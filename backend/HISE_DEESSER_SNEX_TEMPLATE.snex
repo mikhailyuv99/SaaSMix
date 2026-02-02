@@ -1,0 +1,127 @@
+/**
+ * De-esser SNEX – version adaptée au template struct (snex_node).
+ * Paramètres: 0=Threshold, 1=Reduction, 2=FreqLow (Hz), 3=FreqHigh (Hz).
+ */
+template <int NV> struct deesser
+{
+	SNEX_NODE(deesser);
+
+	double sr = 44100.0;
+	double hp_y = 0.0;
+	double hp_x_prev = 0.0;
+	double lp_y = 0.0;
+	double alpha_hp = 0.0;
+	double alpha_lp = 0.0;
+	double envelope = 0.0;
+	double alpha_env = 0.0;
+
+	float threshold = 0.3f;
+	float reduction = 0.5f;
+	float freqLow = 4000.0f;
+	float freqHigh = 10000.0f;
+
+	void updateFilters()
+	{
+		alpha_hp = 1.0 - Math.exp(-2.0 * 3.14159265359 * (double)freqLow / sr);
+		alpha_lp = 1.0 - Math.exp(-2.0 * 3.14159265359 * (double)freqHigh / sr);
+		double tau_env = 0.005 * sr;
+		alpha_env = 1.0 - Math.exp(-1.0 / tau_env);
+	}
+
+	void prepare(PrepareSpecs ps)
+	{
+		sr = ps.sampleRate;
+		updateFilters();
+	}
+
+	void reset()
+	{
+		hp_y = 0.0;
+		hp_x_prev = 0.0;
+		lp_y = 0.0;
+		envelope = 0.0;
+	}
+
+	template <typename ProcessDataType> void process(ProcessDataType& data)
+	{
+		int numSamples = data.getNumSamples();
+		for (int i = 0; i < numSamples; i++)
+		{
+			float left = data[0][i];
+			float right = data[1][i];
+			float mono = (left + right) * 0.5f;
+			double x = (double)mono;
+			double hp_out = alpha_hp * (hp_y + x - hp_x_prev);
+			hp_y = hp_out;
+			hp_x_prev = x;
+			lp_y = lp_y + alpha_lp * (hp_out - lp_y);
+			double level = Math.abs(lp_y);
+			envelope = envelope + alpha_env * (level - envelope);
+			float gain = 1.0f;
+			if (envelope > (double)threshold && threshold > 0.0001f)
+			{
+				double over = envelope / (double)threshold;
+				double g = 1.0 / over;
+				g = 1.0 - (1.0 - g) * (double)reduction;
+				if (g < 0.0) g = 0.0;
+				gain = (float)g;
+			}
+			data[0][i] = left * gain;
+			data[1][i] = right * gain;
+		}
+	}
+
+	double highpass(double x)
+	{
+		double out = alpha_hp * (hp_y + x - hp_x_prev);
+		hp_y = out;
+		hp_x_prev = x;
+		return out;
+	}
+
+	double lowpass(double x)
+	{
+		lp_y = lp_y + alpha_lp * (x - lp_y);
+		return lp_y;
+	}
+
+	template <int C> void processFrame(span<float, C>& data)
+	{
+		float left = data[0];
+		float right = C > 1 ? data[1] : left;
+		float mono = (left + right) * 0.5f;
+
+		double band = lowpass(highpass((double)mono));
+		double level = Math.abs(band);
+		envelope = envelope + alpha_env * (level - envelope);
+
+		float gain = 1.0f;
+		if (envelope > (double)threshold && threshold > 0.0001f)
+		{
+			double over = envelope / (double)threshold;
+			double g = 1.0 / over;
+			g = 1.0 - (1.0 - g) * (double)reduction;
+			if (g < 0.0) g = 0.0;
+			gain = (float)g;
+		}
+
+		data[0] = left * gain;
+		if (C > 1) data[1] = right * gain;
+	}
+
+	void handleHiseEvent(HiseEvent& e)
+	{
+	}
+
+	void setExternalData(const ExternalData& d, int index)
+	{
+	}
+
+	template <int P> void setParameter(double v)
+	{
+		if (P == 0) threshold = (float)v;
+		else if (P == 1) reduction = (float)v;
+		else if (P == 2) { freqLow = (float)v; updateFilters(); }
+		else if (P == 3) { freqHigh = (float)v; updateFilters(); }
+	}
+};

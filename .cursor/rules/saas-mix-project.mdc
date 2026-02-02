@@ -1,0 +1,30 @@
+---
+description: Core project context for SaaS Mix (backend + frontend stack and conventions)
+alwaysApply: true
+---
+
+# SaaS Mix – Project Context
+
+## What This Is
+
+Web SaaS for **automatic vocal mixing**: users upload raw vocal stems + instrumentals (WAV), choose presets, get mixed output (full mix + processed vocal). Target: Hip-Hop/R&B, process in under ~30s.
+
+## Stack
+
+- **Backend:** Python 3.11+, FastAPI, PostgreSQL, Celery + Redis, AWS S3. Audio: librosa, soundfile, scipy.
+- **Frontend:** Next.js 14, React, TypeScript, Tailwind CSS, Web Audio API for playback.
+
+## Structure
+
+- `backend/` – API (`main.py`), audio (`audio_processor.py`, `mixing_service.py`), ML/training scripts, presets, guides.
+- `frontend/` – Next.js app under `app/` (e.g. `page.tsx`, `layout.tsx`), Tailwind config.
+
+## Conventions
+
+- **Audio:** Prefer WAV for processing and storage; support 44.1kHz or 48kHz as documented. Do not assume MP3 for core processing.
+- **Backend:** Use FastAPI routers and Pydantic models; long jobs via Celery. Config via `.env` (see `.env.example`).
+- **Frontend:** Functional components, TypeScript strict; style with Tailwind. Keep API calls in dedicated modules or server actions.
+- **Docs:** Project and setup details live in root `README.md`, `PROJECT_GUIDE.md`, and backend/frontend READMEs; audio/ML guides in `backend/*.md` and root `*_GUIDE.md`.
+- **HISE VST3:** Export from HISE (FX chain at root; disable "Use IPP" if build fails). Identical rendering via C++ host in `hise_vst3_host/` (CMake + JUCE, no Git; build once). Backend uses it automatically when exe is found; config in `vst_config.py`. Full reference: `backend/HISE_VST3_REFERENCE.md`.
+
+When adding features, follow existing patterns in `backend/main.py` and `frontend/app/` and keep API contracts consistent between frontend and backend.

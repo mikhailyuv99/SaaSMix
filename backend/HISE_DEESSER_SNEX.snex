@@ -1,0 +1,131 @@
+/**
+ * De-esser SNEX pour HISE ScriptNode (core.jit / snex_node).
+ * 
+ * Utilisation dans HISE:
+ * 1. Ajoute un ScriptNode FX (ou Script FX) dans ta chaîne.
+ * 2. Crée un noeud "core.jit" (ou snex_node) dans le réseau.
+ * 3. Colle ce code dans l'éditeur SNEX du noeud.
+ * 4. Ajoute 3 paramètres (clic droit sur le noeud ou dans les propriétés):
+ *    - Index 0: Threshold (0.0 à 1.0, défaut 0.3) = seuil de détection
+ *    - Index 1: Reduction (0.0 à 1.0, défaut 0.5) = force de réduction (0 = pas de réduction, 1 = max)
+ *    - Index 2: FreqLow (1000 à 8000, défaut 4000) = bas de la bande sibilantes (Hz)
+ *    - Index 3: FreqHigh (4000 à 15000, défaut 10000) = haut de la bande (Hz)
+ * 5. Dans setParameter, décommente et adapte les index (0,1,2,3) selon tes paramètres.
+ * 
+ * Principe: bande 4–10 kHz isolée → enveloppe → si enveloppe > seuil, gain < 1 sur tout le signal.
+ */
+
+double sr = 44100.0;
+
+// Filtres one-pole (bande sibilantes = HP + LP)
+double hp_y = 0.0;
+double hp_x_prev = 0.0;
+double lp_y = 0.0;
+double alpha_hp = 0.0;
+double alpha_lp = 0.0;
+
+// Enveloppe (détection niveau bande sibilantes)
+double envelope = 0.0;
+double alpha_env = 0.0;
+
+// Paramètres (à lier aux sliders)
+float threshold = 0.3f;
+float reduction = 0.5f;
+float freqLow = 4000.0f;
+float freqHigh = 10000.0f;
+
+void prepare(double sampleRate, int blockSize, int numChannels)
+{
+	sr = sampleRate;
+	// One-pole: alpha = 1 - exp(-2*pi*fc/sr)
+	double fc_hp = (double)freqLow;
+	double fc_lp = (double)freqHigh;
+	alpha_hp = 1.0 - Math.exp(-2.0 * 3.14159265359 * fc_hp / sr);
+	alpha_lp = 1.0 - Math.exp(-2.0 * 3.14159265359 * fc_lp / sr);
+	// Enveloppe: temps de réponse ~5 ms
+	double tau_env = 0.005 * sr;
+	alpha_env = 1.0 - Math.exp(-1.0 / tau_env);
+}
+
+void reset()
+{
+	hp_y = 0.0;
+	hp_x_prev = 0.0;
+	lp_y = 0.0;
+	envelope = 0.0;
+}
+
+void setParameter(int index, double value)
+{
+	if (index == 0)
+		threshold = (float)value;
+	else if (index == 1)
+		reduction = (float)value;
+	else if (index == 2)
+	{
+		freqLow = (float)value;
+		alpha_hp = 1.0 - Math.exp(-2.0 * 3.14159265359 * (double)freqLow / sr);
+	}
+	else if (index == 3)
+	{
+		freqHigh = (float)value;
+		alpha_lp = 1.0 - Math.exp(-2.0 * 3.14159265359 * (double)freqHigh / sr);
+	}
+}
+
+// Highpass one-pole (simplifié: y = alpha * (y + x - x_prev))
+double highpass(double x)
+{
+	double out = alpha_hp * (hp_y + x - hp_x_prev);
+	hp_y = out;
+	hp_x_prev = x;
+	return out;
+}
+
+// Lowpass one-pole
+double lowpass(double x)
+{
+	lp_y = lp_y + alpha_lp * (x - lp_y);
+	return lp_y;
+}
+
+// Bande sibilantes = HP puis LP
+double sibilanceBand(double x)
+{
+	return lowpass(highpass(x));
+}
+
+void processFrame(block frame)
+{
+	float left = frame[0];
+	float right = frame[1];
+	float mono = (left + right) * 0.5f;
+
+	// Niveau de la bande sibilantes
+	double band = sibilanceBand((double)mono);
+	double level = band > 0.0 ? band : -band;
+	if (level < 0.0)
+		level = -level;
+
+	// Enveloppe (smooth)
+	envelope = envelope + alpha_env * (level - envelope);
+
+	// Gain: si enveloppe > seuil, on réduit
+	float th = threshold;
+	float red = reduction;
+	double env = envelope;
+	float gain = 1.0f;
+	if (env > (double)th && th > 0.0001f)
+	{
+		// Réduction: plus envelope dépasse le seuil, plus on baisse le gain
+		double over = env / (double)th;
+		double g = 1.0 / over;
+		g = 1.0 - (1.0 - g) * (double)red;
+		if (g < 0.0)
+			g = 0.0;
+		gain = (float)g;
+	}
+
+	frame[0] = left * gain;
+	frame[1] = right * gain;
+}

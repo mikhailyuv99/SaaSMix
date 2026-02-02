@@ -1,0 +1,124 @@
+# Recreate PLUGINS.txt in HISE – step-by-step
+
+Your FL preset: LEAD 1 → LEAD 2 → then 5 parallel chains (PCOMP, DELAY, SHORT VERB, LONG VERB, DOUBLER) → all sum to master.
+
+In HISE you don't have Waves/FabFilter/Valhalla, so we map each step to HISE effects and approximate settings.
+
+---
+
+## ROUTING (big picture)
+
+- **Lead chain** = main vocal (pitch correction → de-reverb → de-esser → EQ → comp → saturation → de-esser again).
+- **Parallel buses** = PCOMP (compressed vocal), DELAY, SHORT VERB, LONG VERB, DOUBLER; each gets a **send** from the lead, then you **mix** them together at the end.
+
+In HISE you can either:
+- **Option A:** One linear chain (Lead 1 + Lead 2 only), no parallel – simpler, still strong.
+- **Option B:** Lead chain + parallel buses (need routing/sends in HISE; depends if your project has sends/aux).
+
+Start with **Option A**. Add parallel buses later if HISE allows.
+
+---
+
+## OPTION A – Single chain (Lead 1 + Lead 2 in one FX chain)
+
+Put these in order in **Sampler1 → FX** (or Master Chain → FX). Use HISE's built-in names; we give target numbers from your PLUGINS.txt.
+
+### 1. Pitch correction (Lead 1)
+- **Plugin:** If HISE has a "Pitch" / "Pitch Shifter" / "Tune" effect, use it.
+- **Target:** Retune speed 0, humanize 0, classic mode (so almost no correction movement, just in tune).
+- If there's no pitch correction in HISE, skip and do it in the DAW or in post.
+
+### 2. De-reverb (start of Lead 2)
+- **Plugin:** "Reverb" or "Convolution" in **reverse** or a "Dereverb" / "Dry/Wet" style – or a short reverb with **mix very low** and short decay to “tighten” the tail.
+- **Target:** Strength ~1.5, reduce reverb, presence 50%, tail smoothing 0%.
+- If you don't have de-reverb, skip or use a very short, dry reverb at low mix.
+
+### 3. De-esser (first one)
+- **Plugin:** Parametric EQ or "Dynamic EQ" / "Multiband" – one band around **5.5 kHz**, dynamic (reduce when loud).
+- **Target:** Freq 5500 Hz, threshold -40 dB, range -16 dB, split mode.
+- In HISE: one peaking band at 5.5 kHz, or a de-esser module if available; set threshold and range by ear.
+
+### 4. EQ (first F6-style)
+- **Plugin:** **Parametric EQ** (multi-band).
+- **Target (from PLUGINS.txt):**
+  - HPF 127 Hz, Q 12
+  - Band 1: 153 Hz, Q 2.8, Gain -2.9 dB
+  - Band 2: 246 Hz, Q 6.1, Gain -3.4 dB
+  - Band 3: 456 Hz, Q 1.0, Gain -2.6 dB
+  - Band 4: off
+  - Band 5: 4034 Hz, Q 2.0, Gain -4.0 dB
+  - Band 6: 10561 Hz, Q 1.0, Gain +7.0 dB
+  - No LPF
+
+### 5. Compressor (CLA-76 style)
+- **Plugin:** **Compressor**.
+- **Target:** Input -26.9 dB, output -18 dB, attack 2.1 ms, release 7 ms, ratio 4:1.
+
+### 6. Second compressor (RVOX style – gate + comp)
+- **Plugin:** **Compressor** or "Gate + Comp" if available.
+- **Target:** Gate/energy -inf (gate closed until signal), Comp -7 dB, Gain -3.3 dB.
+
+### 7. Third compressor (R Compressor style)
+- **Plugin:** **Compressor**.
+- **Target:** Threshold -20.5 dB, ratio 1.69, attack 4.65 ms, release 57.6 ms, mix 100%, trim 0.
+
+### 8. Saturation (Saturn 2 style – warm tape per band)
+- **Plugin:** **Saturator** (you already have Saturator1).
+- **Target:** 3 bands: 0–306 Hz -1.12 dB + warm tape 18.5%; 306–2565 Hz 0 dB + 18.5%; 2565 Hz–end -0.25 dB + 18.5%. If HISE has one saturator, set drive ~18.5%, tone “warm”, and level to taste.
+
+### 9. Second EQ (second F6)
+- **Plugin:** **Parametric EQ** again.
+- **Target:** HPF 137 Hz Q 12; 141 Hz -3.9 dB Q 1; 392 Hz -3.0 dB Q 1; 5620 Hz -2.7 dB Q 1; 9390 Hz +5.1 dB Q 1 (dynamic: threshold -49.4, etc.). Simplify to same curve shape if you have fewer bands.
+
+### 10. De-esser (Pro-DS style – high band)
+- **Plugin:** **Parametric EQ** (dynamic band) or de-esser.
+- **Target:** 5.725–16 kHz, threshold -44.38 dB, range +10.27 dB, lookahead 12 ms. In HISE: one dynamic band in the highs, threshold and range by ear.
+
+---
+
+## ORDER IN HISE (one chain)
+
+1. Pitch (if available)  
+2. De-reverb (if available)  
+3. De-esser (EQ or de-esser)  
+4. Parametric EQ (first F6)  
+5. Compressor (CLA-76)  
+6. Compressor (RVOX)  
+7. Compressor (R Comp)  
+8. Saturator (Saturn 2)  
+9. Parametric EQ (second F6)  
+10. De-esser (Pro-DS)
+
+You already have **Parametric EQ1**, **Saturator1**, **Chorus1**. Add **Compressor** (x2 or x3), and a second **Parametric EQ** (or more bands on the first). Reorder so EQ → Comp → Saturator → EQ → De-esser. Then tweak by ear with your vocal.
+
+---
+
+## PARALLEL BUSES (Option B – when you want PCOMP, DELAY, VERB, DOUBLER)
+
+- **PCOMP:** Compressed version of the lead (de-esser, EQ, comp, R-Vox, chorus, limiter, flanger, de-esser, HPF). In HISE: duplicate the lead chain or use a send, then add Compressor + Limiter + Chorus/Flanger + EQ (HPF 108 Hz).
+- **DELAY:** Send from lead → Delay (mix 30%, time 1/4 and 1/2 of BPM). In HISE: Delay effect, sync to BPM if possible.
+- **SHORT VERB:** Send → Reverb (plate, short decay ~0.71 s, mix 25%). In HISE: Reverb, type Plate, decay 0.71 s, mix 25%.
+- **LONG VERB:** Send → Reverb (hall, decay ~2.58 s, mix 45%).
+- **DOUBLER:** Send → Stereo width + two “voices” panned -45 and +45, gain -6.7 each. In HISE: Stereo width / imager + pan or dual delay for width.
+
+If your HISE project has **sends** or **aux buses**, create one aux per parallel chain and send from the lead into each; then mix the lead + PCOMP + Delay + Short Verb + Long Verb + Doubler to master. If not, stay with Option A and add one reverb and one delay at the end of the main chain at low mix instead.
+
+---
+
+## QUICK REFERENCE – numbers from PLUGINS.txt
+
+| Effect        | Key settings |
+|---------------|--------------|
+| De-esser 1    | 5500 Hz, thresh -40, range -16 |
+| EQ1 (F6)      | HPF 127 Q12; 153/-2.9; 246/-3.4; 456/-2.6; 4034/-4; 10561/+7 |
+| CLA-76        | In -26.9, Out -18, attack 2.1, release 7, ratio 4 |
+| RVOX          | Comp -7, Gain -3.3 |
+| R Comp        | Thresh -20.5, ratio 1.69, attack 4.65, release 57.6 |
+| Saturn 2      | Warm tape, drive 18.5% per band, levels -1.12 / 0 / -0.25 dB |
+| EQ2 (F6)      | HPF 137 Q12; 141/-3.9; 392/-3; 5620/-2.7; 9390/+5.1 |
+| Pro-DS        | 5.7–16 kHz, thresh -44.38, range +10.27 |
+| Short Verb    | Plate, mix 25%, decay 0.71 s |
+| Long Verb     | Hall, mix 45%, decay 2.58 s |
+| Limiter       | Gain -23.5 dB (or to taste) |
+
+Use this file next to HISE and match the order + numbers as close as your effects allow; then fine-tune by ear.

@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+out/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large / binary (don't commit to avoid push failures)
+*.zip
+*.npy
+*.pdf
+
+# Audio files (don't commit large files)
+*.wav
+*.mp3
+*.flac
+*.aiff
+
+# ML models
+*.pth
+*.h5
+*.ckpt
+*.pt
+
+# Database
+*.db
+*.sqlite
+
+# Uploads and processed files
+uploads/
+processed/
+temp/

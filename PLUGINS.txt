@@ -1,0 +1,48 @@
+For context : LEAD 1 CHAIN is routed only to LEAD 2 CHAIN. Lead 2 chain is routed only to PCOMP,DELAY,SHORT VERB, Long verb and doubler chains. PCOMP,DELAY,SHORT VERB, Long verb and doubler chains are routed to master chain. You dont have to have the same ammount of effects or anything like that but just understand the logic in the mixing and try to recreate something similar. Ask me questions if you need to. But we are trying to create a universal modern rap/trap/rnb preset that sounds good! This preset works almost for everyone in my fl studio.
+
+
+LEAD 1 CHAIN : 
+Plugin 1 : Autotune Pro, retune speed 0, humanize 0, classic mode
+
+LEAD 2 CHAIN
+Plugin1 : DeReverb Pro Mono : Dialogue 1, Strength Multiplier 1.5, Reduce Reverb Knob at 60, Presence 50%, Tail Smoothing 0%
+Plugin 2 : NLS CHANNEL MONO : Drive 7, SPIKE Studio, VCA GROUP 1, Output 0.
+Plugin 3 : R DEESSER : Frequency : 5500, Mode Split, Threshold -40.0, Range -16
+Plugin 4: F6RTA MONO : HPF at Freq 127, Q 12, 1 at Freq 153, Q 2.8, Gain -2.9dB, 2 at Freq 246, Q 6.1, Gain -3.4db, 3 at freq 456, q 1.0, gain -2.6db, 4 not active, 5 at Freq 4034, q 2.0, gain -4.0, 6 at freq 10561, q 1.0, gain 7.0, No LPF.
+Plugin 5 : CLA-76 MONO : input -26.9, output -18.0, attack 2.10, release 7.0, ratio 4, revision blacky.
+Plugin 6: RVOX MONO : Energy -inf, Comp -7.0, Gain -3.3
+Plugin 7 : R COMPRESSOR MONO : Thresh -20.5, ratio 1.69, gain 0.0, attack 4.65, release 57.6, mix 100%, trim 0, mode manual electro and warm.
+Plugin 8 : Saturn 2 : Band 1 : between 0hz and 306 hz, level -1.12db, warm tape, mix 100%, drive 18.5%, band 2 : between 306hz and 2565Hz, warm tape, level 0.0db, drive 18.5%, Band 3 : between 2565Hz and end of Spectrum, level -0.25db, drive 18.5%, warm tape.
+Plugin 9 : F6 RTA MONO: HPF at Freq 137, Q 12, 1 at Freq 141, Q 1.0, Gain -3.9dB, 2 at Freq 392, Q 1.0, Gain -3.0db, 3 NOT ACTIVE, 4 not active, 5 at Freq 5620, q 1.0, gain -2.7, 6 at freq 9390, q 1.0, gain 5.1 (dynamic : threshold -49.4, attack 1.0, release 65, range -8.9), No LPF.
+Plugin 10 : PRO - DS : Between 5.725kHz and 16.01kHz, Mode Single Vocal, Wide Band, Threshold -44.38, Range +10.27db, lookahead 12ms, stereo link 100%
+
+PCOMP CHAIN
+Plugin 1 : R DEESSER MONO : Frequency 8648, Split mode, thresh -45.7, range -15.0
+Plugin 2 : F6RTA MONO : HPF at Freq 134, Q 12, 1 at Freq 240, Q 1.3, Gain -2.2dB, 2 at Freq 473, Q 3.6, Gain -3.2db, 3 at freq 975, q 6.2, gain -4.6db, 4 not active, 5 at Freq 4036, q 3.5, gain -2.3, 6 at freq 10228, q 2.4, gain -2.6, No LPF.
+Plugin 3 : R compressor MONO : Thresh -35.1, ratio 2.34, gain 19.5, attack 2.49, release 66.1, mix 100, trim 0, mode arc electro warm.
+Plugin 4 : R VOX MONO : Gate and energy -Inf, Comp -4.5, gain - 29.1
+Plugin 5 : Fruity chorus default mode at 30% mix
+Plugin 6 : PRO DS : threshold -31.70, range 6.0, between 9.556khz and 16.92 khz, mode allround splitband, lookahead 15 ms, stereo link 100%
+Plugin 7 : Fruity Limiter default with Gain at -23.5db
+Plugin 8 : Fruity Flanger default with 30% mix
+Plugin 9 : R DEESSER MONO : Freq 8920, split mode, thresh -44.7, range -19.0
+Plugin 10 : Pro Q4 with only a high pass filter at 108Hz and 12 db/oct.
+
+DELAY CHAIN : 
+Plugin 1 : Timeless 3 Vocals long into diffusion preset, mix at 30% and 1/4 of bpm
+Plugin 2 : Timeless 3 Vocals long into diffusion preset, mix at 30% and 1/2 of bpm
+
+SHORT VERB CHAIN:
+Plugin 1 : NLS CHANNEL STEREO : Spike, 0 drive, 1 VCA GROUP, output 0
+Plugin 2 : VALHALLAVINTAGEVERB : Mode Plate, Color Now, Presets Vocal Plate, Mix 25%, Predelay 20.00ms, decay 0.71s, damping : high freq 5500hz, highshelf -12.00db, bassfreq 7560hz, bassmult 1.00x, Shape : Size 44.0%, attack 20.0%, Diff : early 18.8%, late 100%, Mod : rate 1.80hz, depth 19.2%, EQ : highcut 20000hz, lowcut 10hz
+Plugin 3 : F6RTA STEREO : HPF at 199hZ, 12db/oct, LPF at 7419Hz, 12 db/oct
+
+LONG VERB CHAIN:
+Plugin 1 : NLS CHANNEL STEREO : Spike, 0 drive, 1 VCA GROUP, output 0
+Plugin 2 : VALHALLAVINTAGEVERB : Random Space, Color 1970s, Presets Large R HALL, Mix 45%, Predelay 21.32ms, decay 2.58s, damping : high freq 4750hz, highshelf -24.00db, bassfreq 370hz, bassmult 1.75x, Shape : Size 76.8%, attack 25.2%, Diff : early 75.0%, late 100%, Mod : rate 2.47hz, depth 83.6%, EQ : highcut 6120hz, lowcut 10hz
+Plugin 3 : F6RTA STEREO : HPF at 199hZ, 12db/oct, LPF at 7419Hz, 12 db/oct
+
+DOUBLER CHAIN:
+Plugin 1 : NLS CHANNEL STEREO : Spike, 0 drive, 1 VCA GROUP, output 0
+Plugin 2 : DOUBLER2 STEREO : Direct gain at 0.0, voice 1 gain at -6.7 and pan at -45, voice 2 gain at -6.7 and pan at +45.
+Plugin 3 : SA IMAGER STEREO : Gain 0.0, Width 2.07.
