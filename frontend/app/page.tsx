@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { CustomSelect } from "./components/CustomSelect";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -16,11 +17,14 @@ export interface MixParams {
   air: boolean;
   bpm: number;
   delay_division: "1/4" | "1/2" | "1/8";
+  phone_fx: boolean;
+  doubler: boolean;
+  robot: boolean;
 }
 
 const DEFAULT_MIX_PARAMS: MixParams = {
-  delay: false,
-  reverb: false,
+  delay: true,
+  reverb: true,
   reverb_mode: 2,
   tone_low: 2,
   tone_mid: 2,
@@ -28,6 +32,9 @@ const DEFAULT_MIX_PARAMS: MixParams = {
   air: false,
   bpm: 120,
   delay_division: "1/4",
+  phone_fx: false,
+  doubler: false,
+  robot: false,
 };
 
 interface Track {
@@ -199,6 +206,14 @@ export default function Home() {
   const [masterPlaybackCurrentTime, setMasterPlaybackCurrentTime] = useState(0);
   const [isMasterResultPlaying, setIsMasterResultPlaying] = useState(false);
   const [masterResumeFrom, setMasterResumeFrom] = useState(0);
+  const [gainSliderHoveredTrackId, setGainSliderHoveredTrackId] = useState<string | null>(null);
+  const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
+  const [fileChooserActiveTrackId, setFileChooserActiveTrackId] = useState<string | null>(null);
+  const [focusedBpmTrackId, setFocusedBpmTrackId] = useState<string | null>(null);
+  const [focusedToneSelect, setFocusedToneSelect] = useState<{ trackId: string; type: "tone_low" | "tone_mid" | "tone_high" } | null>(null);
+  const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
+  const [showMasterMessage, setShowMasterMessage] = useState(false);
+  const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
@@ -294,6 +309,13 @@ export default function Home() {
       cancelled = true;
     };
   }, [masterResult]);
+
+  // Quand la fenêtre reprend le focus (ex. fermeture du sélecteur de fichiers), retirer le glow "fichier .wav"
+  useEffect(() => {
+    const onWindowFocus = () => setFileChooserActiveTrackId(null);
+    window.addEventListener("focus", onWindowFocus);
+    return () => window.removeEventListener("focus", onWindowFocus);
+  }, []);
 
   // Playhead du master pendant la lecture
   useEffect(() => {
@@ -600,7 +622,11 @@ export default function Home() {
     const playable = tracks.filter(
       (t) => t.file && t.rawAudioUrl
     );
-    if (playable.length === 0) return;
+    if (playable.length === 0) {
+      setShowPlayNoFileMessage(true);
+      setTimeout(() => setShowPlayNoFileMessage(false), 3000);
+      return;
+    }
 
     let ctx = contextRef.current;
     if (!ctx) {
@@ -646,6 +672,7 @@ export default function Home() {
       updateTrack(id, { isMixing: true });
       const form = new FormData();
       form.append("file", track.file);
+      form.append("category", track.category);
       const p = track.mixParams;
       form.append("delay", String(p.delay));
       form.append("reverb", String(p.reverb));
@@ -656,13 +683,19 @@ export default function Home() {
       form.append("air", String(p.air));
       form.append("bpm", String(p.bpm));
       form.append("delay_division", p.delay_division);
+      form.append("phone_fx", String(p.phone_fx));
+      form.append("doubler", String(p.doubler));
+      form.append("robot", String(p.robot));
       try {
         const res = await fetch(`${API_BASE}/api/track/mix`, {
           method: "POST",
           body: form,
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || "Mix failed");
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg = typeof data.detail === "string" ? data.detail : Array.isArray(data.detail) ? data.detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ") : JSON.stringify(data.detail ?? data);
+          throw new Error(msg || "Mix failed");
+        }
         const path = data.mixedTrackUrl as string;
         const mixedAudioUrl = path.startsWith("http")
           ? path
@@ -678,7 +711,8 @@ export default function Home() {
       } catch (e) {
         updateTrack(id, { isMixing: false });
         console.error(e);
-        alert("Erreur lors du mix : " + (e instanceof Error ? e.message : String(e)));
+        const errMsg = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
+        alert("Erreur lors du mix : " + errMsg);
       }
     },
     [tracks, updateTrack]
@@ -721,6 +755,12 @@ export default function Home() {
   }, [buildTrackSpecsAndFiles]);
 
   const runMaster = useCallback(async () => {
+    const hasAnyMixed = tracks.some((t) => t.mixedAudioUrl);
+    if (!hasAnyMixed) {
+      setShowMasterMessage(true);
+      setTimeout(() => setShowMasterMessage(false), 3000);
+      return;
+    }
     const { specs, files } = buildTrackSpecsAndFiles();
     if (specs.length === 0) return;
     setIsMastering(true);
@@ -742,7 +782,7 @@ export default function Home() {
     } finally {
       setIsMastering(false);
     }
-  }, [buildTrackSpecsAndFiles]);
+  }, [buildTrackSpecsAndFiles, tracks]);
 
   const startMasterPlayback = useCallback((offset?: number) => {
     const mixBuf = masterMixBufferRef.current;
@@ -866,7 +906,7 @@ export default function Home() {
               className="max-h-28 sm:max-h-36 md:max-h-44 lg:max-h-52 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl object-contain"
             />
           </h1>
-          <p className="text-tagline">
+          <p className="text-tagline text-slate-500">
             Mix & master automatique pour les artistes indépendants
           </p>
         </header>
@@ -876,15 +916,21 @@ export default function Home() {
             <h2 className="sr-only">Lecture</h2>
             <div className="flex justify-center gap-2">
               {!isPlaying ? (
-                <button
-                  type="button"
-                  onClick={playAll}
-                  disabled={!hasAnyPlayable}
-                  className="btn-primary-accent disabled:opacity-40 disabled:cursor-not-allowed w-11 h-11 flex items-center justify-center rounded-lg"
-                  aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
-                >
-                  <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={playAll}
+                    className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors"
+                    aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
+                  >
+                    <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                  </button>
+                  {showPlayNoFileMessage && (
+                    <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                      Veuillez choisir un fichier
+                    </p>
+                  )}
+                </div>
               ) : (
                 <button type="button" onClick={stopAll} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg" aria-label="Pause">
                   <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
@@ -913,54 +959,69 @@ export default function Home() {
                 }}
               >
                 {/* Labels row - toute la largeur, aucun texte coupé */}
-                <div className="flex items-center justify-center min-h-[32px] min-w-0">
-                  <span className="text-tagline text-center break-words leading-tight">
+                <div className={`flex items-center justify-center min-h-[32px] min-w-0 ${fileChooserActiveTrackId === track.id ? "" : "overflow-hidden"}`}>
+                  <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "overflow-hidden text-ellipsis"}`}>
                     Fichier WAV{track.file ? ` ${track.file.name}` : ""}
                   </span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
-                  <span className="text-tagline">MIX</span>
+                  <span className={track.isMixing ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>MIXER</span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
-                  <span className="text-tagline">RÉGLAGES</span>
+                  <span className={track.paramsOpen ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>RÉGLAGES</span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
                   <span className="text-tagline text-center whitespace-nowrap">AVANT / APRÈS</span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
-                  <span className="text-tagline">Catégorie</span>
+                  <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
-                  <span className="text-tagline">Gain {track.gain}%</span>
+                  <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain {track.gain}%</span>
                 </div>
 
                 {/* Boxes row - même largeur par colonne */}
                 <div className="flex items-center min-w-0">
                   <label
                     htmlFor={`file-${track.id}`}
-                    className="w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline text-slate-300 cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
+                    className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
+                    onClick={() => setFileChooserActiveTrackId(track.id)}
                   >
-                    CHOISIR
+                    <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
                   </label>
                   <input
                     id={`file-${track.id}`}
                     type="file"
                     accept=".wav,audio/wav"
                     className="sr-only"
-                    onChange={(e) =>
-                      onFileSelect(track.id, e.target.files?.[0] ?? null)
-                    }
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      onFileSelect(track.id, file);
+                      if (file) setFileChooserActiveTrackId(null);
+                    }}
                   />
                 </div>
-                <div className="flex items-center">
+                <div className="relative flex items-center">
                   <button
                     type="button"
-                    onClick={() => runMix(track.id)}
-                    disabled={!track.file || track.isMixing}
+                    onClick={() => {
+                      if (!track.file) {
+                        setNoFileMessageTrackId(track.id);
+                        setTimeout(() => setNoFileMessageTrackId(null), 3000);
+                        return;
+                      }
+                      runMix(track.id);
+                    }}
+                    disabled={track.isMixing}
                     className="w-full h-9 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline"
                   >
-                    {track.isMixing ? "Mix…" : "Mix"}
+                    {track.isMixing ? "Mixer…" : "Mixer"}
                   </button>
+                  {noFileMessageTrackId === track.id && (
+                    <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                      Veuillez choisir un fichier
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center">
                   <button
@@ -970,9 +1031,11 @@ export default function Home() {
                         paramsOpen: !track.paramsOpen,
                       })
                     }
-                    className="w-full h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
+                    className="group w-full h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
                   >
-                    {track.paramsOpen ? "Masquer" : "Réglages"}
+                    <span className="text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                      {track.paramsOpen ? "Masquer" : "Réglages"}
+                    </span>
                   </button>
                 </div>
                 <div className="flex items-center">
@@ -1010,23 +1073,33 @@ export default function Home() {
                   </button>
                 </div>
                 <div className="flex items-center justify-center min-w-0">
-                  <select
+                  <CustomSelect
                     value={track.category}
-                    onChange={(e) =>
+                    onChange={(v) => {
+                      const newCategory = v as Category;
                       updateTrack(track.id, {
-                        category: e.target.value as Category,
-                      })
-                    }
-                    className="select-category w-full min-w-0 h-9 rounded-lg border border-white/10 bg-white/5 text-slate-200 px-2 pr-6 text-tagline text-center truncate"
-                  >
-                    {(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => (
-                      <option key={c} value={c}>
-                        {CATEGORY_LABELS[c]}
-                      </option>
-                    ))}
-                  </select>
+                        category: newCategory,
+                        mixParams: {
+                          ...track.mixParams,
+                          phone_fx: newCategory === "adlibs_backs",
+                        },
+                      });
+                    }}
+                    onFocus={() => setFocusedCategoryTrackId(track.id)}
+                    onBlur={() => setFocusedCategoryTrackId(null)}
+                    variant="category"
+                    className="w-full min-w-0"
+                    options={(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => ({
+                      value: c,
+                      label: CATEGORY_LABELS[c],
+                    }))}
+                  />
                 </div>
-                <div className="flex items-center h-9">
+                <div
+                  className="flex items-center h-9"
+                  onMouseEnter={() => setGainSliderHoveredTrackId(track.id)}
+                  onMouseLeave={() => setGainSliderHoveredTrackId(null)}
+                >
                   <input
                     type="range"
                     min="0"
@@ -1059,66 +1132,75 @@ export default function Home() {
                 <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {/* Basses / Mids / Aigus : pour toutes les pistes */}
                   <div>
-                    <span className="text-tagline block mb-1 text-center">Basses</span>
-                    <select
+                    <span className={focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_low" ? "text-tagline block mb-1 text-center text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline block mb-1 text-center"}>Basses</span>
+                    <CustomSelect
                       value={track.mixParams.tone_low}
-                      onChange={(e) =>
+                      onChange={(v) =>
                         updateTrack(track.id, {
                           mixParams: {
                             ...track.mixParams,
-                            tone_low: Number(e.target.value) as 1 | 2 | 3,
+                            tone_low: Number(v) as 1 | 2 | 3,
                           },
                         })
                       }
-                      className="w-full rounded border border-white/10 bg-white/5 text-slate-200 px-2 py-1 text-sm text-center [text-align-last:center]"
-                    >
-                      <option value={1}>1</option>
-                      <option value={2}>2</option>
-                      <option value={3}>3</option>
-                    </select>
+                      onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_low" })}
+                      onBlur={() => setFocusedToneSelect(null)}
+                      className="w-full"
+                      options={[
+                        { value: 1, label: "1" },
+                        { value: 2, label: "2" },
+                        { value: 3, label: "3" },
+                      ]}
+                    />
                   </div>
                   <div>
-                    <span className="text-tagline block mb-1 text-center">Mids</span>
-                    <select
+                    <span className={focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_mid" ? "text-tagline block mb-1 text-center text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline block mb-1 text-center"}>Mids</span>
+                    <CustomSelect
                       value={track.mixParams.tone_mid}
-                      onChange={(e) =>
+                      onChange={(v) =>
                         updateTrack(track.id, {
                           mixParams: {
                             ...track.mixParams,
-                            tone_mid: Number(e.target.value) as 1 | 2 | 3,
+                            tone_mid: Number(v) as 1 | 2 | 3,
                           },
                         })
                       }
-                      className="w-full rounded border border-white/10 bg-white/5 text-slate-200 px-2 py-1 text-sm text-center [text-align-last:center]"
-                    >
-                      <option value={1}>1</option>
-                      <option value={2}>2</option>
-                      <option value={3}>3</option>
-                    </select>
+                      onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_mid" })}
+                      onBlur={() => setFocusedToneSelect(null)}
+                      className="w-full"
+                      options={[
+                        { value: 1, label: "1" },
+                        { value: 2, label: "2" },
+                        { value: 3, label: "3" },
+                      ]}
+                    />
                   </div>
                   <div>
-                    <span className="text-tagline block mb-1 text-center">Aigus</span>
-                    <select
+                    <span className={focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_high" ? "text-tagline block mb-1 text-center text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline block mb-1 text-center"}>Aigus</span>
+                    <CustomSelect
                       value={track.mixParams.tone_high}
-                      onChange={(e) =>
+                      onChange={(v) =>
                         updateTrack(track.id, {
                           mixParams: {
                             ...track.mixParams,
-                            tone_high: Number(e.target.value) as 1 | 2 | 3,
+                            tone_high: Number(v) as 1 | 2 | 3,
                           },
                         })
                       }
-                      className="w-full rounded border border-white/10 bg-white/5 text-slate-200 px-2 py-1 text-sm text-center [text-align-last:center]"
-                    >
-                      <option value={1}>1</option>
-                      <option value={2}>2</option>
-                      <option value={3}>3</option>
-                    </select>
+                      onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_high" })}
+                      onBlur={() => setFocusedToneSelect(null)}
+                      className="w-full"
+                      options={[
+                        { value: 1, label: "1" },
+                        { value: 2, label: "2" },
+                        { value: 3, label: "3" },
+                      ]}
+                    />
                   </div>
                   {/* Delay + Division, Reverb + Reverb box, Air + BPM : vocal uniquement */}
                   {isVocal(track.category) && (
                     <>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0">
                         <label className="flex items-center justify-center gap-2 mb-4">
                           <input
                             type="checkbox"
@@ -1131,66 +1213,47 @@ export default function Home() {
                                 },
                               })
                             }
-                            className="rounded border border-white/10 bg-white/5"
+                            className="checkbox-reglages rounded border border-white/10 bg-white/5"
                           />
-                          <span className="text-tagline">Delay</span>
+                          <span className={track.mixParams.delay ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Delay</span>
                         </label>
                         <div>
-                          <select
+                          <CustomSelect
                             value={track.mixParams.delay_division}
-                            onChange={(e) =>
+                            onChange={(v) =>
                               updateTrack(track.id, {
                                 mixParams: {
                                   ...track.mixParams,
-                                  delay_division: e.target.value as "1/4" | "1/2" | "1/8",
+                                  delay_division: v as "1/4" | "1/2" | "1/8",
                                 },
                               })
                             }
-                            className="w-full rounded border border-white/10 bg-white/5 text-slate-200 px-2 py-1 text-sm text-center [text-align-last:center]"
-                          >
-                            <option value="1/4">1/4</option>
-                            <option value="1/2">1/2</option>
-                            <option value="1/8">1/8</option>
-                          </select>
+                            className="w-full"
+                            options={[
+                              { value: "1/4", label: "1/4" },
+                              { value: "1/2", label: "1/2" },
+                              { value: "1/8", label: "1/8" },
+                            ]}
+                          />
                         </div>
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="flex items-center justify-center gap-2 mb-4">
+                        <label className="flex items-center justify-center gap-2 mt-4">
                           <input
                             type="checkbox"
-                            checked={track.mixParams.reverb}
+                            checked={track.mixParams.robot ?? false}
                             onChange={(e) =>
                               updateTrack(track.id, {
                                 mixParams: {
                                   ...track.mixParams,
-                                  reverb: e.target.checked,
+                                  robot: e.target.checked,
                                 },
                               })
                             }
-                            className="rounded border border-white/10 bg-white/5"
+                            className="checkbox-reglages rounded border border-white/10 bg-white/5"
                           />
-                          <span className="text-tagline">Reverb</span>
+                          <span className={track.mixParams.robot ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>FX robot</span>
                         </label>
-                        <div>
-                          <select
-                            value={track.mixParams.reverb_mode}
-                            onChange={(e) =>
-                              updateTrack(track.id, {
-                                mixParams: {
-                                  ...track.mixParams,
-                                  reverb_mode: Number(e.target.value) as 1 | 2 | 3,
-                                },
-                              })
-                            }
-                            className="w-full rounded border border-white/10 bg-white/5 text-slate-200 px-2 py-1 text-sm text-center [text-align-last:center]"
-                          >
-                            <option value={1}>Léger</option>
-                            <option value={2}>Moyen</option>
-                            <option value={3}>Fort</option>
-                          </select>
-                        </div>
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col min-w-0">
                         <label className="flex items-center justify-center gap-2 mb-4">
                           <input
                             type="checkbox"
@@ -1203,12 +1266,12 @@ export default function Home() {
                                 },
                               })
                             }
-                            className="rounded border border-white/10 bg-white/5"
+                            className="checkbox-reglages rounded border border-white/10 bg-white/5"
                           />
-                          <span className="text-tagline">Air</span>
+                          <span className={track.mixParams.air ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Air</span>
                         </label>
-                        <div className="flex items-center justify-center gap-1.5 h-9 rounded border border-white/10 bg-white/5 px-2">
-                          <span className="text-tagline text-slate-400 shrink-0 pointer-events-none select-none leading-none flex items-center">BPM</span>
+                        <div className="flex items-center justify-center w-full min-w-0 min-h-[2rem] rounded-lg border border-white/10 bg-white/5 px-2 box-border">
+                          <span className={`text-tagline shrink-0 ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : ""}`}>BPM</span>
                           <input
                             type="number"
                             min={60}
@@ -1222,9 +1285,88 @@ export default function Home() {
                                 },
                               })
                             }
-                            className="input-bpm w-12 bg-transparent border-0 text-slate-200 text-sm text-center focus:outline-none focus:ring-0"
+                            onFocus={() => setFocusedBpmTrackId(track.id)}
+                            onBlur={() => setFocusedBpmTrackId(null)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                (e.target as HTMLInputElement).blur();
+                                setFocusedBpmTrackId(null);
+                              }
+                            }}
+                            className={`input-bpm w-10 bg-transparent border-none text-tagline text-center focus:outline-none focus:ring-0 p-0 ml-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}
                           />
                         </div>
+                        {isVocal(track.category) && (
+                          <label className="flex items-center justify-center gap-2 mt-4">
+                            <input
+                              type="checkbox"
+                              checked={track.mixParams.phone_fx}
+                              onChange={(e) =>
+                                updateTrack(track.id, {
+                                  mixParams: {
+                                    ...track.mixParams,
+                                    phone_fx: e.target.checked,
+                                  },
+                                })
+                              }
+                              className="checkbox-reglages rounded border border-white/10 bg-white/5"
+                            />
+                            <span className={track.mixParams.phone_fx ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>FX téléphone</span>
+                          </label>
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <label className="flex items-center justify-center gap-2 mb-4">
+                          <input
+                            type="checkbox"
+                            checked={track.mixParams.reverb}
+                            onChange={(e) =>
+                              updateTrack(track.id, {
+                                mixParams: {
+                                  ...track.mixParams,
+                                  reverb: e.target.checked,
+                                },
+                              })
+                            }
+                            className="checkbox-reglages rounded border border-white/10 bg-white/5"
+                          />
+                          <span className={track.mixParams.reverb ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Reverb</span>
+                        </label>
+                        <div>
+                          <CustomSelect
+                            value={track.mixParams.reverb_mode}
+                            onChange={(v) =>
+                              updateTrack(track.id, {
+                                mixParams: {
+                                  ...track.mixParams,
+                                  reverb_mode: Number(v) as 1 | 2 | 3,
+                                },
+                              })
+                            }
+                            className="w-full"
+                            options={[
+                              { value: 1, label: "Léger" },
+                              { value: 2, label: "Moyen" },
+                              { value: 3, label: "Fort" },
+                            ]}
+                          />
+                        </div>
+                        <label className="flex items-center justify-center gap-2 mt-4">
+                          <input
+                            type="checkbox"
+                            checked={track.mixParams.doubler ?? false}
+                            onChange={(e) =>
+                              updateTrack(track.id, {
+                                mixParams: {
+                                  ...track.mixParams,
+                                  doubler: e.target.checked,
+                                },
+                              })
+                            }
+                            className="checkbox-reglages rounded border border-white/10 bg-white/5"
+                          />
+                          <span className={track.mixParams.doubler ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Doubler</span>
+                        </label>
                       </div>
                     </>
                   )}
@@ -1235,16 +1377,19 @@ export default function Home() {
           ))}
         </section>
 
-        <div className="flex flex-col items-center gap-2 mt-6 mb-2">
+        <div className="group flex flex-col items-center gap-2 mt-6 mb-2">
           <button
             type="button"
             onClick={addTrack}
-            className="flex items-center justify-center w-12 h-12 rounded-full border border-white/20 bg-white/5 text-xl font-light text-slate-300 transition-colors hover:bg-white/10 hover:text-white hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608]"
+            className="flex items-center justify-center w-12 h-12 rounded-full border border-white/20 bg-white/5 text-slate-500 transition-colors hover:bg-white/10 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608] group-hover:text-white"
             aria-label="Ajouter une piste"
           >
-            +
+            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
-          <p className="text-tagline">AJOUTER UNE PISTE</p>
+          <p className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">AJOUTER UNE PISTE</p>
         </div>
 
         {tracks.length > 0 && (
@@ -1253,18 +1398,27 @@ export default function Home() {
               type="button"
               onClick={downloadMix}
               disabled={isRenderingMix}
-              className="btn-primary text-tagline flex items-center justify-center text-center"
+              className="btn-primary group flex items-center justify-center text-center disabled:opacity-50"
             >
-              {isRenderingMix ? "RENDU…" : "TÉLÉCHARGER LE MIX"}
+              <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                {isRenderingMix ? "RENDU…" : "TÉLÉCHARGER LE MIX"}
+              </span>
             </button>
-            <button
-              type="button"
-              onClick={runMaster}
-              disabled={isMastering}
-              className="btn-primary-accent text-tagline flex items-center justify-center text-center"
-            >
-              {isMastering ? "MASTERISATION…" : "MASTERISER"}
-            </button>
+            <div className="relative flex justify-center">
+              <button
+                type="button"
+                onClick={runMaster}
+                disabled={isMastering}
+                className="h-9 px-5 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline shrink-0"
+              >
+                {isMastering ? "MASTERISATION…" : "MASTERISER"}
+              </button>
+              {showMasterMessage && (
+                <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                  Veuillez d&apos;abord effectuer un mix
+                </p>
+              )}
+            </div>
           </div>
         )}
 
@@ -1336,9 +1490,11 @@ export default function Home() {
               <a
                 href={masterResult.masterUrl}
                 download="master.wav"
-                className="btn-primary-accent text-tagline inline-block mt-2"
+                className="btn-primary group inline-flex items-center justify-center text-center mt-2"
               >
-                TÉLÉCHARGER LE MASTER
+                <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                  TÉLÉCHARGER LE MASTER
+                </span>
               </a>
             </div>
           </section>

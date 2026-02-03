@@ -1,5 +1,6 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
+import { StarryCeiling } from './components/StarryCeiling'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
@@ -15,7 +16,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body className={`${inter.className} antialiased text-slate-200`}>{children}</body>
+      <body className={`${inter.className} antialiased text-slate-200`}>
+        {/* <StarryCeiling /> */}
+        <div className="relative z-10">{children}</div>
+      </body>
     </html>
   )
 }
