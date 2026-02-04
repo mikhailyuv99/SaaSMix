@@ -327,6 +327,17 @@ export default function Home() {
   const [isLoadingProject, setIsLoadingProject] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
+  type AppModal =
+    | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
+    | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
+    | { type: "alert"; message: string; onClose: () => void }
+    | null;
+  const [appModal, setAppModal] = useState<AppModal>(null);
+  const [promptInputValue, setPromptInputValue] = useState("");
+
+  useEffect(() => {
+    if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
+  }, [appModal?.type, appModal?.defaultValue]);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
@@ -701,11 +712,7 @@ export default function Home() {
     return h;
   }, []);
 
-  const createNewProject = useCallback(async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
-    if (!token) return;
-    const name = window.prompt("Nom du projet ?");
-    if (!name?.trim()) return;
+  const doCreateNewProject = useCallback(async (name: string) => {
     const defaultTracks = getDefaultTracks();
     const payload = defaultTracks.map((t) => ({
       id: t.id,
@@ -729,7 +736,7 @@ export default function Home() {
         localStorage.removeItem("saas_mix_token");
         localStorage.removeItem("saas_mix_user");
         setUser(null);
-        alert("Session expirée. Reconnectez-vous.");
+        setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -750,17 +757,27 @@ export default function Home() {
         } catch (_) {}
         sessionStorage.removeItem(TRACKS_STORAGE_KEY);
       }
-      alert("Projet créé. Page réinitialisée.");
+      setAppModal({ type: "alert", message: "Projet créé. Page réinitialisée.", onClose: () => {} });
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Erreur lors de la création.");
+      setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la création.", onClose: () => {} });
     } finally {
       setIsSavingProject(false);
     }
   }, [getAuthHeaders]);
 
-  const saveProject = useCallback(async () => {
+  const createNewProject = useCallback(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
     if (!token) return;
+    setAppModal({
+      type: "prompt",
+      title: "Nom du projet ?",
+      onConfirm: (value) => { if (value?.trim()) doCreateNewProject(value); },
+      onCancel: () => {},
+    });
+  }, [doCreateNewProject]);
+
+  const doSaveProject = useCallback(async (name: string | null) => {
+    const isUpdate = currentProject != null;
     const payload = tracks.map((t) => ({
       id: t.id,
       category: t.category,
@@ -774,15 +791,8 @@ export default function Home() {
     tracks.forEach((t) => {
       if (t.file) form.append("files", t.file);
     });
-
-    const isUpdate = currentProject != null;
-    if (isUpdate) {
-      form.append("name", currentProject.name);
-    } else {
-      const name = window.prompt("Nom du projet ?");
-      if (!name?.trim()) return;
-      form.append("name", name.trim());
-    }
+    if (isUpdate) form.append("name", currentProject!.name);
+    else if (name?.trim()) form.append("name", name.trim());
 
     setIsSavingProject(true);
     try {
@@ -796,19 +806,35 @@ export default function Home() {
         localStorage.removeItem("saas_mix_token");
         localStorage.removeItem("saas_mix_user");
         setUser(null);
-        alert("Session expirée. Reconnectez-vous.");
+        setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || "Erreur sauvegarde");
       if (!isUpdate) setCurrentProject({ id: data.id, name: data.name });
-      alert(isUpdate ? "Projet mis à jour." : "Projet sauvegardé avec les fichiers.");
+      setAppModal({ type: "alert", message: isUpdate ? "Projet mis à jour." : "Projet sauvegardé avec les fichiers.", onClose: () => {} });
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Erreur lors de la sauvegarde.");
+      setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la sauvegarde.", onClose: () => {} });
     } finally {
       setIsSavingProject(false);
     }
   }, [tracks, getAuthHeaders, currentProject]);
+
+  const saveProject = useCallback(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+    if (!token) return;
+    const isUpdate = currentProject != null;
+    if (isUpdate) {
+      doSaveProject(null);
+    } else {
+      setAppModal({
+        type: "prompt",
+        title: "Nom du projet ?",
+        onConfirm: (value) => { if (value?.trim()) doSaveProject(value); },
+        onCancel: () => {},
+      });
+    }
+  }, [currentProject, doSaveProject]);
 
   const fetchProjectsList = useCallback(async () => {
     const res = await fetch(`${API_BASE}/api/projects`, { headers: getAuthHeaders() });
@@ -831,12 +857,12 @@ export default function Home() {
           localStorage.removeItem("saas_mix_token");
           localStorage.removeItem("saas_mix_user");
           setUser(null);
-          alert("Session expirée. Reconnectez-vous.");
+          setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
           return;
         }
         const project = await res.json().catch(() => null);
         if (!res.ok || !project?.data) {
-          alert("Projet introuvable ou erreur.");
+          setAppModal({ type: "alert", message: "Projet introuvable ou erreur.", onClose: () => {} });
           return;
         }
         const rawTracks = project.data as Array<{
@@ -900,7 +926,7 @@ export default function Home() {
         setCurrentProject({ id: projectId, name: project.name ?? "Sans nom" });
         setShowProjectsModal(false);
       } catch (e) {
-        alert(e instanceof Error ? e.message : "Erreur lors du chargement.");
+        setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors du chargement.", onClose: () => {} });
       } finally {
         setIsLoadingProject(false);
       }
@@ -909,8 +935,20 @@ export default function Home() {
   );
 
   const deleteProject = useCallback(
+    (projectId: string) => {
+      setAppModal({
+        type: "confirm",
+        message: "Supprimer ce projet (fichiers inclus) ?",
+        onConfirm: () => doDeleteProject(projectId),
+        onCancel: () => {},
+      });
+    },
+    [currentProject?.id]
+  );
+
+  const doDeleteProject = useCallback(
     async (projectId: string) => {
-      if (!window.confirm("Supprimer ce projet (fichiers inclus) ?")) return;
+      setAppModal(null);
       const wasCurrentProject = currentProject?.id === projectId;
       try {
         const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
@@ -1234,7 +1272,7 @@ export default function Home() {
         updateTrack(id, { isMixing: false });
         console.error(e);
         const errMsg = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
-        alert("Erreur lors du mix : " + errMsg);
+        setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
     },
     [tracks, updateTrack]
@@ -1272,7 +1310,7 @@ export default function Home() {
         localStorage.removeItem("saas_mix_token");
         localStorage.removeItem("saas_mix_user");
         setUser(null);
-        alert("Session expirée. Reconnectez-vous.");
+        setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
@@ -1280,7 +1318,7 @@ export default function Home() {
       window.open(mixUrl, "_blank");
     } catch (e) {
       console.error(e);
-      alert("Erreur : " + (e instanceof Error ? e.message : String(e)));
+      setAppModal({ type: "alert", message: "Erreur : " + (e instanceof Error ? e.message : String(e)), onClose: () => {} });
     } finally {
       setIsRenderingMix(false);
     }
@@ -1310,7 +1348,7 @@ export default function Home() {
         localStorage.removeItem("saas_mix_token");
         localStorage.removeItem("saas_mix_user");
         setUser(null);
-        alert("Session expirée. Reconnectez-vous.");
+        setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
@@ -1320,7 +1358,7 @@ export default function Home() {
       setMasterPlaybackMode("master");
     } catch (e) {
       console.error(e);
-      alert("Erreur : " + (e instanceof Error ? e.message : String(e)));
+      setAppModal({ type: "alert", message: "Erreur : " + (e instanceof Error ? e.message : String(e)), onClose: () => {} });
     } finally {
       setIsMastering(false);
     }
@@ -1439,6 +1477,95 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
+      {appModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70" aria-modal="true" role="dialog">
+          <div className="bg-[#0f0f0f] border border-white/10 rounded-xl max-w-sm w-full shadow-xl overflow-hidden">
+            {appModal.type === "prompt" && (
+              <>
+                <div className="p-4 border-b border-white/10">
+                  <p className="text-tagline text-slate-300 text-center text-sm tracking-wide">{appModal.title}</p>
+                </div>
+                <div className="p-4">
+                  <input
+                    type="text"
+                    value={promptInputValue}
+                    onChange={(e) => setPromptInputValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        appModal.onConfirm(promptInputValue);
+                        setAppModal(null);
+                      }
+                      if (e.key === "Escape") {
+                        appModal.onCancel();
+                        setAppModal(null);
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-tagline text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/30"
+                    placeholder="Nom du projet"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => { appModal.onCancel(); setAppModal(null); }}
+                    className="flex-1 py-3 text-tagline text-slate-500 hover:bg-white/5 transition-colors text-sm"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { appModal.onConfirm(promptInputValue); setAppModal(null); }}
+                    className="flex-1 py-3 text-tagline text-slate-300 hover:bg-white/5 transition-colors text-sm border-l border-white/10"
+                  >
+                    OK
+                  </button>
+                </div>
+              </>
+            )}
+            {appModal.type === "confirm" && (
+              <>
+                <div className="p-4">
+                  <p className="text-tagline text-slate-300 text-center text-sm tracking-wide">{appModal.message}</p>
+                </div>
+                <div className="flex border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => { appModal.onCancel(); setAppModal(null); }}
+                    className="flex-1 py-3 text-tagline text-slate-500 hover:bg-white/5 transition-colors text-sm"
+                  >
+                    Non
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { appModal.onConfirm(); setAppModal(null); }}
+                    className="flex-1 py-3 text-tagline text-slate-300 hover:bg-white/5 transition-colors text-sm border-l border-white/10"
+                  >
+                    Oui
+                  </button>
+                </div>
+              </>
+            )}
+            {appModal.type === "alert" && (
+              <>
+                <div className="p-4">
+                  <p className="text-tagline text-slate-300 text-center text-sm tracking-wide">{appModal.message}</p>
+                </div>
+                <div className="border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => { appModal.onClose(); setAppModal(null); }}
+                    className="w-full py-3 text-tagline text-slate-300 hover:bg-white/5 transition-colors text-sm"
+                  >
+                    OK
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-10 max-w-4xl max-lg:py-6 max-md:px-3 max-md:py-4">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
           <nav className="max-lg:hidden flex justify-center items-center gap-2 mb-4 text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:gap-1.5 max-md:mb-3 max-md:text-[10px]">
