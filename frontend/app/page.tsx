@@ -215,6 +215,9 @@ export default function Home() {
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
   const [showMasterMessage, setShowMasterMessage] = useState(false);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
+  const [showLoginMixMessage, setShowLoginMixMessage] = useState(false);
+  const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
+  const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
@@ -1437,26 +1440,44 @@ export default function Home() {
 
         {tracks.length > 0 && (
           <div className="flex flex-col items-center gap-3 mt-6">
-            <button
-              type="button"
-              onClick={downloadMix}
-              disabled={isRenderingMix}
-              className="btn-primary group flex items-center justify-center text-center disabled:opacity-50"
-            >
-              <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
-                {isRenderingMix ? "RENDU…" : "TÉLÉCHARGER LE MIX"}
-              </span>
-            </button>
+            <div className="relative flex flex-col items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!user) { setShowLoginMixMessage(true); setTimeout(() => setShowLoginMixMessage(false), 4000); return; }
+                  downloadMix();
+                }}
+                disabled={isRenderingMix}
+                className="btn-primary group flex items-center justify-center text-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                  {isRenderingMix ? "RENDU…" : "TÉLÉCHARGER LE MIX"}
+                </span>
+              </button>
+              {showLoginMixMessage && !user && (
+                <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                  Connectez-vous pour télécharger le mix.
+                </p>
+              )}
+            </div>
             <div className="relative flex justify-center">
               <button
                 type="button"
-                onClick={runMaster}
+                onClick={() => {
+                  if (!user) { setShowLoginMasterMessage(true); setTimeout(() => setShowLoginMasterMessage(false), 4000); return; }
+                  runMaster();
+                }}
                 disabled={isMastering}
                 className="h-9 px-5 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline shrink-0"
               >
                 {isMastering ? "MASTERISATION…" : "MASTERISER"}
               </button>
-              {showMasterMessage && (
+              {showLoginMasterMessage && !user && (
+                <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                  Connectez-vous pour masteriser.
+                </p>
+              )}
+              {user && showMasterMessage && (
                 <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                   Veuillez d&apos;abord effectuer un mix
                 </p>
@@ -1530,15 +1551,32 @@ export default function Home() {
                   />
                 </div>
               )}
-              <a
-                href={masterResult.masterUrl}
-                download="master.wav"
-                className="btn-primary group inline-flex items-center justify-center text-center mt-2"
-              >
-                <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
-                  TÉLÉCHARGER LE MASTER
-                </span>
-              </a>
+              {user ? (
+                <a
+                  href={masterResult.masterUrl}
+                  download="master.wav"
+                  className="btn-primary group inline-flex items-center justify-center text-center mt-2"
+                >
+                  <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                    TÉLÉCHARGER LE MASTER
+                  </span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { setShowLoginMasterDownloadMessage(true); setTimeout(() => setShowLoginMasterDownloadMessage(false), 4000); }}
+                  className="btn-primary group inline-flex items-center justify-center text-center mt-2 relative"
+                >
+                  <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                    TÉLÉCHARGER LE MASTER
+                  </span>
+                  {showLoginMasterDownloadMessage && !user && (
+                    <span className="absolute left-1/2 top-full -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg z-10">
+                      Connectez-vous pour télécharger le master.
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
           </section>
         )}
