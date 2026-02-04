@@ -19,7 +19,9 @@ from mixing_service import MixingService
 from test_hise_direct import render as hise_render, master_only as hise_master_only
 from test_hise_direct import read_wav, write_wav
 from database import engine, Base
+from models import Project  # noqa: F401 - enregistre la table projects avec Base
 from routers.auth import router as auth_router
+from routers.projects import router as projects_router
 from dependencies import get_current_user
 
 # Create the FastAPI app
@@ -38,9 +40,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Créer les tables (users, etc.) au démarrage
+# Créer les tables (users, projects, etc.) au démarrage
 Base.metadata.create_all(bind=engine)
 app.include_router(auth_router)
+app.include_router(projects_router)
 
 # Initialize mixing service
 mixing_service = MixingService()
@@ -223,6 +226,10 @@ async def download_full_mix(path: str):
 
 # --- Étape 1 : Mix d'une piste vocale (chaîne HISE) ---
 
+def _parse_bool_form(value: str) -> bool:
+    return value.strip().lower() in ("true", "1", "yes", "on")
+
+
 @app.post("/api/track/mix")
 async def track_mix(
     file: UploadFile = File(..., description="WAV de la piste vocale"),
@@ -235,9 +242,12 @@ async def track_mix(
     tone_low: int = Form(2, ge=1, le=3, description="Tone low 1|2|3"),
     tone_mid: int = Form(2, ge=1, le=3, description="Tone mid 1|2|3"),
     tone_high: int = Form(2, ge=1, le=3, description="Tone high 1|2|3"),
-    air: bool = Form(False, description="Air (shelf +2dB from 12.5kHz)"),
+    air: str = Form("false", description="Air (shelf +2dB from 12.5kHz)"),
     reverb: bool = Form(False, description="Activer le reverb"),
     reverb_mode: int = Form(2, ge=1, le=3, description="Reverb 1=leger, 2=moyen, 3=large"),
+    phone_fx: str = Form("false", description="FX téléphone (bandpass)"),
+    robot: str = Form("false", description="FX robot (ring mod)"),
+    doubler: str = Form("false", description="Doubler (élargissement)"),
 ):
     """
     Mixe une piste vocale avec la chaîne HISE (gate, VST3, de-esser, tone, delay, reverb).
@@ -267,9 +277,12 @@ async def track_mix(
             tone_low=tone_low,
             tone_mid=tone_mid,
             tone_high=tone_high,
-            air=air,
+            air=_parse_bool_form(air),
             reverb=reverb,
             reverb_mode=reverb_mode,
+            phone_fx=_parse_bool_form(phone_fx),
+            robot=_parse_bool_form(robot),
+            doubler=_parse_bool_form(doubler),
         )
 
         if not ok:

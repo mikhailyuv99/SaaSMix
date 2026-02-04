@@ -21,12 +21,20 @@ try:
     REVERB1_PATH = _vst_path("reverb1")
     REVERB2_PATH = _vst_path("reverb2")
     REVERB3_PATH = _vst_path("reverb3")
+    DOUBLER_PATH = _vst_path("doubler")
+    ROBOT_PATH = _vst_path("robot")
 except Exception:
     MASTER_PATH = Path(r"C:\Users\mikha\Desktop\HISE\master\Binaries\Compiled\VST3\master.vst3")
     _base = Path(r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3")
     REVERB1_PATH = _base / "reverb1.vst3"
     REVERB2_PATH = _base / "reverb2.vst3"
     REVERB3_PATH = _base / "reverb3.vst3"
+    DOUBLER_PATH = Path(r"C:\Users\mikha\Desktop\HISE\doubler\Binaries\Compiled\VST3\doubler.vst3")
+    ROBOT_PATH = Path(r"C:\Users\mikha\Desktop\HISE\robot\Binaries\Compiled\VST3\robot.vst3")
+if DOUBLER_PATH is None:
+    DOUBLER_PATH = Path(r"C:\Users\mikha\Desktop\HISE\doubler\Binaries\Compiled\VST3\doubler.vst3")
+if ROBOT_PATH is None:
+    ROBOT_PATH = Path(r"C:\Users\mikha\Desktop\HISE\robot\Binaries\Compiled\VST3\robot.vst3")
 
 
 def read_wav(path: str):
@@ -380,11 +388,57 @@ def apply_tone_control(audio: np.ndarray, sr: int,
     return np.column_stack([process_channel(audio[:, 0]), process_channel(audio[:, 1])])
 
 
+def _biquad_peaking(sr: int, freq_hz: float, gain_db: float, q: float):
+    """Coeffs biquad peaking EQ (Audio EQ Cookbook)."""
+    from math import sin, cos, sqrt, pi
+    a = 10 ** (gain_db / 40.0)
+    w0 = 2 * pi * freq_hz / sr
+    alpha = sin(w0) / (2 * q)
+    b0 = 1 + alpha * a
+    b1 = -2 * cos(w0)
+    b2 = 1 - alpha * a
+    a0 = 1 + alpha / a
+    a1 = -2 * cos(w0)
+    a2 = 1 - alpha / a
+    return [b0 / a0, b1 / a0, b2 / a0], [1.0, a1 / a0, a2 / a0]
+
+
+def apply_phone_eq(audio: np.ndarray, sr: int,
+                   hpf_hz: float = 900.0,
+                   peak_hz: float = 1650.0, peak_gain_db: float = 2.5, peak_q: float = 2.0,
+                   lpf_hz: float = 5500.0) -> np.ndarray:
+    """
+    FX téléphone : EQ après le gate, avant le 1er VST3.
+    HPF 900 Hz, boost +2.5 dB @ 1650 Hz Q=2, LPF 5500 Hz.
+    """
+    nyq = sr / 2
+    out = audio.astype(np.float64).copy()
+    if out.ndim == 1:
+        chans = [out]
+    else:
+        chans = [out[:, 0], out[:, 1]]
+
+    for ch in chans:
+        # HPF 900 Hz (ordre 2)
+        bh, ah = butter(2, max(hpf_hz / nyq, 0.001), btype='high')
+        ch[:] = lfilter(bh, ah, ch)
+        # Peak +2.5 dB @ 1650 Hz Q=2
+        bp, ap = _biquad_peaking(sr, peak_hz, peak_gain_db, peak_q)
+        ch[:] = lfilter(bp, ap, ch)
+        # LPF 5500 Hz (ordre 2)
+        bl, al = butter(2, min(lpf_hz / nyq, 0.99), btype='low')
+        ch[:] = lfilter(bl, al, ch)
+
+    np.clip(out, -1.0, 1.0, out=out)
+    return out.astype(np.float32)
+
+
 def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bool = True,
            delay: bool = False, bpm: float = 120.0,
            delay_division: str = "1/4",
            tone_low: int = 2, tone_mid: int = 2, tone_high: int = 2, air: bool = False,
-           reverb: bool = False, reverb_mode: int = 2):
+           reverb: bool = False, reverb_mode: int = 2,
+           phone_fx: bool = False, robot: bool = False, doubler: bool = False):
     if not HOST_EXE.exists():
         print(f"ERREUR: hise_vst3_host.exe introuvable: {HOST_EXE}")
         return False
@@ -397,6 +451,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
 
     vst_input = input_wav
     temp_gated = None
+    temp_phone = None
 
     # Étape 0 : Noise gate (avant VST3)
     if noise_gate:
@@ -412,6 +467,16 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         write_wav(temp_gated, gated, sr)
         vst_input = temp_gated
         print("   Gate OK")
+
+    # Étape 0b : FX téléphone (EQ HPF 900, +2.5dB @ 1650 Q=2, LPF 5500) — après gate, juste avant 1er VST3
+    if phone_fx:
+        print("0b. FX téléphone (EQ)...")
+        audio, sr = read_wav(vst_input)
+        audio = apply_phone_eq(audio, sr)
+        temp_phone = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+        write_wav(temp_phone, audio, sr)
+        vst_input = temp_phone
+        print("   FX téléphone OK")
 
     # Étape 1 : Rendu VST3
     if deesser:
@@ -499,8 +564,40 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         else:
             print(f"5. Reverb skip: reverb{reverb_mode}.vst3 introuvable ({reverb_path})")
 
+    # Étape 6 : Doubler (doubler.vst3) — après Reverb, avant Robot
+    if doubler and DOUBLER_PATH and DOUBLER_PATH.exists():
+        print("6. Doubler (doubler.vst3)...")
+        temp_doubler_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+        cmd = [str(HOST_EXE), str(DOUBLER_PATH), output_wav, temp_doubler_out, "1024"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0 and Path(temp_doubler_out).exists():
+            shutil.copy(temp_doubler_out, output_wav)
+            print("   Doubler OK")
+        else:
+            print("   Doubler skip:", result.stderr or result.stdout or "sortie absente")
+        Path(temp_doubler_out).unlink(missing_ok=True)
+    elif doubler:
+        print("6. Doubler skip: doubler.vst3 introuvable")
+
+    # Étape 7 : FX robot (robot.vst3) — après Doubler si coché, sinon après Reverb
+    if robot and ROBOT_PATH and ROBOT_PATH.exists():
+        print("7. FX robot (robot.vst3)...")
+        temp_robot_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+        cmd = [str(HOST_EXE), str(ROBOT_PATH), output_wav, temp_robot_out, "1024"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0 and Path(temp_robot_out).exists():
+            shutil.copy(temp_robot_out, output_wav)
+            print("   FX robot OK")
+        else:
+            print("   FX robot skip:", result.stderr or result.stdout or "sortie absente")
+        Path(temp_robot_out).unlink(missing_ok=True)
+    elif robot:
+        print("7. FX robot skip: robot.vst3 introuvable")
+
     if temp_gated:
         Path(temp_gated).unlink(missing_ok=True)
+    if temp_phone:
+        Path(temp_phone).unlink(missing_ok=True)
 
     print("OK ->", output_wav)
     return True
@@ -550,7 +647,7 @@ if __name__ == "__main__":
         print("  --reverb           Reverb en fin de chaîne (défaut: reverb2)")
         print("  --reverb=1|2|3     Reverb: 1=leger, 2=moyen, 3=large (défaut 2)")
         print("  --master-only      Uniquement master.vst3 (input = WAV déjà mixé, output = masterisé)")
-        print("Chaîne: Gate → VST3 → De-esser → Tone → Gain → Delay → Reverb")
+        print("Chaîne: Gate → [FX téléphone EQ] → VST3 → De-esser → Tone → Gain → Delay → Reverb → [doubler.vst3] → [robot.vst3]")
         sys.exit(1)
 
     # Mode master seul : input WAV mixé → master.vst3 → output

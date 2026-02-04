@@ -263,30 +263,34 @@ function Waveform({
   );
 }
 
-const DEFAULT_TRACKS: Track[] = [
-  {
-    id: generateId(),
-    file: null,
-    category: "lead_vocal",
-    gain: 100,
-    rawAudioUrl: null,
-    mixedAudioUrl: null,
-    isMixing: false,
-    playMode: "mixed",
-    mixParams: { ...DEFAULT_MIX_PARAMS },
-  },
-  {
-    id: generateId(),
-    file: null,
-    category: "instrumental",
-    gain: 100,
-    rawAudioUrl: null,
-    mixedAudioUrl: null,
-    isMixing: false,
-    playMode: "mixed",
-    mixParams: { ...DEFAULT_MIX_PARAMS },
-  },
-];
+function getDefaultTracks(): Track[] {
+  return [
+    {
+      id: generateId(),
+      file: null,
+      category: "lead_vocal",
+      gain: 100,
+      rawAudioUrl: null,
+      mixedAudioUrl: null,
+      isMixing: false,
+      playMode: "mixed",
+      mixParams: { ...DEFAULT_MIX_PARAMS },
+    },
+    {
+      id: generateId(),
+      file: null,
+      category: "instrumental",
+      gain: 100,
+      rawAudioUrl: null,
+      mixedAudioUrl: null,
+      isMixing: false,
+      playMode: "mixed",
+      mixParams: { ...DEFAULT_MIX_PARAMS },
+    },
+  ];
+}
+
+const DEFAULT_TRACKS: Track[] = getDefaultTracks();
 
 export default function Home() {
   const [tracks, setTracks] = useState<Track[]>(DEFAULT_TRACKS);
@@ -317,6 +321,11 @@ export default function Home() {
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
   const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [isSavingProject, setIsSavingProject] = useState(false);
+  const [projectsList, setProjectsList] = useState<{ id: string; name: string; created_at: string | null }[]>([]);
+  const [showProjectsModal, setShowProjectsModal] = useState(false);
+  const [isLoadingProject, setIsLoadingProject] = useState(false);
+  const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
@@ -335,6 +344,8 @@ export default function Home() {
   const userPausedRef = useRef<boolean>(false);
   const tracksRef = useRef<Track[]>([]);
   tracksRef.current = tracks;
+  const isPlayingRef = useRef(false);
+  isPlayingRef.current = isPlaying;
   const isFirstSaveRef = useRef(true);
 
   // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage (après hydratation)
@@ -639,6 +650,242 @@ export default function Home() {
     [updateTrack]
   );
 
+  const getAuthHeaders = useCallback((): Record<string, string> => {
+    if (typeof window === "undefined") return {};
+    const token = localStorage.getItem("saas_mix_token");
+    const h: Record<string, string> = {};
+    if (token) h["Authorization"] = `Bearer ${token}`;
+    return h;
+  }, []);
+
+  const createNewProject = useCallback(async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+    if (!token) return;
+    const name = window.prompt("Nom du projet ?");
+    if (!name?.trim()) return;
+    const defaultTracks = getDefaultTracks();
+    const payload = defaultTracks.map((t) => ({
+      id: t.id,
+      category: t.category,
+      gain: t.gain,
+      mixParams: t.mixParams,
+      mixedAudioUrl: null,
+      rawFileName: null,
+    }));
+    const form = new FormData();
+    form.append("name", name.trim());
+    form.append("data", JSON.stringify(payload));
+    setIsSavingProject(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: form,
+      });
+      if (res.status === 401) {
+        localStorage.removeItem("saas_mix_token");
+        localStorage.removeItem("saas_mix_user");
+        setUser(null);
+        alert("Session expirée. Reconnectez-vous.");
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Erreur création");
+      setCurrentProject({ id: data.id, name: data.name });
+      setTracks(defaultTracks);
+      setMasterResult(null);
+      if (typeof window !== "undefined") {
+        try {
+          const db = await openFilesDB();
+          const tx = db.transaction(FILES_STORE_NAME, "readwrite");
+          await new Promise<void>((resolve, reject) => {
+            const req = tx.objectStore(FILES_STORE_NAME).clear();
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+          });
+          db.close();
+        } catch (_) {}
+        sessionStorage.removeItem(TRACKS_STORAGE_KEY);
+      }
+      alert("Projet créé. Page réinitialisée.");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur lors de la création.");
+    } finally {
+      setIsSavingProject(false);
+    }
+  }, [getAuthHeaders]);
+
+  const saveProject = useCallback(async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+    if (!token) return;
+    const payload = tracks.map((t) => ({
+      id: t.id,
+      category: t.category,
+      gain: t.gain,
+      mixParams: t.mixParams,
+      mixedAudioUrl: t.mixedAudioUrl,
+      rawFileName: t.file?.name ?? t.rawFileName ?? null,
+    }));
+    const form = new FormData();
+    form.append("data", JSON.stringify(payload));
+    tracks.forEach((t) => {
+      if (t.file) form.append("files", t.file);
+    });
+
+    const isUpdate = currentProject != null;
+    if (isUpdate) {
+      form.append("name", currentProject.name);
+    } else {
+      const name = window.prompt("Nom du projet ?");
+      if (!name?.trim()) return;
+      form.append("name", name.trim());
+    }
+
+    setIsSavingProject(true);
+    try {
+      const url = isUpdate ? `${API_BASE}/api/projects/${currentProject!.id}` : `${API_BASE}/api/projects`;
+      const res = await fetch(url, {
+        method: isUpdate ? "PUT" : "POST",
+        headers: getAuthHeaders(),
+        body: form,
+      });
+      if (res.status === 401) {
+        localStorage.removeItem("saas_mix_token");
+        localStorage.removeItem("saas_mix_user");
+        setUser(null);
+        alert("Session expirée. Reconnectez-vous.");
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Erreur sauvegarde");
+      if (!isUpdate) setCurrentProject({ id: data.id, name: data.name });
+      alert(isUpdate ? "Projet mis à jour." : "Projet sauvegardé avec les fichiers.");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erreur lors de la sauvegarde.");
+    } finally {
+      setIsSavingProject(false);
+    }
+  }, [tracks, getAuthHeaders, currentProject]);
+
+  const fetchProjectsList = useCallback(async () => {
+    const res = await fetch(`${API_BASE}/api/projects`, { headers: getAuthHeaders() });
+    if (res.status === 401) {
+      localStorage.removeItem("saas_mix_token");
+      localStorage.removeItem("saas_mix_user");
+      setUser(null);
+      return;
+    }
+    const data = await res.json().catch(() => ({}));
+    setProjectsList(data.projects || []);
+  }, [getAuthHeaders]);
+
+  const loadProject = useCallback(
+    async (projectId: string) => {
+      setIsLoadingProject(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/projects/${projectId}`, { headers: getAuthHeaders() });
+        if (res.status === 401) {
+          localStorage.removeItem("saas_mix_token");
+          localStorage.removeItem("saas_mix_user");
+          setUser(null);
+          alert("Session expirée. Reconnectez-vous.");
+          return;
+        }
+        const project = await res.json().catch(() => null);
+        if (!res.ok || !project?.data) {
+          alert("Projet introuvable ou erreur.");
+          return;
+        }
+        const rawTracks = project.data as Array<{
+          id: string;
+          category: Category;
+          gain: number;
+          mixParams: MixParams;
+          mixedAudioUrl?: string | null;
+          rawFileName?: string | null;
+          rawFileUrl?: string;
+        }>;
+        const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+        const authHeaders = getAuthHeaders();
+        const newTracks: Track[] = await Promise.all(
+          rawTracks.map(async (t) => {
+            const base: Track = {
+              id: t.id,
+              file: null,
+              category: t.category,
+              gain: t.gain ?? 100,
+              rawAudioUrl: null,
+              mixedAudioUrl: t.mixedAudioUrl ?? null,
+              isMixing: false,
+              playMode: "mixed",
+              mixParams: t.mixParams ?? { ...DEFAULT_MIX_PARAMS },
+              paramsOpen: false,
+              rawFileName: t.rawFileName ?? null,
+            };
+            const fileUrl = t.rawFileUrl;
+            if (!fileUrl || !token) return base;
+            const fullUrl = fileUrl.startsWith("http") ? fileUrl : `${API_BASE}${fileUrl}`;
+            const fileRes = await fetch(fullUrl, { headers: authHeaders });
+            if (!fileRes.ok) return base;
+            const blob = await fileRes.blob();
+            const fileName = t.rawFileName || "track.wav";
+            const file = new File([blob], fileName, { type: "audio/wav" });
+            saveFileToIDB(t.id, file);
+            const rawAudioUrl = URL.createObjectURL(file);
+            const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            let waveformPeaks: number[] | undefined;
+            let waveformDuration: number | undefined;
+            try {
+              const buf = await file.arrayBuffer();
+              const buffer = await ctx.decodeAudioData(buf);
+              waveformPeaks = computeWaveformPeaks(buffer, WAVEFORM_POINTS);
+              waveformDuration = buffer.duration;
+            } finally {
+              ctx.close();
+            }
+            return {
+              ...base,
+              file,
+              rawAudioUrl,
+              rawFileName: null,
+              waveformPeaks,
+              waveformDuration,
+            };
+          })
+        );
+        setTracks(newTracks);
+        setCurrentProject({ id: projectId, name: project.name ?? "Sans nom" });
+        setShowProjectsModal(false);
+      } catch (e) {
+        alert(e instanceof Error ? e.message : "Erreur lors du chargement.");
+      } finally {
+        setIsLoadingProject(false);
+      }
+    },
+    [getAuthHeaders]
+  );
+
+  const deleteProject = useCallback(
+    async (projectId: string) => {
+      if (!window.confirm("Supprimer ce projet (fichiers inclus) ?")) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        });
+        if (res.status === 401) {
+          localStorage.removeItem("saas_mix_token");
+          localStorage.removeItem("saas_mix_user");
+          setUser(null);
+          return;
+        }
+        if (currentProject?.id === projectId) setCurrentProject(null);
+        await fetchProjectsList();
+      } catch (_) {}
+    },
+    [getAuthHeaders, fetchProjectsList, currentProject?.id]
+  );
+
   async function decodeTrackBuffers(
     id: string,
     rawUrl: string | null,
@@ -919,6 +1166,7 @@ export default function Home() {
           buffersRef.current.delete(id);
         }
         updateTrack(id, { mixedAudioUrl, isMixing: false });
+        if (isPlayingRef.current) stopAll();
       } catch (e) {
         updateTrack(id, { isMixing: false });
         console.error(e);
@@ -1133,6 +1381,40 @@ export default function Home() {
           <nav className="flex justify-center items-center gap-2 mb-4 text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:gap-1.5 max-md:mb-3 max-md:text-[10px]">
             {user ? (
               <>
+                <button
+                  type="button"
+                  onClick={() => { setShowProjectsModal(true); fetchProjectsList(); }}
+                  className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                >
+                  MES PROJETS
+                </button>
+                <span className="text-slate-600">|</span>
+                <button
+                  type="button"
+                  disabled={isSavingProject}
+                  onClick={createNewProject}
+                  className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
+                  title="Créer un nouveau projet et l’enregistrer dans Mes projets"
+                >
+                  CRÉER UN PROJET
+                </button>
+                <span className="text-slate-600">|</span>
+                <div className="relative flex flex-col items-center">
+                  <button
+                    type="button"
+                    disabled={isSavingProject}
+                    onClick={saveProject}
+                    className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingProject ? "Sauvegarde…" : "SAUVEGARDER"}
+                  </button>
+                  {user && currentProject && (
+                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-500 text-[10px] whitespace-nowrap max-w-[140px] truncate" title={currentProject.name}>
+                      {currentProject.name}
+                    </span>
+                  )}
+                </div>
+                <span className="text-slate-600">|</span>
                 <span className="truncate max-w-[200px]" title={user.email}>{user.email}</span>
                 <span className="text-slate-600">|</span>
                 <button
@@ -1170,6 +1452,62 @@ export default function Home() {
             Mix & master automatique pour les artistes indépendants
           </p>
         </header>
+
+        {showProjectsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" aria-modal="true" role="dialog">
+            <div className="bg-[#0f0f0f] border border-white/10 rounded-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl">
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
+                <h2 className="text-lg font-medium text-white">Mes projets</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowProjectsModal(false)}
+                  className="p-2 rounded text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                  aria-label="Fermer"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
+                {projectsList.length === 0 && !isLoadingProject && (
+                  <p className="text-slate-500 text-sm">Aucun projet sauvegardé.</p>
+                )}
+                {projectsList.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/6"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white truncate">{p.name}</p>
+                      {p.created_at && (
+                        <p className="text-slate-500 text-xs mt-0.5">
+                          {new Date(p.created_at).toLocaleDateString("fr-FR", { dateStyle: "short" })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        disabled={isLoadingProject}
+                        onClick={() => loadProject(p.id)}
+                        className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
+                      >
+                        Charger
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isLoadingProject}
+                        onClick={() => deleteProject(p.id)}
+                        className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 text-sm disabled:opacity-50 transition-colors"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {tracks.length > 0 && (
           <section className="mb-8 max-lg:mb-6 max-md:mb-4">

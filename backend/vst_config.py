@@ -12,6 +12,8 @@ VST_PATHS = {
     "reverb1": r"C:\Users\mikha\Desktop\HISE\reverb1\Binaries\Compiled\VST3\reverb1.vst3",
     "reverb2": r"C:\Users\mikha\Desktop\HISE\reverb2\Binaries\Compiled\VST3\reverb2.vst3",
     "reverb3": r"C:\Users\mikha\Desktop\HISE\reverb3new\Binaries\Compiled\VST3\reverb3new.vst3",
+    "doubler": r"C:\Users\mikha\Desktop\HISE\doubler\Binaries\Compiled\VST3\doubler.vst3",
+    "robot": r"C:\Users\mikha\Desktop\HISE\robot\Binaries\Compiled\VST3\robot.vst3",
     # LEAD 1
     "autotune_pro": VST3 + r"\Antares\Auto-Tune Pro.vst3",
     # LEAD 2 - Waves (via WaveShell ; Pedalboard charge le shell, les plugins Waves sont a l'interieur)
