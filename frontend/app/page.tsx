@@ -51,6 +51,8 @@ interface Track {
   paramsOpen?: boolean;
   waveformPeaks?: number[];
   waveformDuration?: number;
+  /** Après restauration depuis sessionStorage : nom du fichier pour recharger depuis IndexedDB */
+  rawFileName?: string | null;
 }
 
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -76,6 +78,100 @@ function extractMixedTrackId(mixedAudioUrl: string | null): string | undefined {
 }
 
 const WAVEFORM_POINTS = 200;
+const TRACKS_STORAGE_KEY = "saas_mix_tracks";
+const FILES_DB_NAME = "saas_mix_files";
+const FILES_STORE_NAME = "files";
+
+function openFilesDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(FILES_DB_NAME, 1);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => resolve(req.result);
+    req.onupgradeneeded = () => req.result.createObjectStore(FILES_STORE_NAME, { keyPath: "id" });
+  });
+}
+
+function saveFileToIDB(trackId: string, file: File): void {
+  if (typeof window === "undefined") return;
+  openFilesDB().then((db) => {
+    const tx = db.transaction(FILES_STORE_NAME, "readwrite");
+    const store = tx.objectStore(FILES_STORE_NAME);
+    store.put({ id: trackId, blob: file, fileName: file.name });
+    db.close();
+  }).catch(() => {});
+}
+
+function getFileFromIDB(trackId: string): Promise<{ blob: Blob; fileName: string } | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
+  return openFilesDB().then((db) => {
+    return new Promise((resolve) => {
+      const tx = db.transaction(FILES_STORE_NAME, "readonly");
+      const req = tx.objectStore(FILES_STORE_NAME).get(trackId);
+      req.onsuccess = () => {
+        const row = req.result as { blob: Blob; fileName: string } | undefined;
+        db.close();
+        resolve(row ? { blob: row.blob, fileName: row.fileName } : null);
+      };
+      req.onerror = () => { db.close(); resolve(null); };
+    });
+  }).catch(() => null);
+}
+
+function deleteFileFromIDB(trackId: string): void {
+  if (typeof window === "undefined") return;
+  openFilesDB().then((db) => {
+    const tx = db.transaction(FILES_STORE_NAME, "readwrite");
+    tx.objectStore(FILES_STORE_NAME).delete(trackId);
+    db.close();
+  }).catch(() => {});
+}
+
+/** Sauvegarde sérialisable d'une piste (sans File ni blob URLs) pour sessionStorage */
+function tracksToStorage(tracks: Track[]): string {
+  return JSON.stringify(
+    tracks.map((t) => ({
+      id: t.id,
+      category: t.category,
+      gain: t.gain,
+      mixParams: t.mixParams,
+      mixedAudioUrl: t.mixedAudioUrl,
+      rawFileName: t.file?.name ?? t.rawFileName ?? null,
+    }))
+  );
+}
+
+/** Restaure des pistes depuis sessionStorage (file et rawAudioUrl à null) */
+function tracksFromStorage(): Track[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(TRACKS_STORAGE_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw) as Array<{
+      id: string;
+      category: Category;
+      gain: number;
+      mixParams: MixParams;
+      mixedAudioUrl: string | null;
+      rawFileName?: string | null;
+    }>;
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    return arr.map((t) => ({
+      id: t.id,
+      file: null,
+      category: t.category,
+      gain: t.gain,
+      rawAudioUrl: null,
+      mixedAudioUrl: t.mixedAudioUrl ?? null,
+      isMixing: false,
+      playMode: "mixed" as const,
+      mixParams: t.mixParams ?? { ...DEFAULT_MIX_PARAMS },
+      paramsOpen: false,
+      rawFileName: t.rawFileName ?? null,
+    }));
+  } catch {
+    return null;
+  }
+}
 
 function computeWaveformPeaks(buffer: AudioBuffer, numPoints: number): number[] {
   const data = buffer.length > 0 ? buffer.getChannelData(0) : new Float32Array(0);
@@ -167,31 +263,33 @@ function Waveform({
   );
 }
 
+const DEFAULT_TRACKS: Track[] = [
+  {
+    id: generateId(),
+    file: null,
+    category: "lead_vocal",
+    gain: 100,
+    rawAudioUrl: null,
+    mixedAudioUrl: null,
+    isMixing: false,
+    playMode: "mixed",
+    mixParams: { ...DEFAULT_MIX_PARAMS },
+  },
+  {
+    id: generateId(),
+    file: null,
+    category: "instrumental",
+    gain: 100,
+    rawAudioUrl: null,
+    mixedAudioUrl: null,
+    isMixing: false,
+    playMode: "mixed",
+    mixParams: { ...DEFAULT_MIX_PARAMS },
+  },
+];
+
 export default function Home() {
-  const [tracks, setTracks] = useState<Track[]>(() => [
-    {
-      id: generateId(),
-      file: null,
-      category: "lead_vocal",
-      gain: 100,
-      rawAudioUrl: null,
-      mixedAudioUrl: null,
-      isMixing: false,
-      playMode: "mixed",
-      mixParams: { ...DEFAULT_MIX_PARAMS },
-    },
-    {
-      id: generateId(),
-      file: null,
-      category: "instrumental",
-      gain: 100,
-      rawAudioUrl: null,
-      mixedAudioUrl: null,
-      isMixing: false,
-      playMode: "mixed",
-      mixParams: { ...DEFAULT_MIX_PARAMS },
-    },
-  ]);
+  const [tracks, setTracks] = useState<Track[]>(DEFAULT_TRACKS);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPausedPosition, setHasPausedPosition] = useState(false);
   const [playbackPosition, setPlaybackPosition] = useState(0);
@@ -237,8 +335,9 @@ export default function Home() {
   const userPausedRef = useRef<boolean>(false);
   const tracksRef = useRef<Track[]>([]);
   tracksRef.current = tracks;
+  const isFirstSaveRef = useRef(true);
 
-  // Utilisateur connecté (localStorage)
+  // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage (après hydratation)
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -247,8 +346,22 @@ export default function Home() {
         const u = JSON.parse(raw) as { id: string; email: string };
         if (u?.id && u?.email) setUser(u);
       }
+      const restored = tracksFromStorage();
+      if (restored && restored.length > 0) setTracks(restored);
     } catch (_) {}
   }, []);
+
+  // Sauvegarder les pistes dans sessionStorage pour que tout reste pareil après connexion (on ignore le 1er cycle pour ne pas écraser la sauvegarde)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (isFirstSaveRef.current) {
+      isFirstSaveRef.current = false;
+      return;
+    }
+    try {
+      sessionStorage.setItem(TRACKS_STORAGE_KEY, tracksToStorage(tracks));
+    } catch (_) {}
+  }, [tracks]);
 
   // Playhead pour les waveforms : pendant la lecture on met à jour la position
   useEffect(() => {
@@ -327,6 +440,49 @@ export default function Home() {
     };
   }, [masterResult]);
 
+  // Au démontage (ex. navigation vers Connexion/Inscription) : arrêter toute lecture pour éviter "ghost" audio au retour
+  useEffect(() => {
+    return () => {
+      const trackNodes = Array.from(trackPlaybackRef.current.entries());
+      trackPlaybackRef.current.clear();
+      for (const [, nodes] of trackNodes) {
+        try {
+          if (nodes.type === "instrumental") {
+            nodes.source.onended = null;
+            nodes.source.disconnect();
+            nodes.source.stop();
+          } else {
+            nodes.rawSource.onended = null;
+            nodes.mixedSource.onended = null;
+            nodes.rawSource.disconnect();
+            nodes.mixedSource.disconnect();
+            nodes.rawSource.stop();
+            nodes.mixedSource.stop();
+          }
+        } catch (_) {}
+      }
+      const masterNodes = masterPlaybackRef.current;
+      if (masterNodes) {
+        try {
+          masterNodes.mixSource.onended = null;
+          masterNodes.masterSource.onended = null;
+          masterNodes.mixSource.disconnect();
+          masterNodes.masterSource.disconnect();
+          masterNodes.mixSource.stop();
+          masterNodes.masterSource.stop();
+        } catch (_) {}
+        masterPlaybackRef.current = null;
+      }
+      const ctx = contextRef.current;
+      if (ctx) {
+        try {
+          ctx.close();
+        } catch (_) {}
+        contextRef.current = null;
+      }
+    };
+  }, []);
+
   // Quand la fenêtre reprend le focus (ex. fermeture du sélecteur de fichiers), retirer le glow "fichier .wav"
   useEffect(() => {
     const onWindowFocus = () => setFileChooserActiveTrackId(null);
@@ -383,6 +539,7 @@ export default function Home() {
   }, []);
 
   const removeTrack = useCallback((id: string) => {
+    deleteFileFromIDB(id);
     const nodes = trackPlaybackRef.current.get(id);
     if (nodes) {
       if (nodes.type === "instrumental") {
@@ -418,8 +575,35 @@ export default function Home() {
     []
   );
 
+  // Réhydrater les fichiers depuis IndexedDB pour les pistes restaurées (rawFileName mais pas de file)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const toHydrate = tracks.filter((t) => t.rawFileName && !t.file);
+    toHydrate.forEach((track) => {
+      const id = track.id;
+      getFileFromIDB(id).then((data) => {
+        if (!data) return;
+        const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
+        const rawAudioUrl = URL.createObjectURL(file);
+        updateTrack(id, { file, rawAudioUrl, rawFileName: null });
+        const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        fetch(rawAudioUrl)
+          .then((res) => res.arrayBuffer())
+          .then((buf) => ctx.decodeAudioData(buf))
+          .then((buffer) => {
+            ctx.close();
+            const peaks = computeWaveformPeaks(buffer, WAVEFORM_POINTS);
+            updateTrack(id, { waveformPeaks: peaks, waveformDuration: buffer.duration });
+          })
+          .catch(() => ctx.close());
+      });
+    });
+  }, [tracks, updateTrack]);
+
   const onFileSelect = useCallback(
     (id: string, file: File | null) => {
+      if (file) saveFileToIDB(id, file);
+      else deleteFileFromIDB(id);
       const rawAudioUrl =
         file && file.type.startsWith("audio/")
           ? URL.createObjectURL(file)
@@ -431,7 +615,7 @@ export default function Home() {
         buffersRef.current.delete(id);
         return prev.map((t) =>
           t.id === id
-            ? { ...t, file, rawAudioUrl, mixedAudioUrl: null, waveformPeaks: undefined, waveformDuration: undefined }
+            ? { ...t, file, rawAudioUrl, rawFileName: file?.name ?? null, waveformPeaks: undefined, waveformDuration: undefined }
             : t
         );
       });
@@ -704,11 +888,21 @@ export default function Home() {
       form.append("doubler", String(p.doubler));
       form.append("robot", String(p.robot));
       try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
         const res = await fetch(`${API_BASE}/api/track/mix`, {
           method: "POST",
+          headers,
           body: form,
         });
         const data = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          localStorage.removeItem("saas_mix_token");
+          localStorage.removeItem("saas_mix_user");
+          setUser(null);
+          throw new Error("Session expirée. Reconnectez-vous.");
+        }
         if (!res.ok) {
           const msg = typeof data.detail === "string" ? data.detail : Array.isArray(data.detail) ? data.detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ") : JSON.stringify(data.detail ?? data);
           throw new Error(msg || "Mix failed");
@@ -758,9 +952,19 @@ export default function Home() {
       const form = new FormData();
       form.append("track_specs", JSON.stringify(specs));
       files.forEach((f) => form.append("files", f));
-      const res = await fetch(`${API_BASE}/api/render/mix`, { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Render mix échoué");
+      const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/render/mix`, { method: "POST", headers, body: form });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        localStorage.removeItem("saas_mix_token");
+        localStorage.removeItem("saas_mix_user");
+        setUser(null);
+        alert("Session expirée. Reconnectez-vous.");
+        return;
+      }
+      if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       window.open(mixUrl, "_blank");
     } catch (e) {
@@ -786,9 +990,19 @@ export default function Home() {
       const form = new FormData();
       form.append("track_specs", JSON.stringify(specs));
       files.forEach((f) => form.append("files", f));
-      const res = await fetch(`${API_BASE}/api/master`, { method: "POST", body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Masterisation échouée");
+      const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        localStorage.removeItem("saas_mix_token");
+        localStorage.removeItem("saas_mix_user");
+        setUser(null);
+        alert("Session expirée. Reconnectez-vous.");
+        return;
+      }
+      if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       const masterUrl = (data.masterUrl as string).startsWith("http") ? data.masterUrl : `${API_BASE}${data.masterUrl}`;
       setMasterResult({ mixUrl, masterUrl });

@@ -10,7 +10,7 @@ import tempfile
 import uuid
 import numpy as np
 from scipy.signal import resample as scipy_resample
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from typing import Optional, List
@@ -20,6 +20,7 @@ from test_hise_direct import render as hise_render, master_only as hise_master_o
 from test_hise_direct import read_wav, write_wav
 from database import engine, Base
 from routers.auth import router as auth_router
+from dependencies import get_current_user
 
 # Create the FastAPI app
 app = FastAPI(
@@ -344,6 +345,7 @@ async def _build_track_paths_and_gains(track_specs: list, files: List[UploadFile
 
 @app.post("/api/render/mix")
 async def render_mix(
+    current_user: dict = Depends(get_current_user),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
@@ -395,6 +397,7 @@ async def render_mix(
 
 @app.post("/api/master")
 async def master_render(
+    current_user: dict = Depends(get_current_user),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
