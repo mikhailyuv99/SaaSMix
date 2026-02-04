@@ -325,6 +325,7 @@ export default function Home() {
   const [projectsList, setProjectsList] = useState<{ id: string; name: string; created_at: string | null }[]>([]);
   const [showProjectsModal, setShowProjectsModal] = useState(false);
   const [isLoadingProject, setIsLoadingProject] = useState(false);
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
@@ -1440,7 +1441,7 @@ export default function Home() {
     <main className="min-h-screen">
       <div className="container mx-auto px-4 py-10 max-w-4xl max-lg:py-6 max-md:px-3 max-md:py-4">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
-          <nav className="flex justify-center items-center gap-2 mb-4 text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:gap-1.5 max-md:mb-3 max-md:text-[10px]">
+          <nav className="max-lg:hidden flex justify-center items-center gap-2 mb-4 text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:gap-1.5 max-md:mb-3 max-md:text-[10px]">
             {user ? (
               <>
                 <button
@@ -1468,7 +1469,7 @@ export default function Home() {
                     onClick={saveProject}
                     className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    {isSavingProject ? "Sauvegarde…" : "SAUVEGARDER"}
+                    {isSavingProject ? "SAUVEGARDE…" : "SAUVEGARDER"}
                   </button>
                   {user && currentProject && (
                     <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-500 text-[10px] whitespace-nowrap max-w-[140px] truncate" title={currentProject.name}>
@@ -1503,6 +1504,89 @@ export default function Home() {
               </>
             )}
           </nav>
+
+          {/* Menu burger mobile / tablette uniquement */}
+          <div className="lg:hidden flex flex-col items-center mb-4 relative">
+            <button
+              type="button"
+              onClick={() => setNavMenuOpen((o) => !o)}
+              className="text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] p-2 -m-2 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"
+              aria-label="Menu"
+              aria-expanded={navMenuOpen}
+            >
+              <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" />
+              </svg>
+            </button>
+            {navMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  aria-hidden
+                  onClick={() => setNavMenuOpen(false)}
+                />
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[200px] py-2 rounded-lg bg-[#0f0f0f] border border-white/10 shadow-xl text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] text-center">
+                  {user ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => { setNavMenuOpen(false); setShowProjectsModal(true); fetchProjectsList(); }}
+                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors"
+                      >
+                        MES PROJETS
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isSavingProject}
+                        onClick={() => { setNavMenuOpen(false); createNewProject(); }}
+                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                      >
+                        CRÉER UN PROJET
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isSavingProject}
+                        onClick={() => { setNavMenuOpen(false); saveProject(); }}
+                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                      >
+                        {isSavingProject ? "SAUVEGARDE…" : "SAUVEGARDER"}
+                      </button>
+                      {user && currentProject && (
+                        <p className="px-4 py-1.5 text-[10px] text-slate-600 truncate max-w-[220px] mx-auto" title={currentProject.name}>
+                          {currentProject.name}
+                        </p>
+                      )}
+                      <p className="px-4 py-2 text-[10px] text-slate-600 truncate max-w-[220px] mx-auto" title={user.email}>
+                        {user.email}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNavMenuOpen(false);
+                          localStorage.removeItem("saas_mix_token");
+                          localStorage.removeItem("saas_mix_user");
+                          setUser(null);
+                        }}
+                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 mt-1 pt-2"
+                      >
+                        DÉCONNEXION
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/connexion" onClick={() => setNavMenuOpen(false)} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors">
+                        CONNEXION
+                      </Link>
+                      <Link href="/inscription" onClick={() => setNavMenuOpen(false)} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors">
+                        INSCRIPTION
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
           <h1 className="mb-2 flex justify-center">
             <img
               src="/siberia-logo.png"
