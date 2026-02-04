@@ -18,6 +18,8 @@ from presets import list_presets
 from mixing_service import MixingService
 from test_hise_direct import render as hise_render, master_only as hise_master_only
 from test_hise_direct import read_wav, write_wav
+from database import engine, Base
+from routers.auth import router as auth_router
 
 # Create the FastAPI app
 app = FastAPI(
@@ -29,11 +31,15 @@ app = FastAPI(
 # Enable CORS (Cross-Origin Resource Sharing) so frontend can talk to backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"],  # Frontend URL(s)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Créer les tables (users, etc.) au démarrage
+Base.metadata.create_all(bind=engine)
+app.include_router(auth_router)
 
 # Initialize mixing service
 mixing_service = MixingService()

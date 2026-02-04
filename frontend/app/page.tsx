@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import Link from "next/link";
 import { CustomSelect } from "./components/CustomSelect";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -214,6 +215,7 @@ export default function Home() {
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
   const [showMasterMessage, setShowMasterMessage] = useState(false);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
@@ -232,6 +234,18 @@ export default function Home() {
   const userPausedRef = useRef<boolean>(false);
   const tracksRef = useRef<Track[]>([]);
   tracksRef.current = tracks;
+
+  // Utilisateur connecté (localStorage)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem("saas_mix_user");
+      if (raw) {
+        const u = JSON.parse(raw) as { id: string; email: string };
+        if (u?.id && u?.email) setUser(u);
+      }
+    } catch (_) {}
+  }, []);
 
   // Playhead pour les waveforms : pendant la lecture on met à jour la position
   useEffect(() => {
@@ -899,6 +913,35 @@ export default function Home() {
     <main className="min-h-screen">
       <div className="container mx-auto px-4 py-10 max-w-4xl">
         <header className="text-center mb-10 md:mb-12">
+          <nav className="flex justify-center items-center gap-2 mb-4 text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm">
+            {user ? (
+              <>
+                <span className="truncate max-w-[200px]" title={user.email}>{user.email}</span>
+                <span className="text-slate-600">|</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem("saas_mix_token");
+                    localStorage.removeItem("saas_mix_user");
+                    setUser(null);
+                  }}
+                  className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                >
+                  DÉCONNEXION
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/connexion" className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                  CONNEXION
+                </Link>
+                <span className="text-slate-600">|</span>
+                <Link href="/inscription" className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                  INSCRIPTION
+                </Link>
+              </>
+            )}
+          </nav>
           <h1 className="mb-2 flex justify-center">
             <img
               src="/siberia-logo.png"
