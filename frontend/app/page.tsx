@@ -573,6 +573,48 @@ export default function Home() {
     });
   }, []);
 
+  const clearTrackFile = useCallback((id: string) => {
+    deleteFileFromIDB(id);
+    const nodes = trackPlaybackRef.current.get(id);
+    if (nodes) {
+      if (nodes.type === "instrumental") {
+        try {
+          nodes.source.stop();
+        } catch (_) {}
+      } else {
+        try {
+          nodes.rawSource.stop();
+          nodes.mixedSource.stop();
+        } catch (_) {}
+      }
+      trackPlaybackRef.current.delete(id);
+    }
+    buffersRef.current.delete(id);
+    setTracks((prev) => {
+      const t = prev.find((x) => x.id === id);
+      if (t?.rawAudioUrl) URL.revokeObjectURL(t.rawAudioUrl);
+      return prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              file: null,
+              rawAudioUrl: null,
+              rawFileName: null,
+              mixedAudioUrl: null,
+              waveformPeaks: undefined,
+              waveformDuration: undefined,
+            }
+          : p
+      );
+    });
+    if (typeof document !== "undefined") {
+      const input = document.getElementById(`file-${id}`) as HTMLInputElement | null;
+      if (input) input.value = "";
+      const inputMob = document.getElementById(`file-mob-${id}`) as HTMLInputElement | null;
+      if (inputMob) inputMob.value = "";
+    }
+  }, []);
+
   const updateTrack = useCallback(
     (id: string, updates: Partial<Omit<Track, "id">>) => {
       setTracks((prev) =>
@@ -868,6 +910,7 @@ export default function Home() {
   const deleteProject = useCallback(
     async (projectId: string) => {
       if (!window.confirm("Supprimer ce projet (fichiers inclus) ?")) return;
+      const wasCurrentProject = currentProject?.id === projectId;
       try {
         const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
           method: "DELETE",
@@ -879,7 +922,26 @@ export default function Home() {
           setUser(null);
           return;
         }
-        if (currentProject?.id === projectId) setCurrentProject(null);
+        if (wasCurrentProject) {
+          setCurrentProject(null);
+          const defaultTracks = getDefaultTracks();
+          setTracks(defaultTracks);
+          setMasterResult(null);
+          buffersRef.current.clear();
+          if (typeof window !== "undefined") {
+            try {
+              const db = await openFilesDB();
+              const tx = db.transaction(FILES_STORE_NAME, "readwrite");
+              await new Promise<void>((resolve, reject) => {
+                const req = tx.objectStore(FILES_STORE_NAME).clear();
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(req.error);
+              });
+              db.close();
+            } catch (_) {}
+            sessionStorage.removeItem(TRACKS_STORAGE_KEY);
+          }
+        }
         await fetchProjectsList();
       } catch (_) {}
     },
@@ -1597,6 +1659,7 @@ export default function Home() {
                       const file = e.target.files?.[0] ?? null;
                       onFileSelect(track.id, file);
                       if (file) setFileChooserActiveTrackId(null);
+                      e.target.value = "";
                     }}
                   />
                 </div>
@@ -1733,6 +1796,7 @@ export default function Home() {
                       onChange={(e) => {
                         const file = e.target.files?.[0] ?? null;
                         onFileSelect(track.id, file);
+                        e.target.value = "";
                       }}
                     />
                   </div>
@@ -1804,13 +1868,32 @@ export default function Home() {
 
               {track.waveformPeaks != null && track.waveformDuration != null && track.waveformDuration > 0 && (
                 <div className="mt-4 w-full">
-                  <Waveform
-                    peaks={track.waveformPeaks}
-                    duration={track.waveformDuration}
-                    currentTime={currentTimeForWaveform}
-                    onSeek={seekTo}
-                    className="w-full"
-                  />
+                  <div className="relative">
+                    <Waveform
+                      peaks={track.waveformPeaks}
+                      duration={track.waveformDuration}
+                      currentTime={currentTimeForWaveform}
+                      onSeek={seekTo}
+                      className="w-full"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        clearTrackFile(track.id);
+                      }}
+                      className="absolute top-1/2 -translate-y-1/2 right-0.5 w-5 h-5 rounded p-1 text-white hover:bg-white/5 flex items-center justify-center text-base leading-none transition-colors"
+                      title="Supprimer le fichier de la piste"
+                      aria-label="Supprimer le fichier de la piste"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="h-0 overflow-visible relative">
+                    <p className="absolute top-[0.15rem] left-0 right-0 text-tagline text-slate-500 text-[10px] max-md:text-[9px] text-center truncate w-full pointer-events-none" title={track.file?.name ?? track.rawFileName ?? ""}>
+                      {track.file?.name ?? track.rawFileName ?? ""}
+                    </p>
+                  </div>
                 </div>
               )}
 
