@@ -1,0 +1,32 @@
+# À utiliser si "pip install -r requirements.txt" échoue (ex. Python 3.14).
+# Versions assouplies pour permettre des wheels compatibles.
+
+# Outils de build (à installer en premier)
+setuptools>=65
+wheel
+
+# Web + API
+fastapi>=0.104
+uvicorn[standard]>=0.24
+python-multipart>=0.0.6
+
+# Database
+sqlalchemy>=2.0
+alembic>=1.12
+
+# Auth
+python-jose[cryptography]>=3.3
+passlib[bcrypt]>=1.7
+python-dotenv>=1.0
+email-validator>=2.0
+
+# Utilitaires
+pydantic>=2.5
+pydantic-settings>=2.1
+
+# Audio (versions souples pour compat Python récent)
+numpy>=1.26
+scipy>=1.11
+soundfile>=0.12
+librosa>=0.10
+pedalboard>=0.9

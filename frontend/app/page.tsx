@@ -914,9 +914,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
-      <div className="container mx-auto px-4 py-10 max-w-4xl">
-        <header className="text-center mb-10 md:mb-12">
-          <nav className="flex justify-center items-center gap-2 mb-4 text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm">
+      <div className="container mx-auto px-4 py-10 max-w-4xl max-lg:py-6 max-md:px-3 max-md:py-4">
+        <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
+          <nav className="flex justify-center items-center gap-2 mb-4 text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:gap-1.5 max-md:mb-3 max-md:text-[10px]">
             {user ? (
               <>
                 <span className="truncate max-w-[200px]" title={user.email}>{user.email}</span>
@@ -952,24 +952,24 @@ export default function Home() {
               className="max-h-28 sm:max-h-36 md:max-h-44 lg:max-h-52 w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl object-contain"
             />
           </h1>
-          <p className="text-tagline text-slate-500">
+          <p className="text-tagline text-slate-500 max-md:text-[10px] max-md:px-2">
             Mix & master automatique pour les artistes indépendants
           </p>
         </header>
 
         {tracks.length > 0 && (
-          <section className="mb-8">
+          <section className="mb-8 max-lg:mb-6 max-md:mb-4">
             <h2 className="sr-only">Lecture</h2>
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2 max-md:gap-1.5">
               {!isPlaying ? (
                 <div className="relative">
                   <button
                     type="button"
                     onClick={playAll}
-                    className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors"
+                    className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9"
                     aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
                   >
-                    <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                    <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                   </button>
                   {showPlayNoFileMessage && (
                     <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
@@ -978,28 +978,29 @@ export default function Home() {
                   )}
                 </div>
               ) : (
-                <button type="button" onClick={stopAll} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg" aria-label="Pause">
-                  <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                <button type="button" onClick={stopAll} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9" aria-label="Pause">
+                  <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
               )}
             </div>
           </section>
         )}
 
-        <section className="space-y-4 mt-8" aria-label="Pistes">
+        <section className="space-y-4 mt-8 max-lg:mt-6 max-lg:space-y-3 max-md:mt-4 max-md:space-y-2.5" aria-label="Pistes">
           {tracks.map((track) => (
-            <div key={track.id} className="card p-5 relative">
+            <div key={track.id} className="card p-5 relative max-lg:p-4">
               <button
                 type="button"
                 onClick={() => removeTrack(track.id)}
-                className="absolute top-4 right-4 p-2 rounded text-slate-500 hover:bg-white/5 hover:text-slate-300 transition-colors z-10"
+                className="absolute top-4 right-4 p-2 rounded text-slate-500 hover:bg-white/5 hover:text-slate-300 transition-colors z-10 max-lg:top-2 max-lg:right-2 max-lg:p-1.5"
                 title="Supprimer la piste"
               >
                 ✕
               </button>
 
+              {/* Affichage PC uniquement : rien ne change ici côté style desktop */}
               <div
-                className="grid w-full pr-10 gap-x-4 gap-y-1.5"
+                className="grid w-full pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
                 style={{
                   gridTemplateColumns: "1fr 1fr 1fr 1fr 1.2fr 1fr",
                 }}
@@ -1161,6 +1162,94 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Interface mobile et tablette uniquement (PC inchangé) */}
+              <div className="lg:hidden space-y-4 mt-4">
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Fichier WAV{track.file ? ` · ${track.file.name}` : ""}</span>
+                    <label
+                      htmlFor={`file-mob-${track.id}`}
+                      className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-[10px] max-md:text-[9px]"
+                    >
+                      <span className={!track.file ? "glow-blink-slow" : "text-slate-500"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
+                    </label>
+                    <input
+                      id={`file-mob-${track.id}`}
+                      type="file"
+                      accept=".wav,audio/wav"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        onFileSelect(track.id, file);
+                      }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 max-md:gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!track.file) {
+                          setNoFileMessageTrackId(track.id);
+                          setTimeout(() => setNoFileMessageTrackId(null), 3000);
+                          return;
+                        }
+                        runMix(track.id);
+                      }}
+                      disabled={track.isMixing}
+                      className="py-2.5 rounded-lg border border-white/20 bg-white text-[#060608] text-tagline text-[10px] max-md:text-[9px] hover:bg-white/90 disabled:opacity-50"
+                    >
+                      {track.isMixing ? "Mixer…" : "Mixer"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
+                      className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-[10px] max-md:text-[9px] hover:bg-white/10"
+                    >
+                      {track.paramsOpen ? "Masquer" : "Réglages"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => track.mixedAudioUrl && togglePlayMode(track.id, track.playMode === "raw" ? "mixed" : "raw")}
+                      disabled={!track.mixedAudioUrl}
+                      className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-[10px] max-md:text-[9px] hover:bg-white/10 disabled:opacity-50 col-span-2 flex items-center justify-center gap-1"
+                    >
+                      <span className={track.mixedAudioUrl && track.playMode === "raw" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>AVANT</span>
+                      <span className="text-slate-500">/</span>
+                      <span className={track.mixedAudioUrl && track.playMode === "mixed" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>APRÈS</span>
+                    </button>
+                  </div>
+                  <div>
+                    <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Catégorie</span>
+                    <CustomSelect
+                      value={track.category}
+                      onChange={(v) => {
+                        const c = v as Category;
+                        updateTrack(track.id, { category: c, mixParams: { ...track.mixParams, phone_fx: c === "adlibs_backs" } });
+                      }}
+                      onFocus={() => setFocusedCategoryTrackId(track.id)}
+                      onBlur={() => setFocusedCategoryTrackId(null)}
+                      variant="category"
+                      className="w-full text-[10px] max-md:text-[9px]"
+                      options={(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
+                    />
+                  </div>
+                  <div>
+                    <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Gain {track.gain}%</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="200"
+                      value={track.gain}
+                      onChange={(e) => updateTrack(track.id, { gain: Number(e.target.value) })}
+                      className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
+                    />
+                  </div>
+                </div>
+                {noFileMessageTrackId === track.id && (
+                  <p className="text-tagline text-slate-300 text-[10px] max-md:text-[9px] text-center">Choisir un fichier pour mixer.</p>
+                )}
+              </div>
+
               {track.waveformPeaks != null && track.waveformDuration != null && track.waveformDuration > 0 && (
                 <div className="mt-4 w-full">
                   <Waveform
@@ -1173,9 +1262,9 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Paramètres mix : vocal = tout, instrumental = basses/mids/aigus uniquement */}
+              {/* Paramètres mix : vocal = tout, instrumental = basses/mids/aigus uniquement — affichage PC uniquement */}
               {track.paramsOpen && (
-                <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-3 gap-4 max-lg:hidden">
                   {/* Basses / Mids / Aigus : pour toutes les pistes */}
                   <div>
                     <span className={focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_low" ? "text-tagline block mb-1 text-center text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline block mb-1 text-center"}>Basses</span>
@@ -1419,27 +1508,99 @@ export default function Home() {
                 </div>
               )}
 
+              {/* Réglages mobile / tablette : 8 LIGNES HORIZONTALES, toutes alignées (même hauteur de ligne, même largeur colonne label, même hauteur box). PC non touché. */}
+              {track.paramsOpen && (
+                <div className="mt-4 pt-4 border-t border-white/[0.06] lg:hidden flex flex-col gap-2">
+                  {/* Grille : colonne label 5.5rem fixe, colonne control 1fr — toutes les lignes min-h-[2.25rem] et h-9 pour les selects */}
+                  <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                    <span className={`text-tagline text-[10px] max-md:text-[9px] ${focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_low" ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Basses</span>
+                    <CustomSelect value={track.mixParams.tone_low} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 } })} onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_low" })} onBlur={() => setFocusedToneSelect(null)} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
+                  </div>
+                  <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                    <span className={`text-tagline text-[10px] max-md:text-[9px] ${focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_mid" ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Mids</span>
+                    <CustomSelect value={track.mixParams.tone_mid} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 } })} onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_mid" })} onBlur={() => setFocusedToneSelect(null)} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
+                  </div>
+                  <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                    <span className={`text-tagline text-[10px] max-md:text-[9px] ${focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_high" ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Aigus</span>
+                    <CustomSelect value={track.mixParams.tone_high} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 } })} onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_high" })} onBlur={() => setFocusedToneSelect(null)} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
+                  </div>
+                  {isVocal(track.category) && (
+                    <>
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                          <input type="checkbox" checked={track.mixParams.reverb} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
+                          Reverb
+                        </label>
+                        <CustomSelect value={track.mixParams.reverb_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
+                      </div>
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                          <input type="checkbox" checked={track.mixParams.delay} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
+                          Delay
+                        </label>
+                        <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
+                      </div>
+                      <div className="flex items-center justify-between min-h-[2.25rem] px-0 text-tagline text-[10px] max-md:text-[9px]">
+                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                          <input type="checkbox" checked={track.mixParams.phone_fx} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, phone_fx: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
+                          FX téléphone
+                        </label>
+                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                          <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
+                          <span>FX robot</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between min-h-[2.25rem] px-0 text-tagline text-[10px] max-md:text-[9px]">
+                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                          <input type="checkbox" checked={track.mixParams.air} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, air: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
+                          Air
+                        </label>
+                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                          <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
+                          <span>Doubler</span>
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                        <span className={`text-tagline text-[10px] max-md:text-[9px] ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>BPM</span>
+                        <div className="flex items-center h-9 w-full min-w-0 rounded-lg border border-white/10 bg-white/5 px-2 box-border">
+                          <input
+                            type="number"
+                            min={60}
+                            max={200}
+                            value={track.mixParams.bpm}
+                            onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, bpm: Number(e.target.value) || 120 } })}
+                            onFocus={() => setFocusedBpmTrackId(track.id)}
+                            onBlur={() => setFocusedBpmTrackId(null)}
+                            className={`input-bpm w-full min-w-0 bg-transparent border-none text-center focus:outline-none focus:ring-0 p-0 text-[10px] max-md:text-[9px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
             </div>
           ))}
         </section>
 
-        <div className="group flex flex-col items-center gap-2 mt-6 mb-2">
+        <div className="group flex flex-col items-center gap-2 mt-6 mb-2 max-lg:mt-4 max-lg:gap-1.5 max-md:mt-3">
           <button
             type="button"
             onClick={addTrack}
-            className="flex items-center justify-center w-12 h-12 rounded-full border border-white/20 bg-white/5 text-slate-500 transition-colors hover:bg-white/10 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608] group-hover:text-white"
+            className="flex items-center justify-center w-12 h-12 rounded-full border border-white/20 bg-white/5 text-slate-500 transition-colors hover:bg-white/10 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608] group-hover:text-white max-lg:w-11 max-lg:h-11 max-md:w-10 max-md:h-10"
             aria-label="Ajouter une piste"
           >
-            <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </button>
-          <p className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">AJOUTER UNE PISTE</p>
+          <p className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors max-md:text-[10px]">AJOUTER UNE PISTE</p>
         </div>
 
         {tracks.length > 0 && (
-          <div className="flex flex-col items-center gap-3 mt-6">
+          <div className="flex flex-col items-center gap-3 mt-6 max-lg:gap-2 max-lg:mt-4 max-md:gap-1.5 max-md:mt-3">
             <div className="relative flex flex-col items-center">
               <button
                 type="button"
@@ -1448,9 +1609,9 @@ export default function Home() {
                   downloadMix();
                 }}
                 disabled={isRenderingMix}
-                className="btn-primary group flex items-center justify-center text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary group flex items-center justify-center text-center disabled:opacity-50 disabled:cursor-not-allowed max-lg:py-2 max-md:py-1.5 max-md:px-3"
               >
-                <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors max-md:text-[10px]">
                   {isRenderingMix ? "RENDU…" : "TÉLÉCHARGER LE MIX"}
                 </span>
               </button>
@@ -1468,7 +1629,7 @@ export default function Home() {
                   runMaster();
                 }}
                 disabled={isMastering}
-                className="h-9 px-5 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline shrink-0"
+                className="h-9 px-5 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline shrink-0 max-lg:h-8 max-lg:px-4 max-md:h-8 max-md:px-3 max-md:text-[10px]"
               >
                 {isMastering ? "MASTERISATION…" : "MASTERISER"}
               </button>
