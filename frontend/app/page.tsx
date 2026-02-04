@@ -757,7 +757,7 @@ export default function Home() {
         } catch (_) {}
         sessionStorage.removeItem(TRACKS_STORAGE_KEY);
       }
-      setAppModal({ type: "alert", message: "Projet créé. Page réinitialisée.", onClose: () => {} });
+      setAppModal({ type: "alert", message: "Projet créé.", onClose: () => {} });
     } catch (e) {
       setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la création.", onClose: () => {} });
     } finally {
@@ -847,6 +847,51 @@ export default function Home() {
     const data = await res.json().catch(() => ({}));
     setProjectsList(data.projects || []);
   }, [getAuthHeaders]);
+
+  const renameProject = useCallback(
+    async (projectId: string, newName: string) => {
+      if (!newName?.trim()) return;
+      try {
+        const form = new FormData();
+        form.append("name", newName.trim());
+        const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: form,
+        });
+        if (res.status === 401) {
+          localStorage.removeItem("saas_mix_token");
+          localStorage.removeItem("saas_mix_user");
+          setUser(null);
+          setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || "Erreur renommage");
+        if (currentProject?.id === projectId) setCurrentProject({ id: projectId, name: data.name });
+        await fetchProjectsList();
+        setAppModal({ type: "alert", message: "Projet renommé.", onClose: () => {} });
+      } catch (e) {
+        setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors du renommage.", onClose: () => {} });
+      }
+    },
+    [getAuthHeaders, fetchProjectsList, currentProject?.id]
+  );
+
+  const openRenameProjectPrompt = useCallback(
+    (projectId: string, currentName: string) => {
+      setAppModal({
+        type: "prompt",
+        title: "Nouveau nom du projet",
+        defaultValue: currentName,
+        onConfirm: (value) => {
+          if (value?.trim()) renameProject(projectId, value.trim());
+        },
+        onCancel: () => {},
+      });
+    },
+    [renameProject]
+  );
 
   const loadProject = useCallback(
     async (projectId: string) => {
@@ -1765,6 +1810,14 @@ export default function Home() {
                         className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
                       >
                         Charger
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isLoadingProject}
+                        onClick={() => openRenameProjectPrompt(p.id, p.name)}
+                        className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 text-sm disabled:opacity-50 transition-colors"
+                      >
+                        Renommer
                       </button>
                       <button
                         type="button"

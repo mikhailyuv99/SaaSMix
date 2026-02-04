@@ -254,6 +254,33 @@ def get_project_track_file(
     )
 
 
+@router.patch("/{project_id}")
+async def rename_project(
+    project_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    name: str = Form(..., min_length=1, max_length=255, description="Nouveau nom du projet"),
+):
+    """Renomme un projet (met à jour uniquement le nom)."""
+    if not re.match(r"^[a-f0-9\-]{36}$", project_id):
+        raise HTTPException(status_code=400, detail="ID projet invalide")
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.user_id == current_user["user_id"],
+    ).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Projet introuvable")
+    project.name = name.strip()
+    db.commit()
+    db.refresh(project)
+    return {
+        "id": project.id,
+        "name": project.name,
+        "created_at": project.created_at.isoformat() if project.created_at else None,
+        "message": "Projet renommé.",
+    }
+
+
 @router.delete("/{project_id}")
 def delete_project(
     project_id: str,
