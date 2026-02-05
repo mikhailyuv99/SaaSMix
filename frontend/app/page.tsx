@@ -104,7 +104,7 @@ function saveFileToIDB(trackId: string, file: File): void {
 function getFileFromIDB(trackId: string): Promise<{ blob: Blob; fileName: string } | null> {
   if (typeof window === "undefined") return Promise.resolve(null);
   return openFilesDB().then((db) => {
-    return new Promise((resolve) => {
+    return new Promise<{ blob: Blob; fileName: string } | null>((resolve) => {
       const tx = db.transaction(FILES_STORE_NAME, "readonly");
       const req = tx.objectStore(FILES_STORE_NAME).get(trackId);
       req.onsuccess = () => {
