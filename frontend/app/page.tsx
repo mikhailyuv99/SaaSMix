@@ -337,7 +337,7 @@ export default function Home() {
 
   useEffect(() => {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
-  }, [appModal?.type, appModal?.defaultValue]);
+  }, [appModal]);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
