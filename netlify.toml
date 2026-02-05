@@ -1,0 +1,8 @@
+# Netlify config for Next.js (frontend in subdirectory)
+# The Next.js plugin handles publish output - do not set publish in UI
+[build]
+  base = "frontend"
+  command = "npm run build"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
