@@ -333,9 +333,11 @@ export default function Home() {
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
   const mixSimulationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mixSimulationStartRef = useRef<number>(0);
-  const mixFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // montée 99→100% puis attente 0.5s
-  const MIX_ESTIMATED_DURATION_MS = 85000; // 0→99% smooth sur ~85s (temps uniquement, pas de backend)
-  const MIX_PROGRESS_TICK_MS = 50; // tick toutes les 50ms = fluide
+  const mixFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mixProgressTargetRef = useRef<Record<string, number>>({}); // cible % backend (job) pour affichage lissé
+  const mixSmoothIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const MIX_ESTIMATED_DURATION_MS = 85000; // 0→99% temps (fallback backend synchrone)
+  const MIX_PROGRESS_TICK_MS = 50;
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
@@ -1550,6 +1552,10 @@ export default function Home() {
           clearInterval(mixSimulationIntervalRef.current);
           mixSimulationIntervalRef.current = null;
         }
+        if (mixSmoothIntervalRef.current) {
+          clearInterval(mixSmoothIntervalRef.current);
+          mixSmoothIntervalRef.current = null;
+        }
         if (mixFinishIntervalRef.current) {
           clearInterval(mixFinishIntervalRef.current);
           mixFinishIntervalRef.current = null;
@@ -1612,14 +1618,33 @@ export default function Home() {
           throw new Error(msg || "Mix failed");
         }
 
-        // Backend peut répondre en mode job (jobId + poll status) ou en mode synchrone (mixedTrackUrl direct)
-        // On ne touche pas au timer 0→99% : il continue pendant tout le mix (poll + fetch + decode)
+        // Backend : job (poll + % réel) ou synchrone (timer 0→99% seulement)
         const jobId = data.jobId as string | undefined;
         const directMixedUrl = data.mixedTrackUrl as string | undefined;
 
         let path: string;
         if (jobId) {
-          // Poll jusqu'à done ; la barre 0→99% reste pilotée par le timer (aucun % backend)
+          // Mode job : on passe à la progression réelle (backend), affichage lissé
+          if (mixSimulationIntervalRef.current) {
+            clearInterval(mixSimulationIntervalRef.current);
+            mixSimulationIntervalRef.current = null;
+          }
+          mixProgressTargetRef.current[id] = 0;
+          if (mixSmoothIntervalRef.current) {
+            clearInterval(mixSmoothIntervalRef.current);
+            mixSmoothIntervalRef.current = null;
+          }
+          mixSmoothIntervalRef.current = setInterval(() => {
+            setMixProgress((prev) => {
+              const cur = prev[id] ?? 0;
+              const target = mixProgressTargetRef.current[id] ?? cur;
+              const effectiveTarget = Math.max(cur, Math.min(99, target));
+              if (cur >= effectiveTarget) return prev;
+              const next = cur + (effectiveTarget - cur) * 0.2;
+              return { ...prev, [id]: Math.round(Math.min(next, effectiveTarget) * 10) / 10 };
+            });
+          }, MIX_PROGRESS_TICK_MS);
+
           let statusData: { status: string; percent: number; step?: string; mixedTrackUrl?: string; error?: string } = { status: "running", percent: 0 };
           while (statusData.status === "running") {
             await new Promise((r) => setTimeout(r, 500));
@@ -1629,7 +1654,15 @@ export default function Home() {
               break;
             }
             statusData = await statusRes.json();
+            mixProgressTargetRef.current[id] = Math.max(mixProgressTargetRef.current[id] ?? 0, statusData.percent);
           }
+
+          if (mixSmoothIntervalRef.current) {
+            clearInterval(mixSmoothIntervalRef.current);
+            mixSmoothIntervalRef.current = null;
+          }
+          setMixProgress((prev) => ({ ...prev, [id]: 100 }));
+
           if (statusData.status === "error") {
             clearProgress();
             updateTrack(id, { isMixing: false });
@@ -2405,7 +2438,7 @@ export default function Home() {
                   >
                     {track.isMixing ? (
                       <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
-                        {mixProgress[track.id] ?? 0}%
+                        {Number(mixProgress[track.id] ?? 0).toFixed(1)}%
                       </span>
                     ) : (
                       "Mixer"
@@ -2552,7 +2585,7 @@ export default function Home() {
                     >
                       {track.isMixing ? (
                         <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
-                          {mixProgress[track.id] ?? 0}%
+                          {Number(mixProgress[track.id] ?? 0).toFixed(1)}%
                         </span>
                       ) : (
                         "Mixer"
