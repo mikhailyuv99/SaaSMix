@@ -2381,13 +2381,13 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
-                  <span className={track.isMixing ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>MIXER</span>
+                  <span className={track.category === "instrumental" ? "text-tagline text-slate-600" : track.isMixing ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>MIXER</span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
-                  <span className={track.paramsOpen ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>RÉGLAGES</span>
+                  <span className={track.category === "instrumental" ? "text-tagline text-slate-600" : track.paramsOpen ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>RÉGLAGES</span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
-                  <span className="text-tagline text-center whitespace-nowrap">AVANT / APRÈS</span>
+                  <span className={track.category === "instrumental" ? "text-tagline text-slate-600 text-center whitespace-nowrap" : "text-tagline text-center whitespace-nowrap"}>AVANT / APRÈS</span>
                 </div>
                 <div className="flex items-center justify-center min-h-[32px]">
                   <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
@@ -2422,6 +2422,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => {
+                      if (track.category === "instrumental") return;
                       if (!track.file) {
                         setNoFileMessageTrackId(track.id);
                         setTimeout(() => setNoFileMessageTrackId(null), 3000);
@@ -2429,9 +2430,11 @@ export default function Home() {
                       }
                       runMix(track.id);
                     }}
-                    disabled={track.isMixing}
+                    disabled={track.isMixing || track.category === "instrumental"}
                     className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
-                      track.isMixing
+                      track.category === "instrumental"
+                        ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed"
+                        : track.isMixing
                         ? "border-white/30 bg-slate-800 text-white"
                         : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
                     }`}
@@ -2453,14 +2456,11 @@ export default function Home() {
                 <div className="flex items-center">
                   <button
                     type="button"
-                    onClick={() =>
-                      updateTrack(track.id, {
-                        paramsOpen: !track.paramsOpen,
-                      })
-                    }
-                    className="group w-full h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
+                    onClick={() => track.category !== "instrumental" && updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
+                    disabled={track.category === "instrumental"}
+                    className={`group w-full h-9 flex items-center justify-center rounded-lg border text-tagline ${track.category === "instrumental" ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
                   >
-                    <span className="text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                    <span className={track.category === "instrumental" ? "text-slate-500" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>
                       {track.paramsOpen ? "Masquer" : "Réglages"}
                     </span>
                   </button>
@@ -2469,18 +2469,21 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() =>
+                      track.category !== "instrumental" &&
                       track.mixedAudioUrl &&
                       togglePlayMode(
                         track.id,
                         track.playMode === "raw" ? "mixed" : "raw"
                       )
                     }
-                    disabled={!track.mixedAudioUrl}
-                    className="w-full h-9 flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 disabled:cursor-default text-tagline disabled:opacity-80 px-4"
+                    disabled={!track.mixedAudioUrl || track.category === "instrumental"}
+                    className={`w-full h-9 flex items-center justify-center gap-1 rounded-lg border text-tagline px-4 ${track.category === "instrumental" ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed" : "border-white/10 bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 disabled:cursor-default disabled:opacity-80"}`}
                   >
                     <span
                       className={
-                        track.mixedAudioUrl && track.playMode === "raw"
+                        track.category === "instrumental"
+                          ? "text-slate-500"
+                          : track.mixedAudioUrl && track.playMode === "raw"
                           ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                           : "text-slate-400"
                       }
@@ -2490,7 +2493,9 @@ export default function Home() {
                     <span className="text-slate-500">/</span>
                     <span
                       className={
-                        track.mixedAudioUrl && track.playMode === "mixed"
+                        track.category === "instrumental"
+                          ? "text-slate-500"
+                          : track.mixedAudioUrl && track.playMode === "mixed"
                           ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
                           : "text-slate-400"
                       }
@@ -2569,6 +2574,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => {
+                        if (track.category === "instrumental") return;
                         if (!track.file) {
                           setNoFileMessageTrackId(track.id);
                           setTimeout(() => setNoFileMessageTrackId(null), 3000);
@@ -2576,9 +2582,11 @@ export default function Home() {
                         }
                         runMix(track.id);
                       }}
-                      disabled={track.isMixing}
+                      disabled={track.isMixing || track.category === "instrumental"}
                       className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] ${
-                        track.isMixing
+                        track.category === "instrumental"
+                          ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed"
+                          : track.isMixing
                           ? "border-white/30 bg-slate-800 text-white disabled:opacity-50"
                           : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
                       }`}
@@ -2593,20 +2601,21 @@ export default function Home() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
-                      className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-[10px] max-md:text-[9px] hover:bg-white/10"
+                      onClick={() => track.category !== "instrumental" && updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
+                      disabled={track.category === "instrumental"}
+                      className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] ${track.category === "instrumental" ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
                     >
                       {track.paramsOpen ? "Masquer" : "Réglages"}
                     </button>
                     <button
                       type="button"
-                      onClick={() => track.mixedAudioUrl && togglePlayMode(track.id, track.playMode === "raw" ? "mixed" : "raw")}
-                      disabled={!track.mixedAudioUrl}
-                      className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-[10px] max-md:text-[9px] hover:bg-white/10 disabled:opacity-50 col-span-2 flex items-center justify-center gap-1"
+                      onClick={() => track.category !== "instrumental" && track.mixedAudioUrl && togglePlayMode(track.id, track.playMode === "raw" ? "mixed" : "raw")}
+                      disabled={!track.mixedAudioUrl || track.category === "instrumental"}
+                      className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] col-span-2 flex items-center justify-center gap-1 ${track.category === "instrumental" ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed" : "border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50"}`}
                     >
-                      <span className={track.mixedAudioUrl && track.playMode === "raw" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>AVANT</span>
+                      <span className={track.category === "instrumental" ? "text-slate-500" : track.mixedAudioUrl && track.playMode === "raw" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>AVANT</span>
                       <span className="text-slate-500">/</span>
-                      <span className={track.mixedAudioUrl && track.playMode === "mixed" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>APRÈS</span>
+                      <span className={track.category === "instrumental" ? "text-slate-500" : track.mixedAudioUrl && track.playMode === "mixed" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>APRÈS</span>
                     </button>
                   </div>
                   <div>
