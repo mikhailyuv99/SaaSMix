@@ -319,6 +319,9 @@ export default function Home() {
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
   const [showMasterMessage, setShowMasterMessage] = useState(false);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
+  const [playbackLoading, setPlaybackLoading] = useState(false);
+  const setPlaybackLoadingRef = useRef<(v: boolean) => void>(() => {});
+  setPlaybackLoadingRef.current = setPlaybackLoading;
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
   const [showLoginMixMessage, setShowLoginMixMessage] = useState(false);
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
@@ -659,6 +662,7 @@ export default function Home() {
     | { type: "instrumental"; media: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null }; mainGain: GainNode };
   const trackPlaybackRef = useRef<Map<string, VocalNodes | InstrumentalNodes>>(new Map());
   const isMobileRef = useRef(false);
+  const mobilePlaybackGenerationRef = useRef(0);
   if (typeof window !== "undefined") isMobileRef.current = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
   const addTrack = useCallback(() => {
@@ -1384,6 +1388,8 @@ export default function Home() {
       const fullUrl = (url: string) => (url.startsWith("http") || url.startsWith("blob:") ? url : `${API_BASE}${url}`);
 
       if (isMobileRef.current) {
+        const gen = ++mobilePlaybackGenerationRef.current;
+        setPlaybackLoadingRef.current?.(true);
         const mediaToPlay: HTMLAudioElement[] = [];
         const mainGain = ctx.createGain();
         mainGain.connect(ctx.destination);
@@ -1458,6 +1464,8 @@ export default function Home() {
               })
           )
         ).then(() => {
+          if (gen !== mobilePlaybackGenerationRef.current) return;
+          setPlaybackLoadingRef.current?.(false);
           for (let i = 0; i < mediaToPlay.length; i++) {
             mediaToPlay[i].currentTime = offset;
           }
@@ -1952,8 +1960,10 @@ export default function Home() {
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
           if (isMobileRef.current) {
-            // Sur mobile : ne pas lancer la lecture ici (hors geste utilisateur → iOS bloque le son).
-            // L'utilisateur appuie sur Play pour écouter (dans le geste).
+            // Sur mobile : stopper la lecture, repartir de 0 au prochain Play, pas d'auto-play.
+            stopAll();
+            resumeFromRef.current = null;
+            setHasPausedPosition(false);
             setIsPlaying(false);
           } else {
             if (ctx.state === "suspended") {
@@ -2518,16 +2528,20 @@ export default function Home() {
             <h2 className="sr-only">Lecture</h2>
             <div className="flex justify-center gap-2 max-md:gap-1.5">
               {!isPlaying ? (
-                <div className="relative">
+                <div className="relative flex flex-col items-center">
                   <button
                     type="button"
                     onClick={() => playAll()}
+                    disabled={playbackLoading}
                     className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
                     title={undefined}
                   >
                     <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                   </button>
+                  {playbackLoading && (
+                    <p className="mt-1 text-[10px] text-slate-400">Chargement…</p>
+                  )}
                   {showPlayNoFileMessage && (
                     <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Veuillez choisir un fichier
