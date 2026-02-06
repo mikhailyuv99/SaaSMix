@@ -2367,283 +2367,408 @@ export default function Home() {
                 ✕
               </button>
 
-              {/* Affichage PC uniquement : rien ne change ici côté style desktop */}
+              {/* Affichage PC : 3 colonnes (Choisir, Catégorie, Gain) pour instrumental, 6 colonnes pour vocal */}
               <div
                 className="grid w-full pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
                 style={{
-                  gridTemplateColumns: "1fr 1fr 1fr 1fr 1.2fr 1fr",
+                  gridTemplateColumns: track.category === "instrumental" ? "1fr 1.2fr 1fr" : "1fr 1fr 1fr 1fr 1.2fr 1fr",
                 }}
               >
-                {/* Labels row - toute la largeur, aucun texte coupé */}
-                <div className={`flex items-center justify-center min-h-[32px] min-w-0 ${fileChooserActiveTrackId === track.id ? "" : "overflow-hidden"}`}>
-                  <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "overflow-hidden text-ellipsis"}`}>
-                    Fichier WAV{track.file ? ` ${track.file.name}` : ""}
-                  </span>
-                </div>
-                <div className="flex items-center justify-center min-h-[32px]">
-                  <span className={track.category === "instrumental" ? "text-tagline text-slate-600" : track.isMixing ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>MIXER</span>
-                </div>
-                <div className="flex items-center justify-center min-h-[32px]">
-                  <span className={track.category === "instrumental" ? "text-tagline text-slate-600" : track.paramsOpen ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>RÉGLAGES</span>
-                </div>
-                <div className="flex items-center justify-center min-h-[32px]">
-                  <span className={track.category === "instrumental" ? "text-tagline text-slate-600 text-center whitespace-nowrap" : "text-tagline text-center whitespace-nowrap"}>AVANT / APRÈS</span>
-                </div>
-                <div className="flex items-center justify-center min-h-[32px]">
-                  <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
-                </div>
-                <div className="flex items-center justify-center min-h-[32px]">
-                  <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain {track.gain}%</span>
-                </div>
-
-                {/* Boxes row - même largeur par colonne */}
-                <div className="flex items-center min-w-0">
-                  <label
-                    htmlFor={`file-${track.id}`}
-                    className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
-                    onClick={() => setFileChooserActiveTrackId(track.id)}
-                  >
-                    <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
-                  </label>
-                  <input
-                    id={`file-${track.id}`}
-                    type="file"
-                    accept=".wav,audio/wav"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] ?? null;
-                      onFileSelect(track.id, file);
-                      if (file) setFileChooserActiveTrackId(null);
-                      e.target.value = "";
-                    }}
-                  />
-                </div>
-                <div className="relative flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (track.category === "instrumental") return;
-                      if (!track.file) {
-                        setNoFileMessageTrackId(track.id);
-                        setTimeout(() => setNoFileMessageTrackId(null), 3000);
-                        return;
-                      }
-                      runMix(track.id);
-                    }}
-                    disabled={track.isMixing || track.category === "instrumental"}
-                    className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
-                      track.category === "instrumental"
-                        ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed"
-                        : track.isMixing
-                        ? "border-white/30 bg-slate-800 text-white"
-                        : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
-                    }`}
-                  >
-                    {track.isMixing ? (
-                      <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-                        MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
+                {track.category === "instrumental" ? (
+                  <>
+                    <div className={`flex items-center justify-center min-h-[32px] min-w-0 ${fileChooserActiveTrackId === track.id ? "" : "overflow-hidden"}`}>
+                      <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "overflow-hidden text-ellipsis"}`}>
+                        Fichier WAV{track.file ? ` ${track.file.name}` : ""}
                       </span>
-                    ) : (
-                      "Mixer"
-                    )}
-                  </button>
-                  {noFileMessageTrackId === track.id && (
-                    <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
-                      Veuillez choisir un fichier
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => track.category !== "instrumental" && updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
-                    disabled={track.category === "instrumental"}
-                    className={`group w-full h-9 flex items-center justify-center rounded-lg border text-tagline ${track.category === "instrumental" ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
-                  >
-                    <span className={track.category === "instrumental" ? "text-slate-500" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>
-                      {track.paramsOpen ? "Masquer" : "Réglages"}
-                    </span>
-                  </button>
-                </div>
-                <div className="flex items-center">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      track.category !== "instrumental" &&
-                      track.mixedAudioUrl &&
-                      togglePlayMode(
-                        track.id,
-                        track.playMode === "raw" ? "mixed" : "raw"
-                      )
-                    }
-                    disabled={!track.mixedAudioUrl || track.category === "instrumental"}
-                    className={`w-full h-9 flex items-center justify-center gap-1 rounded-lg border text-tagline px-4 ${track.category === "instrumental" ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed" : "border-white/10 bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 disabled:cursor-default disabled:opacity-80"}`}
-                  >
-                    <span
-                      className={
-                        track.category === "instrumental"
-                          ? "text-slate-500"
-                          : track.mixedAudioUrl && track.playMode === "raw"
-                          ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
-                          : "text-slate-400"
-                      }
+                    </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
+                    </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain {track.gain}%</span>
+                    </div>
+                    <div className="flex items-center min-w-0">
+                      <label
+                        htmlFor={`file-${track.id}`}
+                        className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
+                        onClick={() => setFileChooserActiveTrackId(track.id)}
+                      >
+                        <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
+                      </label>
+                      <input
+                        id={`file-${track.id}`}
+                        type="file"
+                        accept=".wav,audio/wav"
+                        className="sr-only"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          onFileSelect(track.id, file);
+                          if (file) setFileChooserActiveTrackId(null);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-center min-w-0">
+                      <CustomSelect
+                        value={track.category}
+                        onChange={(v) => {
+                          const newCategory = v as Category;
+                          updateTrack(track.id, {
+                            category: newCategory,
+                            mixParams: {
+                              ...track.mixParams,
+                              phone_fx: newCategory === "adlibs_backs",
+                            },
+                          });
+                        }}
+                        onFocus={() => setFocusedCategoryTrackId(track.id)}
+                        onBlur={() => setFocusedCategoryTrackId(null)}
+                        variant="category"
+                        className="w-full min-w-0"
+                        options={(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => ({
+                          value: c,
+                          label: CATEGORY_LABELS[c],
+                        }))}
+                      />
+                    </div>
+                    <div
+                      className="flex items-center h-9"
+                      onMouseEnter={() => setGainSliderHoveredTrackId(track.id)}
+                      onMouseLeave={() => setGainSliderHoveredTrackId(null)}
                     >
-                      AVANT
-                    </span>
-                    <span className="text-slate-500">/</span>
-                    <span
-                      className={
-                        track.category === "instrumental"
-                          ? "text-slate-500"
-                          : track.mixedAudioUrl && track.playMode === "mixed"
-                          ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
-                          : "text-slate-400"
-                      }
+                      <input
+                        type="range"
+                        min="0"
+                        max="200"
+                        value={track.gain}
+                        onChange={(e) =>
+                          updateTrack(track.id, {
+                            gain: Number(e.target.value),
+                          })
+                        }
+                        className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={`flex items-center justify-center min-h-[32px] min-w-0 ${fileChooserActiveTrackId === track.id ? "" : "overflow-hidden"}`}>
+                      <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "overflow-hidden text-ellipsis"}`}>
+                        Fichier WAV{track.file ? ` ${track.file.name}` : ""}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className={track.isMixing ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>MIXER</span>
+                    </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className={track.paramsOpen ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>RÉGLAGES</span>
+                    </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className="text-tagline text-center whitespace-nowrap">AVANT / APRÈS</span>
+                    </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
+                    </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain {track.gain}%</span>
+                    </div>
+                    <div className="flex items-center min-w-0">
+                      <label
+                        htmlFor={`file-${track.id}`}
+                        className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
+                        onClick={() => setFileChooserActiveTrackId(track.id)}
+                      >
+                        <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
+                      </label>
+                      <input
+                        id={`file-${track.id}`}
+                        type="file"
+                        accept=".wav,audio/wav"
+                        className="sr-only"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          onFileSelect(track.id, file);
+                          if (file) setFileChooserActiveTrackId(null);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+                    <div className="relative flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!track.file) {
+                            setNoFileMessageTrackId(track.id);
+                            setTimeout(() => setNoFileMessageTrackId(null), 3000);
+                            return;
+                          }
+                          runMix(track.id);
+                        }}
+                        disabled={track.isMixing}
+                        className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
+                          track.isMixing
+                            ? "border-white/30 bg-slate-800 text-white"
+                            : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
+                        }`}
+                      >
+                        {track.isMixing ? (
+                          <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
+                            MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
+                          </span>
+                        ) : (
+                          "Mixer"
+                        )}
+                      </button>
+                      {noFileMessageTrackId === track.id && (
+                        <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                          Veuillez choisir un fichier
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateTrack(track.id, {
+                            paramsOpen: !track.paramsOpen,
+                          })
+                        }
+                        className="group w-full h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
+                      >
+                        <span className="text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                          {track.paramsOpen ? "Masquer" : "Réglages"}
+                        </span>
+                      </button>
+                    </div>
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          track.mixedAudioUrl &&
+                          togglePlayMode(
+                            track.id,
+                            track.playMode === "raw" ? "mixed" : "raw"
+                          )
+                        }
+                        disabled={!track.mixedAudioUrl}
+                        className="w-full h-9 flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 disabled:cursor-default text-tagline disabled:opacity-80 px-4"
+                      >
+                        <span
+                          className={
+                            track.mixedAudioUrl && track.playMode === "raw"
+                              ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                              : "text-slate-400"
+                          }
+                        >
+                          AVANT
+                        </span>
+                        <span className="text-slate-500">/</span>
+                        <span
+                          className={
+                            track.mixedAudioUrl && track.playMode === "mixed"
+                              ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                              : "text-slate-400"
+                          }
+                        >
+                          APRÈS
+                        </span>
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-center min-w-0">
+                      <CustomSelect
+                        value={track.category}
+                        onChange={(v) => {
+                          const newCategory = v as Category;
+                          updateTrack(track.id, {
+                            category: newCategory,
+                            mixParams: {
+                              ...track.mixParams,
+                              phone_fx: newCategory === "adlibs_backs",
+                            },
+                          });
+                        }}
+                        onFocus={() => setFocusedCategoryTrackId(track.id)}
+                        onBlur={() => setFocusedCategoryTrackId(null)}
+                        variant="category"
+                        className="w-full min-w-0"
+                        options={(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => ({
+                          value: c,
+                          label: CATEGORY_LABELS[c],
+                        }))}
+                      />
+                    </div>
+                    <div
+                      className="flex items-center h-9"
+                      onMouseEnter={() => setGainSliderHoveredTrackId(track.id)}
+                      onMouseLeave={() => setGainSliderHoveredTrackId(null)}
                     >
-                      APRÈS
-                    </span>
-                  </button>
-                </div>
-                <div className="flex items-center justify-center min-w-0">
-                  <CustomSelect
-                    value={track.category}
-                    onChange={(v) => {
-                      const newCategory = v as Category;
-                      updateTrack(track.id, {
-                        category: newCategory,
-                        mixParams: {
-                          ...track.mixParams,
-                          phone_fx: newCategory === "adlibs_backs",
-                        },
-                      });
-                    }}
-                    onFocus={() => setFocusedCategoryTrackId(track.id)}
-                    onBlur={() => setFocusedCategoryTrackId(null)}
-                    variant="category"
-                    className="w-full min-w-0"
-                    options={(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => ({
-                      value: c,
-                      label: CATEGORY_LABELS[c],
-                    }))}
-                  />
-                </div>
-                <div
-                  className="flex items-center h-9"
-                  onMouseEnter={() => setGainSliderHoveredTrackId(track.id)}
-                  onMouseLeave={() => setGainSliderHoveredTrackId(null)}
-                >
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    value={track.gain}
-                    onChange={(e) =>
-                      updateTrack(track.id, {
-                        gain: Number(e.target.value),
-                      })
-                    }
-                    className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400"
-                  />
-                </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="200"
+                        value={track.gain}
+                        onChange={(e) =>
+                          updateTrack(track.id, {
+                            gain: Number(e.target.value),
+                          })
+                        }
+                        className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
-              {/* Interface mobile et tablette uniquement (PC inchangé) */}
+              {/* Interface mobile et tablette : 3 blocs symétriques (Choisir, Catégorie, Gain) pour instrumental, sinon layout vocal */}
               <div className="lg:hidden space-y-4 mt-4">
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Fichier WAV{track.file ? ` · ${track.file.name}` : ""}</span>
-                    <label
-                      htmlFor={`file-mob-${track.id}`}
-                      className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-[10px] max-md:text-[9px]"
-                    >
-                      <span className={!track.file ? "glow-blink-slow" : "text-slate-500"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
-                    </label>
-                    <input
-                      id={`file-mob-${track.id}`}
-                      type="file"
-                      accept=".wav,audio/wav"
-                      className="sr-only"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] ?? null;
-                        onFileSelect(track.id, file);
-                        e.target.value = "";
-                      }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 max-md:gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (track.category === "instrumental") return;
-                        if (!track.file) {
-                          setNoFileMessageTrackId(track.id);
-                          setTimeout(() => setNoFileMessageTrackId(null), 3000);
-                          return;
-                        }
-                        runMix(track.id);
-                      }}
-                      disabled={track.isMixing || track.category === "instrumental"}
-                      className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] ${
-                        track.category === "instrumental"
-                          ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed"
-                          : track.isMixing
-                          ? "border-white/30 bg-slate-800 text-white disabled:opacity-50"
-                          : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
-                      }`}
-                    >
-                      {track.isMixing ? (
-                        <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
-                          MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
-                        </span>
-                      ) : (
-                        "Mixer"
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => track.category !== "instrumental" && updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
-                      disabled={track.category === "instrumental"}
-                      className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] ${track.category === "instrumental" ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
-                    >
-                      {track.paramsOpen ? "Masquer" : "Réglages"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => track.category !== "instrumental" && track.mixedAudioUrl && togglePlayMode(track.id, track.playMode === "raw" ? "mixed" : "raw")}
-                      disabled={!track.mixedAudioUrl || track.category === "instrumental"}
-                      className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] col-span-2 flex items-center justify-center gap-1 ${track.category === "instrumental" ? "border-white/5 bg-white/5 text-slate-500 cursor-not-allowed" : "border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50"}`}
-                    >
-                      <span className={track.category === "instrumental" ? "text-slate-500" : track.mixedAudioUrl && track.playMode === "raw" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>AVANT</span>
-                      <span className="text-slate-500">/</span>
-                      <span className={track.category === "instrumental" ? "text-slate-500" : track.mixedAudioUrl && track.playMode === "mixed" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>APRÈS</span>
-                    </button>
-                  </div>
-                  <div>
-                    <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Catégorie</span>
-                    <CustomSelect
-                      value={track.category}
-                      onChange={(v) => {
-                        const c = v as Category;
-                        updateTrack(track.id, { category: c, mixParams: { ...track.mixParams, phone_fx: c === "adlibs_backs" } });
-                      }}
-                      onFocus={() => setFocusedCategoryTrackId(track.id)}
-                      onBlur={() => setFocusedCategoryTrackId(null)}
-                      variant="category"
-                      className="w-full text-[10px] max-md:text-[9px]"
-                      options={(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
-                    />
-                  </div>
-                  <div>
-                    <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Gain {track.gain}%</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="200"
-                      value={track.gain}
-                      onChange={(e) => updateTrack(track.id, { gain: Number(e.target.value) })}
-                      className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
-                    />
-                  </div>
+                <div className={track.category === "instrumental" ? "grid grid-cols-3 gap-2 max-md:gap-1.5" : "space-y-3"}>
+                  {track.category === "instrumental" ? (
+                    <>
+                      <div>
+                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Fichier WAV{track.file ? ` · ${track.file.name}` : ""}</span>
+                        <label
+                          htmlFor={`file-mob-${track.id}`}
+                          className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-[10px] max-md:text-[9px]"
+                        >
+                          <span className={!track.file ? "glow-blink-slow" : "text-slate-500"}>{!track.file ? "CHOISIR" : "CHANGER"}</span>
+                        </label>
+                        <input
+                          id={`file-mob-${track.id}`}
+                          type="file"
+                          accept=".wav,audio/wav"
+                          className="sr-only"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] ?? null;
+                            onFileSelect(track.id, file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Catégorie</span>
+                        <CustomSelect
+                          value={track.category}
+                          onChange={(v) => {
+                            const c = v as Category;
+                            updateTrack(track.id, { category: c, mixParams: { ...track.mixParams, phone_fx: c === "adlibs_backs" } });
+                          }}
+                          onFocus={() => setFocusedCategoryTrackId(track.id)}
+                          onBlur={() => setFocusedCategoryTrackId(null)}
+                          variant="category"
+                          className="w-full text-[10px] max-md:text-[9px]"
+                          options={(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
+                        />
+                      </div>
+                      <div>
+                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Gain {track.gain}%</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="200"
+                          value={track.gain}
+                          onChange={(e) =>
+                            updateTrack(track.id, {
+                              gain: Number(e.target.value),
+                            })
+                          }
+                          className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Fichier WAV{track.file ? ` · ${track.file.name}` : ""}</span>
+                        <label
+                          htmlFor={`file-mob-${track.id}`}
+                          className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-[10px] max-md:text-[9px]"
+                        >
+                          <span className={!track.file ? "glow-blink-slow" : "text-slate-500"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
+                        </label>
+                        <input
+                          id={`file-mob-${track.id}`}
+                          type="file"
+                          accept=".wav,audio/wav"
+                          className="sr-only"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] ?? null;
+                            onFileSelect(track.id, file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 max-md:gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!track.file) {
+                              setNoFileMessageTrackId(track.id);
+                              setTimeout(() => setNoFileMessageTrackId(null), 3000);
+                              return;
+                            }
+                            runMix(track.id);
+                          }}
+                          disabled={track.isMixing}
+                          className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] ${
+                            track.isMixing
+                              ? "border-white/30 bg-slate-800 text-white disabled:opacity-50"
+                              : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
+                          }`}
+                        >
+                          {track.isMixing ? (
+                            <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
+                              MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
+                            </span>
+                          ) : (
+                            "Mixer"
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
+                          className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-[10px] max-md:text-[9px] hover:bg-white/10"
+                        >
+                          {track.paramsOpen ? "Masquer" : "Réglages"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => track.mixedAudioUrl && togglePlayMode(track.id, track.playMode === "raw" ? "mixed" : "raw")}
+                          disabled={!track.mixedAudioUrl}
+                          className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-[10px] max-md:text-[9px] hover:bg-white/10 disabled:opacity-50 col-span-2 flex items-center justify-center gap-1"
+                        >
+                          <span className={track.mixedAudioUrl && track.playMode === "raw" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>AVANT</span>
+                          <span className="text-slate-500">/</span>
+                          <span className={track.mixedAudioUrl && track.playMode === "mixed" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>APRÈS</span>
+                        </button>
+                      </div>
+                      <div>
+                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Catégorie</span>
+                        <CustomSelect
+                          value={track.category}
+                          onChange={(v) => {
+                            const c = v as Category;
+                            updateTrack(track.id, { category: c, mixParams: { ...track.mixParams, phone_fx: c === "adlibs_backs" } });
+                          }}
+                          onFocus={() => setFocusedCategoryTrackId(track.id)}
+                          onBlur={() => setFocusedCategoryTrackId(null)}
+                          variant="category"
+                          className="w-full text-[10px] max-md:text-[9px]"
+                          options={(Object.keys(CATEGORY_LABELS) as Category[]).map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
+                        />
+                      </div>
+                      <div>
+                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Gain {track.gain}%</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="200"
+                          value={track.gain}
+                          onChange={(e) => updateTrack(track.id, { gain: Number(e.target.value) })}
+                          className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
                 {noFileMessageTrackId === track.id && (
                   <p className="text-tagline text-slate-300 text-[10px] max-md:text-[9px] text-center">Choisir un fichier pour mixer.</p>
