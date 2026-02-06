@@ -783,6 +783,18 @@ export default function Home() {
             });
           } catch (_) {}
         })();
+        (async () => {
+          try {
+            const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            if (!contextRef.current) contextRef.current = ctx;
+            const res = await fetch(rawAudioUrl);
+            const buf = await res.arrayBuffer();
+            const decoded = await ctx.decodeAudioData(buf);
+            const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
+            entry.raw = decoded;
+            buffersRef.current.set(id, entry);
+          } catch (_) {}
+        })();
       }
     },
     [updateTrack]
@@ -1190,9 +1202,6 @@ export default function Home() {
 
   const startPlaybackAtOffset = useCallback(
     (ctx: AudioContext, playable: Track[], offset: number) => {
-      const now = ctx.currentTime;
-      startTimeRef.current = now - offset;
-
       const toStop = Array.from(trackPlaybackRef.current.entries());
       trackPlaybackRef.current.clear();
       for (const [, nodes] of toStop) {
@@ -1231,6 +1240,8 @@ export default function Home() {
 
       let endedCount = 0;
       const totalTracks = playable.length;
+      const now = ctx.currentTime;
+      startTimeRef.current = now - offset;
 
       for (const track of playable) {
         if (!track.rawAudioUrl) continue;
@@ -1570,7 +1581,7 @@ export default function Home() {
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
           e.mixed = decoded;
-          if (ctx.state === "suspended") await ctx.resume();
+          await ctx.resume();
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
           const preload = new Audio(fullUrl);
