@@ -366,6 +366,24 @@ async def track_mix(
     with open(input_path, "wb") as f:
         f.write(content)
 
+    # Normaliser en PCM 16-bit (format 65534 / float non supporté par hise_vst3_host)
+    normalized_path = os.path.join(tempfile.gettempdir(), f"mix_norm_{os.getpid()}_{mixed_id[:8]}.wav")
+    try:
+        audio, sr = read_wav(input_path)
+        write_wav(normalized_path, audio, sr)
+    except Exception as e:
+        if os.path.exists(input_path):
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+        raise HTTPException(status_code=400, detail=f"Fichier WAV invalide ou format non supporté: {e}")
+    try:
+        os.remove(input_path)
+    except OSError:
+        pass
+    input_path = normalized_path
+
     with _mix_jobs_lock:
         _mix_jobs[job_id] = {
             "status": "running",
