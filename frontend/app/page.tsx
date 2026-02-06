@@ -361,6 +361,7 @@ export default function Home() {
   const masterStartTimeRef = useRef<number>(0);
 
   const contextRef = useRef<AudioContext | null>(null);
+  const audioUnlockedRef = useRef(false);
   const buffersRef = useRef<Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>>(new Map());
   const startTimeRef = useRef<number>(0);
   const resumeFromRef = useRef<number | null>(null);
@@ -1462,6 +1463,20 @@ export default function Home() {
     [isPlaying]
   );
 
+  /** Débloque l’audio sur mobile (iOS/Android) : joue un buffer silencieux dans le geste utilisateur. */
+  function unlockAudioContextSync(ctx: AudioContext): void {
+    if (audioUnlockedRef.current) return;
+    try {
+      const numSamples = Math.max(1, Math.min(Math.ceil(ctx.sampleRate * 0.05), 4096));
+      const buf = ctx.createBuffer(1, numSamples, ctx.sampleRate);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+      audioUnlockedRef.current = true;
+    } catch (_) {}
+  }
+
   const playAll = useCallback(
     async (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
@@ -1471,6 +1486,7 @@ export default function Home() {
         contextRef.current = ctx;
       }
       if (ctx.state === "suspended") {
+        unlockAudioContextSync(ctx);
         await ctx.resume().catch(() => {
           setIsPlaying(false);
           return;
