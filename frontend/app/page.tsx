@@ -1557,21 +1557,50 @@ export default function Home() {
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
           e.mixed = decoded;
-          if (ctx.state === "suspended") await ctx.resume();
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
           const preload = new Audio(fullUrl);
           preload.preload = "auto";
           preload.load();
           preloadMixedRef.current.set(id, preload);
-          const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-          const patchedPlayable = basePlayable.map((t) =>
-            t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
-          );
           resumeFromRef.current = null;
           setHasPausedPosition(false);
           setIsPlaying(true);
-          startPlaybackAtOffset(ctx, patchedPlayable, 0);
+          const existingNodes = trackPlaybackRef.current.get(id);
+          if (existingNodes?.type === "vocal") {
+            existingNodes.rawGain.gain.value = 0;
+            existingNodes.mixedGain.gain.value = 1;
+            if (existingNodes.rawMedia) existingNodes.rawMedia.element.currentTime = 0;
+            if (existingNodes.mixedMedia) existingNodes.mixedMedia.element.currentTime = 0;
+            if (existingNodes.mixedBufferNode) {
+              try {
+                existingNodes.mixedBufferNode.onended = null;
+                existingNodes.mixedBufferNode.stop();
+                existingNodes.mixedBufferNode.disconnect();
+              } catch (_) {}
+            }
+            const src = ctx.createBufferSource();
+            src.buffer = decoded;
+            src.connect(existingNodes.mixedGain);
+            src.onended = () => {
+              trackPlaybackRef.current.delete(id);
+              if (trackPlaybackRef.current.size === 0) {
+                setIsPlaying(false);
+                setHasPausedPosition(false);
+              }
+            };
+            const duration = decoded.duration;
+            src.start(ctx.currentTime, 0, duration);
+            (existingNodes as VocalNodes).mixedBufferNode = src;
+            startTimeRef.current = ctx.currentTime;
+          } else {
+            const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+            const patchedPlayable = basePlayable.map((t) =>
+              t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
+            );
+            ctx.resume();
+            startPlaybackAtOffset(ctx, patchedPlayable, 0);
+          }
         } catch (decodeErr) {
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           if (isPlayingRef.current) stopAll();
