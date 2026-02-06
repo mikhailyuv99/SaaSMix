@@ -1613,13 +1613,9 @@ export default function Home() {
         }
 
         // Backend peut répondre en mode job (jobId + poll status) ou en mode synchrone (mixedTrackUrl direct)
+        // On ne touche pas au timer 0→99% : il continue pendant tout le mix (poll + fetch + decode)
         const jobId = data.jobId as string | undefined;
         const directMixedUrl = data.mixedTrackUrl as string | undefined;
-
-        if (mixSimulationIntervalRef.current) {
-          clearInterval(mixSimulationIntervalRef.current);
-          mixSimulationIntervalRef.current = null;
-        }
 
         let path: string;
         if (jobId) {
@@ -1687,94 +1683,66 @@ export default function Home() {
           resumeFromRef.current = null;
           setHasPausedPosition(false);
 
-          const doStartPlayback = () => {
-            if (mixFinishIntervalRef.current) {
-              clearInterval(mixFinishIntervalRef.current);
-              mixFinishIntervalRef.current = null;
-            }
-            setMixProgress((prev) => ({ ...prev, [id]: 100 }));
-            const existingNodes = trackPlaybackRef.current.get(id);
-            if (existingNodes?.type === "vocal") {
-              existingNodes.rawGain.gain.value = 0;
-              existingNodes.mixedGain.gain.value = 1;
-              if (existingNodes.rawMedia) existingNodes.rawMedia.element.currentTime = 0;
-              if (existingNodes.mixedMedia) existingNodes.mixedMedia.element.currentTime = 0;
-              const when = ctx.currentTime;
-              if (existingNodes.rawBufferNode) {
-                try {
-                  existingNodes.rawBufferNode.onended = null;
-                  existingNodes.rawBufferNode.stop(when);
-                  existingNodes.rawBufferNode.disconnect();
-                } catch (_) {}
-                const rawBuf = e.raw;
-                if (rawBuf) {
-                  const rawSrc = ctx.createBufferSource();
-                  rawSrc.buffer = rawBuf;
-                  rawSrc.connect(existingNodes.rawGain);
-                  rawSrc.onended = () => {
-                    trackPlaybackRef.current.delete(id);
-                    if (trackPlaybackRef.current.size === 0) {
-                      setIsPlaying(false);
-                      setHasPausedPosition(false);
-                    }
-                  };
-                  rawSrc.start(when, 0, rawBuf.duration);
-                  (existingNodes as VocalNodes).rawBufferNode = rawSrc;
-                }
+          setMixProgress((prev) => ({ ...prev, [id]: 100 }));
+          const existingNodes = trackPlaybackRef.current.get(id);
+          if (existingNodes?.type === "vocal") {
+            existingNodes.rawGain.gain.value = 0;
+            existingNodes.mixedGain.gain.value = 1;
+            if (existingNodes.rawMedia) existingNodes.rawMedia.element.currentTime = 0;
+            if (existingNodes.mixedMedia) existingNodes.mixedMedia.element.currentTime = 0;
+            const when = ctx.currentTime;
+            if (existingNodes.rawBufferNode) {
+              try {
+                existingNodes.rawBufferNode.onended = null;
+                existingNodes.rawBufferNode.stop(when);
+                existingNodes.rawBufferNode.disconnect();
+              } catch (_) {}
+              const rawBuf = e.raw;
+              if (rawBuf) {
+                const rawSrc = ctx.createBufferSource();
+                rawSrc.buffer = rawBuf;
+                rawSrc.connect(existingNodes.rawGain);
+                rawSrc.onended = () => {
+                  trackPlaybackRef.current.delete(id);
+                  if (trackPlaybackRef.current.size === 0) {
+                    setIsPlaying(false);
+                    setHasPausedPosition(false);
+                  }
+                };
+                rawSrc.start(when, 0, rawBuf.duration);
+                (existingNodes as VocalNodes).rawBufferNode = rawSrc;
               }
-              if (existingNodes.mixedBufferNode) {
-                try {
-                  existingNodes.mixedBufferNode.onended = null;
-                  existingNodes.mixedBufferNode.stop(when);
-                  existingNodes.mixedBufferNode.disconnect();
-                } catch (_) {}
-              }
-              const src = ctx.createBufferSource();
-              src.buffer = decoded;
-              src.connect(existingNodes.mixedGain);
-              src.onended = () => {
-                trackPlaybackRef.current.delete(id);
-                if (trackPlaybackRef.current.size === 0) {
-                  setIsPlaying(false);
-                  setHasPausedPosition(false);
-                }
-              };
-              src.start(when, 0, decoded.duration);
-              (existingNodes as VocalNodes).mixedBufferNode = src;
-              startTimeRef.current = when;
-            } else {
-              const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-              const patchedPlayable = basePlayable.map((t) =>
-                t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
-              );
-              ctx.resume();
-              startPlaybackAtOffset(ctx, patchedPlayable, 0);
             }
-            setIsPlaying(true);
-            setTimeout(clearProgress, 500);
-          };
-
-          // Monter à 100% en smooth puis lancer le son tout de suite
-          if (mixFinishIntervalRef.current) {
-            clearInterval(mixFinishIntervalRef.current);
-            mixFinishIntervalRef.current = null;
+            if (existingNodes.mixedBufferNode) {
+              try {
+                existingNodes.mixedBufferNode.onended = null;
+                existingNodes.mixedBufferNode.stop(when);
+                existingNodes.mixedBufferNode.disconnect();
+              } catch (_) {}
+            }
+            const src = ctx.createBufferSource();
+            src.buffer = decoded;
+            src.connect(existingNodes.mixedGain);
+            src.onended = () => {
+              trackPlaybackRef.current.delete(id);
+              if (trackPlaybackRef.current.size === 0) {
+                setIsPlaying(false);
+                setHasPausedPosition(false);
+              }
+            };
+            src.start(when, 0, decoded.duration);
+            (existingNodes as VocalNodes).mixedBufferNode = src;
+            startTimeRef.current = when;
+          } else {
+            const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+            const patchedPlayable = basePlayable.map((t) =>
+              t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
+            );
+            ctx.resume();
+            startPlaybackAtOffset(ctx, patchedPlayable, 0);
           }
-          const finishTick = () => {
-            setMixProgress((prev) => {
-              const cur = prev[id] ?? 0;
-              if (cur >= 99.9) {
-                if (mixFinishIntervalRef.current) {
-                  clearInterval(mixFinishIntervalRef.current);
-                  mixFinishIntervalRef.current = null;
-                }
-                doStartPlayback();
-                return { ...prev, [id]: 100 };
-              }
-              const next = cur + (100 - cur) * 0.12;
-              return { ...prev, [id]: Math.round(next * 10) / 10 };
-            });
-          };
-          mixFinishIntervalRef.current = setInterval(finishTick, 16);
+          setIsPlaying(true);
+          setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
             clearInterval(mixFinishIntervalRef.current);
