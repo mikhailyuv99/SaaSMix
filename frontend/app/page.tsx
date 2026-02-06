@@ -1189,12 +1189,7 @@ export default function Home() {
   }
 
   const startPlaybackAtOffset = useCallback(
-    async (ctx: AudioContext, playable: Track[], offset: number) => {
-      await Promise.all(
-        playable.map((t) =>
-          decodeTrackBuffers(t.id, t.rawAudioUrl, t.mixedAudioUrl ?? null)
-        )
-      );
+    (ctx: AudioContext, playable: Track[], offset: number) => {
       const now = ctx.currentTime;
       startTimeRef.current = now - offset;
 
@@ -1436,7 +1431,7 @@ export default function Home() {
   );
 
   const playAll = useCallback(
-    async (override?: { playable?: Track[]; startOffset?: number }) => {
+    (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
       let ctx = contextRef.current;
       if (!ctx) {
@@ -1497,7 +1492,7 @@ export default function Home() {
       resumeFromRef.current = null;
       setHasPausedPosition(false);
 
-      await startPlaybackAtOffset(ctx, playable, startOffset);
+      startPlaybackAtOffset(ctx, playable, startOffset);
     },
     [startPlaybackAtOffset]
   );
@@ -1589,7 +1584,7 @@ export default function Home() {
           resumeFromRef.current = null;
           setHasPausedPosition(false);
           setIsPlaying(true);
-          await startPlaybackAtOffset(ctx, patchedPlayable, 0);
+          startPlaybackAtOffset(ctx, patchedPlayable, 0);
         } catch (decodeErr) {
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           if (isPlayingRef.current) stopAll();
