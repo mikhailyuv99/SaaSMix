@@ -594,6 +594,27 @@ export default function Home() {
     return () => events.forEach((ev) => document.documentElement.removeEventListener(ev, handler));
   }, []);
 
+  // Pré-décode des buffers dès qu’un fichier est choisi (contexte déjà créé par premier touch). Au tap Play les buffers sont prêts = 0 latence + son sur mobile.
+  useEffect(() => {
+    const ctx = contextRef.current;
+    if (!ctx) return;
+    const playable = tracks.filter((t) => t.file && t.rawAudioUrl);
+    for (const t of playable) {
+      const rawUrl = t.rawAudioUrl
+        ? t.rawAudioUrl.startsWith("http") || t.rawAudioUrl.startsWith("blob:")
+          ? t.rawAudioUrl
+          : `${API_BASE}${t.rawAudioUrl}`
+        : null;
+      const mixedUrl =
+        t.playMode === "mixed" && t.mixedAudioUrl
+          ? t.mixedAudioUrl.startsWith("http")
+            ? t.mixedAudioUrl
+            : `${API_BASE}${t.mixedAudioUrl}`
+          : null;
+      decodeTrackBuffers(t.id, rawUrl, mixedUrl).catch(() => {});
+    }
+  }, [tracks]);
+
   // Quand la fenêtre reprend le focus (ex. fermeture du sélecteur de fichiers), retirer le glow "fichier .wav"
   useEffect(() => {
     const onWindowFocus = () => setFileChooserActiveTrackId(null);
@@ -1215,8 +1236,22 @@ export default function Home() {
     buffersRef.current.set(id, entry);
   }
 
-  /** Charge tous les buffers (raw + mixed si besoin). Lance uniquement si tout est prêt = synchro garantie. */
+  /** Charge tous les buffers (raw + mixed si besoin). Si déjà pré-décodés, retour immédiat = 0 latence au tap Play. */
   async function ensureAllBuffersLoaded(playable: Track[]): Promise<void> {
+    let allReady = true;
+    for (const t of playable) {
+      const entry = buffersRef.current.get(t.id) ?? { raw: null, mixed: null };
+      if (!entry.raw) {
+        allReady = false;
+        break;
+      }
+      if (t.playMode === "mixed" && t.mixedAudioUrl && !entry.mixed) {
+        allReady = false;
+        break;
+      }
+    }
+    if (allReady) return;
+
     const fullRaw = (t: Track) =>
       t.rawAudioUrl
         ? t.rawAudioUrl.startsWith("http") || t.rawAudioUrl.startsWith("blob:")
