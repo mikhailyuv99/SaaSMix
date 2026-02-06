@@ -331,6 +331,9 @@ export default function Home() {
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
+  const mixSimulationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const mixSimulationStartRef = useRef<number>(0);
+  const MIX_ESTIMATED_DURATION_MS = 58000; // progression 0→90% sur ~58s quand backend synchrone
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
@@ -1541,6 +1544,10 @@ export default function Home() {
       if (!track?.file) return;
 
       const clearProgress = () => {
+        if (mixSimulationIntervalRef.current) {
+          clearInterval(mixSimulationIntervalRef.current);
+          mixSimulationIntervalRef.current = null;
+        }
         setMixProgress((prev) => {
           const next = { ...prev };
           delete next[id];
@@ -1550,6 +1557,16 @@ export default function Home() {
 
       setMixProgress((prev) => ({ ...prev, [id]: 0 }));
       updateTrack(id, { isMixing: true });
+
+      // Progression simulée 0→90% pendant l'attente du POST (backend synchrone)
+      mixSimulationStartRef.current = Date.now();
+      const tickSimulation = () => {
+        const elapsed = Date.now() - mixSimulationStartRef.current;
+        const pct = Math.min(89, Math.floor((elapsed / MIX_ESTIMATED_DURATION_MS) * 90));
+        setMixProgress((prev) => (prev[id] === 100 ? prev : { ...prev, [id]: pct }));
+      };
+      tickSimulation(); // premier tick tout de suite
+      mixSimulationIntervalRef.current = setInterval(tickSimulation, 250);
 
       const form = new FormData();
       form.append("file", track.file);
@@ -1593,6 +1610,11 @@ export default function Home() {
         const jobId = data.jobId as string | undefined;
         const directMixedUrl = data.mixedTrackUrl as string | undefined;
 
+        if (mixSimulationIntervalRef.current) {
+          clearInterval(mixSimulationIntervalRef.current);
+          mixSimulationIntervalRef.current = null;
+        }
+
         let path: string;
         if (jobId) {
           // Nouveau backend : poll progression réelle
@@ -1615,8 +1637,8 @@ export default function Home() {
           }
           path = statusData.mixedTrackUrl as string;
         } else if (directMixedUrl) {
-          // Ancien backend : mix synchrone, URL directe (pas de progression détaillée)
-          setMixProgress((prev) => ({ ...prev, [id]: 100 }));
+          // Ancien backend : mix synchrone. 90% = mix terminé, 90→100% pendant fetch/decode, 100% = son démarre
+          setMixProgress((prev) => ({ ...prev, [id]: 90 }));
           path = directMixedUrl;
         } else {
           clearProgress();
@@ -1624,6 +1646,8 @@ export default function Home() {
           setAppModal({ type: "alert", message: "Réponse API invalide (jobId ou mixedTrackUrl manquant).", onClose: () => {} });
           return;
         }
+
+        const fromSyncBackend = !!directMixedUrl && !jobId;
 
         if (!path) {
           clearProgress();
@@ -1641,13 +1665,14 @@ export default function Home() {
         try {
           const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
           if (!contextRef.current) contextRef.current = ctx;
+          if (fromSyncBackend) setMixProgress((prev) => ({ ...prev, [id]: 93 }));
           const audioRes = await fetch(fullUrl);
           const ab = await audioRes.arrayBuffer();
+          if (fromSyncBackend) setMixProgress((prev) => ({ ...prev, [id]: 97 }));
           const decoded = await ctx.decodeAudioData(ab);
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
           e.mixed = decoded;
-          setMixProgress((prev) => ({ ...prev, [id]: 100 }));
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           setTimeout(clearProgress, 500);
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
@@ -1660,6 +1685,8 @@ export default function Home() {
           setIsPlaying(true);
           const existingNodes = trackPlaybackRef.current.get(id);
           if (existingNodes?.type === "vocal") {
+            // 100% = tout de suite avant que le son parte
+            setMixProgress((prev) => ({ ...prev, [id]: 100 }));
             existingNodes.rawGain.gain.value = 0;
             existingNodes.mixedGain.gain.value = 1;
             if (existingNodes.rawMedia) existingNodes.rawMedia.element.currentTime = 0;
@@ -1708,6 +1735,7 @@ export default function Home() {
             (existingNodes as VocalNodes).mixedBufferNode = src;
             startTimeRef.current = when;
           } else {
+            setMixProgress((prev) => ({ ...prev, [id]: 100 }));
             const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
             const patchedPlayable = basePlayable.map((t) =>
               t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
@@ -1728,6 +1756,10 @@ export default function Home() {
           preloadMixedRef.current.set(id, preload);
         }
       } catch (e) {
+        if (mixSimulationIntervalRef.current) {
+          clearInterval(mixSimulationIntervalRef.current);
+          mixSimulationIntervalRef.current = null;
+        }
         clearProgress();
         updateTrack(id, { isMixing: false });
         console.error(e);
