@@ -506,13 +506,13 @@ export default function Home() {
             } else if ("media" in nodes) {
               nodes.media.element.onended = null;
               nodes.media.element.pause();
-              nodes.media.source.disconnect();
+              if (nodes.media.source) nodes.media.source.disconnect();
             }
           } else {
             if (nodes.rawMedia) {
               nodes.rawMedia.element.onended = null;
               nodes.rawMedia.element.pause();
-              nodes.rawMedia.source.disconnect();
+              if (nodes.rawMedia.source) if (nodes.rawMedia.source) nodes.rawMedia.source.disconnect();
             }
             if (nodes.rawBufferNode) {
               try {
@@ -525,7 +525,7 @@ export default function Home() {
             if (nodes.mixedMedia) {
               nodes.mixedMedia.element.onended = null;
               nodes.mixedMedia.element.pause();
-              nodes.mixedMedia.source.disconnect();
+              if (nodes.mixedMedia.source) if (nodes.mixedMedia.source) nodes.mixedMedia.source.disconnect();
             }
             if (nodes.mixedBufferNode) {
               try {
@@ -645,10 +645,10 @@ export default function Home() {
 
   type VocalNodes = {
     type: "vocal";
-    rawMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null;
+    rawMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null;
     rawBufferNode: AudioBufferSourceNode | null;
     rawUnlockGain: GainNode | null;
-    mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null;
+    mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null;
     mixedBufferNode: AudioBufferSourceNode | null;
     rawGain: GainNode;
     mixedGain: GainNode;
@@ -656,8 +656,10 @@ export default function Home() {
   };
   type InstrumentalNodes =
     | { type: "instrumental"; bufferNode: AudioBufferSourceNode; mainGain: GainNode }
-    | { type: "instrumental"; media: { element: HTMLAudioElement; source: MediaElementAudioSourceNode }; mainGain: GainNode };
+    | { type: "instrumental"; media: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null }; mainGain: GainNode };
   const trackPlaybackRef = useRef<Map<string, VocalNodes | InstrumentalNodes>>(new Map());
+  const isMobileRef = useRef(false);
+  if (typeof window !== "undefined") isMobileRef.current = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
   const addTrack = useCallback(() => {
     setTracks((prev) => {
@@ -690,14 +692,14 @@ export default function Home() {
             nodes.bufferNode.disconnect();
           } else if ("media" in nodes) {
             nodes.media.element.pause();
-            nodes.media.source.disconnect();
+            if (nodes.media.source) nodes.media.source.disconnect();
           }
         } catch (_) {}
       } else {
         try {
           if (nodes.rawMedia) {
             nodes.rawMedia.element.pause();
-            nodes.rawMedia.source.disconnect();
+            if (nodes.rawMedia.source) nodes.rawMedia.source.disconnect();
           }
           if (nodes.rawBufferNode) {
             try {
@@ -708,7 +710,7 @@ export default function Home() {
           if (nodes.rawUnlockGain) nodes.rawUnlockGain.disconnect();
           if (nodes.mixedMedia) {
             nodes.mixedMedia.element.pause();
-            nodes.mixedMedia.source.disconnect();
+            if (nodes.mixedMedia.source) nodes.mixedMedia.source.disconnect();
           }
           if (nodes.mixedBufferNode) {
             try {
@@ -740,14 +742,14 @@ export default function Home() {
             nodes.bufferNode.disconnect();
           } else if ("media" in nodes) {
             nodes.media.element.pause();
-            nodes.media.source.disconnect();
+            if (nodes.media.source) nodes.media.source.disconnect();
           }
         } catch (_) {}
       } else {
         try {
           if (nodes.rawMedia) {
             nodes.rawMedia.element.pause();
-            nodes.rawMedia.source.disconnect();
+            if (nodes.rawMedia.source) nodes.rawMedia.source.disconnect();
           }
           if (nodes.rawBufferNode) {
             try {
@@ -758,7 +760,7 @@ export default function Home() {
           if (nodes.rawUnlockGain) nodes.rawUnlockGain.disconnect();
           if (nodes.mixedMedia) {
             nodes.mixedMedia.element.pause();
-            nodes.mixedMedia.source.disconnect();
+            if (nodes.mixedMedia.source) nodes.mixedMedia.source.disconnect();
           }
           if (nodes.mixedBufferNode) {
             try {
@@ -1297,13 +1299,13 @@ export default function Home() {
               nodes.bufferNode.disconnect();
             } else if ("media" in nodes) {
               nodes.media.element.pause();
-              nodes.media.source.disconnect();
+              if (nodes.media.source) nodes.media.source.disconnect();
             }
           } catch (_) {}
         } else {
           if (nodes.rawMedia) {
             nodes.rawMedia.element.pause();
-            nodes.rawMedia.source.disconnect();
+            if (nodes.rawMedia.source) nodes.rawMedia.source.disconnect();
           }
           if (nodes.rawBufferNode) {
             try {
@@ -1314,7 +1316,7 @@ export default function Home() {
           if (nodes.rawUnlockGain) nodes.rawUnlockGain.disconnect();
           if (nodes.mixedMedia) {
             nodes.mixedMedia.element.pause();
-            nodes.mixedMedia.source.disconnect();
+            if (nodes.mixedMedia.source) nodes.mixedMedia.source.disconnect();
           }
           if (nodes.mixedBufferNode) {
             try {
@@ -1343,13 +1345,13 @@ export default function Home() {
             } else if ("media" in nodes) {
               nodes.media.element.onended = null;
               nodes.media.element.pause();
-              nodes.media.source.disconnect();
+              if (nodes.media.source) nodes.media.source.disconnect();
             }
           } else {
             if (nodes.rawMedia) {
               nodes.rawMedia.element.onended = null;
               nodes.rawMedia.element.pause();
-              nodes.rawMedia.source.disconnect();
+              if (nodes.rawMedia.source) if (nodes.rawMedia.source) nodes.rawMedia.source.disconnect();
             }
             if (nodes.rawBufferNode) {
               try {
@@ -1362,7 +1364,7 @@ export default function Home() {
             if (nodes.mixedMedia) {
               nodes.mixedMedia.element.onended = null;
               nodes.mixedMedia.element.pause();
-              nodes.mixedMedia.source.disconnect();
+              if (nodes.mixedMedia.source) if (nodes.mixedMedia.source) nodes.mixedMedia.source.disconnect();
             }
             if (nodes.mixedBufferNode) {
               try {
@@ -1378,6 +1380,78 @@ export default function Home() {
       const totalTracks = playable.length;
       const now = ctx.currentTime;
       startTimeRef.current = now - offset;
+
+      const fullUrl = (url: string) => (url.startsWith("http") || url.startsWith("blob:") ? url : `${API_BASE}${url}`);
+
+      if (isMobileRef.current) {
+        const mediaToPlay: HTMLAudioElement[] = [];
+        const mainGain = ctx.createGain();
+        mainGain.connect(ctx.destination);
+        for (const track of playable) {
+          if (!track.rawAudioUrl) continue;
+          const onEnd = () => {
+            trackPlaybackRef.current.delete(track.id);
+            endedCount++;
+            if (endedCount >= totalTracks) {
+              setIsPlaying(false);
+              setHasPausedPosition(false);
+            }
+          };
+          if (track.category === "instrumental") {
+            const audio = new Audio(fullUrl(track.rawAudioUrl));
+            audio.currentTime = offset;
+            audio.volume = track.gain / 100;
+            audio.onended = onEnd;
+            mediaToPlay.push(audio);
+            trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source: null }, mainGain });
+          } else {
+            const rawGain = ctx.createGain();
+            const mixedGain = ctx.createGain();
+            rawGain.connect(mainGain);
+            mixedGain.connect(mainGain);
+            rawGain.gain.value = track.playMode === "mixed" && track.mixedAudioUrl ? 0 : 1;
+            mixedGain.gain.value = track.playMode === "mixed" && track.mixedAudioUrl ? 1 : 0;
+            const onEndVocal = () => {
+              trackPlaybackRef.current.delete(track.id);
+              endedCount++;
+              if (endedCount >= totalTracks) {
+                setIsPlaying(false);
+                setHasPausedPosition(false);
+              }
+            };
+            const rawVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 0 : 1) * (track.gain / 100);
+            const mixedVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 1 : 0) * (track.gain / 100);
+            const rawAudio = new Audio(fullUrl(track.rawAudioUrl));
+            rawAudio.currentTime = offset;
+            rawAudio.volume = rawVol;
+            rawAudio.onended = onEndVocal;
+            mediaToPlay.push(rawAudio);
+            let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
+            if (track.mixedAudioUrl) {
+              const mixedAudio = new Audio(fullUrl(track.mixedAudioUrl));
+              mixedAudio.currentTime = offset;
+              mixedAudio.volume = mixedVol;
+              mixedAudio.onended = onEndVocal;
+              mediaToPlay.push(mixedAudio);
+              mixedMedia = { element: mixedAudio, source: null };
+            }
+            trackPlaybackRef.current.set(track.id, {
+              type: "vocal",
+              rawMedia: { element: rawAudio, source: null },
+              rawBufferNode: null,
+              rawUnlockGain: null,
+              mixedMedia,
+              mixedBufferNode: null,
+              rawGain,
+              mixedGain,
+              mainGain,
+            });
+          }
+        }
+        for (let i = 0; i < mediaToPlay.length; i++) mediaToPlay[i].play().catch(() => {});
+        setIsPlaying(true);
+        return;
+      }
 
       for (const track of playable) {
         if (!track.rawAudioUrl) continue;
@@ -1604,15 +1678,17 @@ export default function Home() {
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
         return;
       }
-      try {
-        await ensureAllBuffersLoaded(playable);
-      } catch (e) {
-        setAppModal({
-          type: "alert",
-          message: e instanceof Error ? e.message : "Impossible de charger les pistes. Réessayez.",
-          onClose: () => {},
-        });
-        return;
+      if (!isMobileRef.current) {
+        try {
+          await ensureAllBuffersLoaded(playable);
+        } catch (e) {
+          setAppModal({
+            type: "alert",
+            message: e instanceof Error ? e.message : "Impossible de charger les pistes. Réessayez.",
+            onClose: () => {},
+          });
+          return;
+        }
       }
       if (trackPlaybackRef.current.size > 0) {
         for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
@@ -1626,12 +1702,12 @@ export default function Home() {
                 } catch (_) {}
               } else if ("media" in nodes) {
                 nodes.media.element.pause();
-                nodes.media.source.disconnect();
+                if (nodes.media.source) nodes.media.source.disconnect();
               }
             } else {
               if (nodes.rawMedia) {
                 nodes.rawMedia.element.pause();
-                nodes.rawMedia.source.disconnect();
+                if (nodes.rawMedia.source) nodes.rawMedia.source.disconnect();
               }
               if (nodes.rawBufferNode) {
                 try {
@@ -1643,7 +1719,7 @@ export default function Home() {
               if (nodes.rawUnlockGain) nodes.rawUnlockGain.disconnect();
               if (nodes.mixedMedia) {
                 nodes.mixedMedia.element.pause();
-                nodes.mixedMedia.source.disconnect();
+                if (nodes.mixedMedia.source) nodes.mixedMedia.source.disconnect();
               }
               if (nodes.mixedBufferNode) {
                 try {
