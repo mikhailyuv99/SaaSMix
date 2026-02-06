@@ -2584,7 +2584,7 @@ export default function Home() {
                       }`}
                     >
                       {track.isMixing ? (
-                        <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] [text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
+                        <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
                           MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                         </span>
                       ) : (
