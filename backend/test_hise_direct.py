@@ -8,6 +8,8 @@ VST_BLOCK_SIZE = int(os.environ.get("VST_BLOCK_SIZE", "2048"))
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import wave
 import shutil
 import soundfile as sf
@@ -637,13 +639,33 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
     _progress("Chaîne principale (VST3)")
     cmd = [str(HOST_EXE), str(VST3_PATH), vst_input, vst_output, str(VST_BLOCK_SIZE)]
     print("1. Rendu VST3...")
-    # Certains VST3 chargent des DLL/ressources depuis le répertoire du plugin
     cwd = str(VST3_PATH.parent) if VST3_PATH.parent else None
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
-    
-    if result.returncode != 0:
-        err = (result.stderr or result.stdout or "").strip() or f"code sortie {result.returncode}"
-        print("ERREUR:", err, f"(code sortie {result.returncode})")
+    vst_weight = WEIGHTS["Chaîne principale (VST3)"]
+    start_pct = round((_cumul_weight[0] / _total_weight) * 100) if _total_weight else 0
+    end_pct = round(((_cumul_weight[0] + vst_weight) / _total_weight) * 100) if _total_weight else 100
+    result_holder = []
+
+    def _run_vst():
+        r = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
+        result_holder.append((r.returncode, r.stdout, r.stderr))
+
+    thr = threading.Thread(target=_run_vst)
+    thr.start()
+    vst_start = time.time()
+    while thr.is_alive():
+        time.sleep(1.2)
+        elapsed = time.time() - vst_start
+        ratio = min(0.92, elapsed / 50.0)
+        pct = round(start_pct + (end_pct - start_pct) * ratio)
+        if progress_callback:
+            progress_callback(min(99, pct), "Chaîne principale (VST3)")
+    thr.join()
+    result = result_holder[0] if result_holder else (1, "", "timeout")
+    returncode, stdout, stderr = result
+
+    if returncode != 0:
+        err = (stderr or stdout or "").strip() or f"code sortie {returncode}"
+        print("ERREUR:", err, f"(code sortie {returncode})")
         Path(normalized_input).unlink(missing_ok=True)
         return False, err
 
@@ -652,7 +674,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         print("ERREUR:", msg)
         Path(normalized_input).unlink(missing_ok=True)
         return False, msg
-    
+
     print("   VST3 OK")
     _progress("VST3 OK", done=True)
 
@@ -717,13 +739,33 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
             print(f"5. Reverb (reverb{reverb_mode}.vst3)...")
             temp_reverb_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
             cmd = [str(HOST_EXE), str(reverb_path), output_wav, temp_reverb_out, str(VST_BLOCK_SIZE)]
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode == 0 and Path(temp_reverb_out).exists():
+            rvb_weight = WEIGHTS["Reverb"]
+            rvb_start_pct = round((_cumul_weight[0] / _total_weight) * 100) if _total_weight else 0
+            rvb_end_pct = round(((_cumul_weight[0] + rvb_weight) / _total_weight) * 100) if _total_weight else 100
+            reverb_result = []
+
+            def _run_reverb():
+                r = subprocess.run(cmd, capture_output=True, text=True)
+                reverb_result.append((r.returncode, r.stdout, r.stderr))
+
+            rvb_thr = threading.Thread(target=_run_reverb)
+            rvb_thr.start()
+            rvb_start = time.time()
+            while rvb_thr.is_alive():
+                time.sleep(1.0)
+                elapsed = time.time() - rvb_start
+                ratio = min(0.92, elapsed / 18.0)
+                pct = round(rvb_start_pct + (rvb_end_pct - rvb_start_pct) * ratio)
+                if progress_callback:
+                    progress_callback(min(99, pct), "Reverb")
+            rvb_thr.join()
+            result = reverb_result[0] if reverb_result else (1, "", "")
+            if result[0] == 0 and Path(temp_reverb_out).exists():
                 shutil.copy(temp_reverb_out, output_wav)
                 print("   Reverb OK")
                 _progress("Reverb OK", done=True)
             else:
-                print("   Reverb skip:", result.stderr or result.stdout or "sortie absente")
+                print("   Reverb skip:", result[2] or result[1] or "sortie absente")
                 _progress("Reverb skip", done=True)
             Path(temp_reverb_out).unlink(missing_ok=True)
         else:
