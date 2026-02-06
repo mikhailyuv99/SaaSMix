@@ -579,7 +579,15 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         print(f"ERREUR: {msg}")
         return False, msg
 
-    vst_input = input_wav
+    # Normaliser en PCM 16-bit : hise_vst3_host ne gère pas le format 65534 (extensible/float)
+    normalized_input = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+    try:
+        audio_norm, sr_norm = read_wav(input_wav)
+        write_wav(normalized_input, audio_norm, sr_norm)
+    except Exception as e:
+        Path(normalized_input).unlink(missing_ok=True)
+        return False, str(e)
+    vst_input = normalized_input
     temp_gated = None
     temp_phone = None
 
@@ -588,7 +596,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
     if noise_gate:
         _progress("Noise gate")
         print("0. Noise gate...")
-        audio, sr = read_wav(input_wav)
+        audio, sr = read_wav(normalized_input)
         if audio.ndim == 2 and audio.shape[1] == 2:
             left = apply_noise_gate(audio[:, 0], sr, threshold_db=-50.0, lookahead_ms=10.0)
             right = apply_noise_gate(audio[:, 1], sr, threshold_db=-50.0, lookahead_ms=10.0)
@@ -630,11 +638,13 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
     if result.returncode != 0:
         err = (result.stderr or result.stdout or "").strip() or f"code sortie {result.returncode}"
         print("ERREUR:", err, f"(code sortie {result.returncode})")
+        Path(normalized_input).unlink(missing_ok=True)
         return False, err
-    
+
     if not Path(vst_output).exists():
         msg = "Fichier de sortie VST3 non créé"
         print("ERREUR:", msg)
+        Path(normalized_input).unlink(missing_ok=True)
         return False, msg
     
     print("   VST3 OK")
@@ -756,6 +766,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         Path(temp_gated).unlink(missing_ok=True)
     if temp_phone:
         Path(temp_phone).unlink(missing_ok=True)
+    Path(normalized_input).unlink(missing_ok=True)
 
     _progress("Terminé")
     print("OK ->", output_wav)
