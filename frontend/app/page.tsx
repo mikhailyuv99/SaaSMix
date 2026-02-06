@@ -333,6 +333,7 @@ export default function Home() {
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
   const mixSimulationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mixSimulationStartRef = useRef<number>(0);
+  const mixFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // 90→99 fluide (backend synchrone)
   const MIX_ESTIMATED_DURATION_MS = 58000; // progression 0→90% sur ~58s quand backend synchrone
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
@@ -1637,8 +1638,19 @@ export default function Home() {
           }
           path = statusData.mixedTrackUrl as string;
         } else if (directMixedUrl) {
-          // Ancien backend : mix synchrone. 90% = mix terminé, 90→100% pendant fetch/decode, 100% = son démarre
+          // Ancien backend : mix synchrone. 90% = mix terminé, puis progression fluide 90→99 jusqu'au play
           setMixProgress((prev) => ({ ...prev, [id]: 90 }));
+          if (mixFinishIntervalRef.current) {
+            clearInterval(mixFinishIntervalRef.current);
+            mixFinishIntervalRef.current = null;
+          }
+          mixFinishIntervalRef.current = setInterval(() => {
+            setMixProgress((prev) => {
+              const cur = prev[id] ?? 90;
+              if (cur >= 99) return prev;
+              return { ...prev, [id]: cur + 1 };
+            });
+          }, 180);
           path = directMixedUrl;
         } else {
           clearProgress();
@@ -1665,10 +1677,8 @@ export default function Home() {
         try {
           const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
           if (!contextRef.current) contextRef.current = ctx;
-          if (fromSyncBackend) setMixProgress((prev) => ({ ...prev, [id]: 93 }));
           const audioRes = await fetch(fullUrl);
           const ab = await audioRes.arrayBuffer();
-          if (fromSyncBackend) setMixProgress((prev) => ({ ...prev, [id]: 97 }));
           const decoded = await ctx.decodeAudioData(ab);
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
@@ -1685,7 +1695,10 @@ export default function Home() {
           setIsPlaying(true);
           const existingNodes = trackPlaybackRef.current.get(id);
           if (existingNodes?.type === "vocal") {
-            // 100% = tout de suite avant que le son parte
+            if (mixFinishIntervalRef.current) {
+              clearInterval(mixFinishIntervalRef.current);
+              mixFinishIntervalRef.current = null;
+            }
             setMixProgress((prev) => ({ ...prev, [id]: 100 }));
             existingNodes.rawGain.gain.value = 0;
             existingNodes.mixedGain.gain.value = 1;
@@ -1735,6 +1748,10 @@ export default function Home() {
             (existingNodes as VocalNodes).mixedBufferNode = src;
             startTimeRef.current = when;
           } else {
+            if (mixFinishIntervalRef.current) {
+              clearInterval(mixFinishIntervalRef.current);
+              mixFinishIntervalRef.current = null;
+            }
             setMixProgress((prev) => ({ ...prev, [id]: 100 }));
             const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
             const patchedPlayable = basePlayable.map((t) =>
@@ -1744,6 +1761,10 @@ export default function Home() {
             startPlaybackAtOffset(ctx, patchedPlayable, 0);
           }
         } catch (decodeErr) {
+          if (mixFinishIntervalRef.current) {
+            clearInterval(mixFinishIntervalRef.current);
+            mixFinishIntervalRef.current = null;
+          }
           clearProgress();
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           if (isPlayingRef.current) stopAll();
@@ -1759,6 +1780,10 @@ export default function Home() {
         if (mixSimulationIntervalRef.current) {
           clearInterval(mixSimulationIntervalRef.current);
           mixSimulationIntervalRef.current = null;
+        }
+        if (mixFinishIntervalRef.current) {
+          clearInterval(mixFinishIntervalRef.current);
+          mixFinishIntervalRef.current = null;
         }
         clearProgress();
         updateTrack(id, { isMixing: false });
@@ -2391,7 +2416,13 @@ export default function Home() {
                     disabled={track.isMixing}
                     className="w-full h-9 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline"
                   >
-                    {track.isMixing ? `${mixProgress[track.id] ?? 0}%` : "Mixer"}
+                    {track.isMixing ? (
+                    <span className="drop-shadow-[0_0_6px_rgba(255,255,255,0.95)] drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]">
+                      {mixProgress[track.id] ?? 0}%
+                    </span>
+                  ) : (
+                    "Mixer"
+                  )}
                   </button>
                   {noFileMessageTrackId === track.id && (
                     <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
@@ -2528,7 +2559,13 @@ export default function Home() {
                       disabled={track.isMixing}
                       className="py-2.5 rounded-lg border border-white/20 bg-white text-[#060608] text-tagline text-[10px] max-md:text-[9px] hover:bg-white/90 disabled:opacity-50"
                     >
-                      {track.isMixing ? `${mixProgress[track.id] ?? 0}%` : "Mixer"}
+                      {track.isMixing ? (
+                      <span className="drop-shadow-[0_0_6px_rgba(255,255,255,0.95)] drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]">
+                        {mixProgress[track.id] ?? 0}%
+                      </span>
+                    ) : (
+                      "Mixer"
+                    )}
                     </button>
                     <button
                       type="button"
