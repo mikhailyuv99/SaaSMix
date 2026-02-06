@@ -10,6 +10,7 @@ import sys
 import tempfile
 import wave
 import shutil
+import soundfile as sf
 from pathlib import Path
 from typing import Optional, Callable
 import numpy as np
@@ -107,32 +108,38 @@ if sys.platform == "linux":
 
 
 def read_wav(path: str):
-    """Lit un WAV en float32 (16, 24 ou 32-bit)."""
-    with wave.open(path, "rb") as wf:
-        sr = wf.getframerate()
-        nch = wf.getnchannels()
-        nframes = wf.getnframes()
-        sampwidth = wf.getsampwidth()
-        raw = wf.readframes(nframes)
-
-    if sampwidth == 2:  # 16-bit
-        arr = np.frombuffer(raw, dtype=np.int16)
-        audio = arr.astype(np.float32) / 32768.0
-    elif sampwidth == 3:  # 24-bit
-        arr = np.frombuffer(raw, dtype=np.uint8)
-        arr = arr.reshape(-1, 3)
-        # Little-endian 24-bit -> int32
-        sample = (arr[:, 0].astype(np.int32) | (arr[:, 1].astype(np.int32) << 8) |
-                  (arr[:, 2].astype(np.int32) << 16))
-        sample = np.where(sample >= 0x800000, sample - 0x1000000, sample)
-        audio = sample.astype(np.float32) / 8388608.0
-    elif sampwidth == 4:  # 32-bit
-        arr = np.frombuffer(raw, dtype=np.int32)
-        audio = arr.astype(np.float32) / 2147483648.0
-    else:
-        raise ValueError(f"Sample width {sampwidth} non supporté")
-
-    audio = audio.reshape(-1, nch)
+    """Lit un WAV en float32. Supporte PCM 16/24/32-bit, float, et WAVE_FORMAT_EXTENSIBLE (65534)."""
+    try:
+        audio, sr = sf.read(path, dtype="float32")
+    except Exception as e:
+        # Fallback pour .wav basique si soundfile échoue (fichier corrompu, etc.)
+        try:
+            with wave.open(path, "rb") as wf:
+                sr = wf.getframerate()
+                nch = wf.getnchannels()
+                nframes = wf.getnframes()
+                sampwidth = wf.getsampwidth()
+                raw = wf.readframes(nframes)
+            if sampwidth == 2:
+                arr = np.frombuffer(raw, dtype=np.int16)
+                audio = arr.astype(np.float32) / 32768.0
+            elif sampwidth == 3:
+                arr = np.frombuffer(raw, dtype=np.uint8)
+                arr = arr.reshape(-1, 3)
+                sample = (arr[:, 0].astype(np.int32) | (arr[:, 1].astype(np.int32) << 8) |
+                          (arr[:, 2].astype(np.int32) << 16))
+                sample = np.where(sample >= 0x800000, sample - 0x1000000, sample)
+                audio = sample.astype(np.float32) / 8388608.0
+            elif sampwidth == 4:
+                arr = np.frombuffer(raw, dtype=np.int32)
+                audio = arr.astype(np.float32) / 2147483648.0
+            else:
+                raise ValueError(f"Sample width {sampwidth} non supporté")
+            audio = audio.reshape(-1, nch)
+        except Exception:
+            raise e
+    if audio.ndim == 1:
+        audio = audio.reshape(-1, 1)
     return audio, sr
 
 
