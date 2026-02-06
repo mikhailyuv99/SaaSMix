@@ -496,17 +496,11 @@ export default function Home() {
       for (const [, nodes] of trackNodes) {
         try {
           if (nodes.type === "instrumental") {
-            if ("bufferNode" in nodes && nodes.bufferNode) {
-              try {
-                nodes.bufferNode.onended = null;
-                nodes.bufferNode.stop();
-                nodes.bufferNode.disconnect();
-              } catch (_) {}
-            } else {
-              nodes.media.element.onended = null;
-              nodes.media.element.pause();
-              nodes.media.source.disconnect();
-            }
+            try {
+              nodes.bufferNode.onended = null;
+              nodes.bufferNode.stop();
+              nodes.bufferNode.disconnect();
+            } catch (_) {}
           } else {
             if (nodes.rawMedia) {
               nodes.rawMedia.element.onended = null;
@@ -596,9 +590,7 @@ export default function Home() {
     mixedGain: GainNode;
     mainGain: GainNode;
   };
-  type InstrumentalNodes =
-    | { type: "instrumental"; media: { element: HTMLAudioElement; source: MediaElementAudioSourceNode }; mainGain: GainNode }
-    | { type: "instrumental"; bufferNode: AudioBufferSourceNode; mainGain: GainNode };
+  type InstrumentalNodes = { type: "instrumental"; bufferNode: AudioBufferSourceNode; mainGain: GainNode };
   const trackPlaybackRef = useRef<Map<string, VocalNodes | InstrumentalNodes>>(new Map());
 
   const addTrack = useCallback(() => {
@@ -627,13 +619,8 @@ export default function Home() {
     if (nodes) {
       if (nodes.type === "instrumental") {
         try {
-          if ("bufferNode" in nodes && nodes.bufferNode) {
-            nodes.bufferNode.stop();
-            nodes.bufferNode.disconnect();
-          } else {
-            nodes.media.element.pause();
-            nodes.media.source.disconnect();
-          }
+          nodes.bufferNode.stop();
+          nodes.bufferNode.disconnect();
         } catch (_) {}
       } else {
         try {
@@ -677,13 +664,8 @@ export default function Home() {
     if (nodes) {
       if (nodes.type === "instrumental") {
         try {
-          if ("bufferNode" in nodes && nodes.bufferNode) {
-            nodes.bufferNode.stop();
-            nodes.bufferNode.disconnect();
-          } else {
-            nodes.media.element.pause();
-            nodes.media.source.disconnect();
-          }
+          nodes.bufferNode.stop();
+          nodes.bufferNode.disconnect();
         } catch (_) {}
       } else {
         try {
@@ -1219,15 +1201,10 @@ export default function Home() {
     for (const [, nodes] of nodesMap) {
       try {
         if (nodes.type === "instrumental") {
-          if ("bufferNode" in nodes && nodes.bufferNode) {
-            try {
-              nodes.bufferNode.stop();
-              nodes.bufferNode.disconnect();
-            } catch (_) {}
-          } else {
-            nodes.media.element.pause();
-            nodes.media.source.disconnect();
-          }
+          try {
+            nodes.bufferNode.stop();
+            nodes.bufferNode.disconnect();
+          } catch (_) {}
         } else {
           if (nodes.rawMedia) {
             nodes.rawMedia.element.pause();
@@ -1262,17 +1239,11 @@ export default function Home() {
       for (const [, nodes] of toStop) {
         try {
           if (nodes.type === "instrumental") {
-            if ("bufferNode" in nodes && nodes.bufferNode) {
-              try {
-                nodes.bufferNode.onended = null;
-                nodes.bufferNode.stop();
-                nodes.bufferNode.disconnect();
-              } catch (_) {}
-            } else {
-              nodes.media.element.onended = null;
-              nodes.media.element.pause();
-              nodes.media.source.disconnect();
-            }
+            try {
+              nodes.bufferNode.onended = null;
+              nodes.bufferNode.stop();
+              nodes.bufferNode.disconnect();
+            } catch (_) {}
           } else {
             if (nodes.rawMedia) {
               nodes.rawMedia.element.onended = null;
@@ -1406,31 +1377,27 @@ export default function Home() {
         for (const [id, nodes] of Array.from(trackPlaybackRef.current.entries())) {
           try {
             if (nodes.type === "instrumental") {
-              if ("bufferNode" in nodes && nodes.bufferNode) {
-                const buf = buffersRef.current.get(id)?.raw;
-                if (buf) {
-                  const when = ctx.currentTime;
-                  try {
-                    nodes.bufferNode.onended = null;
-                    nodes.bufferNode.stop(when);
-                    nodes.bufferNode.disconnect();
-                  } catch (_) {}
-                  const src = ctx.createBufferSource();
-                  src.buffer = buf;
-                  src.connect(nodes.mainGain);
-                  src.onended = () => {
-                    trackPlaybackRef.current.delete(id);
-                    if (trackPlaybackRef.current.size === 0) {
-                      setIsPlaying(false);
-                      setHasPausedPosition(false);
-                    }
-                  };
-                  const duration = Math.max(0, buf.duration - safeOffset);
-                  src.start(when, safeOffset, duration);
-                  trackPlaybackRef.current.set(id, { type: "instrumental", bufferNode: src, mainGain: nodes.mainGain });
-                }
-              } else {
-                nodes.media.element.currentTime = safeOffset;
+              const buf = buffersRef.current.get(id)?.raw;
+              if (buf) {
+                const when = ctx.currentTime;
+                try {
+                  nodes.bufferNode.onended = null;
+                  nodes.bufferNode.stop(when);
+                  nodes.bufferNode.disconnect();
+                } catch (_) {}
+                const src = ctx.createBufferSource();
+                src.buffer = buf;
+                src.connect(nodes.mainGain);
+                src.onended = () => {
+                  trackPlaybackRef.current.delete(id);
+                  if (trackPlaybackRef.current.size === 0) {
+                    setIsPlaying(false);
+                    setHasPausedPosition(false);
+                  }
+                };
+                const duration = Math.max(0, buf.duration - safeOffset);
+                src.start(when, safeOffset, duration);
+                trackPlaybackRef.current.set(id, { type: "instrumental", bufferNode: src, mainGain: nodes.mainGain });
               }
             } else {
               if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
@@ -1530,16 +1497,11 @@ export default function Home() {
         for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
           try {
             if (nodes.type === "instrumental") {
-              if ("bufferNode" in nodes && nodes.bufferNode) {
-                try {
-                  nodes.bufferNode.onended = null;
-                  nodes.bufferNode.stop();
-                  nodes.bufferNode.disconnect();
-                } catch (_) {}
-              } else {
-                nodes.media.element.pause();
-                nodes.media.source.disconnect();
-              }
+              try {
+                nodes.bufferNode.onended = null;
+                nodes.bufferNode.stop();
+                nodes.bufferNode.disconnect();
+              } catch (_) {}
             } else {
               if (nodes.rawMedia) {
                 nodes.rawMedia.element.pause();
