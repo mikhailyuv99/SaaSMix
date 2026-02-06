@@ -552,6 +552,42 @@ export default function Home() {
     };
   }, []);
 
+  // Déblocage audio mobile : au premier touch/click, créer le contexte, jouer un buffer silencieux + un <audio> silencieux (iOS)
+  const SILENT_WAV =
+    "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+  useEffect(() => {
+    function doUnlock() {
+      if (audioUnlockedRef.current) return;
+      try {
+        let ctx = contextRef.current;
+        if (!ctx) {
+          ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+          contextRef.current = ctx;
+        }
+        if (ctx.state === "suspended") {
+          ctx.resume().catch(() => {});
+          const numSamples = Math.max(1, Math.min(Math.ceil(ctx.sampleRate * 0.05), 4096));
+          const buf = ctx.createBuffer(1, numSamples, ctx.sampleRate);
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          src.connect(ctx.destination);
+          src.start(0);
+        }
+        const au = new Audio(SILENT_WAV);
+        au.volume = 0;
+        au.play().catch(() => {});
+        audioUnlockedRef.current = true;
+      } catch (_) {}
+    }
+    const events: (keyof DocumentEventMap)[] = ["touchstart", "touchend", "mousedown", "click"];
+    const handler = () => {
+      doUnlock();
+      events.forEach((ev) => document.documentElement.removeEventListener(ev, handler));
+    };
+    events.forEach((ev) => document.documentElement.addEventListener(ev, handler, { passive: true }));
+    return () => events.forEach((ev) => document.documentElement.removeEventListener(ev, handler));
+  }, []);
+
   // Quand la fenêtre reprend le focus (ex. fermeture du sélecteur de fichiers), retirer le glow "fichier .wav"
   useEffect(() => {
     const onWindowFocus = () => setFileChooserActiveTrackId(null);
@@ -1486,6 +1522,7 @@ export default function Home() {
         contextRef.current = ctx;
       }
       if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {}); // lance le resume dans le geste, sans attendre
         unlockAudioContextSync(ctx);
         await ctx.resume().catch(() => {
           setIsPlaying(false);
@@ -2328,6 +2365,9 @@ export default function Home() {
                 </button>
               )}
             </div>
+            <p className="mt-2 text-center text-[11px] text-slate-500 max-md:block hidden">
+              Touchez l’écran une fois puis lancez la lecture. iPhone : désactivez le mode silencieux (interrupteur) pour entendre le son.
+            </p>
           </section>
           );
         })()}
