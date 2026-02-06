@@ -1951,9 +1951,19 @@ export default function Home() {
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
-          ctx.resume();
-          startPlaybackAtOffset(ctx, patchedPlayable, 0);
-          setIsPlaying(true);
+          if (isMobileRef.current) {
+            // Sur mobile : ne pas lancer la lecture ici (hors geste utilisateur → iOS bloque le son).
+            // L'utilisateur appuie sur Play pour écouter (dans le geste).
+            setIsPlaying(false);
+          } else {
+            if (ctx.state === "suspended") {
+              ctx.resume().catch(() => {});
+              unlockAudioContextSync(ctx);
+              await ctx.resume().catch(() => {});
+            }
+            startPlaybackAtOffset(ctx, patchedPlayable, 0);
+            setIsPlaying(true);
+          }
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
