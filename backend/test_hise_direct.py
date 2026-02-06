@@ -511,8 +511,19 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
            progress_callback: Optional[Callable[[int, str], None]] = None):
     """Retourne (True, None) en cas de succès, (False, message_erreur) sinon.
     progress_callback(percent, step_name) appelé à chaque étape (0-100).
-    Le pourcentage est réparti sur les étapes réellement exécutées (options cochées)."""
-    # Étapes qui vont réellement s'exécuter (pour répartir 0-100 % dessus)
+    Pourcentage pondéré par le temps réel des étapes (VST3 principal et reverb = lourds)."""
+    # Poids par étape (reflète le temps réel : chaîne VST3 et reverb dominent)
+    WEIGHTS = {
+        "Noise gate": 2,
+        "FX téléphone": 2,
+        "Chaîne principale (VST3)": 52,
+        "De-esser": 5,
+        "Tone": 4,
+        "Delay": 4,
+        "Reverb": 18,
+        "Doubler": 4,
+        "FX robot": 4,
+    }
     _steps = []
     if noise_gate:
         _steps.append("Noise gate")
@@ -531,14 +542,21 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         _steps.append("Doubler")
     if robot:
         _steps.append("FX robot")
-    _total = len(_steps)
-    _step_index = [0]  # mutable pour closure
+    _total_weight = sum(WEIGHTS.get(s, 5) for s in _steps) or 100
+    _cumul_weight = [0]  # mutable
+
+    def _step_weight(step_label: str) -> int:
+        """Poids pour un libellé de fin d'étape (ex. 'Noise gate OK', 'VST3 OK')."""
+        for key in WEIGHTS:
+            if step_label.startswith(key) or (key == "Chaîne principale (VST3)" and "VST3" in step_label):
+                return WEIGHTS[key]
+        return 5
 
     def _progress(step: str, done: bool = False):
         if progress_callback:
             if done:
-                _step_index[0] += 1
-            pct = round((_step_index[0] / _total) * 100) if _total else 100
+                _cumul_weight[0] += _step_weight(step)
+            pct = round((_cumul_weight[0] / _total_weight) * 100) if _total_weight else 100
             progress_callback(min(100, pct), step)
 
     if not HOST_EXE.exists():
