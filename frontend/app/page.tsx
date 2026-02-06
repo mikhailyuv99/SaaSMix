@@ -1304,7 +1304,7 @@ export default function Home() {
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
         startTimeRef.current = ctx.currentTime - safeOffset;
-        for (const [id, nodes] of trackPlaybackRef.current.entries()) {
+        for (const [id, nodes] of Array.from(trackPlaybackRef.current.entries())) {
           try {
             if (nodes.type === "instrumental") {
               nodes.media.element.currentTime = safeOffset;
@@ -1361,7 +1361,7 @@ export default function Home() {
       });
     }
     if (trackPlaybackRef.current.size > 0) {
-      for (const [, nodes] of trackPlaybackRef.current.entries()) {
+      for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
         try {
           if (nodes.type === "instrumental") {
             nodes.media.element.pause();
