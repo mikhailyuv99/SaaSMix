@@ -335,6 +335,8 @@ export default function Home() {
   const mixSimulationStartRef = useRef<number>(0);
   const mixFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // progression fluide jusqu'à 99% (backend synchrone)
   const mixCurrentPctRef = useRef<number>(0); // dernière valeur simulation (pour enchaîner sans saut)
+  const mixProgressTargetRef = useRef<Record<string, number>>({}); // cible % (backend) pour lissage
+  const mixSmoothIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const MIX_ESTIMATED_DURATION_MS = 58000; // progression 0→89% sur ~58s quand backend synchrone
   const MIX_FINISH_DURATION_MS = 9000; // current→99% étalé sur 9s (fetch+decode)
   type AppModal =
@@ -1551,6 +1553,10 @@ export default function Home() {
           clearInterval(mixSimulationIntervalRef.current);
           mixSimulationIntervalRef.current = null;
         }
+        if (mixSmoothIntervalRef.current) {
+          clearInterval(mixSmoothIntervalRef.current);
+          mixSmoothIntervalRef.current = null;
+        }
         setMixProgress((prev) => {
           const next = { ...prev };
           delete next[id];
@@ -1621,7 +1627,22 @@ export default function Home() {
 
         let path: string;
         if (jobId) {
-          // Nouveau backend : poll progression réelle
+          // Nouveau backend : poll progression réelle, affichage lissé (pas de sauts)
+          if (mixSmoothIntervalRef.current) {
+            clearInterval(mixSmoothIntervalRef.current);
+            mixSmoothIntervalRef.current = null;
+          }
+          mixSmoothIntervalRef.current = setInterval(() => {
+            setMixProgress((prev) => {
+              const cur = prev[id] ?? 0;
+              const target = mixProgressTargetRef.current[id] ?? cur;
+              const effectiveTarget = Math.max(cur, target);
+              if (cur >= effectiveTarget) return prev;
+              const step = Math.min(1.8, (effectiveTarget - cur) * 0.2);
+              const next = Math.min(cur + step, effectiveTarget);
+              return { ...prev, [id]: Math.round(next * 10) / 10 };
+            });
+          }, 60);
           let statusData: { status: string; percent: number; step?: string; mixedTrackUrl?: string; error?: string } = { status: "running", percent: 0 };
           while (statusData.status === "running") {
             await new Promise((r) => setTimeout(r, 500));
@@ -1631,7 +1652,11 @@ export default function Home() {
               break;
             }
             statusData = await statusRes.json();
-            setMixProgress((prev) => ({ ...prev, [id]: Math.max(prev[id] ?? 0, statusData.percent) }));
+            mixProgressTargetRef.current[id] = Math.max(mixProgressTargetRef.current[id] ?? 0, statusData.percent);
+          }
+          if (mixSmoothIntervalRef.current) {
+            clearInterval(mixSmoothIntervalRef.current);
+            mixSmoothIntervalRef.current = null;
           }
           if (statusData.status === "error") {
             clearProgress();
@@ -1787,6 +1812,10 @@ export default function Home() {
         if (mixSimulationIntervalRef.current) {
           clearInterval(mixSimulationIntervalRef.current);
           mixSimulationIntervalRef.current = null;
+        }
+        if (mixSmoothIntervalRef.current) {
+          clearInterval(mixSmoothIntervalRef.current);
+          mixSmoothIntervalRef.current = null;
         }
         if (mixFinishIntervalRef.current) {
           clearInterval(mixFinishIntervalRef.current);
