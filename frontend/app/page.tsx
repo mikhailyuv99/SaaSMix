@@ -637,7 +637,6 @@ export default function Home() {
     | { type: "instrumental"; bufferNode: AudioBufferSourceNode; mainGain: GainNode }
     | { type: "instrumental"; media: { element: HTMLAudioElement; source: MediaElementAudioSourceNode }; mainGain: GainNode };
   const trackPlaybackRef = useRef<Map<string, VocalNodes | InstrumentalNodes>>(new Map());
-  const isMobile = typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 
   const addTrack = useCallback(() => {
     setTracks((prev) => {
@@ -1345,80 +1344,6 @@ export default function Home() {
       const now = ctx.currentTime;
       startTimeRef.current = now - offset;
 
-      const fullUrl = (url: string) => (url.startsWith("http") || url.startsWith("blob:") ? url : `${API_BASE}${url}`);
-      const mediaToPlay: HTMLAudioElement[] = [];
-
-      if (isMobile) {
-        for (const track of playable) {
-          if (!track.rawAudioUrl) continue;
-          const mainGain = ctx.createGain();
-          mainGain.gain.value = track.gain / 100;
-          mainGain.connect(ctx.destination);
-          const onEnd = () => {
-            trackPlaybackRef.current.delete(track.id);
-            endedCount++;
-            if (endedCount >= totalTracks) {
-              setIsPlaying(false);
-              setHasPausedPosition(false);
-            }
-          };
-          if (track.category === "instrumental") {
-            const audio = new Audio(fullUrl(track.rawAudioUrl));
-            const source = ctx.createMediaElementSource(audio);
-            source.connect(mainGain);
-            audio.currentTime = offset;
-            audio.onended = onEnd;
-            mediaToPlay.push(audio);
-            trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source }, mainGain });
-          } else {
-            const rawGain = ctx.createGain();
-            const mixedGain = ctx.createGain();
-            rawGain.connect(mainGain);
-            mixedGain.connect(mainGain);
-            rawGain.gain.value = track.playMode === "mixed" && track.mixedAudioUrl ? 0 : 1;
-            mixedGain.gain.value = track.playMode === "mixed" && track.mixedAudioUrl ? 1 : 0;
-            const onEndVocal = () => {
-              trackPlaybackRef.current.delete(track.id);
-              endedCount++;
-              if (endedCount >= totalTracks) {
-                setIsPlaying(false);
-                setHasPausedPosition(false);
-              }
-            };
-            const rawAudio = new Audio(fullUrl(track.rawAudioUrl));
-            const rawSource = ctx.createMediaElementSource(rawAudio);
-            rawSource.connect(rawGain);
-            rawAudio.currentTime = offset;
-            rawAudio.onended = onEndVocal;
-            mediaToPlay.push(rawAudio);
-            let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null = null;
-            if (track.mixedAudioUrl) {
-              const mixedAudio = new Audio(fullUrl(track.mixedAudioUrl));
-              const mixedSource = ctx.createMediaElementSource(mixedAudio);
-              mixedSource.connect(mixedGain);
-              mixedAudio.currentTime = offset;
-              mixedAudio.onended = onEndVocal;
-              mediaToPlay.push(mixedAudio);
-              mixedMedia = { element: mixedAudio, source: mixedSource };
-            }
-            trackPlaybackRef.current.set(track.id, {
-              type: "vocal",
-              rawMedia: { element: rawAudio, source: rawSource },
-              rawBufferNode: null,
-              rawUnlockGain: null,
-              mixedMedia,
-              mixedBufferNode: null,
-              rawGain,
-              mixedGain,
-              mainGain,
-            });
-          }
-        }
-        for (const el of mediaToPlay) el.play().catch(() => {});
-        setIsPlaying(true);
-        return;
-      }
-
       for (const track of playable) {
         if (!track.rawAudioUrl) continue;
         const entry = buffersRef.current.get(track.id) ?? { raw: null, mixed: null };
@@ -1644,17 +1569,15 @@ export default function Home() {
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
         return;
       }
-      if (!isMobile) {
-        try {
-          await ensureAllBuffersLoaded(playable);
-        } catch (e) {
-          setAppModal({
-            type: "alert",
-            message: e instanceof Error ? e.message : "Impossible de charger les pistes. Réessayez.",
-            onClose: () => {},
-          });
-          return;
-        }
+      try {
+        await ensureAllBuffersLoaded(playable);
+      } catch (e) {
+        setAppModal({
+          type: "alert",
+          message: e instanceof Error ? e.message : "Impossible de charger les pistes. Réessayez.",
+          onClose: () => {},
+        });
+        return;
       }
       if (trackPlaybackRef.current.size > 0) {
         for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
