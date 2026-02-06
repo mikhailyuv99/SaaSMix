@@ -131,4 +131,14 @@
     animation: starry-twinkle var(--star-duration, 4s) ease-in-out infinite;
     animation-delay: var(--star-delay, 0s);
   }
+  /* MIXAGE... : points de suspension en séquence (vague) */
+  @keyframes mix-dot {
+    0% { opacity: 0.25; }
+    25% { opacity: 1; }
+    75% { opacity: 1; }
+    100% { opacity: 0.25; }
+  }
+  .animate-mix-dot {
+    animation: mix-dot 1.2s ease-in-out infinite;
+  }
 }

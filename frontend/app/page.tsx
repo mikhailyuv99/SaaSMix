@@ -2432,13 +2432,13 @@ export default function Home() {
                     disabled={track.isMixing}
                     className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
                       track.isMixing
-                        ? "border-white/30 bg-black text-white"
+                        ? "border-white/30 bg-slate-800 text-white"
                         : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
                     }`}
                   >
                     {track.isMixing ? (
                       <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-                        MIXAGE...
+                        MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                       </span>
                     ) : (
                       "Mixer"
@@ -2579,13 +2579,13 @@ export default function Home() {
                       disabled={track.isMixing}
                       className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] ${
                         track.isMixing
-                          ? "border-white/30 bg-black text-white disabled:opacity-50"
+                          ? "border-white/30 bg-slate-800 text-white disabled:opacity-50"
                           : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
                       }`}
                     >
                       {track.isMixing ? (
                         <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-                          MIXAGE...
+                          MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                         </span>
                       ) : (
                         "Mixer"
