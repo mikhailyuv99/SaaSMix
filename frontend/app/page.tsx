@@ -1589,32 +1589,42 @@ export default function Home() {
           throw new Error(msg || "Mix failed");
         }
 
-        const jobId = data.jobId as string;
-        if (!jobId) {
-          throw new Error("Réponse API invalide (jobId manquant)");
-        }
+        // Backend peut répondre en mode job (jobId + poll status) ou en mode synchrone (mixedTrackUrl direct)
+        const jobId = data.jobId as string | undefined;
+        const directMixedUrl = data.mixedTrackUrl as string | undefined;
 
-        // Poll progression réelle (chaîne de mix backend)
-        let statusData: { status: string; percent: number; step?: string; mixedTrackUrl?: string; error?: string } = { status: "running", percent: 0 };
-        while (statusData.status === "running") {
-          await new Promise((r) => setTimeout(r, 500));
-          const statusRes = await fetch(`${API_BASE}/api/track/mix/status?job_id=${encodeURIComponent(jobId)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-          if (!statusRes.ok) {
-            statusData = { status: "error", percent: 0, error: "Impossible de récupérer le statut du mix" };
-            break;
+        let path: string;
+        if (jobId) {
+          // Nouveau backend : poll progression réelle
+          let statusData: { status: string; percent: number; step?: string; mixedTrackUrl?: string; error?: string } = { status: "running", percent: 0 };
+          while (statusData.status === "running") {
+            await new Promise((r) => setTimeout(r, 500));
+            const statusRes = await fetch(`${API_BASE}/api/track/mix/status?job_id=${encodeURIComponent(jobId)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+            if (!statusRes.ok) {
+              statusData = { status: "error", percent: 0, error: "Impossible de récupérer le statut du mix" };
+              break;
+            }
+            statusData = await statusRes.json();
+            setMixProgress((prev) => ({ ...prev, [id]: statusData.percent }));
           }
-          statusData = await statusRes.json();
-          setMixProgress((prev) => ({ ...prev, [id]: statusData.percent }));
-        }
-
-        if (statusData.status === "error") {
+          if (statusData.status === "error") {
+            clearProgress();
+            updateTrack(id, { isMixing: false });
+            setAppModal({ type: "alert", message: "Erreur lors du mix : " + (statusData.error || "Échec inconnu"), onClose: () => {} });
+            return;
+          }
+          path = statusData.mixedTrackUrl as string;
+        } else if (directMixedUrl) {
+          // Ancien backend : mix synchrone, URL directe (pas de progression détaillée)
+          setMixProgress((prev) => ({ ...prev, [id]: 100 }));
+          path = directMixedUrl;
+        } else {
           clearProgress();
           updateTrack(id, { isMixing: false });
-          setAppModal({ type: "alert", message: "Erreur lors du mix : " + (statusData.error || "Échec inconnu"), onClose: () => {} });
+          setAppModal({ type: "alert", message: "Réponse API invalide (jobId ou mixedTrackUrl manquant).", onClose: () => {} });
           return;
         }
 
-        const path = statusData.mixedTrackUrl as string;
         if (!path) {
           clearProgress();
           updateTrack(id, { isMixing: false });
