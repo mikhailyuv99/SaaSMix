@@ -1399,7 +1399,6 @@ export default function Home() {
           };
           if (track.category === "instrumental") {
             const audio = new Audio(fullUrl(track.rawAudioUrl));
-            audio.currentTime = offset;
             audio.volume = track.gain / 100;
             audio.onended = onEnd;
             mediaToPlay.push(audio);
@@ -1422,14 +1421,12 @@ export default function Home() {
             const rawVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 0 : 1) * (track.gain / 100);
             const mixedVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 1 : 0) * (track.gain / 100);
             const rawAudio = new Audio(fullUrl(track.rawAudioUrl));
-            rawAudio.currentTime = offset;
             rawAudio.volume = rawVol;
             rawAudio.onended = onEndVocal;
             mediaToPlay.push(rawAudio);
             let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
             if (track.mixedAudioUrl) {
               const mixedAudio = new Audio(fullUrl(track.mixedAudioUrl));
-              mixedAudio.currentTime = offset;
               mixedAudio.volume = mixedVol;
               mixedAudio.onended = onEndVocal;
               mediaToPlay.push(mixedAudio);
@@ -1448,7 +1445,26 @@ export default function Home() {
             });
           }
         }
-        for (let i = 0; i < mediaToPlay.length; i++) mediaToPlay[i].play().catch(() => {});
+        Promise.all(
+          mediaToPlay.map(
+            (el) =>
+              new Promise<void>((resolve) => {
+                if (el.readyState >= 3) {
+                  resolve();
+                  return;
+                }
+                el.addEventListener("canplaythrough", () => resolve(), { once: true });
+                el.addEventListener("error", () => resolve(), { once: true });
+              })
+          )
+        ).then(() => {
+          for (let i = 0; i < mediaToPlay.length; i++) {
+            mediaToPlay[i].currentTime = offset;
+          }
+          for (let i = 0; i < mediaToPlay.length; i++) {
+            mediaToPlay[i].play().catch(() => {});
+          }
+        });
         setIsPlaying(true);
         return;
       }
