@@ -1644,13 +1644,14 @@ export default function Home() {
             clearInterval(mixFinishIntervalRef.current);
             mixFinishIntervalRef.current = null;
           }
+          // 90→99% étalé sur ~5 s (fetch + decode) pour éviter de rester bloqué à 99%
           mixFinishIntervalRef.current = setInterval(() => {
             setMixProgress((prev) => {
               const cur = prev[id] ?? 90;
               if (cur >= 99) return prev;
               return { ...prev, [id]: cur + 1 };
             });
-          }, 180);
+          }, 550);
           path = directMixedUrl;
         } else {
           clearProgress();
@@ -2417,7 +2418,7 @@ export default function Home() {
                     className="w-full h-9 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline"
                   >
                     {track.isMixing ? (
-                    <span className="drop-shadow-[0_0_6px_rgba(255,255,255,0.95)] drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]">
+                    <span className="drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
                       {mixProgress[track.id] ?? 0}%
                     </span>
                   ) : (
@@ -2560,7 +2561,7 @@ export default function Home() {
                       className="py-2.5 rounded-lg border border-white/20 bg-white text-[#060608] text-tagline text-[10px] max-md:text-[9px] hover:bg-white/90 disabled:opacity-50"
                     >
                       {track.isMixing ? (
-                      <span className="drop-shadow-[0_0_6px_rgba(255,255,255,0.95)] drop-shadow-[0_0_12px_rgba(255,255,255,0.6)]">
+                      <span className="drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
                         {mixProgress[track.id] ?? 0}%
                       </span>
                     ) : (
