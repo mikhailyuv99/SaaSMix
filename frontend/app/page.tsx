@@ -1631,7 +1631,7 @@ export default function Home() {
               break;
             }
             statusData = await statusRes.json();
-            setMixProgress((prev) => ({ ...prev, [id]: statusData.percent }));
+            setMixProgress((prev) => ({ ...prev, [id]: Math.max(prev[id] ?? 0, statusData.percent) }));
           }
           if (statusData.status === "error") {
             clearProgress();
@@ -1765,6 +1765,7 @@ export default function Home() {
             );
             ctx.resume();
             startPlaybackAtOffset(ctx, patchedPlayable, 0);
+            setIsPlaying(true);
           }
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
