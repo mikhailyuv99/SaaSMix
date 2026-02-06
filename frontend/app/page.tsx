@@ -333,8 +333,10 @@ export default function Home() {
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
   const mixSimulationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mixSimulationStartRef = useRef<number>(0);
-  const mixFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // 90→99 fluide (backend synchrone)
-  const MIX_ESTIMATED_DURATION_MS = 58000; // progression 0→90% sur ~58s quand backend synchrone
+  const mixFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // progression fluide jusqu'à 99% (backend synchrone)
+  const mixCurrentPctRef = useRef<number>(0); // dernière valeur simulation (pour enchaîner sans saut)
+  const MIX_ESTIMATED_DURATION_MS = 58000; // progression 0→89% sur ~58s quand backend synchrone
+  const MIX_FINISH_DURATION_MS = 9000; // current→99% étalé sur 9s (fetch+decode)
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
@@ -1564,6 +1566,7 @@ export default function Home() {
       const tickSimulation = () => {
         const elapsed = Date.now() - mixSimulationStartRef.current;
         const pct = Math.min(89, Math.floor((elapsed / MIX_ESTIMATED_DURATION_MS) * 90));
+        mixCurrentPctRef.current = pct;
         setMixProgress((prev) => (prev[id] === 100 ? prev : { ...prev, [id]: pct }));
       };
       tickSimulation(); // premier tick tout de suite
@@ -1638,20 +1641,21 @@ export default function Home() {
           }
           path = statusData.mixedTrackUrl as string;
         } else if (directMixedUrl) {
-          // Ancien backend : mix synchrone. 90% = mix terminé, puis progression fluide 90→99 jusqu'au play
-          setMixProgress((prev) => ({ ...prev, [id]: 90 }));
+          // Ancien backend : enchaîner sans saut (current→99% étalé sur MIX_FINISH_DURATION_MS)
+          const startFrom = Math.min(89, mixCurrentPctRef.current);
           if (mixFinishIntervalRef.current) {
             clearInterval(mixFinishIntervalRef.current);
             mixFinishIntervalRef.current = null;
           }
-          // 90→99% étalé sur ~5 s (fetch + decode) pour éviter de rester bloqué à 99%
+          const steps = 99 - startFrom;
+          const stepMs = steps > 0 ? Math.min(800, Math.max(350, MIX_FINISH_DURATION_MS / steps)) : 500;
           mixFinishIntervalRef.current = setInterval(() => {
             setMixProgress((prev) => {
-              const cur = prev[id] ?? 90;
+              const cur = prev[id] ?? startFrom;
               if (cur >= 99) return prev;
               return { ...prev, [id]: cur + 1 };
             });
-          }, 550);
+          }, stepMs);
           path = directMixedUrl;
         } else {
           clearProgress();
@@ -2415,15 +2419,19 @@ export default function Home() {
                       runMix(track.id);
                     }}
                     disabled={track.isMixing}
-                    className="w-full h-9 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline"
+                    className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
+                      track.isMixing
+                        ? "border-white/30 bg-slate-800 text-white"
+                        : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
+                    }`}
                   >
                     {track.isMixing ? (
-                    <span className="drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
-                      {mixProgress[track.id] ?? 0}%
-                    </span>
-                  ) : (
-                    "Mixer"
-                  )}
+                      <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
+                        {mixProgress[track.id] ?? 0}%
+                      </span>
+                    ) : (
+                      "Mixer"
+                    )}
                   </button>
                   {noFileMessageTrackId === track.id && (
                     <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
@@ -2558,15 +2566,19 @@ export default function Home() {
                         runMix(track.id);
                       }}
                       disabled={track.isMixing}
-                      className="py-2.5 rounded-lg border border-white/20 bg-white text-[#060608] text-tagline text-[10px] max-md:text-[9px] hover:bg-white/90 disabled:opacity-50"
+                      className={`py-2.5 rounded-lg border text-tagline text-[10px] max-md:text-[9px] ${
+                        track.isMixing
+                          ? "border-white/30 bg-slate-800 text-white disabled:opacity-50"
+                          : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
+                      }`}
                     >
                       {track.isMixing ? (
-                      <span className="drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
-                        {mixProgress[track.id] ?? 0}%
-                      </span>
-                    ) : (
-                      "Mixer"
-                    )}
+                        <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
+                          {mixProgress[track.id] ?? 0}%
+                        </span>
+                      ) : (
+                        "Mixer"
+                      )}
                     </button>
                     <button
                       type="button"
