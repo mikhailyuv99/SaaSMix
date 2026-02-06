@@ -330,6 +330,8 @@ export default function Home() {
   const [isLoadingProject, setIsLoadingProject] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
+  const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
+  const mixProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
@@ -1538,7 +1540,30 @@ export default function Home() {
     async (id: string) => {
       const track = tracks.find((t) => t.id === id);
       if (!track?.file) return;
+      if (mixProgressIntervalRef.current) {
+        clearInterval(mixProgressIntervalRef.current);
+        mixProgressIntervalRef.current = null;
+      }
+      setMixProgress((prev) => ({ ...prev, [id]: 0 }));
       updateTrack(id, { isMixing: true });
+      mixProgressIntervalRef.current = setInterval(() => {
+        setMixProgress((prev) => {
+          const v = prev[id] ?? 0;
+          if (v >= 90) return prev;
+          return { ...prev, [id]: Math.min(v + 2, 90) };
+        });
+      }, 300);
+      const clearProgress = () => {
+        if (mixProgressIntervalRef.current) {
+          clearInterval(mixProgressIntervalRef.current);
+          mixProgressIntervalRef.current = null;
+        }
+        setMixProgress((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+      };
       const form = new FormData();
       form.append("file", track.file);
       form.append("category", track.category);
@@ -1593,6 +1618,8 @@ export default function Home() {
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
           e.mixed = decoded;
+          setMixProgress((prev) => ({ ...prev, [id]: 100 }));
+          setTimeout(clearProgress, 400);
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
           const preload = new Audio(fullUrl);
@@ -1661,6 +1688,7 @@ export default function Home() {
             startPlaybackAtOffset(ctx, patchedPlayable, 0);
           }
         } catch (decodeErr) {
+          clearProgress();
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           if (isPlayingRef.current) stopAll();
           const prev = preloadMixedRef.current.get(id);
@@ -1672,6 +1700,7 @@ export default function Home() {
           preloadMixedRef.current.set(id, preload);
         }
       } catch (e) {
+        clearProgress();
         updateTrack(id, { isMixing: false });
         console.error(e);
         const errMsg = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
@@ -2302,7 +2331,7 @@ export default function Home() {
                     disabled={track.isMixing}
                     className="w-full h-9 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline"
                   >
-                    {track.isMixing ? "Mixer…" : "Mixer"}
+                    {track.isMixing ? `${mixProgress[track.id] ?? 0}%` : "Mixer"}
                   </button>
                   {noFileMessageTrackId === track.id && (
                     <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
@@ -2439,7 +2468,7 @@ export default function Home() {
                       disabled={track.isMixing}
                       className="py-2.5 rounded-lg border border-white/20 bg-white text-[#060608] text-tagline text-[10px] max-md:text-[9px] hover:bg-white/90 disabled:opacity-50"
                     >
-                      {track.isMixing ? "Mixer…" : "Mixer"}
+                      {track.isMixing ? `${mixProgress[track.id] ?? 0}%` : "Mixer"}
                     </button>
                     <button
                       type="button"
