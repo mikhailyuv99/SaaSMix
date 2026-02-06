@@ -333,12 +333,9 @@ export default function Home() {
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
   const mixSimulationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mixSimulationStartRef = useRef<number>(0);
-  const mixFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // progression fluide jusqu'à 99% (backend synchrone)
-  const mixCurrentPctRef = useRef<number>(0); // dernière valeur simulation (pour enchaîner sans saut)
-  const mixProgressTargetRef = useRef<Record<string, number>>({}); // cible % (backend) pour lissage
-  const mixSmoothIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const MIX_ESTIMATED_DURATION_MS = 58000; // progression 0→89% sur ~58s quand backend synchrone
-  const MIX_FINISH_DURATION_MS = 9000; // current→99% étalé sur 9s (fetch+decode)
+  const mixFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null); // montée 99→100% puis attente 0.5s
+  const MIX_ESTIMATED_DURATION_MS = 85000; // 0→99% smooth sur ~85s (temps uniquement, pas de backend)
+  const MIX_PROGRESS_TICK_MS = 50; // tick toutes les 50ms = fluide
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
@@ -1553,9 +1550,9 @@ export default function Home() {
           clearInterval(mixSimulationIntervalRef.current);
           mixSimulationIntervalRef.current = null;
         }
-        if (mixSmoothIntervalRef.current) {
-          clearInterval(mixSmoothIntervalRef.current);
-          mixSmoothIntervalRef.current = null;
+        if (mixFinishIntervalRef.current) {
+          clearInterval(mixFinishIntervalRef.current);
+          mixFinishIntervalRef.current = null;
         }
         setMixProgress((prev) => {
           const next = { ...prev };
@@ -1567,16 +1564,15 @@ export default function Home() {
       setMixProgress((prev) => ({ ...prev, [id]: 0 }));
       updateTrack(id, { isMixing: true });
 
-      // Progression simulée 0→90% pendant l'attente du POST (backend synchrone)
+      // Une seule progression 0→99% basée sur le temps (smooth, pas de backend)
       mixSimulationStartRef.current = Date.now();
-      const tickSimulation = () => {
+      const tickSmooth = () => {
         const elapsed = Date.now() - mixSimulationStartRef.current;
-        const pct = Math.min(89, Math.floor((elapsed / MIX_ESTIMATED_DURATION_MS) * 90));
-        mixCurrentPctRef.current = pct;
-        setMixProgress((prev) => (prev[id] === 100 ? prev : { ...prev, [id]: pct }));
+        const pct = Math.min(99, (elapsed / MIX_ESTIMATED_DURATION_MS) * 99);
+        setMixProgress((prev) => (prev[id] === 100 ? prev : { ...prev, [id]: Math.round(pct * 10) / 10 }));
       };
-      tickSimulation(); // premier tick tout de suite
-      mixSimulationIntervalRef.current = setInterval(tickSimulation, 250);
+      tickSmooth();
+      mixSimulationIntervalRef.current = setInterval(tickSmooth, MIX_PROGRESS_TICK_MS);
 
       const form = new FormData();
       form.append("file", track.file);
@@ -1627,22 +1623,7 @@ export default function Home() {
 
         let path: string;
         if (jobId) {
-          // Nouveau backend : poll progression réelle, affichage lissé (pas de sauts)
-          if (mixSmoothIntervalRef.current) {
-            clearInterval(mixSmoothIntervalRef.current);
-            mixSmoothIntervalRef.current = null;
-          }
-          mixSmoothIntervalRef.current = setInterval(() => {
-            setMixProgress((prev) => {
-              const cur = prev[id] ?? 0;
-              const target = mixProgressTargetRef.current[id] ?? cur;
-              const effectiveTarget = Math.max(cur, target);
-              if (cur >= effectiveTarget) return prev;
-              const step = Math.min(1.8, (effectiveTarget - cur) * 0.2);
-              const next = Math.min(cur + step, effectiveTarget);
-              return { ...prev, [id]: Math.round(next * 10) / 10 };
-            });
-          }, 60);
+          // Poll jusqu'à done ; la barre 0→99% reste pilotée par le timer (aucun % backend)
           let statusData: { status: string; percent: number; step?: string; mixedTrackUrl?: string; error?: string } = { status: "running", percent: 0 };
           while (statusData.status === "running") {
             await new Promise((r) => setTimeout(r, 500));
@@ -1652,11 +1633,6 @@ export default function Home() {
               break;
             }
             statusData = await statusRes.json();
-            mixProgressTargetRef.current[id] = Math.max(mixProgressTargetRef.current[id] ?? 0, statusData.percent);
-          }
-          if (mixSmoothIntervalRef.current) {
-            clearInterval(mixSmoothIntervalRef.current);
-            mixSmoothIntervalRef.current = null;
           }
           if (statusData.status === "error") {
             clearProgress();
@@ -1666,22 +1642,6 @@ export default function Home() {
           }
           path = statusData.mixedTrackUrl as string;
         } else if (directMixedUrl) {
-          // Ancien backend (pas de progression réelle) : mix = terminé → 90%, puis 90→99% sur ~5s (fetch+decode)
-          // pour que le son ne parte pas à 82% si la simulation était encore basse
-          setMixProgress((prev) => ({ ...prev, [id]: 90 }));
-          if (mixFinishIntervalRef.current) {
-            clearInterval(mixFinishIntervalRef.current);
-            mixFinishIntervalRef.current = null;
-          }
-          const finishDurationMs = 5000; // 90→99% sur 5s
-          const stepMs = Math.round(finishDurationMs / 9); // 9 steps
-          mixFinishIntervalRef.current = setInterval(() => {
-            setMixProgress((prev) => {
-              const cur = prev[id] ?? 90;
-              if (cur >= 99) return prev;
-              return { ...prev, [id]: cur + 1 };
-            });
-          }, stepMs);
           path = directMixedUrl;
         } else {
           clearProgress();
@@ -1714,8 +1674,11 @@ export default function Home() {
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
           e.mixed = decoded;
+          if (mixSimulationIntervalRef.current) {
+            clearInterval(mixSimulationIntervalRef.current);
+            mixSimulationIntervalRef.current = null;
+          }
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
-          setTimeout(clearProgress, 500);
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
           const preload = new Audio(fullUrl);
           preload.preload = "auto";
@@ -1723,75 +1686,95 @@ export default function Home() {
           preloadMixedRef.current.set(id, preload);
           resumeFromRef.current = null;
           setHasPausedPosition(false);
-          setIsPlaying(true);
-          const existingNodes = trackPlaybackRef.current.get(id);
-          if (existingNodes?.type === "vocal") {
+
+          const doStartPlayback = () => {
             if (mixFinishIntervalRef.current) {
               clearInterval(mixFinishIntervalRef.current);
               mixFinishIntervalRef.current = null;
             }
             setMixProgress((prev) => ({ ...prev, [id]: 100 }));
-            existingNodes.rawGain.gain.value = 0;
-            existingNodes.mixedGain.gain.value = 1;
-            if (existingNodes.rawMedia) existingNodes.rawMedia.element.currentTime = 0;
-            if (existingNodes.mixedMedia) existingNodes.mixedMedia.element.currentTime = 0;
-            const when = ctx.currentTime;
-            if (existingNodes.rawBufferNode) {
-              try {
-                existingNodes.rawBufferNode.onended = null;
-                existingNodes.rawBufferNode.stop(when);
-                existingNodes.rawBufferNode.disconnect();
-              } catch (_) {}
-              const rawBuf = e.raw;
-              if (rawBuf) {
-                const rawSrc = ctx.createBufferSource();
-                rawSrc.buffer = rawBuf;
-                rawSrc.connect(existingNodes.rawGain);
-                rawSrc.onended = () => {
-                  trackPlaybackRef.current.delete(id);
-                  if (trackPlaybackRef.current.size === 0) {
-                    setIsPlaying(false);
-                    setHasPausedPosition(false);
-                  }
-                };
-                rawSrc.start(when, 0, rawBuf.duration);
-                (existingNodes as VocalNodes).rawBufferNode = rawSrc;
+            const existingNodes = trackPlaybackRef.current.get(id);
+            if (existingNodes?.type === "vocal") {
+              existingNodes.rawGain.gain.value = 0;
+              existingNodes.mixedGain.gain.value = 1;
+              if (existingNodes.rawMedia) existingNodes.rawMedia.element.currentTime = 0;
+              if (existingNodes.mixedMedia) existingNodes.mixedMedia.element.currentTime = 0;
+              const when = ctx.currentTime;
+              if (existingNodes.rawBufferNode) {
+                try {
+                  existingNodes.rawBufferNode.onended = null;
+                  existingNodes.rawBufferNode.stop(when);
+                  existingNodes.rawBufferNode.disconnect();
+                } catch (_) {}
+                const rawBuf = e.raw;
+                if (rawBuf) {
+                  const rawSrc = ctx.createBufferSource();
+                  rawSrc.buffer = rawBuf;
+                  rawSrc.connect(existingNodes.rawGain);
+                  rawSrc.onended = () => {
+                    trackPlaybackRef.current.delete(id);
+                    if (trackPlaybackRef.current.size === 0) {
+                      setIsPlaying(false);
+                      setHasPausedPosition(false);
+                    }
+                  };
+                  rawSrc.start(when, 0, rawBuf.duration);
+                  (existingNodes as VocalNodes).rawBufferNode = rawSrc;
+                }
               }
-            }
-            if (existingNodes.mixedBufferNode) {
-              try {
-                existingNodes.mixedBufferNode.onended = null;
-                existingNodes.mixedBufferNode.stop(when);
-                existingNodes.mixedBufferNode.disconnect();
-              } catch (_) {}
-            }
-            const src = ctx.createBufferSource();
-            src.buffer = decoded;
-            src.connect(existingNodes.mixedGain);
-            src.onended = () => {
-              trackPlaybackRef.current.delete(id);
-              if (trackPlaybackRef.current.size === 0) {
-                setIsPlaying(false);
-                setHasPausedPosition(false);
+              if (existingNodes.mixedBufferNode) {
+                try {
+                  existingNodes.mixedBufferNode.onended = null;
+                  existingNodes.mixedBufferNode.stop(when);
+                  existingNodes.mixedBufferNode.disconnect();
+                } catch (_) {}
               }
-            };
-            src.start(when, 0, decoded.duration);
-            (existingNodes as VocalNodes).mixedBufferNode = src;
-            startTimeRef.current = when;
-          } else {
-            if (mixFinishIntervalRef.current) {
-              clearInterval(mixFinishIntervalRef.current);
-              mixFinishIntervalRef.current = null;
+              const src = ctx.createBufferSource();
+              src.buffer = decoded;
+              src.connect(existingNodes.mixedGain);
+              src.onended = () => {
+                trackPlaybackRef.current.delete(id);
+                if (trackPlaybackRef.current.size === 0) {
+                  setIsPlaying(false);
+                  setHasPausedPosition(false);
+                }
+              };
+              src.start(when, 0, decoded.duration);
+              (existingNodes as VocalNodes).mixedBufferNode = src;
+              startTimeRef.current = when;
+            } else {
+              const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+              const patchedPlayable = basePlayable.map((t) =>
+                t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
+              );
+              ctx.resume();
+              startPlaybackAtOffset(ctx, patchedPlayable, 0);
             }
-            setMixProgress((prev) => ({ ...prev, [id]: 100 }));
-            const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-            const patchedPlayable = basePlayable.map((t) =>
-              t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
-            );
-            ctx.resume();
-            startPlaybackAtOffset(ctx, patchedPlayable, 0);
             setIsPlaying(true);
+            setTimeout(clearProgress, 500);
+          };
+
+          // Monter à 100% en smooth puis lancer le son tout de suite
+          if (mixFinishIntervalRef.current) {
+            clearInterval(mixFinishIntervalRef.current);
+            mixFinishIntervalRef.current = null;
           }
+          const finishTick = () => {
+            setMixProgress((prev) => {
+              const cur = prev[id] ?? 0;
+              if (cur >= 99.9) {
+                if (mixFinishIntervalRef.current) {
+                  clearInterval(mixFinishIntervalRef.current);
+                  mixFinishIntervalRef.current = null;
+                }
+                doStartPlayback();
+                return { ...prev, [id]: 100 };
+              }
+              const next = cur + (100 - cur) * 0.12;
+              return { ...prev, [id]: Math.round(next * 10) / 10 };
+            });
+          };
+          mixFinishIntervalRef.current = setInterval(finishTick, 16);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
             clearInterval(mixFinishIntervalRef.current);
@@ -1812,10 +1795,6 @@ export default function Home() {
         if (mixSimulationIntervalRef.current) {
           clearInterval(mixSimulationIntervalRef.current);
           mixSimulationIntervalRef.current = null;
-        }
-        if (mixSmoothIntervalRef.current) {
-          clearInterval(mixSmoothIntervalRef.current);
-          mixSmoothIntervalRef.current = null;
         }
         if (mixFinishIntervalRef.current) {
           clearInterval(mixFinishIntervalRef.current);
