@@ -492,9 +492,18 @@ export default function Home() {
             nodes.media.element.pause();
             nodes.media.source.disconnect();
           } else {
-            nodes.rawMedia.element.onended = null;
-            nodes.rawMedia.element.pause();
-            nodes.rawMedia.source.disconnect();
+            if (nodes.rawMedia) {
+              nodes.rawMedia.element.onended = null;
+              nodes.rawMedia.element.pause();
+              nodes.rawMedia.source.disconnect();
+            }
+            if (nodes.rawBufferNode) {
+              try {
+                nodes.rawBufferNode.onended = null;
+                nodes.rawBufferNode.stop();
+                nodes.rawBufferNode.disconnect();
+              } catch (_) {}
+            }
             if (nodes.mixedMedia) {
               nodes.mixedMedia.element.onended = null;
               nodes.mixedMedia.element.pause();
@@ -561,7 +570,8 @@ export default function Home() {
 
   type VocalNodes = {
     type: "vocal";
-    rawMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode };
+    rawMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null;
+    rawBufferNode: AudioBufferSourceNode | null;
     mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null;
     mixedBufferNode: AudioBufferSourceNode | null;
     rawGain: GainNode;
@@ -606,8 +616,16 @@ export default function Home() {
         } catch (_) {}
       } else {
         try {
-          nodes.rawMedia.element.pause();
-          nodes.rawMedia.source.disconnect();
+          if (nodes.rawMedia) {
+            nodes.rawMedia.element.pause();
+            nodes.rawMedia.source.disconnect();
+          }
+          if (nodes.rawBufferNode) {
+            try {
+              nodes.rawBufferNode.stop();
+              nodes.rawBufferNode.disconnect();
+            } catch (_) {}
+          }
           if (nodes.mixedMedia) {
             nodes.mixedMedia.element.pause();
             nodes.mixedMedia.source.disconnect();
@@ -642,8 +660,16 @@ export default function Home() {
         } catch (_) {}
       } else {
         try {
-          nodes.rawMedia.element.pause();
-          nodes.rawMedia.source.disconnect();
+          if (nodes.rawMedia) {
+            nodes.rawMedia.element.pause();
+            nodes.rawMedia.source.disconnect();
+          }
+          if (nodes.rawBufferNode) {
+            try {
+              nodes.rawBufferNode.stop();
+              nodes.rawBufferNode.disconnect();
+            } catch (_) {}
+          }
           if (nodes.mixedMedia) {
             nodes.mixedMedia.element.pause();
             nodes.mixedMedia.source.disconnect();
@@ -1137,8 +1163,16 @@ export default function Home() {
           nodes.media.element.pause();
           nodes.media.source.disconnect();
         } else {
-          nodes.rawMedia.element.pause();
-          nodes.rawMedia.source.disconnect();
+          if (nodes.rawMedia) {
+            nodes.rawMedia.element.pause();
+            nodes.rawMedia.source.disconnect();
+          }
+          if (nodes.rawBufferNode) {
+            try {
+              nodes.rawBufferNode.stop();
+              nodes.rawBufferNode.disconnect();
+            } catch (_) {}
+          }
           if (nodes.mixedMedia) {
             nodes.mixedMedia.element.pause();
             nodes.mixedMedia.source.disconnect();
@@ -1155,7 +1189,12 @@ export default function Home() {
   }
 
   const startPlaybackAtOffset = useCallback(
-    (ctx: AudioContext, playable: Track[], offset: number) => {
+    async (ctx: AudioContext, playable: Track[], offset: number) => {
+      await Promise.all(
+        playable.map((t) =>
+          decodeTrackBuffers(t.id, t.rawAudioUrl, t.mixedAudioUrl ?? null)
+        )
+      );
       const now = ctx.currentTime;
       startTimeRef.current = now - offset;
 
@@ -1168,9 +1207,18 @@ export default function Home() {
             nodes.media.element.pause();
             nodes.media.source.disconnect();
           } else {
-            nodes.rawMedia.element.onended = null;
-            nodes.rawMedia.element.pause();
-            nodes.rawMedia.source.disconnect();
+            if (nodes.rawMedia) {
+              nodes.rawMedia.element.onended = null;
+              nodes.rawMedia.element.pause();
+              nodes.rawMedia.source.disconnect();
+            }
+            if (nodes.rawBufferNode) {
+              try {
+                nodes.rawBufferNode.onended = null;
+                nodes.rawBufferNode.stop();
+                nodes.rawBufferNode.disconnect();
+              } catch (_) {}
+            }
             if (nodes.mixedMedia) {
               nodes.mixedMedia.element.onended = null;
               nodes.mixedMedia.element.pause();
@@ -1234,24 +1282,39 @@ export default function Home() {
               setHasPausedPosition(false);
             }
           };
-          const fullRawUrl = track.rawAudioUrl.startsWith("http") || track.rawAudioUrl.startsWith("blob:") ? track.rawAudioUrl : `${API_BASE}${track.rawAudioUrl}`;
-          const rawAudio = new Audio(fullRawUrl);
-          const rawMediaSource = ctx.createMediaElementSource(rawAudio);
-          rawMediaSource.connect(rawGain);
-          rawAudio.onended = onEnd;
-          rawAudio.currentTime = offset;
-          rawAudio.play().catch(() => {});
+          const entry = buffersRef.current.get(track.id) ?? { raw: null, mixed: null };
+          const rawBuf = entry.raw;
+          let rawMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null = null;
+          let rawBufferNode: AudioBufferSourceNode | null = null;
+          if (rawBuf) {
+            const src = ctx.createBufferSource();
+            src.buffer = rawBuf;
+            src.connect(rawGain);
+            src.onended = onEnd;
+            const duration = Math.max(0, rawBuf.duration - offset);
+            src.start(now, offset, duration);
+            rawBufferNode = src;
+          } else {
+            const fullRawUrl = track.rawAudioUrl.startsWith("http") || track.rawAudioUrl.startsWith("blob:") ? track.rawAudioUrl : `${API_BASE}${track.rawAudioUrl}`;
+            const rawAudio = new Audio(fullRawUrl);
+            const rawMediaSource = ctx.createMediaElementSource(rawAudio);
+            rawMediaSource.connect(rawGain);
+            rawAudio.onended = onEnd;
+            rawAudio.currentTime = offset;
+            rawAudio.play().catch(() => {});
+            rawMedia = { element: rawAudio, source: rawMediaSource };
+          }
           let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null = null;
           let mixedBufferNode: AudioBufferSourceNode | null = null;
           if (track.mixedAudioUrl) {
-            const mixedBuf = buffersRef.current.get(track.id)?.mixed;
+            const mixedBuf = entry.mixed;
             if (mixedBuf) {
               const src = ctx.createBufferSource();
               src.buffer = mixedBuf;
               src.connect(mixedGain);
               src.onended = onEnd;
               const duration = Math.max(0, mixedBuf.duration - offset);
-              src.start(0, offset, duration);
+              src.start(now, offset, duration);
               mixedBufferNode = src;
             } else {
               const fullMixedUrl = track.mixedAudioUrl.startsWith("http") ? track.mixedAudioUrl : `${API_BASE}${track.mixedAudioUrl}`;
@@ -1278,7 +1341,8 @@ export default function Home() {
           }
           trackPlaybackRef.current.set(track.id, {
             type: "vocal",
-            rawMedia: { element: rawAudio, source: rawMediaSource },
+            rawMedia,
+            rawBufferNode,
             mixedMedia,
             mixedBufferNode,
             rawGain,
@@ -1309,7 +1373,31 @@ export default function Home() {
             if (nodes.type === "instrumental") {
               nodes.media.element.currentTime = safeOffset;
             } else {
-              nodes.rawMedia.element.currentTime = safeOffset;
+              if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
+              if (nodes.rawBufferNode) {
+                const rawBuf = buffersRef.current.get(id)?.raw;
+                if (rawBuf) {
+                  const when = ctx.currentTime;
+                  try {
+                    nodes.rawBufferNode.onended = null;
+                    nodes.rawBufferNode.stop(when);
+                    nodes.rawBufferNode.disconnect();
+                  } catch (_) {}
+                  const src = ctx.createBufferSource();
+                  src.buffer = rawBuf;
+                  src.connect(nodes.rawGain);
+                  src.onended = () => {
+                    trackPlaybackRef.current.delete(id);
+                    if (trackPlaybackRef.current.size === 0) {
+                      setIsPlaying(false);
+                      setHasPausedPosition(false);
+                    }
+                  };
+                  const duration = Math.max(0, rawBuf.duration - safeOffset);
+                  src.start(when, safeOffset, duration);
+                  (nodes as VocalNodes).rawBufferNode = src;
+                }
+              }
               if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
               if (nodes.mixedBufferNode) {
                 const mixedBuf = buffersRef.current.get(id)?.mixed;
@@ -1348,7 +1436,7 @@ export default function Home() {
   );
 
   const playAll = useCallback(
-    (override?: { playable?: Track[]; startOffset?: number }) => {
+    async (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
       let ctx = contextRef.current;
       if (!ctx) {
@@ -1368,8 +1456,17 @@ export default function Home() {
               nodes.media.element.pause();
               nodes.media.source.disconnect();
             } else {
-              nodes.rawMedia.element.pause();
-              nodes.rawMedia.source.disconnect();
+              if (nodes.rawMedia) {
+                nodes.rawMedia.element.pause();
+                nodes.rawMedia.source.disconnect();
+              }
+              if (nodes.rawBufferNode) {
+                try {
+                  nodes.rawBufferNode.onended = null;
+                  nodes.rawBufferNode.stop();
+                  nodes.rawBufferNode.disconnect();
+                } catch (_) {}
+              }
               if (nodes.mixedMedia) {
                 nodes.mixedMedia.element.pause();
                 nodes.mixedMedia.source.disconnect();
@@ -1400,7 +1497,7 @@ export default function Home() {
       resumeFromRef.current = null;
       setHasPausedPosition(false);
 
-      startPlaybackAtOffset(ctx, playable, startOffset);
+      await startPlaybackAtOffset(ctx, playable, startOffset);
     },
     [startPlaybackAtOffset]
   );
@@ -1492,7 +1589,7 @@ export default function Home() {
           resumeFromRef.current = null;
           setHasPausedPosition(false);
           setIsPlaying(true);
-          startPlaybackAtOffset(ctx, patchedPlayable, 0);
+          await startPlaybackAtOffset(ctx, patchedPlayable, 0);
         } catch (decodeErr) {
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           if (isPlayingRef.current) stopAll();
