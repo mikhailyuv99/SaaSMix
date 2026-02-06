@@ -331,7 +331,6 @@ export default function Home() {
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
-  const mixProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
@@ -1540,30 +1539,18 @@ export default function Home() {
     async (id: string) => {
       const track = tracks.find((t) => t.id === id);
       if (!track?.file) return;
-      if (mixProgressIntervalRef.current) {
-        clearInterval(mixProgressIntervalRef.current);
-        mixProgressIntervalRef.current = null;
-      }
-      setMixProgress((prev) => ({ ...prev, [id]: 0 }));
-      updateTrack(id, { isMixing: true });
-      mixProgressIntervalRef.current = setInterval(() => {
-        setMixProgress((prev) => {
-          const v = prev[id] ?? 0;
-          if (v >= 90) return prev;
-          return { ...prev, [id]: Math.min(v + 2, 90) };
-        });
-      }, 300);
+
       const clearProgress = () => {
-        if (mixProgressIntervalRef.current) {
-          clearInterval(mixProgressIntervalRef.current);
-          mixProgressIntervalRef.current = null;
-        }
         setMixProgress((prev) => {
           const next = { ...prev };
           delete next[id];
           return next;
         });
       };
+
+      setMixProgress((prev) => ({ ...prev, [id]: 0 }));
+      updateTrack(id, { isMixing: true });
+
       const form = new FormData();
       form.append("file", track.file);
       form.append("category", track.category);
@@ -1580,6 +1567,7 @@ export default function Home() {
       form.append("phone_fx", String(p.phone_fx));
       form.append("doubler", String(p.doubler));
       form.append("robot", String(p.robot));
+
       try {
         const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
         const headers: Record<string, string> = {};
@@ -1600,27 +1588,58 @@ export default function Home() {
           const msg = typeof data.detail === "string" ? data.detail : Array.isArray(data.detail) ? data.detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ") : JSON.stringify(data.detail ?? data);
           throw new Error(msg || "Mix failed");
         }
-        const path = data.mixedTrackUrl as string;
-        const mixedAudioUrl = path.startsWith("http")
-          ? path
-          : `${API_BASE}${path}`;
+
+        const jobId = data.jobId as string;
+        if (!jobId) {
+          throw new Error("Réponse API invalide (jobId manquant)");
+        }
+
+        // Poll progression réelle (chaîne de mix backend)
+        let statusData: { status: string; percent: number; step?: string; mixedTrackUrl?: string; error?: string } = { status: "running", percent: 0 };
+        while (statusData.status === "running") {
+          await new Promise((r) => setTimeout(r, 500));
+          const statusRes = await fetch(`${API_BASE}/api/track/mix/status?job_id=${encodeURIComponent(jobId)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          if (!statusRes.ok) {
+            statusData = { status: "error", percent: 0, error: "Impossible de récupérer le statut du mix" };
+            break;
+          }
+          statusData = await statusRes.json();
+          setMixProgress((prev) => ({ ...prev, [id]: statusData.percent }));
+        }
+
+        if (statusData.status === "error") {
+          clearProgress();
+          updateTrack(id, { isMixing: false });
+          setAppModal({ type: "alert", message: "Erreur lors du mix : " + (statusData.error || "Échec inconnu"), onClose: () => {} });
+          return;
+        }
+
+        const path = statusData.mixedTrackUrl as string;
+        if (!path) {
+          clearProgress();
+          updateTrack(id, { isMixing: false });
+          setAppModal({ type: "alert", message: "Mix terminé mais URL introuvable.", onClose: () => {} });
+          return;
+        }
+
+        const mixedAudioUrl = path.startsWith("http") ? path : `${API_BASE}${path}`;
         const fullUrl = mixedAudioUrl.startsWith("http") ? mixedAudioUrl : `${API_BASE}${mixedAudioUrl}`;
         const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
         entry.mixed = null;
         buffersRef.current.set(id, entry);
-        // On garde "mix en cours" jusqu'à ce que le buffer soit prêt + contexte audio réveillé → Play 100% instantané.
+
         try {
           const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
           if (!contextRef.current) contextRef.current = ctx;
-          const res = await fetch(fullUrl);
-          const ab = await res.arrayBuffer();
+          const audioRes = await fetch(fullUrl);
+          const ab = await audioRes.arrayBuffer();
           const decoded = await ctx.decodeAudioData(ab);
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
           e.mixed = decoded;
           setMixProgress((prev) => ({ ...prev, [id]: 100 }));
-          setTimeout(clearProgress, 400);
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
+          setTimeout(clearProgress, 500);
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
           const preload = new Audio(fullUrl);
           preload.preload = "auto";
@@ -1675,8 +1694,7 @@ export default function Home() {
                 setHasPausedPosition(false);
               }
             };
-            const duration = decoded.duration;
-            src.start(when, 0, duration);
+            src.start(when, 0, decoded.duration);
             (existingNodes as VocalNodes).mixedBufferNode = src;
             startTimeRef.current = when;
           } else {

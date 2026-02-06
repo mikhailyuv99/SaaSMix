@@ -6,13 +6,15 @@ This is the entry point for our backend API server.
 import json
 import os
 import re
+import sys
 import tempfile
+import threading
 import uuid
 import numpy as np
 from scipy.signal import resample as scipy_resample
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from typing import Optional, List
 from presets import list_presets
 from mixing_service import MixingService
@@ -54,11 +56,29 @@ app.include_router(projects_router)
 # Initialize mixing service
 mixing_service = MixingService()
 
+
+@app.on_event("startup")
+def startup_sync_r2():
+    """En production (Linux), télécharge les binaires HISE depuis R2 au démarrage."""
+    if sys.platform == "linux" and os.environ.get("R2_BUCKET_NAME"):
+        try:
+            from r2_assets import ensure_r2_assets
+            if ensure_r2_assets():
+                print("[R2] Binaires VST Linux prêts.")
+            else:
+                print("[R2] Sync R2 non effectuée (config manquante ou erreur).")
+        except Exception as e:
+            print("[R2] Startup sync:", e)
+
 # Dossier pour les pistes mixées (téléchargement par ID, pas par path)
 MIXED_TRACKS_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_mixed")
 # Dossier pour le mix complet et le master (render)
 RENDER_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_render")
 TARGET_SR = 44100
+
+# Jobs de mix (progression réelle) : job_id -> { status, percent, step, mixedTrackUrl?, error? }
+_mix_jobs: dict = {}
+_mix_jobs_lock = threading.Lock()
 
 
 def _assemble_tracks(track_paths_gains: List[tuple], output_path: str) -> bool:
@@ -236,6 +256,80 @@ def _parse_bool_form(value: str) -> bool:
     return value.strip().lower() in ("true", "1", "yes", "on")
 
 
+def _run_mix_job(
+    job_id: str,
+    input_path: str,
+    output_path: str,
+    mixed_id: str,
+    deesser: bool,
+    noise_gate: bool,
+    delay: bool,
+    bpm: float,
+    delay_division: str,
+    tone_low: int,
+    tone_mid: int,
+    tone_high: int,
+    air: bool,
+    reverb: bool,
+    reverb_mode: int,
+    phone_fx: bool,
+    robot: bool,
+    doubler: bool,
+):
+    def progress_callback(percent: int, step: str):
+        with _mix_jobs_lock:
+            if job_id in _mix_jobs:
+                _mix_jobs[job_id]["percent"] = percent
+                _mix_jobs[job_id]["step"] = step
+
+    try:
+        ok, err_msg = hise_render(
+            input_path,
+            output_path,
+            deesser=deesser,
+            noise_gate=noise_gate,
+            delay=delay,
+            bpm=bpm,
+            delay_division=delay_division,
+            tone_low=tone_low,
+            tone_mid=tone_mid,
+            tone_high=tone_high,
+            air=air,
+            reverb=reverb,
+            reverb_mode=reverb_mode,
+            phone_fx=phone_fx,
+            robot=robot,
+            doubler=doubler,
+            progress_callback=progress_callback,
+        )
+        with _mix_jobs_lock:
+            if job_id not in _mix_jobs:
+                return
+            if not ok:
+                _mix_jobs[job_id]["status"] = "error"
+                _mix_jobs[job_id]["error"] = err_msg or "Le mix a échoué (chaîne HISE)"
+                return
+            if not os.path.exists(output_path):
+                _mix_jobs[job_id]["status"] = "error"
+                _mix_jobs[job_id]["error"] = "Fichier mixé non créé"
+                return
+            _mix_jobs[job_id]["status"] = "done"
+            _mix_jobs[job_id]["percent"] = 100
+            _mix_jobs[job_id]["step"] = "Terminé"
+            _mix_jobs[job_id]["mixedTrackUrl"] = f"/api/download/mixed-track?id={mixed_id}"
+    except Exception as e:
+        with _mix_jobs_lock:
+            if job_id in _mix_jobs:
+                _mix_jobs[job_id]["status"] = "error"
+                _mix_jobs[job_id]["error"] = str(e)
+    finally:
+        if os.path.exists(input_path):
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+
 @app.post("/api/track/mix")
 async def track_mix(
     file: UploadFile = File(..., description="WAV de la piste vocale"),
@@ -256,76 +350,125 @@ async def track_mix(
     doubler: str = Form("false", description="Doubler (élargissement)"),
 ):
     """
-    Mixe une piste vocale avec la chaîne HISE (gate, VST3, de-esser, tone, delay, reverb).
-    Retourne l'URL pour écouter ou télécharger la piste mixée.
+    Démarre le mix d'une piste vocale (chaîne HISE). Retourne immédiatement un jobId.
+    Suivre la progression via GET /api/track/mix/status?job_id=...
     """
     if not file.filename or not file.filename.lower().endswith(".wav"):
         raise HTTPException(status_code=400, detail="Le fichier doit être un WAV")
 
     os.makedirs(MIXED_TRACKS_DIR, exist_ok=True)
     mixed_id = str(uuid.uuid4())
+    job_id = str(uuid.uuid4())
     input_path = os.path.join(tempfile.gettempdir(), f"mix_input_{os.getpid()}_{mixed_id[:8]}.wav")
     output_path = os.path.join(MIXED_TRACKS_DIR, f"{mixed_id}.wav")
 
-    try:
-        content = await file.read()
-        with open(input_path, "wb") as f:
-            f.write(content)
+    content = await file.read()
+    with open(input_path, "wb") as f:
+        f.write(content)
 
-        ok = hise_render(
-            input_path,
-            output_path,
-            deesser=deesser,
-            noise_gate=noise_gate,
-            delay=delay,
-            bpm=bpm,
-            delay_division=delay_division,
-            tone_low=tone_low,
-            tone_mid=tone_mid,
-            tone_high=tone_high,
-            air=_parse_bool_form(air),
-            reverb=reverb,
-            reverb_mode=reverb_mode,
-            phone_fx=_parse_bool_form(phone_fx),
-            robot=_parse_bool_form(robot),
-            doubler=_parse_bool_form(doubler),
-        )
-
-        if not ok:
-            raise HTTPException(status_code=500, detail="Le mix a échoué (chaîne HISE)")
-
-        if not os.path.exists(output_path):
-            raise HTTPException(status_code=500, detail="Fichier mixé non créé")
-
-        return {
-            "status": "success",
-            "mixedTrackUrl": f"/api/download/mixed-track?id={mixed_id}",
-            "message": "Piste mixée avec succès.",
+    with _mix_jobs_lock:
+        _mix_jobs[job_id] = {
+            "status": "running",
+            "percent": 0,
+            "step": "",
+            "mixedTrackUrl": None,
+            "error": None,
         }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors du mix: {str(e)}")
-    finally:
-        if os.path.exists(input_path):
-            try:
-                os.remove(input_path)
-            except OSError:
-                pass
+
+    thread = threading.Thread(
+        target=_run_mix_job,
+        kwargs={
+            "job_id": job_id,
+            "input_path": input_path,
+            "output_path": output_path,
+            "mixed_id": mixed_id,
+            "deesser": deesser,
+            "noise_gate": noise_gate,
+            "delay": delay,
+            "bpm": bpm,
+            "delay_division": delay_division,
+            "tone_low": tone_low,
+            "tone_mid": tone_mid,
+            "tone_high": tone_high,
+            "air": _parse_bool_form(air),
+            "reverb": reverb,
+            "reverb_mode": reverb_mode,
+            "phone_fx": _parse_bool_form(phone_fx),
+            "robot": _parse_bool_form(robot),
+            "doubler": _parse_bool_form(doubler),
+        },
+        daemon=True,
+    )
+    thread.start()
+
+    return {
+        "jobId": job_id,
+        "status": "running",
+        "message": "Mix démarré. Utilisez GET /api/track/mix/status?job_id=... pour la progression.",
+    }
+
+
+@app.get("/api/track/mix/status")
+async def track_mix_status(job_id: str):
+    """Retourne la progression du mix : status (running|done|error), percent, step, mixedTrackUrl (si done), error (si error)."""
+    with _mix_jobs_lock:
+        job = _mix_jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job inconnu ou expiré")
+    return {
+        "status": job["status"],
+        "percent": job["percent"],
+        "step": job["step"],
+        "mixedTrackUrl": job.get("mixedTrackUrl"),
+        "error": job.get("error"),
+    }
 
 
 @app.get("/api/download/mixed-track")
-async def download_mixed_track(id: str):
-    """Télécharge ou lit la piste mixée (pour le player)."""
+async def download_mixed_track(request: Request, id: str):
+    """Télécharge ou lit la piste mixée. Supporte Range pour lecture streaming (play instantané)."""
     if not re.match(r"^[a-f0-9\-]{36}$", id):
         raise HTTPException(status_code=400, detail="ID invalide")
     path = os.path.join(MIXED_TRACKS_DIR, f"{id}.wav")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Piste mixée introuvable ou expirée")
-    return FileResponse(
-        path,
+    size = os.path.getsize(path)
+    range_header = request.headers.get("range")
+    if not range_header or not range_header.strip().lower().startswith("bytes="):
+        return FileResponse(
+            path,
+            media_type="audio/wav",
+            filename="mixed_track.wav",
+            headers={"Accept-Ranges": "bytes"},
+        )
+    try:
+        parts = range_header.strip().split("=")[1].strip().split("-")
+        start = int(parts[0]) if parts[0] else 0
+        end = int(parts[1]) if len(parts) > 1 and parts[1] else size - 1
+        if start >= size or end >= size:
+            end = size - 1
+        if start > end:
+            start, end = 0, size - 1
+        length = end - start + 1
+    except (ValueError, IndexError):
+        return FileResponse(
+            path,
+            media_type="audio/wav",
+            filename="mixed_track.wav",
+            headers={"Accept-Ranges": "bytes"},
+        )
+    with open(path, "rb") as f:
+        f.seek(start)
+        body = f.read(length)
+    return Response(
+        content=body,
+        status_code=206,
         media_type="audio/wav",
-        filename="mixed_track.wav",
+        headers={
+            "Accept-Ranges": "bytes",
+            "Content-Range": f"bytes {start}-{end}/{size}",
+            "Content-Length": str(len(body)),
+        },
     )
 
 

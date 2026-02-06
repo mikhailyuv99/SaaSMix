@@ -1,15 +1,21 @@
 """
-Test direct : appelle hise_vst3_host.exe avec Project1.vst3 + de-esser léger
+Test direct : appelle hise_vst3_host (Windows .exe ou Linux binaire depuis R2) avec Project1.vst3 + de-esser léger.
 """
+import os
+
+# Taille de bloc pour le host VST3 (plus grand = moins d'appels processBlock, rendu souvent plus rapide)
+VST_BLOCK_SIZE = int(os.environ.get("VST_BLOCK_SIZE", "2048"))
 import subprocess
+import sys
 import tempfile
 import wave
 import shutil
 from pathlib import Path
+from typing import Optional, Callable
 import numpy as np
 from scipy.signal import butter, lfilter
 
-# Chemins
+# Chemins (Windows par défaut ; écrasés sous Linux si R2 configuré)
 HOST_EXE = Path(r"c:\Users\mikha\Desktop\SaaS Mix\hise_vst3_host\build\hise_vst3_host_artefacts\Release\hise_vst3_host.exe")
 VST3_PATH = Path(r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3\Project1.vst3")
 try:
@@ -35,6 +41,69 @@ if DOUBLER_PATH is None:
     DOUBLER_PATH = Path(r"C:\Users\mikha\Desktop\HISE\doubler\Binaries\Compiled\VST3\doubler.vst3")
 if ROBOT_PATH is None:
     ROBOT_PATH = Path(r"C:\Users\mikha\Desktop\HISE\robot\Binaries\Compiled\VST3\robot.vst3")
+
+# Serveur Windows (prod) : chemins par variables d’env (voir DEPLOY_WINDOWS.md)
+if os.environ.get("HISE_VST3_HOST_EXE"):
+    HOST_EXE = Path(os.environ["HISE_VST3_HOST_EXE"])
+if os.environ.get("VST_BASE"):
+    _base = Path(os.environ["VST_BASE"])
+    VST3_PATH = _base / "Project1.vst3"
+    MASTER_PATH = _base / "master.vst3"
+    REVERB1_PATH = _base / "reverb1.vst3"
+    REVERB2_PATH = _base / "reverb2.vst3"
+    REVERB3_PATH = _base / "reverb3new.vst3"
+    DOUBLER_PATH = _base / "doubler.vst3"
+    ROBOT_PATH = _base / "robot.vst3"
+
+    def _vst_full(base: Path, name: str) -> Path:
+        return base / name / "Binaries" / "Compiled" / "VST3" / f"{name}.vst3"
+
+    if not VST3_PATH.exists():
+        VST3_PATH = _vst_full(_base, "Project1")
+    if not MASTER_PATH.exists():
+        MASTER_PATH = _vst_full(_base, "master")
+    if not REVERB1_PATH.exists():
+        REVERB1_PATH = _vst_full(_base, "reverb1")
+    if not REVERB2_PATH.exists():
+        REVERB2_PATH = _vst_full(_base, "reverb2")
+    if not REVERB3_PATH.exists():
+        REVERB3_PATH = _vst_full(_base, "reverb3new")
+    if not DOUBLER_PATH.exists():
+        DOUBLER_PATH = _vst_full(_base, "doubler")
+    if not ROBOT_PATH.exists():
+        ROBOT_PATH = _vst_full(_base, "robot")
+
+# Linux (production Render) : utiliser binaires téléchargés depuis R2
+if sys.platform == "linux":
+    try:
+        from r2_assets import ensure_r2_assets, get_linux_host_path, get_linux_vst_path
+        if ensure_r2_assets():
+            host = get_linux_host_path()
+            if host:
+                HOST_EXE = host
+                vst3 = get_linux_vst_path("Project1")
+                if vst3:
+                    VST3_PATH = vst3
+                master = get_linux_vst_path("master")
+                if master:
+                    MASTER_PATH = master
+                r1 = get_linux_vst_path("reverb1")
+                if r1:
+                    REVERB1_PATH = r1
+                r2 = get_linux_vst_path("reverb2")
+                if r2:
+                    REVERB2_PATH = r2
+                r3 = get_linux_vst_path("reverb3new")
+                if r3:
+                    REVERB3_PATH = r3
+                d = get_linux_vst_path("doubler")
+                if d:
+                    DOUBLER_PATH = d
+                r = get_linux_vst_path("robot")
+                if r:
+                    ROBOT_PATH = r
+    except Exception as e:
+        print("Linux/R2: chaîne HISE non disponible:", e)
 
 
 def read_wav(path: str):
@@ -438,23 +507,61 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
            delay_division: str = "1/4",
            tone_low: int = 2, tone_mid: int = 2, tone_high: int = 2, air: bool = False,
            reverb: bool = False, reverb_mode: int = 2,
-           phone_fx: bool = False, robot: bool = False, doubler: bool = False):
+           phone_fx: bool = False, robot: bool = False, doubler: bool = False,
+           progress_callback: Optional[Callable[[int, str], None]] = None):
+    """Retourne (True, None) en cas de succès, (False, message_erreur) sinon.
+    progress_callback(percent, step_name) appelé à chaque étape (0-100).
+    Le pourcentage est réparti sur les étapes réellement exécutées (options cochées)."""
+    # Étapes qui vont réellement s'exécuter (pour répartir 0-100 % dessus)
+    _steps = []
+    if noise_gate:
+        _steps.append("Noise gate")
+    if phone_fx:
+        _steps.append("FX téléphone")
+    _steps.append("Chaîne principale (VST3)")
+    if deesser:
+        _steps.append("De-esser")
+    if tone_low != 2 or tone_mid != 2 or tone_high != 2 or air:
+        _steps.append("Tone")
+    if delay:
+        _steps.append("Delay")
+    if reverb:
+        _steps.append("Reverb")
+    if doubler:
+        _steps.append("Doubler")
+    if robot:
+        _steps.append("FX robot")
+    _total = len(_steps)
+    _step_index = [0]  # mutable pour closure
+
+    def _progress(step: str, done: bool = False):
+        if progress_callback:
+            if done:
+                _step_index[0] += 1
+            pct = round((_step_index[0] / _total) * 100) if _total else 100
+            progress_callback(min(100, pct), step)
+
     if not HOST_EXE.exists():
-        print(f"ERREUR: hise_vst3_host.exe introuvable: {HOST_EXE}")
-        return False
+        msg = f"hise_vst3_host introuvable: {HOST_EXE}"
+        print(f"ERREUR: {msg}")
+        return False, msg
     if not VST3_PATH.exists():
-        print(f"ERREUR: VST3 introuvable: {VST3_PATH}")
-        return False
+        msg = f"VST3 introuvable: {VST3_PATH}"
+        print(f"ERREUR: {msg}")
+        return False, msg
     if not Path(input_wav).exists():
-        print(f"ERREUR: Fichier d'entrée introuvable: {input_wav}")
-        return False
+        msg = f"Fichier d'entrée introuvable: {input_wav}"
+        print(f"ERREUR: {msg}")
+        return False, msg
 
     vst_input = input_wav
     temp_gated = None
     temp_phone = None
 
+    _progress("Préparation")
     # Étape 0 : Noise gate (avant VST3)
     if noise_gate:
+        _progress("Noise gate")
         print("0. Noise gate...")
         audio, sr = read_wav(input_wav)
         if audio.ndim == 2 and audio.shape[1] == 2:
@@ -467,9 +574,11 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         write_wav(temp_gated, gated, sr)
         vst_input = temp_gated
         print("   Gate OK")
+        _progress("Noise gate OK", done=True)
 
     # Étape 0b : FX téléphone (EQ HPF 900, +2.5dB @ 1650 Q=2, LPF 5500) — après gate, juste avant 1er VST3
     if phone_fx:
+        _progress("FX téléphone")
         print("0b. FX téléphone (EQ)...")
         audio, sr = read_wav(vst_input)
         audio = apply_phone_eq(audio, sr)
@@ -477,6 +586,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         write_wav(temp_phone, audio, sr)
         vst_input = temp_phone
         print("   FX téléphone OK")
+        _progress("FX téléphone OK", done=True)
 
     # Étape 1 : Rendu VST3
     if deesser:
@@ -485,23 +595,29 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
     else:
         vst_output = output_wav
 
-    cmd = [str(HOST_EXE), str(VST3_PATH), vst_input, vst_output, "1024"]
+    _progress("Chaîne principale (VST3)")
+    cmd = [str(HOST_EXE), str(VST3_PATH), vst_input, vst_output, str(VST_BLOCK_SIZE)]
     print("1. Rendu VST3...")
-    
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    # Certains VST3 chargent des DLL/ressources depuis le répertoire du plugin
+    cwd = str(VST3_PATH.parent) if VST3_PATH.parent else None
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
     
     if result.returncode != 0:
-        print("ERREUR:", result.stderr or result.stdout)
-        return False
+        err = (result.stderr or result.stdout or "").strip() or f"code sortie {result.returncode}"
+        print("ERREUR:", err, f"(code sortie {result.returncode})")
+        return False, err
     
     if not Path(vst_output).exists():
-        print("ERREUR: Fichier de sortie VST3 non créé")
-        return False
+        msg = "Fichier de sortie VST3 non créé"
+        print("ERREUR:", msg)
+        return False, msg
     
     print("   VST3 OK")
-    
+    _progress("VST3 OK", done=True)
+
     # Étape 2 : De-esser (Python FFT, sans Pro-DS pour le SaaS)
     if deesser:
+        _progress("De-esser")
         print("2. De-esser (FFT)...")
         audio, sr = read_wav(vst_output)
         if audio.ndim == 2 and audio.shape[1] == 2:
@@ -513,9 +629,11 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         write_wav(output_wav, audio_out, sr)
         print("   De-esser OK")
         Path(temp_vst_output).unlink(missing_ok=True)
+        _progress("De-esser OK", done=True)
 
     # Étape 3 : Tone presets (avant delay)
     if tone_low != 2 or tone_mid != 2 or tone_high != 2 or air:
+        _progress("Tone")
         print("3. Tone (low/mid/high + air)...")
         audio, sr = read_wav(output_wav)
         audio_tone = apply_tone_control(
@@ -523,6 +641,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         )
         write_wav(output_wav, audio_tone, sr)
         print("   Tone OK")
+        _progress("Tone OK", done=True)
 
     # Gain +4.5 dB avant delay uniquement pour reverb2 et reverb3 (reverb1 pas assez présente)
     if reverb and reverb_mode in (2, 3):
@@ -535,6 +654,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
 
     # Étape 4 : Delay ping-pong (optionnel)
     if delay:
+        _progress("Delay")
         print(f"4. Delay ping-pong ({delay_division})...")
         audio, sr = read_wav(output_wav)
         auto_bpm = bpm if bpm != 120.0 else None
@@ -545,62 +665,76 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         )
         write_wav(output_wav, audio_delayed, sr)
         print("   Delay OK")
+        _progress("Delay OK", done=True)
 
     # Étape 5 : Reverb VST3 (1=leger, 2=moyen défaut, 3=large)
     if reverb:
         reverb_paths = {1: REVERB1_PATH, 2: REVERB2_PATH, 3: REVERB3_PATH}
         reverb_path = reverb_paths.get(max(1, min(3, reverb_mode)), REVERB2_PATH)
         if reverb_path and reverb_path.exists():
+            _progress("Reverb")
             print(f"5. Reverb (reverb{reverb_mode}.vst3)...")
             temp_reverb_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-            cmd = [str(HOST_EXE), str(reverb_path), output_wav, temp_reverb_out, "1024"]
+            cmd = [str(HOST_EXE), str(reverb_path), output_wav, temp_reverb_out, str(VST_BLOCK_SIZE)]
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0 and Path(temp_reverb_out).exists():
                 shutil.copy(temp_reverb_out, output_wav)
                 print("   Reverb OK")
+                _progress("Reverb OK", done=True)
             else:
                 print("   Reverb skip:", result.stderr or result.stdout or "sortie absente")
+                _progress("Reverb skip", done=True)
             Path(temp_reverb_out).unlink(missing_ok=True)
         else:
             print(f"5. Reverb skip: reverb{reverb_mode}.vst3 introuvable ({reverb_path})")
+            _progress("Reverb skip", done=True)
 
     # Étape 6 : Doubler (doubler.vst3) — après Reverb, avant Robot
     if doubler and DOUBLER_PATH and DOUBLER_PATH.exists():
+        _progress("Doubler")
         print("6. Doubler (doubler.vst3)...")
         temp_doubler_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-        cmd = [str(HOST_EXE), str(DOUBLER_PATH), output_wav, temp_doubler_out, "1024"]
+        cmd = [str(HOST_EXE), str(DOUBLER_PATH), output_wav, temp_doubler_out, str(VST_BLOCK_SIZE)]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0 and Path(temp_doubler_out).exists():
             shutil.copy(temp_doubler_out, output_wav)
             print("   Doubler OK")
+            _progress("Doubler OK", done=True)
         else:
             print("   Doubler skip:", result.stderr or result.stdout or "sortie absente")
+            _progress("Doubler skip", done=True)
         Path(temp_doubler_out).unlink(missing_ok=True)
     elif doubler:
         print("6. Doubler skip: doubler.vst3 introuvable")
+        _progress("Doubler skip", done=True)
 
     # Étape 7 : FX robot (robot.vst3) — après Doubler si coché, sinon après Reverb
     if robot and ROBOT_PATH and ROBOT_PATH.exists():
+        _progress("FX robot")
         print("7. FX robot (robot.vst3)...")
         temp_robot_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-        cmd = [str(HOST_EXE), str(ROBOT_PATH), output_wav, temp_robot_out, "1024"]
+        cmd = [str(HOST_EXE), str(ROBOT_PATH), output_wav, temp_robot_out, str(VST_BLOCK_SIZE)]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0 and Path(temp_robot_out).exists():
             shutil.copy(temp_robot_out, output_wav)
             print("   FX robot OK")
+            _progress("FX robot OK", done=True)
         else:
             print("   FX robot skip:", result.stderr or result.stdout or "sortie absente")
+            _progress("FX robot skip", done=True)
         Path(temp_robot_out).unlink(missing_ok=True)
     elif robot:
         print("7. FX robot skip: robot.vst3 introuvable")
+        _progress("FX robot skip", done=True)
 
     if temp_gated:
         Path(temp_gated).unlink(missing_ok=True)
     if temp_phone:
         Path(temp_phone).unlink(missing_ok=True)
 
+    _progress("Terminé")
     print("OK ->", output_wav)
-    return True
+    return True, None
 
 
 def master_only(input_wav: str, output_wav: str) -> bool:
@@ -609,7 +743,7 @@ def master_only(input_wav: str, output_wav: str) -> bool:
     Retourne True si succès, False sinon.
     """
     if not HOST_EXE.exists():
-        print(f"ERREUR: hise_vst3_host.exe introuvable: {HOST_EXE}")
+        print(f"ERREUR: hise_vst3_host introuvable: {HOST_EXE}")
         return False
     if not MASTER_PATH or not MASTER_PATH.exists():
         print(f"ERREUR: master.vst3 introuvable: {MASTER_PATH}")
@@ -619,7 +753,7 @@ def master_only(input_wav: str, output_wav: str) -> bool:
         return False
     temp_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
     try:
-        cmd = [str(HOST_EXE), str(MASTER_PATH), input_wav, temp_out, "1024"]
+        cmd = [str(HOST_EXE), str(MASTER_PATH), input_wav, temp_out, str(VST_BLOCK_SIZE)]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0 and Path(temp_out).exists():
             shutil.copy(temp_out, output_wav)
@@ -658,14 +792,14 @@ if __name__ == "__main__":
             print(f"ERREUR: Fichier introuvable: {input_wav}")
             sys.exit(1)
         if not HOST_EXE.exists():
-            print(f"ERREUR: hise_vst3_host.exe introuvable: {HOST_EXE}")
+            print(f"ERREUR: hise_vst3_host introuvable: {HOST_EXE}")
             sys.exit(1)
         if not MASTER_PATH or not MASTER_PATH.exists():
             print(f"ERREUR: master.vst3 introuvable: {MASTER_PATH}")
             sys.exit(1)
         print("Master seul (master.vst3)...")
         temp_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-        cmd = [str(HOST_EXE), str(MASTER_PATH), input_wav, temp_out, "1024"]
+        cmd = [str(HOST_EXE), str(MASTER_PATH), input_wav, temp_out, str(VST_BLOCK_SIZE)]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0 and Path(temp_out).exists():
             shutil.copy(temp_out, output_wav)
@@ -728,7 +862,9 @@ if __name__ == "__main__":
             except Exception:
                 pass
 
-    render(sys.argv[1], sys.argv[2], deesser=not no_deesser, noise_gate=not no_gate,
-           delay=use_delay, bpm=bpm, delay_division=div,
-           tone_low=tone_low, tone_mid=tone_mid, tone_high=tone_high, air=air,
-           reverb=use_reverb, reverb_mode=reverb_mode)
+    ok, err = render(sys.argv[1], sys.argv[2], deesser=not no_deesser, noise_gate=not no_gate,
+                     delay=use_delay, bpm=bpm, delay_division=div,
+                     tone_low=tone_low, tone_mid=tone_mid, tone_high=tone_high, air=air,
+                     reverb=use_reverb, reverb_mode=reverb_mode)
+    if not ok:
+        sys.exit(1)
