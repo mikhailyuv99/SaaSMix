@@ -1641,17 +1641,18 @@ export default function Home() {
           }
           path = statusData.mixedTrackUrl as string;
         } else if (directMixedUrl) {
-          // Ancien backend : enchaîner sans saut (current→99% étalé sur MIX_FINISH_DURATION_MS)
-          const startFrom = Math.min(89, mixCurrentPctRef.current);
+          // Ancien backend (pas de progression réelle) : mix = terminé → 90%, puis 90→99% sur ~5s (fetch+decode)
+          // pour que le son ne parte pas à 82% si la simulation était encore basse
+          setMixProgress((prev) => ({ ...prev, [id]: 90 }));
           if (mixFinishIntervalRef.current) {
             clearInterval(mixFinishIntervalRef.current);
             mixFinishIntervalRef.current = null;
           }
-          const steps = 99 - startFrom;
-          const stepMs = steps > 0 ? Math.min(800, Math.max(350, MIX_FINISH_DURATION_MS / steps)) : 500;
+          const finishDurationMs = 5000; // 90→99% sur 5s
+          const stepMs = Math.round(finishDurationMs / 9); // 9 steps
           mixFinishIntervalRef.current = setInterval(() => {
             setMixProgress((prev) => {
-              const cur = prev[id] ?? startFrom;
+              const cur = prev[id] ?? 90;
               if (cur >= 99) return prev;
               return { ...prev, [id]: cur + 1 };
             });
