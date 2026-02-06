@@ -2035,7 +2035,7 @@ export default function Home() {
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={playAll}
+                    onClick={() => playAll()}
                     className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
                     title={undefined}
