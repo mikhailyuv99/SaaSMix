@@ -1608,10 +1608,33 @@ export default function Home() {
             existingNodes.mixedGain.gain.value = 1;
             if (existingNodes.rawMedia) existingNodes.rawMedia.element.currentTime = 0;
             if (existingNodes.mixedMedia) existingNodes.mixedMedia.element.currentTime = 0;
+            const when = ctx.currentTime;
+            if (existingNodes.rawBufferNode) {
+              try {
+                existingNodes.rawBufferNode.onended = null;
+                existingNodes.rawBufferNode.stop(when);
+                existingNodes.rawBufferNode.disconnect();
+              } catch (_) {}
+              const rawBuf = e.raw;
+              if (rawBuf) {
+                const rawSrc = ctx.createBufferSource();
+                rawSrc.buffer = rawBuf;
+                rawSrc.connect(existingNodes.rawGain);
+                rawSrc.onended = () => {
+                  trackPlaybackRef.current.delete(id);
+                  if (trackPlaybackRef.current.size === 0) {
+                    setIsPlaying(false);
+                    setHasPausedPosition(false);
+                  }
+                };
+                rawSrc.start(when, 0, rawBuf.duration);
+                (existingNodes as VocalNodes).rawBufferNode = rawSrc;
+              }
+            }
             if (existingNodes.mixedBufferNode) {
               try {
                 existingNodes.mixedBufferNode.onended = null;
-                existingNodes.mixedBufferNode.stop();
+                existingNodes.mixedBufferNode.stop(when);
                 existingNodes.mixedBufferNode.disconnect();
               } catch (_) {}
             }
@@ -1626,9 +1649,9 @@ export default function Home() {
               }
             };
             const duration = decoded.duration;
-            src.start(ctx.currentTime, 0, duration);
+            src.start(when, 0, duration);
             (existingNodes as VocalNodes).mixedBufferNode = src;
-            startTimeRef.current = ctx.currentTime;
+            startTimeRef.current = when;
           } else {
             const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
             const patchedPlayable = basePlayable.map((t) =>
