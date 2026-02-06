@@ -17,7 +17,12 @@ import numpy as np
 from scipy.signal import butter, lfilter
 
 # Chemins (Windows par défaut ; écrasés sous Linux si R2 configuré)
-HOST_EXE = Path(r"c:\Users\mikha\Desktop\SaaS Mix\hise_vst3_host\build\hise_vst3_host_artefacts\Release\hise_vst3_host.exe")
+_def = Path(r"c:\Users\mikha\Desktop\SaaS Mix\hise_vst3_host\build\hise_vst3_host_artefacts\Release\hise_vst3_host.exe")
+# Fallback : chemin relatif au projet (VPS = C:\Users\Administrator\SaaSMix\...)
+if not _def.exists():
+    _project_root = Path(__file__).resolve().parent.parent
+    _def = _project_root / "hise_vst3_host" / "build" / "hise_vst3_host_artefacts" / "Release" / "hise_vst3_host.exe"
+HOST_EXE = _def
 VST3_PATH = Path(r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3\Project1.vst3")
 try:
     from vst_config import VST_PATHS
@@ -48,31 +53,32 @@ if os.environ.get("HISE_VST3_HOST_EXE"):
     HOST_EXE = Path(os.environ["HISE_VST3_HOST_EXE"])
 if os.environ.get("VST_BASE"):
     _base = Path(os.environ["VST_BASE"])
-    VST3_PATH = _base / "Project1.vst3"
-    MASTER_PATH = _base / "master.vst3"
-    REVERB1_PATH = _base / "reverb1.vst3"
-    REVERB2_PATH = _base / "reverb2.vst3"
-    REVERB3_PATH = _base / "reverb3new.vst3"
-    DOUBLER_PATH = _base / "doubler.vst3"
-    ROBOT_PATH = _base / "robot.vst3"
+    # Scan récursif : tous les .vst3 sous VST_BASE, indexés par nom (stem)
+    _vst_map = {}
+    if _base.exists():
+        try:
+            for f in _base.rglob("*.vst3"):
+                stem = f.stem.lower()
+                if stem not in _vst_map:
+                    _vst_map[stem] = f
+        except Exception:
+            pass
+    def _vst_by_name(name: str, alt: str = None) -> Path:
+        for key in (name.lower(), (alt or "").lower()):
+            if key and key in _vst_map:
+                return _vst_map[key]
+        for stem, p in _vst_map.items():
+            if name.lower() in stem or (alt and alt.lower() in stem):
+                return p
+        return _base / f"{name}.vst3"
 
-    def _vst_full(base: Path, name: str) -> Path:
-        return base / name / "Binaries" / "Compiled" / "VST3" / f"{name}.vst3"
-
-    if not VST3_PATH.exists():
-        VST3_PATH = _vst_full(_base, "Project1")
-    if not MASTER_PATH.exists():
-        MASTER_PATH = _vst_full(_base, "master")
-    if not REVERB1_PATH.exists():
-        REVERB1_PATH = _vst_full(_base, "reverb1")
-    if not REVERB2_PATH.exists():
-        REVERB2_PATH = _vst_full(_base, "reverb2")
-    if not REVERB3_PATH.exists():
-        REVERB3_PATH = _vst_full(_base, "reverb3new")
-    if not DOUBLER_PATH.exists():
-        DOUBLER_PATH = _vst_full(_base, "doubler")
-    if not ROBOT_PATH.exists():
-        ROBOT_PATH = _vst_full(_base, "robot")
+    VST3_PATH = _vst_map.get("project1") or _vst_by_name("project1")
+    MASTER_PATH = _vst_map.get("master") or _vst_by_name("master")
+    REVERB1_PATH = _vst_map.get("reverb1") or _vst_by_name("reverb1")
+    REVERB2_PATH = _vst_map.get("reverb2") or _vst_by_name("reverb2")
+    REVERB3_PATH = _vst_map.get("reverb3new") or _vst_map.get("reverb3") or _vst_by_name("reverb3new", "reverb3")
+    DOUBLER_PATH = _vst_map.get("doubler") or _vst_by_name("doubler")
+    ROBOT_PATH = _vst_map.get("robot") or _vst_by_name("robot")
 
 # Linux (production Render) : utiliser binaires téléchargés depuis R2
 if sys.platform == "linux":
