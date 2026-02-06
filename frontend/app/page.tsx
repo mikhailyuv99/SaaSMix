@@ -783,18 +783,6 @@ export default function Home() {
             });
           } catch (_) {}
         })();
-        (async () => {
-          try {
-            const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-            if (!contextRef.current) contextRef.current = ctx;
-            const res = await fetch(rawAudioUrl);
-            const buf = await res.arrayBuffer();
-            const decoded = await ctx.decodeAudioData(buf);
-            const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
-            entry.raw = decoded;
-            buffersRef.current.set(id, entry);
-          } catch (_) {}
-        })();
       }
     },
     [updateTrack]
@@ -1289,27 +1277,15 @@ export default function Home() {
             }
           };
           const entry = buffersRef.current.get(track.id) ?? { raw: null, mixed: null };
-          const rawBuf = entry.raw;
-          let rawMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null = null;
-          let rawBufferNode: AudioBufferSourceNode | null = null;
-          if (rawBuf) {
-            const src = ctx.createBufferSource();
-            src.buffer = rawBuf;
-            src.connect(rawGain);
-            src.onended = onEnd;
-            const duration = Math.max(0, rawBuf.duration - offset);
-            src.start(now, offset, duration);
-            rawBufferNode = src;
-          } else {
-            const fullRawUrl = track.rawAudioUrl.startsWith("http") || track.rawAudioUrl.startsWith("blob:") ? track.rawAudioUrl : `${API_BASE}${track.rawAudioUrl}`;
-            const rawAudio = new Audio(fullRawUrl);
-            const rawMediaSource = ctx.createMediaElementSource(rawAudio);
-            rawMediaSource.connect(rawGain);
-            rawAudio.onended = onEnd;
-            rawAudio.currentTime = offset;
-            rawAudio.play().catch(() => {});
-            rawMedia = { element: rawAudio, source: rawMediaSource };
-          }
+          const fullRawUrl = track.rawAudioUrl.startsWith("http") || track.rawAudioUrl.startsWith("blob:") ? track.rawAudioUrl : `${API_BASE}${track.rawAudioUrl}`;
+          const rawAudio = new Audio(fullRawUrl);
+          const rawMediaSource = ctx.createMediaElementSource(rawAudio);
+          rawMediaSource.connect(rawGain);
+          rawAudio.onended = onEnd;
+          rawAudio.currentTime = offset;
+          rawAudio.play().catch(() => {});
+          const rawMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } = { element: rawAudio, source: rawMediaSource };
+          const rawBufferNode: AudioBufferSourceNode | null = null;
           let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode } | null = null;
           let mixedBufferNode: AudioBufferSourceNode | null = null;
           if (track.mixedAudioUrl) {
@@ -1581,7 +1557,7 @@ export default function Home() {
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
           e.mixed = decoded;
-          await ctx.resume();
+          if (ctx.state === "suspended") await ctx.resume();
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
           const preload = new Audio(fullUrl);
