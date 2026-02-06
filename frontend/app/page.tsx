@@ -364,7 +364,7 @@ export default function Home() {
   isPlayingRef.current = isPlaying;
   const preloadMixedRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const isFirstSaveRef = useRef(true);
-  const playAllRef = useRef<() => void>(() => {});
+  const playAllRef = useRef<(override?: { playable?: Track[]; startOffset?: number }) => void>(() => {});
 
   // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage (après hydratation)
   useEffect(() => {
@@ -1347,61 +1347,63 @@ export default function Home() {
     [isPlaying]
   );
 
-  const playAll = useCallback(() => {
-    userPausedRef.current = false;
-    let ctx = contextRef.current;
-    if (!ctx) {
-      ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      contextRef.current = ctx;
-    }
-    if (ctx.state === "suspended") {
-      ctx.resume().catch(() => {
-        setIsPlaying(false);
-        return;
-      });
-    }
-    if (trackPlaybackRef.current.size > 0) {
-      for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-        try {
-          if (nodes.type === "instrumental") {
-            nodes.media.element.pause();
-            nodes.media.source.disconnect();
-          } else {
-            nodes.rawMedia.element.pause();
-            nodes.rawMedia.source.disconnect();
-            if (nodes.mixedMedia) {
-              nodes.mixedMedia.element.pause();
-              nodes.mixedMedia.source.disconnect();
-            }
-            if (nodes.mixedBufferNode) {
-              try {
-                nodes.mixedBufferNode.onended = null;
-                nodes.mixedBufferNode.stop();
-                nodes.mixedBufferNode.disconnect();
-              } catch (_) {}
-            }
-          }
-        } catch (_) {}
+  const playAll = useCallback(
+    (override?: { playable?: Track[]; startOffset?: number }) => {
+      userPausedRef.current = false;
+      let ctx = contextRef.current;
+      if (!ctx) {
+        ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        contextRef.current = ctx;
       }
-      trackPlaybackRef.current.clear();
-    }
-    const playable = tracksRef.current.filter(
-      (t) => t.file && t.rawAudioUrl
-    );
-    if (playable.length === 0) {
-      setShowPlayNoFileMessage(true);
-      setTimeout(() => setShowPlayNoFileMessage(false), 3000);
-      return;
-    }
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {
+          setIsPlaying(false);
+          return;
+        });
+      }
+      if (trackPlaybackRef.current.size > 0) {
+        for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+          try {
+            if (nodes.type === "instrumental") {
+              nodes.media.element.pause();
+              nodes.media.source.disconnect();
+            } else {
+              nodes.rawMedia.element.pause();
+              nodes.rawMedia.source.disconnect();
+              if (nodes.mixedMedia) {
+                nodes.mixedMedia.element.pause();
+                nodes.mixedMedia.source.disconnect();
+              }
+              if (nodes.mixedBufferNode) {
+                try {
+                  nodes.mixedBufferNode.onended = null;
+                  nodes.mixedBufferNode.stop();
+                  nodes.mixedBufferNode.disconnect();
+                } catch (_) {}
+              }
+            }
+          } catch (_) {}
+        }
+        trackPlaybackRef.current.clear();
+      }
+      const playable =
+        override?.playable ?? tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+      if (playable.length === 0) {
+        setShowPlayNoFileMessage(true);
+        setTimeout(() => setShowPlayNoFileMessage(false), 3000);
+        return;
+      }
 
-    setIsPlaying(true);
+      setIsPlaying(true);
 
-    const startOffset = resumeFromRef.current ?? 0;
-    resumeFromRef.current = null;
-    setHasPausedPosition(false);
+      const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
+      resumeFromRef.current = null;
+      setHasPausedPosition(false);
 
-    startPlaybackAtOffset(ctx, playable, startOffset);
-  }, [startPlaybackAtOffset]);
+      startPlaybackAtOffset(ctx, playable, startOffset);
+    },
+    [startPlaybackAtOffset]
+  );
 
   playAllRef.current = playAll;
 
@@ -1477,16 +1479,22 @@ export default function Home() {
           if (!e) throw new Error("track entry missing");
           e.mixed = decoded;
           if (ctx.state === "suspended") await ctx.resume();
-          updateTrack(id, { mixedAudioUrl, isMixing: false });
-          if (isPlayingRef.current) stopAll();
+          updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
           const preload = new Audio(fullUrl);
           preload.preload = "auto";
           preload.load();
           preloadMixedRef.current.set(id, preload);
-          setTimeout(() => playAllRef.current(), 0);
+          const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+          const patchedPlayable = basePlayable.map((t) =>
+            t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
+          );
+          resumeFromRef.current = null;
+          setHasPausedPosition(false);
+          setIsPlaying(true);
+          startPlaybackAtOffset(ctx, patchedPlayable, 0);
         } catch (decodeErr) {
-          updateTrack(id, { mixedAudioUrl, isMixing: false });
+          updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           if (isPlayingRef.current) stopAll();
           const prev = preloadMixedRef.current.get(id);
           if (prev) prev.src = "";
@@ -1503,7 +1511,7 @@ export default function Home() {
         setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
     },
-    [tracks, updateTrack]
+    [tracks, updateTrack, startPlaybackAtOffset]
   );
 
   const isVocal = (c: Category) =>
