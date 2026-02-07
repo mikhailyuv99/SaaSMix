@@ -374,6 +374,7 @@ export default function Home() {
   const preloadMixedRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const isFirstSaveRef = useRef(true);
   const playAllRef = useRef<(override?: { playable?: Track[]; startOffset?: number }) => void>(() => {});
+  const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
 
   // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage (après hydratation)
   useEffect(() => {
@@ -617,21 +618,30 @@ export default function Home() {
 
   // Synchroniser le gain (slider) et le volume Avant/Après avec les nodes en cours de lecture
   useEffect(() => {
-    trackPlaybackRef.current.forEach((nodes, id) => {
-      const t = tracks.find((tr) => tr.id === id);
-      if (!t) return;
-      const g = t.gain / 100;
-      nodes.mainGain.gain.value = g;
-      if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
-        nodes.media.element.volume = g;
-      }
-      if (nodes.type === "vocal") {
-        const rawVol = (t.playMode === "raw" || !t.mixedAudioUrl ? 1 : 0) * g;
-        const mixedVol = (t.playMode === "mixed" && t.mixedAudioUrl ? 1 : 0) * g;
-        if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
-        if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
-      }
-    });
+    try {
+      trackPlaybackRef.current.forEach((nodes, id) => {
+        try {
+          const t = tracks.find((tr) => tr.id === id);
+          if (!t) return;
+          const g = Math.max(0, Math.min(1, (t.gain ?? 100) / 100));
+          if (!Number.isFinite(g)) return;
+          if (nodes.mainGain?.gain != null) nodes.mainGain.gain.value = g;
+          if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
+            nodes.media.element.volume = g;
+          }
+          if (nodes.type === "vocal") {
+            const rawVol = (t.playMode === "raw" || !t.mixedAudioUrl ? 1 : 0) * g;
+            const mixedVol = (t.playMode === "mixed" && t.mixedAudioUrl ? 1 : 0) * g;
+            if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
+            if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
+          }
+        } catch (_) {
+          // per-track ignore
+        }
+      });
+    } catch (_) {
+      // ignore
+    }
   }, [tracks]);
 
   // Quand la fenêtre reprend le focus (ex. fermeture du sélecteur de fichiers), retirer le glow "fichier .wav"
@@ -825,19 +835,26 @@ export default function Home() {
         prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
       );
       if ("gain" in updates && updates.gain !== undefined) {
-        const nodes = trackPlaybackRef.current.get(id);
-        if (!nodes) return;
-        const g = updates.gain / 100;
-        nodes.mainGain.gain.value = g;
-        const track = tracksRef.current.find((t) => t.id === id);
-        if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
-          nodes.media.element.volume = g;
-        }
-        if (nodes.type === "vocal" && track) {
-          const rawVol = (track.playMode === "raw" || !track.mixedAudioUrl ? 1 : 0) * g;
-          const mixedVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 1 : 0) * g;
-          if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
-          if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
+        const g = Math.max(0, Math.min(1, Number(updates.gain) / 100));
+        if (!Number.isFinite(g)) return;
+        try {
+          const nodes = trackPlaybackRef.current.get(id);
+          if (!nodes) return;
+          const track = tracksRef.current.find((t) => t.id === id);
+          const playMode = track?.playMode ?? "raw";
+          const hasMixed = Boolean(track?.mixedAudioUrl);
+          if (nodes.mainGain?.gain != null) nodes.mainGain.gain.value = g;
+          if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
+            nodes.media.element.volume = g;
+          }
+          if (nodes.type === "vocal") {
+            const rawVol = (playMode === "raw" || !hasMixed ? 1 : 0) * g;
+            const mixedVol = (playMode === "mixed" && hasMixed ? 1 : 0) * g;
+            if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
+            if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
+          }
+        } catch {
+          // ignore: context closed or node detached
         }
       }
     },
@@ -1737,7 +1754,10 @@ export default function Home() {
           return;
         });
       }
-      const playable = override?.playable ?? tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+      let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+      if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
+        pendingPlayableAfterMixRef.current = null;
+      }
       const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
       if (playable.length === 0) {
         setShowPlayNoFileMessage(true);
@@ -1811,15 +1831,37 @@ export default function Home() {
 
   const togglePlayMode = useCallback(
     (id: string, targetMode: "raw" | "mixed") => {
-      const nodes = trackPlaybackRef.current.get(id);
-      const track = tracksRef.current.find((t) => t.id === id);
-      if (nodes?.type === "vocal" && track) {
-        nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
-        nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
-        const g = track.gain / 100;
-        if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = (targetMode === "raw" ? 1 : 0) * g;
-        if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = (targetMode === "mixed" ? 1 : 0) * g;
-      }
+      try {
+        const nodes = trackPlaybackRef.current.get(id);
+        const track = tracksRef.current.find((t) => t.id === id);
+        if (nodes?.type === "vocal" && track) {
+          try {
+            if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
+            if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
+          } catch {}
+          const g = Math.max(0, Math.min(1, (track.gain ?? 100) / 100));
+          const rawEl = nodes.rawMedia?.element;
+          const mixedEl = nodes.mixedMedia?.element;
+          if (rawEl && mixedEl) {
+            if (targetMode === "raw") {
+              rawEl.currentTime = mixedEl.currentTime;
+              mixedEl.pause();
+              mixedEl.volume = 0;
+              rawEl.volume = g;
+              rawEl.play().catch(() => {});
+            } else {
+              mixedEl.currentTime = rawEl.currentTime;
+              rawEl.pause();
+              rawEl.volume = 0;
+              mixedEl.volume = g;
+              mixedEl.play().catch(() => {});
+            }
+          } else {
+            if (rawEl) rawEl.volume = (targetMode === "raw" ? 1 : 0) * g;
+            if (mixedEl) mixedEl.volume = (targetMode === "mixed" ? 1 : 0) * g;
+          }
+        }
+      } catch {}
       updateTrack(id, { playMode: targetMode });
     },
     [updateTrack]
@@ -1998,8 +2040,8 @@ export default function Home() {
           preloadMixedRef.current.set(id, preload);
           resumeFromRef.current = null;
           setHasPausedPosition(false);
-
           setMixProgress((prev) => ({ ...prev, [id]: 100 }));
+
           stopAll();
           resumeFromRef.current = null;
           setHasPausedPosition(false);
@@ -2007,17 +2049,13 @@ export default function Home() {
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
-          if (isMobileRef.current) {
-            setIsPlaying(false);
-          } else {
-            if (ctx.state === "suspended") {
-              ctx.resume().catch(() => {});
-              unlockAudioContextSync(ctx);
-              await ctx.resume().catch(() => {});
-            }
-            startPlaybackAtOffset(ctx, patchedPlayable, 0);
-            setIsPlaying(true);
+          if (ctx.state === "suspended") {
+            ctx.resume().catch(() => {});
+            unlockAudioContextSync(ctx);
+            await ctx.resume().catch(() => {});
           }
+          startPlaybackAtOffset(ctx, patchedPlayable, 0);
+          setIsPlaying(true);
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
@@ -2681,10 +2719,10 @@ export default function Home() {
                         type="range"
                         min="0"
                         max="200"
-                        value={track.gain}
+                        value={track.gain ?? 100}
                         onChange={(e) =>
                           updateTrack(track.id, {
-                            gain: Number(e.target.value),
+                            gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
                           })
                         }
                         className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400"
@@ -2847,10 +2885,10 @@ export default function Home() {
                         type="range"
                         min="0"
                         max="200"
-                        value={track.gain}
+                        value={track.gain ?? 100}
                         onChange={(e) =>
                           updateTrack(track.id, {
-                            gain: Number(e.target.value),
+                            gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
                           })
                         }
                         className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400"
@@ -2906,10 +2944,10 @@ export default function Home() {
                           type="range"
                           min="0"
                           max="200"
-                          value={track.gain}
+                          value={track.gain ?? 100}
                           onChange={(e) =>
                             updateTrack(track.id, {
-                              gain: Number(e.target.value),
+                              gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
                             })
                           }
                           className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
@@ -3002,8 +3040,8 @@ export default function Home() {
                           type="range"
                           min="0"
                           max="200"
-                          value={track.gain}
-                          onChange={(e) => updateTrack(track.id, { gain: Number(e.target.value) })}
+                          value={track.gain ?? 100}
+                          onChange={(e) => updateTrack(track.id, { gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)) })}
                           className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
                         />
                       </div>
