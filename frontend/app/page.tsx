@@ -1499,6 +1499,20 @@ export default function Home() {
             });
           }
         }
+        for (const track of playable) {
+          if (track.category !== "instrumental" && track.mixedAudioUrl) {
+            const nodes = trackPlaybackRef.current.get(track.id);
+            if (nodes?.type === "vocal" && nodes.rawGain && nodes.mixedGain) {
+              const pm = track.playMode === "mixed";
+              nodes.rawGain.gain.value = pm ? 0 : 1;
+              nodes.mixedGain.gain.value = pm ? 1 : 0;
+            }
+          }
+        }
+        for (let i = 0; i < mediaToPlay.length; i++) {
+          mediaToPlay[i].currentTime = offset;
+          mediaToPlay[i].play().catch(() => {});
+        }
         const loadPromises = mediaToPlay.map(
           (el) =>
             new Promise<void>((resolve) => {
@@ -1517,9 +1531,6 @@ export default function Home() {
           if (gen !== mobilePlaybackGenerationRef.current) return;
           for (let i = 0; i < mediaToPlay.length; i++) {
             mediaToPlay[i].currentTime = offset;
-          }
-          for (let i = 0; i < mediaToPlay.length; i++) {
-            mediaToPlay[i].play().catch(() => {});
           }
         });
         setIsPlaying(true);
@@ -1860,39 +1871,33 @@ export default function Home() {
             if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
           } catch {}
           if (rawEl && mixedEl) {
-            let masterPos = targetMode === "raw" ? mixedEl.currentTime : rawEl.currentTime;
-            const toPause: HTMLAudioElement[] = [];
-            const toSyncAndPlay: HTMLAudioElement[] = [];
-            for (const [otherId, otherNodes] of Array.from(trackPlaybackRef.current.entries())) {
-              if (otherNodes.type === "instrumental" && "media" in otherNodes && otherNodes.media?.element) {
-                const el = otherNodes.media.element;
-                toPause.push(el);
-                toSyncAndPlay.push(el);
-                if (otherId !== id) masterPos = el.currentTime;
-              } else if (otherNodes.type === "vocal") {
-                const otherRaw = otherNodes.rawMedia?.element;
-                const otherMixed = otherNodes.mixedMedia?.element;
-                if (otherId === id) {
-                  toPause.push(rawEl, mixedEl);
-                  toSyncAndPlay.push(targetMode === "raw" ? rawEl : mixedEl);
-                } else {
+            const active = targetMode === "raw" ? rawEl : mixedEl;
+            const inactive = targetMode === "raw" ? mixedEl : rawEl;
+            inactive.pause();
+            inactive.volume = 0;
+            active.volume = g;
+            requestAnimationFrame(() => {
+              let masterPos = targetMode === "raw" ? mixedEl.currentTime : rawEl.currentTime;
+              for (const [otherId, otherNodes] of Array.from(trackPlaybackRef.current.entries())) {
+                if (otherId === id) continue;
+                if (otherNodes.type === "instrumental" && "media" in otherNodes && otherNodes.media?.element) {
+                  masterPos = otherNodes.media.element.currentTime;
+                  break;
+                }
+                if (otherNodes.type === "vocal" && (otherNodes.rawMedia?.element || otherNodes.mixedMedia?.element)) {
                   const tr = tracksRef.current.find((t) => t.id === otherId);
-                  const el = tr?.playMode === "mixed" && otherMixed ? otherMixed : otherRaw;
-                  if (el) {
-                    toPause.push(el);
-                    toSyncAndPlay.push(el);
-                    if (!el.paused) masterPos = el.currentTime;
+                  const el = tr?.playMode === "mixed" && otherNodes.mixedMedia?.element
+                    ? otherNodes.mixedMedia.element
+                    : otherNodes.rawMedia?.element;
+                  if (el && !el.paused) {
+                    masterPos = el.currentTime;
+                    break;
                   }
                 }
               }
-            }
-            for (const el of toPause) el.pause();
-            const active = targetMode === "raw" ? rawEl : mixedEl;
-            const inactive = targetMode === "raw" ? mixedEl : rawEl;
-            inactive.volume = 0;
-            active.volume = g;
-            for (const el of toSyncAndPlay) el.currentTime = masterPos;
-            for (const el of toSyncAndPlay) el.play().catch(() => {});
+              active.currentTime = masterPos;
+              active.play().catch(() => {});
+            });
           } else {
             if (rawEl) rawEl.volume = (targetMode === "raw" ? 1 : 0) * g;
             if (mixedEl) mixedEl.volume = (targetMode === "mixed" ? 1 : 0) * g;
