@@ -920,7 +920,11 @@ export default function Home() {
         const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         fetch(rawAudioUrl)
           .then((res) => res.arrayBuffer())
-          .then((buf) => ctx.decodeAudioData(buf))
+          .then((buf) => {
+            // Cache the ArrayBuffer so mobile playAll can re-decode without re-fetching
+            abCacheRef.current.set(`raw:${rawAudioUrl}`, buf.slice(0));
+            return ctx.decodeAudioData(buf);
+          })
           .then((buffer) => {
             ctx.close();
             const peaks = computeWaveformPeaks(buffer, WAVEFORM_POINTS);
@@ -1554,7 +1558,7 @@ export default function Home() {
   const seekTo = useCallback(
     (offset: number) => {
       const ctx = contextRef.current;
-      const playable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+      const playable = tracksRef.current.filter((t) => t.rawAudioUrl);
       if (playable.length === 0) return;
       const safeOffset = Math.max(0, offset);
       const now = Date.now();
@@ -1563,7 +1567,7 @@ export default function Home() {
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
         // Seek = stop all + recreate at new offset. Sample-accurate via scheduleAt.
-        const playable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+        const playable = tracksRef.current.filter((t) => t.rawAudioUrl);
         startPlaybackAtOffset(ctx, playable, safeOffset);
       } else {
         resumeFromRef.current = safeOffset;
@@ -1602,7 +1606,7 @@ export default function Home() {
     async (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
       // Resolve playable tracks and start offset FIRST (shared by mobile + PC)
-      let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+      let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.rawAudioUrl);
       if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
         pendingPlayableAfterMixRef.current = null;
       }
@@ -1961,7 +1965,7 @@ export default function Home() {
               } catch (_) {}
             }
           }
-          const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+          const basePlayable = tracksRef.current.filter((t) => t.rawAudioUrl);
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
