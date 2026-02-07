@@ -126,7 +126,8 @@ function deleteFileFromIDB(trackId: string): void {
   }).catch(() => {});
 }
 
-/** Sauvegarde sérialisable d'une piste (sans File ni blob URLs) pour sessionStorage */
+/** Sauvegarde sérialisable d'une piste pour sessionStorage.
+ *  Inclut rawAudioUrl (blob URL) — survit aux navigations client-side (login). */
 function tracksToStorage(tracks: Track[]): string {
   return JSON.stringify(
     tracks.map((t) => ({
@@ -135,12 +136,13 @@ function tracksToStorage(tracks: Track[]): string {
       gain: t.gain,
       mixParams: t.mixParams,
       mixedAudioUrl: t.mixedAudioUrl,
+      rawAudioUrl: t.rawAudioUrl ?? null,
       rawFileName: t.file?.name ?? t.rawFileName ?? null,
     }))
   );
 }
 
-/** Restaure des pistes depuis sessionStorage (file et rawAudioUrl à null) */
+/** Restaure des pistes depuis sessionStorage. rawAudioUrl (blob) survit aux nav client-side. */
 function tracksFromStorage(): Track[] | null {
   if (typeof window === "undefined") return null;
   try {
@@ -152,6 +154,7 @@ function tracksFromStorage(): Track[] | null {
       gain: number;
       mixParams: MixParams;
       mixedAudioUrl: string | null;
+      rawAudioUrl?: string | null;
       rawFileName?: string | null;
     }>;
     if (!Array.isArray(arr) || arr.length === 0) return null;
@@ -160,7 +163,7 @@ function tracksFromStorage(): Track[] | null {
       file: null,
       category: t.category,
       gain: t.gain,
-      rawAudioUrl: null,
+      rawAudioUrl: t.rawAudioUrl ?? null,
       mixedAudioUrl: t.mixedAudioUrl ?? null,
       isMixing: false,
       playMode: "mixed" as const,
@@ -383,7 +386,9 @@ export default function Home() {
   const playAllRef = useRef<(override?: { playable?: Track[]; startOffset?: number }) => void>(() => {});
   const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
 
-  // Utilisateur connecté (localStorage) + restauration des pistes + IDB file hydration (single batch)
+  // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage.
+  // rawAudioUrl (blob URL) survit aux navigations client-side (login) et est restauré directement.
+  // Le fichier File sera réhydraté en background par le useEffect per-track ci-dessous.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -394,54 +399,39 @@ export default function Home() {
       }
       const restored = tracksFromStorage();
       if (!restored || restored.length === 0) return;
-
-      // Set tracks immediately for UI (file names, categories visible while IDB loads)
       setTracks(restored);
 
-      // Pre-hydrate ALL files from IDB in parallel, then batch-update in ONE setTracks call.
-      // This avoids the N-rerender chain that makes the old per-track useEffect so slow.
-      const toHydrate = restored.filter((t) => t.rawFileName);
-      if (toHydrate.length === 0) return;
+      // Compute waveforms for tracks that have a valid rawAudioUrl.
+      // Blob URLs survive client-side navigation. On full reload they're stale → fails silently.
+      const withUrl = restored.filter((t) => t.rawAudioUrl);
+      if (withUrl.length === 0) return;
 
       Promise.all(
-        toHydrate.map(async (track) => {
-          const data = await getFileFromIDB(track.id);
-          if (!data) return null;
-          const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
-          const rawAudioUrl = URL.createObjectURL(file);
-          // Pre-cache ArrayBuffer for mobile playAll (avoids re-fetch when context is recreated)
+        withUrl.map(async (track) => {
           try {
-            const res = await fetch(rawAudioUrl);
+            const res = await fetch(track.rawAudioUrl!);
+            if (!res.ok) return null;
             const ab = await res.arrayBuffer();
-            abCacheRef.current.set(`raw:${rawAudioUrl}`, ab.slice(0));
-            // Decode waveform
+            abCacheRef.current.set(`raw:${track.rawAudioUrl}`, ab.slice(0));
             const wCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
             const decoded = await wCtx.decodeAudioData(ab);
             wCtx.close();
             const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
-            return { id: track.id, file, rawAudioUrl, peaks, duration: decoded.duration };
+            return { id: track.id, peaks, duration: decoded.duration };
           } catch (_) {
-            return { id: track.id, file, rawAudioUrl, peaks: null, duration: null };
+            return null;
           }
         })
       ).then((results) => {
         const updates = results.filter(Boolean) as Array<{
-          id: string; file: File; rawAudioUrl: string;
-          peaks: number[] | null; duration: number | null;
+          id: string; peaks: number[]; duration: number;
         }>;
         if (updates.length === 0) return;
-        // Single setTracks call — ONE re-render with all files + waveforms ready
         setTracks((prev) =>
           prev.map((t) => {
             const u = updates.find((x) => x.id === t.id);
             if (!u) return t;
-            return {
-              ...t,
-              file: u.file,
-              rawAudioUrl: u.rawAudioUrl,
-              rawFileName: null,
-              ...(u.peaks ? { waveformPeaks: u.peaks, waveformDuration: u.duration ?? undefined } : {}),
-            };
+            return { ...t, waveformPeaks: u.peaks, waveformDuration: u.duration };
           })
         );
       });
@@ -691,7 +681,7 @@ export default function Home() {
   useEffect(() => {
     const ctx = contextRef.current;
     if (!ctx) return;
-    const playable = tracks.filter((t) => t.file && t.rawAudioUrl);
+    const playable = tracks.filter((t) => t.rawAudioUrl);
     for (const t of playable) {
       const rawUrl = t.rawAudioUrl
         ? t.rawAudioUrl.startsWith("http") || t.rawAudioUrl.startsWith("blob:")
@@ -957,24 +947,23 @@ export default function Home() {
     }
   }, [tracks, applyGainToNodes]);
 
-  // Réhydrater les fichiers depuis IndexedDB — only for tracks added AFTER mount
-  // (mount effect already batch-hydrates all restored tracks above)
-  const mountHydrationDoneRef = useRef(false);
+  // Réhydrater les fichiers File depuis IndexedDB (nécessaire pour le mixage qui upload le fichier).
+  // rawAudioUrl est déjà restauré depuis sessionStorage — on ne le remplace pas s'il est déjà valide.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!mountHydrationDoneRef.current) {
-      // Skip on first renders — the mount effect handles initial hydration in batch
-      mountHydrationDoneRef.current = true;
-      return;
-    }
     const toHydrate = tracks.filter((t) => t.rawFileName && !t.file);
     toHydrate.forEach((track) => {
       const id = track.id;
       getFileFromIDB(id).then((data) => {
         if (!data) return;
         const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
-        const rawAudioUrl = URL.createObjectURL(file);
-        updateTrack(id, { file, rawAudioUrl, rawFileName: null });
+        const updates: Partial<Omit<Track, "id">> = { file, rawFileName: null };
+        // Only set rawAudioUrl if there isn't one already (avoid replacing a valid blob URL)
+        const current = tracksRef.current.find((t) => t.id === id);
+        if (!current?.rawAudioUrl) {
+          updates.rawAudioUrl = URL.createObjectURL(file);
+        }
+        updateTrack(id, updates);
       });
     });
   }, [tracks, updateTrack]);
@@ -1376,11 +1365,26 @@ export default function Home() {
       const cacheKey = `raw:${rawUrl}`;
       let ab = abCacheRef.current.get(cacheKey);
       if (!ab) {
-        const res = await fetch(rawUrl);
-        ab = await res.arrayBuffer();
-        abCacheRef.current.set(cacheKey, ab); // cache the original
+        try {
+          const res = await fetch(rawUrl);
+          if (!res.ok) throw new Error(`fetch ${res.status}`);
+          ab = await res.arrayBuffer();
+          abCacheRef.current.set(cacheKey, ab);
+        } catch (_) {
+          // Blob URL is stale (full page reload) — fallback to IDB
+          const data = await getFileFromIDB(id);
+          if (data) {
+            const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
+            const freshUrl = URL.createObjectURL(file);
+            const res2 = await fetch(freshUrl);
+            ab = await res2.arrayBuffer();
+            abCacheRef.current.set(`raw:${freshUrl}`, ab);
+            // Update the track with the new valid blob URL
+            updateTrack(id, { file, rawAudioUrl: freshUrl, rawFileName: data.fileName });
+          }
+        }
       }
-      entry.raw = await ctx.decodeAudioData(ab.slice(0)); // decode a clone (decode detaches the buffer)
+      if (ab) entry.raw = await ctx.decodeAudioData(ab.slice(0));
     }
     if (mixedUrl && !entry.mixed) {
       const fullUrl = mixedUrl.startsWith("http") ? mixedUrl : `${API_BASE}${mixedUrl}`;
@@ -1695,35 +1699,14 @@ export default function Home() {
       }
 
       // --- Now resolve playable tracks (safe to await after AudioContext is set up) ---
-      let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.rawAudioUrl);
+      // rawAudioUrl is persisted in sessionStorage → available immediately after client-side navigation.
+      // For stale blob URLs (full reload), decodeTrackBuffers has IDB fallback.
+      const playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.rawAudioUrl);
       if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
         pendingPlayableAfterMixRef.current = null;
       }
       const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
 
-      // If no playable tracks but files exist in IDB (after login navigation),
-      // load them directly instead of waiting for the useEffect hydration chain.
-      if (playable.length === 0 && !override?.playable) {
-        const needsIDB = tracksRef.current.filter((t) => t.rawFileName && !t.rawAudioUrl);
-        if (needsIDB.length > 0) {
-          const hydrated: Track[] = [];
-          await Promise.all(
-            needsIDB.map(async (track) => {
-              const data = await getFileFromIDB(track.id);
-              if (!data) return;
-              const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
-              const rawAudioUrl = URL.createObjectURL(file);
-              // Update React state (for UI, waveform, etc.)
-              updateTrack(track.id, { file, rawAudioUrl, rawFileName: null });
-              // Build playable entry directly (React state won't update until next render)
-              hydrated.push({ ...track, file, rawAudioUrl, rawFileName: null });
-            })
-          );
-          // Merge: tracks that already had rawAudioUrl + freshly hydrated ones
-          const alreadyReady = tracksRef.current.filter((t) => t.rawAudioUrl);
-          playable = [...alreadyReady, ...hydrated];
-        }
-      }
       if (playable.length === 0) {
         setShowPlayNoFileMessage(true);
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
