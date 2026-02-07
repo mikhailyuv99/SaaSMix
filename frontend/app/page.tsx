@@ -1429,7 +1429,6 @@ export default function Home() {
       if (isMobileRef.current) {
         const gen = ++mobilePlaybackGenerationRef.current;
         const mediaToPlay: HTMLAudioElement[] = [];
-        const mediaToLoad: HTMLAudioElement[] = [];
         for (const track of playable) {
           if (!track.rawAudioUrl) continue;
           const trackMainGain = ctx.createGain();
@@ -1449,7 +1448,6 @@ export default function Home() {
             audio.volume = 1;
             audio.onended = onEnd;
             mediaToPlay.push(audio);
-            mediaToLoad.push(audio);
             const source = ctx.createMediaElementSource(audio);
             source.connect(trackMainGain);
             trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source }, mainGain: trackMainGain });
@@ -1480,15 +1478,12 @@ export default function Home() {
               const mixedAudio = new Audio(fullUrl(track.mixedAudioUrl));
               mixedAudio.volume = 1;
               mixedAudio.onended = onEndVocal;
+              mediaToPlay.push(mixedAudio);
               const mixedSource = ctx.createMediaElementSource(mixedAudio);
               mixedSource.connect(mixedGain);
               mixedMedia = { element: mixedAudio, source: mixedSource };
-              mediaToLoad.push(rawAudio, mixedAudio);
-              mediaToPlay.push(playMixed ? mixedAudio : rawAudio);
-            } else {
-              mediaToLoad.push(rawAudio);
-              mediaToPlay.push(rawAudio);
             }
+            mediaToPlay.push(rawAudio);
             trackPlaybackRef.current.set(track.id, {
               type: "vocal",
               rawMedia: { element: rawAudio, source: rawSource },
@@ -1502,7 +1497,7 @@ export default function Home() {
             });
           }
         }
-        const loadPromises = mediaToLoad.map(
+        const loadPromises = mediaToPlay.map(
           (el) =>
             new Promise<void>((resolve) => {
               if (el.readyState >= 2) {
@@ -2152,7 +2147,20 @@ export default function Home() {
             pendingPlayableAfterMixRef.current = patchedPlayable;
             setIsPlaying(false);
           } else {
-            playAllRef.current?.({ playable: patchedPlayable, startOffset: 0 });
+            (async () => {
+              try {
+                await ensureAllBuffersLoaded(patchedPlayable);
+                if (ctx.state === "suspended") {
+                  unlockAudioContextSync(ctx);
+                  await ctx.resume();
+                }
+                startPlaybackAtOffset(ctx, patchedPlayable, 0);
+                setIsPlaying(true);
+              } catch (err) {
+                console.error("Mix finish playback:", err);
+                setAppModal({ type: "alert", message: err instanceof Error ? err.message : "Erreur lancement lecture.", onClose: () => {} });
+              }
+            })();
           }
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
