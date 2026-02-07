@@ -1729,22 +1729,41 @@ export default function Home() {
         if (nodes?.type === "vocal" && track) {
           const rawEl = nodes.rawMedia?.element;
           const mixedEl = nodes.mixedMedia?.element;
-          // Gains-only toggle: both elements play simultaneously, gains control which is heard.
-          try {
-            if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
-            if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
-          } catch {}
-          if (rawEl && mixedEl) {
-            // Always sync currentTime from the previously-heard element to the newly-heard one.
-            // Prevents drift that makes raw sound "ahead" when switching from mixed.
-            if (targetMode === "raw") {
-              rawEl.currentTime = mixedEl.currentTime;
-            } else {
-              mixedEl.currentTime = rawEl.currentTime;
+
+          if (isMobileRef.current && rawEl && mixedEl) {
+            // Mobile: mute track, pause both, sync to same position, play both, unmute.
+            // This guarantees raw+mixed stay perfectly in sync after toggle.
+            const mainGainVal = nodes.mainGain?.gain?.value ?? 1;
+            if (nodes.mainGain) nodes.mainGain.gain.value = 0;
+            try {
+              if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
+              if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
+            } catch {}
+            const syncTime = (targetMode === "raw" ? mixedEl : rawEl).currentTime;
+            rawEl.pause();
+            mixedEl.pause();
+            rawEl.currentTime = syncTime;
+            mixedEl.currentTime = syncTime;
+            rawEl.play().catch(() => {});
+            mixedEl.play().catch(() => {});
+            setTimeout(() => {
+              if (nodes.mainGain) nodes.mainGain.gain.value = mainGainVal;
+            }, 30);
+          } else {
+            // PC: gains-only toggle (working perfectly, do NOT change)
+            try {
+              if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
+              if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
+            } catch {}
+            if (rawEl && mixedEl) {
+              if (targetMode === "raw") {
+                rawEl.currentTime = mixedEl.currentTime;
+              } else {
+                mixedEl.currentTime = rawEl.currentTime;
+              }
+              if (rawEl.paused && !rawEl.ended) { rawEl.play().catch(() => {}); }
+              if (mixedEl.paused && !mixedEl.ended) { mixedEl.play().catch(() => {}); }
             }
-            // If an element got paused (edge case), resume it.
-            if (rawEl.paused && !rawEl.ended) { rawEl.play().catch(() => {}); }
-            if (mixedEl.paused && !mixedEl.ended) { mixedEl.play().catch(() => {}); }
           }
         }
       } catch (_) {}
