@@ -2151,20 +2151,21 @@ export default function Home() {
             pendingPlayableAfterMixRef.current = patchedPlayable;
             setIsPlaying(false);
           } else {
-            (async () => {
-              try {
-                await ensureAllBuffersLoaded(patchedPlayable);
-                if (ctx.state === "suspended") {
-                  unlockAudioContextSync(ctx);
-                  await ctx.resume();
-                }
+            try {
+              if (ctx.state === "suspended") {
+                unlockAudioContextSync(ctx);
+                ctx.resume().then(() => {
+                  startPlaybackAtOffset(ctx, patchedPlayable, 0);
+                  setIsPlaying(true);
+                }).catch(() => setIsPlaying(false));
+              } else {
                 startPlaybackAtOffset(ctx, patchedPlayable, 0);
                 setIsPlaying(true);
-              } catch (err) {
-                console.error("Mix finish playback:", err);
-                setAppModal({ type: "alert", message: err instanceof Error ? err.message : "Erreur lancement lecture.", onClose: () => {} });
               }
-            })();
+            } catch (err) {
+              console.error("Mix finish playback:", err);
+              setAppModal({ type: "alert", message: err instanceof Error ? err.message : "Erreur lancement lecture.", onClose: () => {} });
+            }
           }
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
