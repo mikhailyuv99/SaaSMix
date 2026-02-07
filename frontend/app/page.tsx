@@ -1549,7 +1549,7 @@ export default function Home() {
         }
         setIsPlaying(true);
         // Continuous sync: keep ALL elements locked to the AudioContext clock.
-        // Runs every 50ms with 15ms tolerance — drift is corrected before it's humanly perceptible.
+        // 5ms tolerance (~240 samples at 48kHz) checked every 20ms — below human perception.
         if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
         syncIntervalRef.current = setInterval(() => {
           if (seekInProgressRef.current) return;
@@ -1560,20 +1560,20 @@ export default function Home() {
           for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
             try {
               if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
-                if (Math.abs(nodes.media.element.currentTime - expectedPos) > 0.015) {
+                if (Math.abs(nodes.media.element.currentTime - expectedPos) > 0.005) {
                   nodes.media.element.currentTime = expectedPos;
                 }
               } else if (nodes.type === "vocal") {
-                if (nodes.rawMedia && Math.abs(nodes.rawMedia.element.currentTime - expectedPos) > 0.015) {
+                if (nodes.rawMedia && Math.abs(nodes.rawMedia.element.currentTime - expectedPos) > 0.005) {
                   nodes.rawMedia.element.currentTime = expectedPos;
                 }
-                if (nodes.mixedMedia && Math.abs(nodes.mixedMedia.element.currentTime - expectedPos) > 0.015) {
+                if (nodes.mixedMedia && Math.abs(nodes.mixedMedia.element.currentTime - expectedPos) > 0.005) {
                   nodes.mixedMedia.element.currentTime = expectedPos;
                 }
               }
             } catch (_) {}
           }
-        }, 50);
+        }, 20);
       });
     },
     []
