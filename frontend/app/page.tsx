@@ -451,9 +451,11 @@ export default function Home() {
     }
   }, [masterResult]);
 
-  // Waveforms du résultat master (mix + master) quand on a les URLs
+  // Waveforms du résultat master (fallback — normally decoded in runMaster before isMastering=false)
   useEffect(() => {
     if (!masterResult) return;
+    // Skip if already decoded in runMaster
+    if (masterMixBufferRef.current && masterMasterBufferRef.current && masterWaveforms) return;
     let cancelled = false;
     (async () => {
       const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -1610,6 +1612,10 @@ export default function Home() {
       }
       resumeFromRef.current = null;
       setHasPausedPosition(false);
+      // Re-ensure context is running — mobile browsers may re-suspend during async buffer loading
+      if (ctx.state === "suspended") {
+        await ctx.resume().catch(() => {});
+      }
       setIsPlaying(true);
       startPlaybackAtOffset(ctx, playable, startOffset);
     },
@@ -1984,6 +1990,24 @@ export default function Home() {
       if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       const masterUrl = (data.masterUrl as string).startsWith("http") ? data.masterUrl : `${API_BASE}${data.masterUrl}`;
+      // Decode waveforms BEFORE ending the mastering animation so everything is ready to play
+      try {
+        const decodeCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        const [mixBufRes, masterBufRes] = await Promise.all([fetch(mixUrl), fetch(masterUrl)]);
+        const [mixBuf, masterBuf] = await Promise.all([
+          mixBufRes.arrayBuffer().then((b) => decodeCtx.decodeAudioData(b)),
+          masterBufRes.arrayBuffer().then((b) => decodeCtx.decodeAudioData(b)),
+        ]);
+        masterMixBufferRef.current = mixBuf;
+        masterMasterBufferRef.current = masterBuf;
+        setMasterWaveforms({
+          mix: { peaks: computeWaveformPeaks(mixBuf, WAVEFORM_POINTS), duration: mixBuf.duration },
+          master: { peaks: computeWaveformPeaks(masterBuf, WAVEFORM_POINTS), duration: masterBuf.duration },
+        });
+        decodeCtx.close();
+      } catch (_) {
+        // Waveform decode failed — still show result, useEffect will retry
+      }
       setMasterResult({ mixUrl, masterUrl });
       setMasterPlaybackMode("master");
     } catch (e) {
@@ -3285,12 +3309,12 @@ export default function Home() {
                 disabled={isMastering}
                 className={`h-9 px-5 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed shrink-0 max-lg:h-8 max-lg:px-4 max-md:h-8 max-md:px-3 max-md:text-[10px] ${
                   isMastering
-                    ? "border-blue-400/40 bg-blue-950 text-blue-200"
+                    ? "border-white/30 bg-slate-800 text-white"
                     : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
                 }`}
               >
                 {isMastering ? (
-                  <span className="text-blue-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]">
+                  <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
                     MASTERING<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                   </span>
                 ) : "MASTERISER"}
