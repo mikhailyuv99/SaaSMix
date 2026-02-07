@@ -1549,10 +1549,10 @@ export default function Home() {
         }
         setIsPlaying(true);
         // Continuous sync: keep ALL elements locked to the AudioContext clock.
-        // Catches drift from async play(), seek timing, resume, or any other cause.
+        // Runs every 50ms with 15ms tolerance — drift is corrected before it's humanly perceptible.
         if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
         syncIntervalRef.current = setInterval(() => {
-          if (seekInProgressRef.current) return; // skip during PC seek (gains are muted, startTimeRef is stale)
+          if (seekInProgressRef.current) return;
           const sCtx = contextRef.current;
           if (!sCtx || trackPlaybackRef.current.size === 0) return;
           const expectedPos = sCtx.currentTime - startTimeRef.current;
@@ -1560,20 +1560,20 @@ export default function Home() {
           for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
             try {
               if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
-                if (Math.abs(nodes.media.element.currentTime - expectedPos) > 0.04) {
+                if (Math.abs(nodes.media.element.currentTime - expectedPos) > 0.015) {
                   nodes.media.element.currentTime = expectedPos;
                 }
               } else if (nodes.type === "vocal") {
-                if (nodes.rawMedia && Math.abs(nodes.rawMedia.element.currentTime - expectedPos) > 0.04) {
+                if (nodes.rawMedia && Math.abs(nodes.rawMedia.element.currentTime - expectedPos) > 0.015) {
                   nodes.rawMedia.element.currentTime = expectedPos;
                 }
-                if (nodes.mixedMedia && Math.abs(nodes.mixedMedia.element.currentTime - expectedPos) > 0.04) {
+                if (nodes.mixedMedia && Math.abs(nodes.mixedMedia.element.currentTime - expectedPos) > 0.015) {
                   nodes.mixedMedia.element.currentTime = expectedPos;
                 }
               }
             } catch (_) {}
           }
-        }, 200);
+        }, 50);
       });
     },
     []
