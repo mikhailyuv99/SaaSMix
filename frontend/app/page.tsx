@@ -1475,7 +1475,9 @@ export default function Home() {
             rawSource.connect(rawGain);
             let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
             if (track.mixedAudioUrl) {
-              const mixedAudio = new Audio(fullUrl(track.mixedAudioUrl));
+              const mixedAudio = new Audio();
+              mixedAudio.crossOrigin = "anonymous";
+              mixedAudio.src = fullUrl(track.mixedAudioUrl);
               mixedAudio.volume = 1;
               mixedAudio.onended = onEndVocal;
               mediaToPlay.push(mixedAudio);
@@ -1588,30 +1590,27 @@ export default function Home() {
           const rawUnlockGain = ctx.createGain();
           rawUnlockGain.gain.value = 0;
           rawUnlockGain.connect(mainGain);
-          const playMixed = track.playMode === "mixed" && track.mixedAudioUrl && entry.mixed;
-          let rawBufferNode: AudioBufferSourceNode | null = null;
+          const playMixed = track.playMode === "mixed" && track.mixedAudioUrl && !!entry.mixed;
+          rawGain.gain.value = playMixed ? 0 : 1;
+          mixedGain.gain.value = playMixed ? 1 : 0;
+          const srcRaw = ctx.createBufferSource();
+          srcRaw.buffer = rawBuf;
+          srcRaw.connect(rawGain);
+          srcRaw.onended = onEndVocal;
+          srcRaw.start(now, offset, Math.max(0, rawBuf.duration - offset));
           let mixedBufferNode: AudioBufferSourceNode | null = null;
-          if (playMixed) {
+          if (entry.mixed) {
             const srcMixed = ctx.createBufferSource();
-            srcMixed.buffer = entry.mixed!;
+            srcMixed.buffer = entry.mixed;
             srcMixed.connect(mixedGain);
             srcMixed.onended = onEndVocal;
-            const durationMixed = Math.max(0, entry.mixed!.duration - offset);
-            srcMixed.start(now, offset, durationMixed);
+            srcMixed.start(now, offset, Math.max(0, entry.mixed.duration - offset));
             mixedBufferNode = srcMixed;
-          } else {
-            const srcRaw = ctx.createBufferSource();
-            srcRaw.buffer = rawBuf;
-            srcRaw.connect(rawGain);
-            srcRaw.onended = onEndVocal;
-            const durationRaw = Math.max(0, rawBuf.duration - offset);
-            srcRaw.start(now, offset, durationRaw);
-            rawBufferNode = srcRaw;
           }
           trackPlaybackRef.current.set(track.id, {
             type: "vocal",
             rawMedia: null,
-            rawBufferNode,
+            rawBufferNode: srcRaw,
             rawUnlockGain,
             mixedMedia: null,
             mixedBufferNode,
