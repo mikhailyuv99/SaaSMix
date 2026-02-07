@@ -663,6 +663,7 @@ export default function Home() {
   const isMobileRef = useRef(false);
   const mobilePlaybackGenerationRef = useRef(0);
   const seekGenRef = useRef(0);
+  const vocalSyncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   if (typeof window !== "undefined") isMobileRef.current = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
   const addTrack = useCallback(() => {
@@ -1327,6 +1328,7 @@ export default function Home() {
   }
 
   function stopAll() {
+    if (vocalSyncIntervalRef.current) { clearInterval(vocalSyncIntervalRef.current); vocalSyncIntervalRef.current = null; }
     userPausedRef.current = true;
     const ctx = contextRef.current;
     const nodesMap = Array.from(trackPlaybackRef.current.entries());
@@ -1383,6 +1385,7 @@ export default function Home() {
 
   const startPlaybackAtOffset = useCallback(
     (ctx: AudioContext, playable: Track[], offset: number) => {
+      if (vocalSyncIntervalRef.current) { clearInterval(vocalSyncIntervalRef.current); vocalSyncIntervalRef.current = null; }
       const toStop = Array.from(trackPlaybackRef.current.entries());
       trackPlaybackRef.current.clear();
       for (const [, nodes] of toStop) {
@@ -1543,6 +1546,24 @@ export default function Home() {
           activeElements[i].play().catch(() => {});
         }
         setIsPlaying(true);
+        // Mobile: keep the silent vocal element continuously synced to the audible one.
+        // This makes Avant/Après toggle instant with zero desync.
+        if (isMobileRef.current) {
+          if (vocalSyncIntervalRef.current) clearInterval(vocalSyncIntervalRef.current);
+          vocalSyncIntervalRef.current = setInterval(() => {
+            for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+              if (nodes.type !== "vocal" || !nodes.rawMedia || !nodes.mixedMedia) continue;
+              try {
+                const rawG = nodes.rawGain?.gain?.value ?? 0;
+                const activeEl = rawG > 0 ? nodes.rawMedia.element : nodes.mixedMedia.element;
+                const silentEl = rawG > 0 ? nodes.mixedMedia.element : nodes.rawMedia.element;
+                if (Math.abs(activeEl.currentTime - silentEl.currentTime) > 0.015) {
+                  silentEl.currentTime = activeEl.currentTime;
+                }
+              } catch (_) {}
+            }
+          }, 200);
+        }
       });
     },
     []
@@ -1731,24 +1752,15 @@ export default function Home() {
           const mixedEl = nodes.mixedMedia?.element;
 
           if (isMobileRef.current && rawEl && mixedEl) {
-            // Mobile: mute track, pause both, sync to same position, play both, unmute.
-            // This guarantees raw+mixed stay perfectly in sync after toggle.
-            const mainGainVal = nodes.mainGain?.gain?.value ?? 1;
-            if (nodes.mainGain) nodes.mainGain.gain.value = 0;
+            // Mobile: just switch gains — the background vocalSyncInterval keeps
+            // the silent element continuously synced to the audible one, so this is instant.
             try {
               if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
               if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
             } catch {}
-            const syncTime = (targetMode === "raw" ? mixedEl : rawEl).currentTime;
-            rawEl.pause();
-            mixedEl.pause();
-            rawEl.currentTime = syncTime;
-            mixedEl.currentTime = syncTime;
-            rawEl.play().catch(() => {});
-            mixedEl.play().catch(() => {});
-            setTimeout(() => {
-              if (nodes.mainGain) nodes.mainGain.gain.value = mainGainVal;
-            }, 30);
+            // If an element got paused (edge case), resume it.
+            if (rawEl.paused && !rawEl.ended) { rawEl.play().catch(() => {}); }
+            if (mixedEl.paused && !mixedEl.ended) { mixedEl.play().catch(() => {}); }
           } else {
             // PC: gains-only toggle (working perfectly, do NOT change)
             try {
