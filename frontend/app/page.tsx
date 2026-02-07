@@ -383,7 +383,7 @@ export default function Home() {
   const playAllRef = useRef<(override?: { playable?: Track[]; startOffset?: number }) => void>(() => {});
   const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
 
-  // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage (après hydratation)
+  // Utilisateur connecté (localStorage) + restauration des pistes + IDB file hydration (single batch)
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -393,7 +393,58 @@ export default function Home() {
         if (u?.id && u?.email) setUser(u);
       }
       const restored = tracksFromStorage();
-      if (restored && restored.length > 0) setTracks(restored);
+      if (!restored || restored.length === 0) return;
+
+      // Set tracks immediately for UI (file names, categories visible while IDB loads)
+      setTracks(restored);
+
+      // Pre-hydrate ALL files from IDB in parallel, then batch-update in ONE setTracks call.
+      // This avoids the N-rerender chain that makes the old per-track useEffect so slow.
+      const toHydrate = restored.filter((t) => t.rawFileName);
+      if (toHydrate.length === 0) return;
+
+      Promise.all(
+        toHydrate.map(async (track) => {
+          const data = await getFileFromIDB(track.id);
+          if (!data) return null;
+          const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
+          const rawAudioUrl = URL.createObjectURL(file);
+          // Pre-cache ArrayBuffer for mobile playAll (avoids re-fetch when context is recreated)
+          try {
+            const res = await fetch(rawAudioUrl);
+            const ab = await res.arrayBuffer();
+            abCacheRef.current.set(`raw:${rawAudioUrl}`, ab.slice(0));
+            // Decode waveform
+            const wCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            const decoded = await wCtx.decodeAudioData(ab);
+            wCtx.close();
+            const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
+            return { id: track.id, file, rawAudioUrl, peaks, duration: decoded.duration };
+          } catch (_) {
+            return { id: track.id, file, rawAudioUrl, peaks: null, duration: null };
+          }
+        })
+      ).then((results) => {
+        const updates = results.filter(Boolean) as Array<{
+          id: string; file: File; rawAudioUrl: string;
+          peaks: number[] | null; duration: number | null;
+        }>;
+        if (updates.length === 0) return;
+        // Single setTracks call — ONE re-render with all files + waveforms ready
+        setTracks((prev) =>
+          prev.map((t) => {
+            const u = updates.find((x) => x.id === t.id);
+            if (!u) return t;
+            return {
+              ...t,
+              file: u.file,
+              rawAudioUrl: u.rawAudioUrl,
+              rawFileName: null,
+              ...(u.peaks ? { waveformPeaks: u.peaks, waveformDuration: u.duration ?? undefined } : {}),
+            };
+          })
+        );
+      });
     } catch (_) {}
   }, []);
 
@@ -906,9 +957,16 @@ export default function Home() {
     }
   }, [tracks, applyGainToNodes]);
 
-  // Réhydrater les fichiers depuis IndexedDB pour les pistes restaurées (rawFileName mais pas de file)
+  // Réhydrater les fichiers depuis IndexedDB — only for tracks added AFTER mount
+  // (mount effect already batch-hydrates all restored tracks above)
+  const mountHydrationDoneRef = useRef(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!mountHydrationDoneRef.current) {
+      // Skip on first renders — the mount effect handles initial hydration in batch
+      mountHydrationDoneRef.current = true;
+      return;
+    }
     const toHydrate = tracks.filter((t) => t.rawFileName && !t.file);
     toHydrate.forEach((track) => {
       const id = track.id;
@@ -917,20 +975,6 @@ export default function Home() {
         const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
         const rawAudioUrl = URL.createObjectURL(file);
         updateTrack(id, { file, rawAudioUrl, rawFileName: null });
-        const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-        fetch(rawAudioUrl)
-          .then((res) => res.arrayBuffer())
-          .then((buf) => {
-            // Cache the ArrayBuffer so mobile playAll can re-decode without re-fetching
-            abCacheRef.current.set(`raw:${rawAudioUrl}`, buf.slice(0));
-            return ctx.decodeAudioData(buf);
-          })
-          .then((buffer) => {
-            ctx.close();
-            const peaks = computeWaveformPeaks(buffer, WAVEFORM_POINTS);
-            updateTrack(id, { waveformPeaks: peaks, waveformDuration: buffer.duration });
-          })
-          .catch(() => ctx.close());
       });
     });
   }, [tracks, updateTrack]);
