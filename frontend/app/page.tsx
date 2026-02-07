@@ -1576,33 +1576,20 @@ export default function Home() {
             } catch (_) {}
           }
         } else {
-          // PC: pause all, seek all, wait all seeked, then play all at once
-          const allEls: HTMLAudioElement[] = [];
+          // PC: simple currentTime assignment — same as mobile since both use HTMLAudioElement.
+          // Avoids pause()+play() which can break MediaElementAudioSourceNode routing for mixed audio.
+          const when = ctx.currentTime;
+          startTimeRef.current = when - safeOffset;
           for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
             try {
               if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
-                allEls.push(nodes.media.element);
+                nodes.media.element.currentTime = safeOffset;
               } else if (nodes.type === "vocal") {
-                if (nodes.rawMedia) allEls.push(nodes.rawMedia.element);
-                if (nodes.mixedMedia) allEls.push(nodes.mixedMedia.element);
+                if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
+                if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
               }
             } catch (_) {}
           }
-          for (const el of allEls) el.pause();
-          for (const el of allEls) el.currentTime = safeOffset;
-          const gen = ++seekGenRef.current;
-          const waitSeeked = (el: HTMLAudioElement) =>
-            new Promise<void>((resolve) => {
-              if (!el.seeking) { resolve(); return; }
-              const done = () => resolve();
-              el.addEventListener("seeked", done, { once: true });
-              setTimeout(done, 3000);
-            });
-          Promise.all(allEls.map(waitSeeked)).then(() => {
-            if (gen !== seekGenRef.current) return;
-            startTimeRef.current = ctx.currentTime - safeOffset;
-            for (const el of allEls) el.play().catch(() => {});
-          });
         }
       } else {
         resumeFromRef.current = safeOffset;
@@ -1738,9 +1725,16 @@ export default function Home() {
             if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
           } catch {}
           if (rawEl && mixedEl) {
-            // If an element got paused (edge case), resync and resume it.
-            if (rawEl.paused && !rawEl.ended) { rawEl.currentTime = mixedEl.currentTime; rawEl.play().catch(() => {}); }
-            if (mixedEl.paused && !mixedEl.ended) { mixedEl.currentTime = rawEl.currentTime; mixedEl.play().catch(() => {}); }
+            // Always sync currentTime from the previously-heard element to the newly-heard one.
+            // Prevents drift that makes raw sound "ahead" when switching from mixed.
+            if (targetMode === "raw") {
+              rawEl.currentTime = mixedEl.currentTime;
+            } else {
+              mixedEl.currentTime = rawEl.currentTime;
+            }
+            // If an element got paused (edge case), resume it.
+            if (rawEl.paused && !rawEl.ended) { rawEl.play().catch(() => {}); }
+            if (mixedEl.paused && !mixedEl.ended) { mixedEl.play().catch(() => {}); }
           }
         }
       } catch (_) {}
