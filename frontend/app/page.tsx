@@ -126,6 +126,13 @@ function deleteFileFromIDB(trackId: string): void {
   }).catch(() => {});
 }
 
+// ─── Module-level caches ────────────────────────────────────────────
+// These persist across component unmount/remount (client-side navigation).
+// Without this, navigating to /connexion and back destroys all cached data,
+// forcing a full re-fetch + re-decode when the user presses Play.
+const _persistentAbCache = new Map<string, ArrayBuffer>();
+const _persistentBuffersCache = new Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>();
+
 /** Sauvegarde sérialisable d'une piste pour sessionStorage.
  *  Inclut rawAudioUrl (blob URL) — survit aux navigations client-side (login). */
 function tracksToStorage(tracks: Track[]): string {
@@ -366,9 +373,9 @@ export default function Home() {
 
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
-  const buffersRef = useRef<Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>>(new Map());
+  const buffersRef = useRef(_persistentBuffersCache);
   // Cache raw ArrayBuffers so we can re-decode without re-fetching when AudioContext changes (mobile)
-  const abCacheRef = useRef<Map<string, ArrayBuffer>>(new Map());
+  const abCacheRef = useRef(_persistentAbCache);
   // Mobile iOS: route AudioContext output through MediaStreamDestination → HTMLAudioElement
   // so iOS actually sends audio to the speaker (ctx.destination alone doesn't work on iOS).
   const streamDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
@@ -401,15 +408,13 @@ export default function Home() {
       if (!restored || restored.length === 0) return;
       setTracks(restored);
 
-      // Ensure an AudioContext exists so the pre-decode useEffect can fire immediately.
-      // On iOS this context starts "suspended" (no user gesture), but decodeAudioData works regardless.
-      // This lets the pre-decode effect populate buffersRef BEFORE the user presses Play → instant playback.
+      // Ensure an AudioContext exists so the pre-decode useEffect can fire.
       if (!contextRef.current || contextRef.current.state === "closed") {
         contextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       }
 
-      // Compute waveforms for tracks that have a valid rawAudioUrl (using ONE shared context).
-      // Blob URLs survive client-side navigation. On full reload they're stale → fails silently.
+      // Compute waveforms. If we already have decoded buffers from before navigation
+      // (module-level cache survives remount), use them directly — zero network I/O, zero decoding.
       const withUrl = restored.filter((t) => t.rawAudioUrl);
       if (withUrl.length === 0) return;
 
@@ -417,10 +422,21 @@ export default function Home() {
       Promise.all(
         withUrl.map(async (track) => {
           try {
-            const res = await fetch(track.rawAudioUrl!);
-            if (!res.ok) return null;
-            const ab = await res.arrayBuffer();
-            abCacheRef.current.set(`raw:${track.rawAudioUrl}`, ab.slice(0));
+            // Fast path: use cached decoded buffer (survives remount via module-level Map)
+            const cached = buffersRef.current.get(track.id);
+            if (cached?.raw) {
+              const peaks = computeWaveformPeaks(cached.raw, WAVEFORM_POINTS);
+              return { id: track.id, peaks, duration: cached.raw.duration };
+            }
+            // Slow path: fetch + decode (first load or full page refresh)
+            const cacheKey = `raw:${track.rawAudioUrl}`;
+            let ab = abCacheRef.current.get(cacheKey);
+            if (!ab) {
+              const res = await fetch(track.rawAudioUrl!);
+              if (!res.ok) return null;
+              ab = await res.arrayBuffer();
+              abCacheRef.current.set(cacheKey, ab.slice(0));
+            }
             const decoded = await wCtx.decodeAudioData(ab.slice(0));
             const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
             return { id: track.id, peaks, duration: decoded.duration };
