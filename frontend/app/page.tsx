@@ -401,11 +401,19 @@ export default function Home() {
       if (!restored || restored.length === 0) return;
       setTracks(restored);
 
-      // Compute waveforms for tracks that have a valid rawAudioUrl.
+      // Ensure an AudioContext exists so the pre-decode useEffect can fire immediately.
+      // On iOS this context starts "suspended" (no user gesture), but decodeAudioData works regardless.
+      // This lets the pre-decode effect populate buffersRef BEFORE the user presses Play → instant playback.
+      if (!contextRef.current || contextRef.current.state === "closed") {
+        contextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      }
+
+      // Compute waveforms for tracks that have a valid rawAudioUrl (using ONE shared context).
       // Blob URLs survive client-side navigation. On full reload they're stale → fails silently.
       const withUrl = restored.filter((t) => t.rawAudioUrl);
       if (withUrl.length === 0) return;
 
+      const wCtx = contextRef.current;
       Promise.all(
         withUrl.map(async (track) => {
           try {
@@ -413,9 +421,7 @@ export default function Home() {
             if (!res.ok) return null;
             const ab = await res.arrayBuffer();
             abCacheRef.current.set(`raw:${track.rawAudioUrl}`, ab.slice(0));
-            const wCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-            const decoded = await wCtx.decodeAudioData(ab);
-            wCtx.close();
+            const decoded = await wCtx.decodeAudioData(ab.slice(0));
             const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
             return { id: track.id, peaks, duration: decoded.duration };
           } catch (_) {
@@ -1672,7 +1678,8 @@ export default function Home() {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
-        buffersRef.current.clear();
+        // NOTE: We do NOT clear buffersRef — AudioBuffers are context-agnostic per the Web Audio API spec.
+        // Buffers pre-decoded by the mount effect / pre-decode useEffect are reusable with the new context.
 
         // Route through MediaStreamDestination → HTMLAudioElement (iOS audio fix)
         try {
