@@ -39,7 +39,6 @@ export default function ConnexionPage() {
           localStorage.setItem(USER_KEY, JSON.stringify(data.user));
         }
         router.push("/");
-        router.refresh();
       }
     } catch {
       setError("Impossible de joindre le serveur.");
