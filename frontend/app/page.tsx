@@ -616,34 +616,6 @@ export default function Home() {
     }
   }, [tracks]);
 
-  // Synchroniser le gain (slider) et le volume Avant/Après avec les nodes en cours de lecture
-  useEffect(() => {
-    try {
-      trackPlaybackRef.current.forEach((nodes, id) => {
-        try {
-          const t = tracks.find((tr) => tr.id === id);
-          if (!t) return;
-          const g = Math.max(0, Math.min(1, (t.gain ?? 100) / 100));
-          if (!Number.isFinite(g)) return;
-          if (nodes.mainGain?.gain != null) nodes.mainGain.gain.value = g;
-          if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
-            nodes.media.element.volume = g;
-          }
-          if (nodes.type === "vocal") {
-            const rawVol = (t.playMode === "raw" || !t.mixedAudioUrl ? 1 : 0) * g;
-            const mixedVol = (t.playMode === "mixed" && t.mixedAudioUrl ? 1 : 0) * g;
-            if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
-            if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
-          }
-        } catch (_) {
-          // per-track ignore
-        }
-      });
-    } catch (_) {
-      // ignore
-    }
-  }, [tracks]);
-
   // Quand la fenêtre reprend le focus (ex. fermeture du sélecteur de fichiers), retirer le glow "fichier .wav"
   useEffect(() => {
     const onWindowFocus = () => setFileChooserActiveTrackId(null);
@@ -829,37 +801,57 @@ export default function Home() {
     }
   }, []);
 
+  const applyGainToNodes = useCallback(
+    (id: string, gainVal: number, playMode?: "raw" | "mixed", hasMixed?: boolean) => {
+      const g = Math.max(0, Math.min(2, Number(gainVal) / 100));
+      if (!Number.isFinite(g)) return;
+      try {
+        const nodes = trackPlaybackRef.current.get(id);
+        if (!nodes) return;
+        const t = tracksRef.current.find((tr) => tr.id === id);
+        const pm = playMode ?? t?.playMode ?? "raw";
+        const hm = hasMixed ?? Boolean(t?.mixedAudioUrl);
+        if (nodes.mainGain?.gain != null) nodes.mainGain.gain.value = g;
+        if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
+          nodes.media.element.volume = Math.min(1, g);
+        }
+        if (nodes.type === "vocal") {
+          const rawVol = (pm === "raw" || !hm ? 1 : 0) * Math.min(1, g);
+          const mixedVol = (pm === "mixed" && hm ? 1 : 0) * Math.min(1, g);
+          if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
+          if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
+        }
+      } catch {
+        // ignore
+      }
+    },
+    []
+  );
+
   const updateTrack = useCallback(
     (id: string, updates: Partial<Omit<Track, "id">>) => {
       setTracks((prev) =>
         prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
       );
       if ("gain" in updates && updates.gain !== undefined) {
-        const g = Math.max(0, Math.min(1, Number(updates.gain) / 100));
-        if (!Number.isFinite(g)) return;
-        try {
-          const nodes = trackPlaybackRef.current.get(id);
-          if (!nodes) return;
-          const track = tracksRef.current.find((t) => t.id === id);
-          const playMode = track?.playMode ?? "raw";
-          const hasMixed = Boolean(track?.mixedAudioUrl);
-          if (nodes.mainGain?.gain != null) nodes.mainGain.gain.value = g;
-          if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
-            nodes.media.element.volume = g;
-          }
-          if (nodes.type === "vocal") {
-            const rawVol = (playMode === "raw" || !hasMixed ? 1 : 0) * g;
-            const mixedVol = (playMode === "mixed" && hasMixed ? 1 : 0) * g;
-            if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
-            if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
-          }
-        } catch {
-          // ignore: context closed or node detached
-        }
+        applyGainToNodes(id, updates.gain);
       }
     },
-    []
+    [applyGainToNodes]
   );
+
+  // Synchroniser le gain (slider) et le volume Avant/Après avec les nodes en cours de lecture
+  useEffect(() => {
+    try {
+      tracks.forEach((t) => {
+        if (trackPlaybackRef.current.has(t.id)) {
+          applyGainToNodes(t.id, t.gain ?? 100, t.playMode, Boolean(t.mixedAudioUrl));
+        }
+      });
+    } catch (_) {
+      // ignore
+    }
+  }, [tracks, applyGainToNodes]);
 
   // Réhydrater les fichiers depuis IndexedDB pour les pistes restaurées (rawFileName mais pas de file)
   useEffect(() => {
@@ -1829,33 +1821,34 @@ export default function Home() {
 
   playAllRef.current = playAll;
 
+  const lastTogglePlayModeRef = useRef<{ id: string; ts: number } | null>(null);
   const togglePlayMode = useCallback(
     (id: string, targetMode: "raw" | "mixed") => {
+      const now = Date.now();
+      const last = lastTogglePlayModeRef.current;
+      if (last?.id === id && now - last.ts < 120) return;
+      lastTogglePlayModeRef.current = { id, ts: now };
+
       try {
         const nodes = trackPlaybackRef.current.get(id);
         const track = tracksRef.current.find((t) => t.id === id);
         if (nodes?.type === "vocal" && track) {
+          const g = Math.max(0, Math.min(1, (track.gain ?? 100) / 100));
+          const rawEl = nodes.rawMedia?.element;
+          const mixedEl = nodes.mixedMedia?.element;
           try {
             if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
             if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
           } catch {}
-          const g = Math.max(0, Math.min(1, (track.gain ?? 100) / 100));
-          const rawEl = nodes.rawMedia?.element;
-          const mixedEl = nodes.mixedMedia?.element;
           if (rawEl && mixedEl) {
-            if (targetMode === "raw") {
-              rawEl.currentTime = mixedEl.currentTime;
-              mixedEl.pause();
-              mixedEl.volume = 0;
-              rawEl.volume = g;
-              rawEl.play().catch(() => {});
-            } else {
-              mixedEl.currentTime = rawEl.currentTime;
-              rawEl.pause();
-              rawEl.volume = 0;
-              mixedEl.volume = g;
-              mixedEl.play().catch(() => {});
-            }
+            const pos = targetMode === "raw" ? mixedEl.currentTime : rawEl.currentTime;
+            const active = targetMode === "raw" ? rawEl : mixedEl;
+            const inactive = targetMode === "raw" ? mixedEl : rawEl;
+            inactive.pause();
+            inactive.volume = 0;
+            active.currentTime = pos;
+            active.volume = g;
+            active.play().catch(() => {});
           } else {
             if (rawEl) rawEl.volume = (targetMode === "raw" ? 1 : 0) * g;
             if (mixedEl) mixedEl.volume = (targetMode === "mixed" ? 1 : 0) * g;
@@ -2049,13 +2042,18 @@ export default function Home() {
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
-          if (ctx.state === "suspended") {
-            ctx.resume().catch(() => {});
-            unlockAudioContextSync(ctx);
-            await ctx.resume().catch(() => {});
+          if (isMobileRef.current) {
+            pendingPlayableAfterMixRef.current = patchedPlayable;
+            setIsPlaying(false);
+          } else {
+            if (ctx.state === "suspended") {
+              ctx.resume().catch(() => {});
+              unlockAudioContextSync(ctx);
+              await ctx.resume().catch(() => {});
+            }
+            startPlaybackAtOffset(ctx, patchedPlayable, 0);
+            setIsPlaying(true);
           }
-          startPlaybackAtOffset(ctx, patchedPlayable, 0);
-          setIsPlaying(true);
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
@@ -2720,6 +2718,10 @@ export default function Home() {
                         min="0"
                         max="200"
                         value={track.gain ?? 100}
+                        onInput={(e) => {
+                          const v = Math.max(0, Math.min(200, Number((e.target as HTMLInputElement).value) || 0));
+                          applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
+                        }}
                         onChange={(e) =>
                           updateTrack(track.id, {
                             gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
@@ -2886,6 +2888,10 @@ export default function Home() {
                         min="0"
                         max="200"
                         value={track.gain ?? 100}
+                        onInput={(e) => {
+                          const v = Math.max(0, Math.min(200, Number((e.target as HTMLInputElement).value) || 0));
+                          applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
+                        }}
                         onChange={(e) =>
                           updateTrack(track.id, {
                             gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
@@ -2945,6 +2951,10 @@ export default function Home() {
                           min="0"
                           max="200"
                           value={track.gain ?? 100}
+                          onInput={(e) => {
+                            const v = Math.max(0, Math.min(200, Number((e.target as HTMLInputElement).value) || 0));
+                            applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
+                          }}
                           onChange={(e) =>
                             updateTrack(track.id, {
                               gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
@@ -3041,6 +3051,10 @@ export default function Home() {
                           min="0"
                           max="200"
                           value={track.gain ?? 100}
+                          onInput={(e) => {
+                            const v = Math.max(0, Math.min(200, Number((e.target as HTMLInputElement).value) || 0));
+                            applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
+                          }}
                           onChange={(e) => updateTrack(track.id, { gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)) })}
                           className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
                         />
