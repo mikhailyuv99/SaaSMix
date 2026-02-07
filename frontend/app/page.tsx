@@ -1605,35 +1605,14 @@ export default function Home() {
   const playAll = useCallback(
     async (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
-      // Resolve playable tracks and start offset FIRST (shared by mobile + PC)
-      let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.rawAudioUrl);
-      if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
-        pendingPlayableAfterMixRef.current = null;
-      }
-      const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
-      // If no playable tracks but some are still hydrating from IDB (have rawFileName), wait up to 2s
-      if (playable.length === 0 && !override?.playable) {
-        const hydrating = tracksRef.current.some((t) => t.rawFileName && !t.rawAudioUrl);
-        if (hydrating) {
-          for (let i = 0; i < 20; i++) {
-            await new Promise((r) => setTimeout(r, 100));
-            playable = tracksRef.current.filter((t) => t.rawAudioUrl);
-            if (playable.length > 0) break;
-          }
-        }
-      }
-      if (playable.length === 0) {
-        setShowPlayNoFileMessage(true);
-        setTimeout(() => setShowPlayNoFileMessage(false), 3000);
-        return;
-      }
-      // --- AudioContext setup (mobile vs PC) ---
+
+      // --- AudioContext setup FIRST (MUST be synchronous in user gesture for iOS) ---
+      // This MUST happen before any await, otherwise iOS won't activate the audio session.
       const isMob = isMobileRef.current;
       let ctx = contextRef.current;
 
       if (isMob) {
         // MOBILE: always create a FRESH AudioContext in THIS user gesture.
-        // Clean up previous output element if any
         if (outputElRef.current) {
           try { outputElRef.current.pause(); outputElRef.current.srcObject = null; } catch (_) {}
           outputElRef.current = null;
@@ -1645,12 +1624,9 @@ export default function Home() {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
-        // Clear decoded buffers — they must be re-decoded with the new context's decoder.
         buffersRef.current.clear();
 
-        // KEY iOS FIX: route AudioContext output through MediaStreamDestination → HTMLAudioElement.
-        // iOS Safari refuses to route ctx.destination to the speaker reliably,
-        // but HTMLAudioElement.play() in a user gesture ALWAYS works.
+        // Route through MediaStreamDestination → HTMLAudioElement (iOS audio fix)
         try {
           const dest = ctx.createMediaStreamDestination();
           streamDestRef.current = dest;
@@ -1659,21 +1635,43 @@ export default function Home() {
           outputEl.play().catch(() => {}); // user gesture — iOS will honor this
           outputElRef.current = outputEl;
         } catch (_) {
-          // Fallback: if createMediaStreamDestination not supported, use ctx.destination
           streamDestRef.current = null;
           outputElRef.current = null;
         }
       } else if (!ctx || ctx.state === "closed") {
-        // PC: create context only if none exists — uses ctx.destination directly
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
       }
 
-      // Unlock + resume (safety net for both platforms)
+      // Unlock + resume (still in user gesture for the first call)
       unlockAudioContextSync(ctx);
       if (ctx.state === "suspended") {
         await ctx.resume().catch(() => {});
+      }
+
+      // --- Now resolve playable tracks (safe to await after AudioContext is set up) ---
+      let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.rawAudioUrl);
+      if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
+        pendingPlayableAfterMixRef.current = null;
+      }
+      const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
+
+      // If no playable tracks but some are still hydrating from IDB, wait up to 30s
+      if (playable.length === 0 && !override?.playable) {
+        const hydrating = tracksRef.current.some((t) => t.rawFileName && !t.rawAudioUrl);
+        if (hydrating) {
+          for (let i = 0; i < 300; i++) {
+            await new Promise((r) => setTimeout(r, 100));
+            playable = tracksRef.current.filter((t) => t.rawAudioUrl);
+            if (playable.length > 0) break;
+          }
+        }
+      }
+      if (playable.length === 0) {
+        setShowPlayNoFileMessage(true);
+        setTimeout(() => setShowPlayNoFileMessage(false), 3000);
+        return;
       }
       try {
         await ensureAllBuffersLoaded(playable);
@@ -2068,15 +2066,18 @@ export default function Home() {
       }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
-      // Use anchor + click instead of window.open — iOS Safari blocks window.open in async callbacks
+      // Fetch as blob and download locally — avoids popup/new tab on all platforms
+      const dlRes = await fetch(mixUrl);
+      const blob = await dlRes.blob();
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = mixUrl;
+      a.href = blobUrl;
       a.download = "mix.wav";
-      a.target = "_blank";
-      a.rel = "noopener";
+      a.style.display = "none";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
     } catch (e) {
       console.error(e);
       setAppModal({ type: "alert", message: "Erreur : " + (e instanceof Error ? e.message : String(e)), onClose: () => {} });
