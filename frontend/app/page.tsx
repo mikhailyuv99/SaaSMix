@@ -530,6 +530,7 @@ export default function Home() {
             }
             if (nodes.mixedBufferNode) {
               try {
+                nodes.mixedBufferNode.onended = null;
                 nodes.mixedBufferNode.stop();
                 nodes.mixedBufferNode.disconnect();
               } catch (_) {}
@@ -716,6 +717,7 @@ export default function Home() {
           }
           if (nodes.mixedBufferNode) {
             try {
+              nodes.mixedBufferNode.onended = null;
               nodes.mixedBufferNode.stop();
               nodes.mixedBufferNode.disconnect();
             } catch (_) {}
@@ -766,6 +768,7 @@ export default function Home() {
           }
           if (nodes.mixedBufferNode) {
             try {
+              nodes.mixedBufferNode.onended = null;
               nodes.mixedBufferNode.stop();
               nodes.mixedBufferNode.disconnect();
             } catch (_) {}
@@ -1367,6 +1370,7 @@ export default function Home() {
           }
           if (nodes.mixedBufferNode) {
             try {
+              nodes.mixedBufferNode.onended = null;
               nodes.mixedBufferNode.stop();
               nodes.mixedBufferNode.disconnect();
             } catch (_) {}
@@ -1415,6 +1419,7 @@ export default function Home() {
             }
             if (nodes.mixedBufferNode) {
               try {
+                nodes.mixedBufferNode.onended = null;
                 nodes.mixedBufferNode.stop();
                 nodes.mixedBufferNode.disconnect();
               } catch (_) {}
@@ -2137,25 +2142,8 @@ export default function Home() {
           if (isMobileRef.current) {
             pendingPlayableAfterMixRef.current = patchedPlayable;
           } else {
-            userPausedRef.current = false;
-            try {
-              if (ctx.state === "suspended") {
-                unlockAudioContextSync(ctx);
-                try { await ctx.resume(); } catch (_) {}
-              }
-              if (ctx.state === "running") {
-                startPlaybackAtOffset(ctx, patchedPlayable, 0);
-                setIsPlaying(true);
-              } else {
-                // Could not resume AudioContext – store for next user gesture
-                pendingPlayableAfterMixRef.current = patchedPlayable;
-                resumeFromRef.current = 0;
-              }
-            } catch (err) {
-              console.error("Mix finish autoplay:", err);
-              pendingPlayableAfterMixRef.current = patchedPlayable;
-              resumeFromRef.current = 0;
-            }
+            // Use playAll for robust autoplay: handles context resume, buffer loading, and cleanup
+            playAllRef.current({ playable: patchedPlayable, startOffset: 0 });
           }
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
