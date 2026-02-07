@@ -413,25 +413,13 @@ export default function Home() {
     let raf = 0;
     const throttleMs = 100;
     const tick = () => {
-      const now = Date.now();
-      if (now - playbackThrottleRef.current >= throttleMs) {
-        playbackThrottleRef.current = now;
-        let pos = 0;
-        if (isMobileRef.current) {
-          // Mobile: read position from first HTMLAudioElement
-          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-            if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
-              pos = nodes.media.element.currentTime; break;
-            } else if (nodes.type === "vocal" && nodes.rawMedia?.element) {
-              pos = nodes.rawMedia.element.currentTime; break;
-            }
-          }
-        } else {
-          // PC: use AudioContext time
-          const ctx = contextRef.current;
-          if (ctx) pos = ctx.currentTime - startTimeRef.current;
+      const ctx = contextRef.current;
+      if (ctx) {
+        const now = Date.now();
+        if (now - playbackThrottleRef.current >= throttleMs) {
+          playbackThrottleRef.current = now;
+          setPlaybackPosition(ctx.currentTime - startTimeRef.current);
         }
-        setPlaybackPosition(pos);
       }
       raf = requestAnimationFrame(tick);
     };
@@ -625,7 +613,6 @@ export default function Home() {
 
   // Pré-décode des buffers dès qu’un fichier est choisi (contexte déjà créé par premier touch). Au tap Play les buffers sont prêts = 0 latence + son sur mobile.
   useEffect(() => {
-    if (isMobileRef.current) return; // Mobile uses HTMLAudioElement, no buffer pre-decode needed
     const ctx = contextRef.current;
     if (!ctx) return;
     const playable = tracks.filter((t) => t.file && t.rawAudioUrl);
@@ -696,9 +683,6 @@ export default function Home() {
     isMobileRef.current = /Android|iPhone|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
     // The Macintosh + maxTouchPoints > 1 check detects iPad (iPadOS reports desktop UA).
   }
-  const mobilePlayGenRef = useRef(0);
-  const mobileElementsRef = useRef<HTMLAudioElement[]>([]);
-
   const addTrack = useCallback(() => {
     setTracks((prev) => {
       const isSecondTrack = prev.length === 1;
@@ -956,25 +940,24 @@ export default function Home() {
             });
           } catch (_) {}
         })();
-        // Pre-decode raw buffer into AudioBuffer (PC only — mobile uses HTMLAudioElement)
-        if (!isMobileRef.current) {
-          (async () => {
-            try {
-              const existingCtx = contextRef.current;
-              const ctx = existingCtx && existingCtx.state !== "closed"
-                ? existingCtx
-                : new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-              const shouldClose = ctx !== existingCtx;
-              const res = await fetch(rawAudioUrl);
-              const buf = await res.arrayBuffer();
-              const decoded = await ctx.decodeAudioData(buf);
-              if (shouldClose) ctx.close();
-              const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
-              entry.raw = decoded;
-              buffersRef.current.set(id, entry);
-            } catch (_) {}
-          })();
-        }
+        (async () => {
+          try {
+            // Use existing context if available, otherwise create a temporary one (do NOT store in contextRef
+            // — contexts created outside user gestures are permanently suspended on iOS)
+            const existingCtx = contextRef.current;
+            const ctx = existingCtx && existingCtx.state !== "closed"
+              ? existingCtx
+              : new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            const shouldClose = ctx !== existingCtx;
+            const res = await fetch(rawAudioUrl);
+            const buf = await res.arrayBuffer();
+            const decoded = await ctx.decodeAudioData(buf);
+            if (shouldClose) ctx.close();
+            const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
+            entry.raw = decoded;
+            buffersRef.current.set(id, entry);
+          } catch (_) {}
+        })();
       }
     },
     [updateTrack]
@@ -1371,34 +1354,6 @@ export default function Home() {
   function stopAll() {
     userPausedRef.current = true;
     const nodesMap = Array.from(trackPlaybackRef.current.entries());
-
-    if (isMobileRef.current) {
-      // ── MOBILE: get position from HTMLAudioElement, pause all elements ──
-      let pos = 0;
-      for (const [, nodes] of nodesMap) {
-        if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
-          pos = nodes.media.element.currentTime; break;
-        } else if (nodes.type === "vocal" && nodes.rawMedia?.element) {
-          pos = nodes.rawMedia.element.currentTime; break;
-        }
-      }
-      if (nodesMap.length > 0) {
-        resumeFromRef.current = pos;
-        setPausedAtSeconds(pos);
-        setHasPausedPosition(true);
-      } else {
-        resumeFromRef.current = null;
-        setHasPausedPosition(false);
-      }
-      // Pause and clear mobile elements
-      for (const el of mobileElementsRef.current) { try { el.onended = null; el.pause(); } catch (_) {} }
-      mobileElementsRef.current = [];
-      trackPlaybackRef.current.clear();
-      setIsPlaying(false);
-      return;
-    }
-
-    // ── PC: original logic (untouched) ──
     const ctx = contextRef.current;
     if (ctx && nodesMap.length > 0) {
       const pos = Math.max(0, ctx.currentTime - startTimeRef.current);
@@ -1561,16 +1516,10 @@ export default function Home() {
       if (now - lastSeekRef.current.time < 120 && Math.abs(lastSeekRef.current.offset - safeOffset) < 0.05) return;
       lastSeekRef.current = { offset: safeOffset, time: now };
 
-      if (isPlaying && trackPlaybackRef.current.size > 0) {
-        if (isMobileRef.current) {
-          // Mobile: recreate all elements at new offset (in-place seek is unreliable on iOS)
-          const seekPlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-          startMobilePlayback(seekPlayable, safeOffset);
-        } else if (ctx) {
-          // PC: stop all + recreate at new offset. Sample-accurate via scheduleAt.
-          const seekPlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-          startPlaybackAtOffset(ctx, seekPlayable, safeOffset);
-        }
+      if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
+        // Seek = stop all + recreate at new offset. Sample-accurate via scheduleAt.
+        const playable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+        startPlaybackAtOffset(ctx, playable, safeOffset);
       } else {
         resumeFromRef.current = safeOffset;
         setPausedAtSeconds(safeOffset);
@@ -1604,136 +1553,6 @@ export default function Home() {
     } catch (_) {}
   }
 
-  // ─── MOBILE-ONLY: plain HTMLAudioElement playback (no AudioContext, no Web Audio API) ───
-  const startMobilePlayback = useCallback(
-    (playable: Track[], offset: number) => {
-      // 1. Stop any existing mobile elements
-      for (const el of mobileElementsRef.current) {
-        try { el.onended = null; el.pause(); el.src = ""; } catch (_) {}
-      }
-      mobileElementsRef.current = [];
-      // Also stop anything in trackPlaybackRef (from a prior PC-like session or stale state)
-      for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-        try {
-          if (nodes.type === "instrumental") {
-            if ("bufferNode" in nodes && nodes.bufferNode) { try { nodes.bufferNode.onended = null; nodes.bufferNode.stop(); nodes.bufferNode.disconnect(); } catch (_) {} }
-            if ("media" in nodes) { try { nodes.media.element.onended = null; nodes.media.element.pause(); } catch (_) {} }
-          } else {
-            if (nodes.rawBufferNode) { try { nodes.rawBufferNode.onended = null; nodes.rawBufferNode.stop(); nodes.rawBufferNode.disconnect(); } catch (_) {} }
-            if (nodes.rawMedia) { try { nodes.rawMedia.element.onended = null; nodes.rawMedia.element.pause(); } catch (_) {} }
-            if (nodes.mixedBufferNode) { try { nodes.mixedBufferNode.onended = null; nodes.mixedBufferNode.stop(); nodes.mixedBufferNode.disconnect(); } catch (_) {} }
-            if (nodes.mixedMedia) { try { nodes.mixedMedia.element.onended = null; nodes.mixedMedia.element.pause(); } catch (_) {} }
-          }
-        } catch (_) {}
-      }
-      trackPlaybackRef.current.clear();
-
-      // 2. Build elements for each track
-      const mkUrl = (url: string) => (url.startsWith("http") || url.startsWith("blob:") ? url : `${API_BASE}${url}`);
-      const gen = ++mobilePlayGenRef.current;
-      let endedCount = 0;
-      const trackCount = playable.filter((t) => t.rawAudioUrl).length;
-      const allElements: HTMLAudioElement[] = [];
-
-      for (const track of playable) {
-        if (!track.rawAudioUrl) continue;
-        const vol = Math.max(0, Math.min(1, track.gain / 100));
-
-        const onTrackEnd = () => {
-          trackPlaybackRef.current.delete(track.id);
-          endedCount++;
-          if (endedCount >= trackCount) {
-            setIsPlaying(false);
-            setHasPausedPosition(false);
-            resumeFromRef.current = 0;
-          }
-        };
-
-        if (track.category === "instrumental") {
-          const audio = new Audio(mkUrl(track.rawAudioUrl));
-          audio.volume = vol;
-          audio.onended = onTrackEnd;
-          allElements.push(audio);
-          // Store in trackPlaybackRef using media field (source=null since no AudioContext)
-          trackPlaybackRef.current.set(track.id, {
-            type: "instrumental",
-            media: { element: audio, source: null },
-            mainGain: null as unknown as GainNode,
-          });
-        } else {
-          // Vocal: create BOTH raw and mixed elements, play simultaneously, switch via volume
-          const isPlayingMixed = track.playMode === "mixed" && !!track.mixedAudioUrl;
-          let vocalEnded = false;
-          const onVocalEnd = () => { if (vocalEnded) return; vocalEnded = true; onTrackEnd(); };
-
-          const rawAudio = new Audio(mkUrl(track.rawAudioUrl));
-          rawAudio.muted = isPlayingMixed; // iOS ignores .volume — use .muted instead
-          rawAudio.onended = onVocalEnd;
-          allElements.push(rawAudio);
-
-          let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
-          if (track.mixedAudioUrl) {
-            const mixedAudio = new Audio();
-            mixedAudio.crossOrigin = "anonymous";
-            mixedAudio.preload = "auto";
-            mixedAudio.src = mkUrl(track.mixedAudioUrl);
-            mixedAudio.load();
-            mixedAudio.muted = !isPlayingMixed; // iOS ignores .volume — use .muted instead
-            mixedAudio.onended = onVocalEnd;
-            allElements.push(mixedAudio);
-            mixedMedia = { element: mixedAudio, source: null };
-          }
-
-          trackPlaybackRef.current.set(track.id, {
-            type: "vocal",
-            rawMedia: { element: rawAudio, source: null },
-            rawBufferNode: null,
-            rawUnlockGain: null,
-            mixedMedia,
-            mixedBufferNode: null,
-            rawGain: null as unknown as GainNode,
-            mixedGain: null as unknown as GainNode,
-            mainGain: null as unknown as GainNode,
-          });
-        }
-      }
-
-      mobileElementsRef.current = allElements;
-
-      // 3. Wait for all elements to be loadable
-      const waitReady = (el: HTMLAudioElement) =>
-        new Promise<void>((resolve) => {
-          if (el.readyState >= 2) { resolve(); return; }
-          const done = () => resolve();
-          el.addEventListener("canplaythrough", done, { once: true });
-          el.addEventListener("canplay", done, { once: true });
-          el.addEventListener("error", done, { once: true });
-          setTimeout(done, 8000); // failsafe timeout
-        });
-
-      // 4. Wait for an element to finish seeking after currentTime is set
-      const waitSeeked = (el: HTMLAudioElement) =>
-        new Promise<void>((resolve) => {
-          const done = () => resolve();
-          el.addEventListener("seeked", done, { once: true });
-          setTimeout(done, 3000); // failsafe
-        });
-
-      Promise.all(allElements.map(waitReady)).then(async () => {
-        if (gen !== mobilePlayGenRef.current) return; // stale generation
-        // Set all positions
-        for (const el of allElements) { el.currentTime = offset; }
-        // Wait for ALL elements to finish seeking to the exact position
-        await Promise.all(allElements.map(waitSeeked));
-        if (gen !== mobilePlayGenRef.current) return;
-        // Now all elements are at the same position — play in tight synchronous loop
-        for (const el of allElements) { el.play().catch(() => {}); }
-        setIsPlaying(true);
-      });
-    },
-    []
-  );
-
   const playAll = useCallback(
     async (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
@@ -1748,16 +1567,15 @@ export default function Home() {
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
         return;
       }
-      // ── MOBILE: use plain HTMLAudioElement, skip AudioContext entirely ──
-      if (isMobileRef.current) {
-        resumeFromRef.current = null;
-        setHasPausedPosition(false);
-        startMobilePlayback(playable, startOffset);
-        return;
+      // On mobile: activate iOS audio session with HTMLAudioElement primer BEFORE touching AudioContext.
+      // iOS kills the audio session after long pauses; only HTMLAudioElement.play() can reactivate it.
+      const isMob = isMobileRef.current;
+      if (isMob) {
+        try { const p = new Audio(SILENT_WAV); p.volume = 0.01; await p.play(); } catch (_) {}
       }
-      // ── PC: AudioBufferSourceNode via AudioContext (untouched) ──
+      // Create or resume AudioContext (on mobile: always fresh in this user gesture)
       let ctx = contextRef.current;
-      if (!ctx || ctx.state === "closed") {
+      if (isMob || !ctx || ctx.state === "closed") {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
@@ -1824,7 +1642,7 @@ export default function Home() {
       setIsPlaying(true);
       startPlaybackAtOffset(ctx, playable, startOffset);
     },
-    [startPlaybackAtOffset, startMobilePlayback]
+    [startPlaybackAtOffset]
   );
 
   playAllRef.current = playAll;
@@ -1840,20 +1658,12 @@ export default function Home() {
       try {
         const nodes = trackPlaybackRef.current.get(id);
         if (nodes?.type === "vocal") {
-          if (isMobileRef.current) {
-            // Mobile: switch via .muted (iOS ignores .volume — it's read-only)
-            try {
-              if (nodes.rawMedia?.element) nodes.rawMedia.element.muted = targetMode !== "raw";
-              if (nodes.mixedMedia?.element) nodes.mixedMedia.element.muted = targetMode !== "mixed";
-            } catch {}
-          } else {
-            // PC: Both raw and mixed buffer sources are already playing sample-locked.
-            // Just switch gains — instant, no seeking needed.
-            try {
-              if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
-              if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
-            } catch {}
-          }
+          // Both raw and mixed buffer sources are already playing sample-locked.
+          // Just switch gains — instant, no seeking needed.
+          try {
+            if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
+            if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
+          } catch {}
         }
       } catch (_) {}
       updateTrack(id, { playMode: targetMode });
@@ -1889,8 +1699,8 @@ export default function Home() {
       setMixProgress((prev) => ({ ...prev, [id]: 0 }));
       updateTrack(id, { isMixing: true });
 
-      // Resume AudioContext on user gesture (Run mix click) so it's running when mix completes for PC autoplay
-      if (typeof window !== "undefined" && !isMobileRef.current) {
+      // Resume AudioContext on user gesture (Run mix click) so it's running when mix completes for autoplay
+      if (typeof window !== "undefined") {
         const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         if (!contextRef.current) contextRef.current = ctx;
         if (ctx.state === "suspended") {
@@ -2030,17 +1840,14 @@ export default function Home() {
         buffersRef.current.set(id, entry);
 
         try {
-          // Decode mixed buffer into AudioBuffer (PC only — mobile uses HTMLAudioElement)
-          if (!isMobileRef.current) {
-            const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-            if (!contextRef.current) contextRef.current = ctx;
-            const audioRes = await fetch(fullUrl);
-            const ab = await audioRes.arrayBuffer();
-            const decoded = await ctx.decodeAudioData(ab);
-            const e = buffersRef.current.get(id);
-            if (!e) throw new Error("track entry missing");
-            e.mixed = decoded;
-          }
+          const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+          if (!contextRef.current) contextRef.current = ctx;
+          const audioRes = await fetch(fullUrl);
+          const ab = await audioRes.arrayBuffer();
+          const decoded = await ctx.decodeAudioData(ab);
+          const e = buffersRef.current.get(id);
+          if (!e) throw new Error("track entry missing");
+          e.mixed = decoded;
           if (mixSimulationIntervalRef.current) {
             clearInterval(mixSimulationIntervalRef.current);
             mixSimulationIntervalRef.current = null;
@@ -2057,9 +1864,6 @@ export default function Home() {
 
           // Stop existing playback without marking as user-paused (stopAll sets userPausedRef = true)
           {
-            // Clean up mobile elements if any
-            for (const el of mobileElementsRef.current) { try { el.onended = null; el.pause(); } catch (_) {} }
-            mobileElementsRef.current = [];
             const oldNodes = Array.from(trackPlaybackRef.current.entries());
             trackPlaybackRef.current.clear();
             setIsPlaying(false);
