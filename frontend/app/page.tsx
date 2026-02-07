@@ -1463,7 +1463,10 @@ export default function Home() {
             mixedGain.connect(trackMainGain);
             rawGain.gain.value = playMixed ? 0 : 1;
             mixedGain.gain.value = playMixed ? 1 : 0;
+            let vocalEnded = false;
             const onEndVocal = () => {
+              if (vocalEnded) return;
+              vocalEnded = true;
               trackPlaybackRef.current.delete(track.id);
               endedCount++;
               if (endedCount >= totalTracks) {
@@ -1479,9 +1482,20 @@ export default function Home() {
             rawSource.connect(rawGain);
             let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
             if (track.mixedAudioUrl) {
-              const mixedAudio = new Audio();
-              mixedAudio.crossOrigin = "anonymous";
-              mixedAudio.src = fullUrl(track.mixedAudioUrl);
+              // Reuse preloaded element if available (already has data cached from mix finish)
+              const preloaded = preloadMixedRef.current.get(track.id);
+              let mixedAudio: HTMLAudioElement;
+              if (preloaded && !preloaded.error) {
+                mixedAudio = preloaded;
+                preloadMixedRef.current.delete(track.id);
+                if (!mixedAudio.crossOrigin) mixedAudio.crossOrigin = "anonymous";
+              } else {
+                mixedAudio = new Audio();
+                mixedAudio.crossOrigin = "anonymous";
+                mixedAudio.preload = "auto";
+                mixedAudio.src = fullUrl(track.mixedAudioUrl);
+                mixedAudio.load();
+              }
               mixedAudio.volume = 1;
               mixedAudio.onended = onEndVocal;
               const mixedSource = ctx.createMediaElementSource(mixedAudio);
@@ -1499,8 +1513,9 @@ export default function Home() {
               mixedGain,
               mainGain: trackMainGain,
             });
-            const activeEl = playMixed && mixedMedia ? mixedMedia.element : rawAudio;
-            activeElements.push(activeEl);
+            // Play both raw and mixed elements so Avant/Après toggle is instant (gains control which is heard)
+            activeElements.push(rawAudio);
+            if (mixedMedia) activeElements.push(mixedMedia.element);
           }
         }
         const waitReady = (el: HTMLAudioElement) =>
@@ -1571,7 +1586,10 @@ export default function Home() {
             rawGain.gain.value = track.playMode === "mixed" ? 0 : 1;
             mixedGain.gain.value = track.playMode === "mixed" ? 1 : 0;
           }
+          let pcVocalEnded = false;
           const onEndVocal = () => {
+            if (pcVocalEnded) return;
+            pcVocalEnded = true;
             trackPlaybackRef.current.delete(track.id);
             endedCount++;
             if (endedCount >= totalTracks) {
@@ -1860,91 +1878,41 @@ export default function Home() {
             if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
           } catch {}
           if (rawEl && mixedEl) {
-            const active = targetMode === "raw" ? rawEl : mixedEl;
-            const inactive = targetMode === "raw" ? mixedEl : rawEl;
-            inactive.pause();
-            inactive.volume = 0;
-            active.volume = g;
-            let masterPos = targetMode === "raw" ? mixedEl.currentTime : rawEl.currentTime;
-            for (const [otherId, otherNodes] of Array.from(trackPlaybackRef.current.entries())) {
-              if (otherId === id) continue;
-              if (otherNodes.type === "instrumental" && "media" in otherNodes && otherNodes.media?.element) {
-                masterPos = otherNodes.media.element.currentTime;
-                break;
-              }
-              if (otherNodes.type === "vocal" && (otherNodes.rawMedia?.element || otherNodes.mixedMedia?.element)) {
-                const tr = tracksRef.current.find((t) => t.id === otherId);
-                const el = tr?.playMode === "mixed" && otherNodes.mixedMedia?.element
-                  ? otherNodes.mixedMedia.element
-                  : otherNodes.rawMedia?.element;
-                if (el && !el.paused) {
-                  masterPos = el.currentTime;
-                  break;
-                }
-              }
-            }
-            active.currentTime = masterPos;
-            active.play().catch(() => {});
+            // Gains-only toggle: both elements play simultaneously, gains control which is heard.
+            // If an element got paused (edge case), resync and resume it.
+            if (rawEl.paused && !rawEl.ended) { rawEl.currentTime = mixedEl.currentTime; rawEl.play().catch(() => {}); }
+            if (mixedEl.paused && !mixedEl.ended) { mixedEl.currentTime = rawEl.currentTime; mixedEl.play().catch(() => {}); }
           } else {
             if (rawEl) rawEl.volume = (targetMode === "raw" ? 1 : 0) * g;
             if (mixedEl) mixedEl.volume = (targetMode === "mixed" ? 1 : 0) * g;
           }
+          // PC Web Audio: gains-only toggle. Both buffer sources are already playing (from startPlaybackAtOffset).
+          // Only create a missing buffer source if needed (e.g., mixed buffer loaded after playback started).
           const ctx = contextRef.current;
-          if (ctx && useBufferPath && rawBuf && (targetMode === "raw" || (targetMode === "mixed" && mixedBuf))) {
-            const when = ctx.currentTime;
-            const offset = Math.max(0, when - startTimeRef.current);
-            const totalTracks = tracksRef.current.filter((t) => t.file && t.rawAudioUrl).length;
-            const onEndVocal = () => {
-              trackPlaybackRef.current.delete(id);
-              if (trackPlaybackRef.current.size === 0) {
-                setIsPlaying(false);
-                setHasPausedPosition(false);
-              }
-              const playableNext = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-              if (contextRef.current && playableNext.length > 0 && !isMobileRef.current) {
-                startPlaybackAtOffset(contextRef.current, playableNext, 0);
-                setIsPlaying(true);
-              }
-            };
-            try {
-              if (nodes.rawBufferNode) {
-                nodes.rawBufferNode.onended = null;
-                nodes.rawBufferNode.stop(when);
-                nodes.rawBufferNode.disconnect();
-              }
-            } catch (_) {}
-            try {
-              if (nodes.mixedBufferNode) {
-                nodes.mixedBufferNode.onended = null;
-                nodes.mixedBufferNode.stop(when);
-                nodes.mixedBufferNode.disconnect();
-              }
-            } catch (_) {}
-            if (targetMode === "raw") {
-              const src = ctx.createBufferSource();
-              src.buffer = rawBuf;
-              src.connect(nodes.rawGain);
-              src.onended = onEndVocal;
-              const duration = Math.max(0, rawBuf.duration - offset);
-              src.start(when, offset, duration);
-              (nodes as VocalNodes).rawBufferNode = src;
-              (nodes as VocalNodes).mixedBufferNode = null;
-            } else if (mixedBuf) {
+          if (ctx && useBufferPath) {
+            if (targetMode === "mixed" && !nodes.mixedBufferNode && mixedBuf) {
+              const when = ctx.currentTime;
+              const off = Math.max(0, when - startTimeRef.current);
               const src = ctx.createBufferSource();
               src.buffer = mixedBuf;
               src.connect(nodes.mixedGain);
-              src.onended = onEndVocal;
-              const duration = Math.max(0, mixedBuf.duration - offset);
-              src.start(when, offset, duration);
+              src.start(when, off, Math.max(0, mixedBuf.duration - off));
               (nodes as VocalNodes).mixedBufferNode = src;
-              (nodes as VocalNodes).rawBufferNode = null;
+            } else if (targetMode === "raw" && !nodes.rawBufferNode && rawBuf) {
+              const when = ctx.currentTime;
+              const off = Math.max(0, when - startTimeRef.current);
+              const src = ctx.createBufferSource();
+              src.buffer = rawBuf;
+              src.connect(nodes.rawGain);
+              src.start(when, off, Math.max(0, rawBuf.duration - off));
+              (nodes as VocalNodes).rawBufferNode = src;
             }
           }
         }
       } catch (_) {}
       updateTrack(id, { playMode: targetMode });
     },
-    [updateTrack, startPlaybackAtOffset]
+    [updateTrack]
   );
 
   const runMix = useCallback(
@@ -2130,13 +2098,34 @@ export default function Home() {
           }
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
           setMixedPreloadReady((p) => ({ ...p, [id]: true }));
-          const preload = new Audio(fullUrl);
+          const preload = new Audio();
+          preload.crossOrigin = "anonymous";
           preload.preload = "auto";
+          preload.src = fullUrl;
           preload.load();
           preloadMixedRef.current.set(id, preload);
           setMixProgress((prev) => ({ ...prev, [id]: 100 }));
 
-          stopAll();
+          // Stop existing playback without marking as user-paused (stopAll sets userPausedRef = true)
+          {
+            const oldNodes = Array.from(trackPlaybackRef.current.entries());
+            trackPlaybackRef.current.clear();
+            setIsPlaying(false);
+            for (const [, nd] of oldNodes) {
+              try {
+                if (nd.type === "instrumental") {
+                  if ("bufferNode" in nd && nd.bufferNode) { try { nd.bufferNode.onended = null; nd.bufferNode.stop(); nd.bufferNode.disconnect(); } catch (_) {} }
+                  else if ("media" in nd) { nd.media.element.onended = null; nd.media.element.pause(); if (nd.media.source) nd.media.source.disconnect(); }
+                } else {
+                  if (nd.rawMedia) { nd.rawMedia.element.onended = null; nd.rawMedia.element.pause(); if (nd.rawMedia.source) nd.rawMedia.source.disconnect(); }
+                  if (nd.rawBufferNode) { try { nd.rawBufferNode.onended = null; nd.rawBufferNode.stop(); nd.rawBufferNode.disconnect(); } catch (_) {} }
+                  if (nd.rawUnlockGain) nd.rawUnlockGain.disconnect();
+                  if (nd.mixedMedia) { nd.mixedMedia.element.onended = null; nd.mixedMedia.element.pause(); if (nd.mixedMedia.source) nd.mixedMedia.source.disconnect(); }
+                  if (nd.mixedBufferNode) { try { nd.mixedBufferNode.onended = null; nd.mixedBufferNode.stop(); nd.mixedBufferNode.disconnect(); } catch (_) {} }
+                }
+              } catch (_) {}
+            }
+          }
           resumeFromRef.current = null;
           setPausedAtSeconds(0);
           setHasPausedPosition(false);
@@ -2147,23 +2136,25 @@ export default function Home() {
           // Autoplay: buffer is already in buffersRef (no await ensureAllBuffersLoaded per spec).
           if (isMobileRef.current) {
             pendingPlayableAfterMixRef.current = patchedPlayable;
-            setIsPlaying(false);
           } else {
+            userPausedRef.current = false;
             try {
-              // Context was resumed at mix start (user gesture); start playback synchronously when possible
               if (ctx.state === "suspended") {
                 unlockAudioContextSync(ctx);
-                ctx.resume().then(() => {
-                  startPlaybackAtOffset(ctx, patchedPlayable, 0);
-                  setIsPlaying(true);
-                }).catch(() => setIsPlaying(false));
-              } else {
+                try { await ctx.resume(); } catch (_) {}
+              }
+              if (ctx.state === "running") {
                 startPlaybackAtOffset(ctx, patchedPlayable, 0);
                 setIsPlaying(true);
+              } else {
+                // Could not resume AudioContext – store for next user gesture
+                pendingPlayableAfterMixRef.current = patchedPlayable;
+                resumeFromRef.current = 0;
               }
             } catch (err) {
-              console.error("Mix finish playback:", err);
-              setAppModal({ type: "alert", message: err instanceof Error ? err.message : "Erreur lancement lecture.", onClose: () => {} });
+              console.error("Mix finish autoplay:", err);
+              pendingPlayableAfterMixRef.current = patchedPlayable;
+              resumeFromRef.current = 0;
             }
           }
           setTimeout(clearProgress, 500);
