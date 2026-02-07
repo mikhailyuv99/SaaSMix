@@ -1559,36 +1559,51 @@ export default function Home() {
       lastSeekRef.current = { offset: safeOffset, time: now };
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
-        // Collect every HTMLAudioElement currently playing
-        const allEls: HTMLAudioElement[] = [];
-        for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-          try {
-            if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
-              allEls.push(nodes.media.element);
-            } else if (nodes.type === "vocal") {
-              if (nodes.rawMedia) allEls.push(nodes.rawMedia.element);
-              if (nodes.mixedMedia) allEls.push(nodes.mixedMedia.element);
-            }
-          } catch (_) {}
-        }
-        // 1. Pause all (silences output instantly)
-        for (const el of allEls) el.pause();
-        // 2. Seek all to the new position
-        for (const el of allEls) el.currentTime = safeOffset;
-        // 3. Wait for ALL elements to finish seeking, then resume ALL at once
-        const gen = ++seekGenRef.current;
-        const waitSeeked = (el: HTMLAudioElement) =>
-          new Promise<void>((resolve) => {
-            if (!el.seeking) { resolve(); return; }
-            const done = () => resolve();
-            el.addEventListener("seeked", done, { once: true });
-            setTimeout(done, 3000);
+        if (isMobileRef.current) {
+          // Mobile: simple currentTime assignment — elements keep playing from new position
+          const when = ctx.currentTime;
+          startTimeRef.current = when - safeOffset;
+          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+            try {
+              if (nodes.type === "instrumental") {
+                if ("media" in nodes && nodes.media) {
+                  nodes.media.element.currentTime = safeOffset;
+                }
+              } else {
+                if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
+                if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
+              }
+            } catch (_) {}
+          }
+        } else {
+          // PC: pause all, seek all, wait all seeked, then play all at once
+          const allEls: HTMLAudioElement[] = [];
+          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+            try {
+              if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
+                allEls.push(nodes.media.element);
+              } else if (nodes.type === "vocal") {
+                if (nodes.rawMedia) allEls.push(nodes.rawMedia.element);
+                if (nodes.mixedMedia) allEls.push(nodes.mixedMedia.element);
+              }
+            } catch (_) {}
+          }
+          for (const el of allEls) el.pause();
+          for (const el of allEls) el.currentTime = safeOffset;
+          const gen = ++seekGenRef.current;
+          const waitSeeked = (el: HTMLAudioElement) =>
+            new Promise<void>((resolve) => {
+              if (!el.seeking) { resolve(); return; }
+              const done = () => resolve();
+              el.addEventListener("seeked", done, { once: true });
+              setTimeout(done, 3000);
+            });
+          Promise.all(allEls.map(waitSeeked)).then(() => {
+            if (gen !== seekGenRef.current) return;
+            startTimeRef.current = ctx.currentTime - safeOffset;
+            for (const el of allEls) el.play().catch(() => {});
           });
-        Promise.all(allEls.map(waitSeeked)).then(() => {
-          if (gen !== seekGenRef.current) return; // superseded by a newer seek
-          startTimeRef.current = ctx.currentTime - safeOffset;
-          for (const el of allEls) el.play().catch(() => {});
-        });
+        }
       } else {
         resumeFromRef.current = safeOffset;
         setPausedAtSeconds(safeOffset);
@@ -1949,11 +1964,14 @@ export default function Home() {
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
-          // After mix: stop playback and reset cursor to 0. User presses Play to hear the result.
+          // After mix: store patched playable for next Play press.
           pendingPlayableAfterMixRef.current = patchedPlayable;
-          resumeFromRef.current = 0;
-          setPausedAtSeconds(0);
-          setHasPausedPosition(false);
+          if (!isMobileRef.current) {
+            // PC: reset cursor to 0
+            resumeFromRef.current = 0;
+            setPausedAtSeconds(0);
+            setHasPausedPosition(false);
+          }
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
