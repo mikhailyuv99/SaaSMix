@@ -1657,15 +1657,27 @@ export default function Home() {
       }
       const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
 
-      // If no playable tracks but some are still hydrating from IDB, wait up to 30s
+      // If no playable tracks but files exist in IDB (after login navigation),
+      // load them directly instead of waiting for the useEffect hydration chain.
       if (playable.length === 0 && !override?.playable) {
-        const hydrating = tracksRef.current.some((t) => t.rawFileName && !t.rawAudioUrl);
-        if (hydrating) {
-          for (let i = 0; i < 300; i++) {
-            await new Promise((r) => setTimeout(r, 100));
-            playable = tracksRef.current.filter((t) => t.rawAudioUrl);
-            if (playable.length > 0) break;
-          }
+        const needsIDB = tracksRef.current.filter((t) => t.rawFileName && !t.rawAudioUrl);
+        if (needsIDB.length > 0) {
+          const hydrated: Track[] = [];
+          await Promise.all(
+            needsIDB.map(async (track) => {
+              const data = await getFileFromIDB(track.id);
+              if (!data) return;
+              const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
+              const rawAudioUrl = URL.createObjectURL(file);
+              // Update React state (for UI, waveform, etc.)
+              updateTrack(track.id, { file, rawAudioUrl, rawFileName: null });
+              // Build playable entry directly (React state won't update until next render)
+              hydrated.push({ ...track, file, rawAudioUrl, rawFileName: null });
+            })
+          );
+          // Merge: tracks that already had rawAudioUrl + freshly hydrated ones
+          const alreadyReady = tracksRef.current.filter((t) => t.rawAudioUrl);
+          playable = [...alreadyReady, ...hydrated];
         }
       }
       if (playable.length === 0) {
