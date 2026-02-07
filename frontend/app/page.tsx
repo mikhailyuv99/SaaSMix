@@ -1563,8 +1563,18 @@ export default function Home() {
 
       if (isPlaying && trackPlaybackRef.current.size > 0) {
         if (isMobileRef.current) {
-          // Mobile: set currentTime on all HTMLAudioElements directly
-          for (const el of mobileElementsRef.current) { try { el.currentTime = safeOffset; } catch (_) {} }
+          // Mobile: pause all, seek all, wait for seeked events, then resume all
+          const els = mobileElementsRef.current;
+          for (const el of els) { try { el.pause(); } catch (_) {} }
+          for (const el of els) { try { el.currentTime = safeOffset; } catch (_) {} }
+          const waitSeeked = (el: HTMLAudioElement) =>
+            new Promise<void>((resolve) => {
+              el.addEventListener("seeked", () => resolve(), { once: true });
+              setTimeout(resolve, 3000);
+            });
+          Promise.all(els.map(waitSeeked)).then(() => {
+            for (const el of els) { el.play().catch(() => {}); }
+          });
         } else if (ctx) {
           // PC: stop all + recreate at new offset. Sample-accurate via scheduleAt.
           const seekPlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
@@ -1699,7 +1709,7 @@ export default function Home() {
 
       mobileElementsRef.current = allElements;
 
-      // 3. Wait for all elements to be ready, then play simultaneously
+      // 3. Wait for all elements to be loadable
       const waitReady = (el: HTMLAudioElement) =>
         new Promise<void>((resolve) => {
           if (el.readyState >= 2) { resolve(); return; }
@@ -1710,10 +1720,22 @@ export default function Home() {
           setTimeout(done, 8000); // failsafe timeout
         });
 
-      Promise.all(allElements.map(waitReady)).then(() => {
+      // 4. Wait for an element to finish seeking after currentTime is set
+      const waitSeeked = (el: HTMLAudioElement) =>
+        new Promise<void>((resolve) => {
+          const done = () => resolve();
+          el.addEventListener("seeked", done, { once: true });
+          setTimeout(done, 3000); // failsafe
+        });
+
+      Promise.all(allElements.map(waitReady)).then(async () => {
         if (gen !== mobilePlayGenRef.current) return; // stale generation
-        // Set all positions then play in tight synchronous loop
+        // Set all positions
         for (const el of allElements) { el.currentTime = offset; }
+        // Wait for ALL elements to finish seeking to the exact position
+        await Promise.all(allElements.map(waitSeeked));
+        if (gen !== mobilePlayGenRef.current) return;
+        // Now all elements are at the same position — play in tight synchronous loop
         for (const el of allElements) { el.play().catch(() => {}); }
         setIsPlaying(true);
       });
