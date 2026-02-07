@@ -142,9 +142,6 @@ function getBufCache(): Map<string, { raw: AudioBuffer | null; mixed: AudioBuffe
   return w.__saas_buf as Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>;
 }
 
-/* eslint-disable no-console */
-function dbg(...args: unknown[]) { console.log("[SaaS Mix PlayDebug]", ...args); }
-/* eslint-enable no-console */
 
 /** Sauvegarde sérialisable d'une piste pour sessionStorage.
  *  Inclut rawAudioUrl (blob URL) — survit aux navigations client-side (login). */
@@ -347,6 +344,11 @@ export default function Home() {
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
   const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [projectsList, setProjectsList] = useState<{ id: string; name: string; created_at: string | null }[]>([]);
   const [showProjectsModal, setShowProjectsModal] = useState(false);
@@ -414,7 +416,6 @@ export default function Home() {
   // Le fichier File sera réhydraté en background par le useEffect per-track ci-dessous.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    dbg("MOUNT effect — abCache:", abCacheRef.current.size, "bufCache:", buffersRef.current.size);
     try {
       const raw = localStorage.getItem("saas_mix_user");
       if (raw) {
@@ -422,8 +423,7 @@ export default function Home() {
         if (u?.id && u?.email) setUser(u);
       }
       const restored = tracksFromStorage();
-      if (!restored || restored.length === 0) { dbg("No tracks in sessionStorage"); return; }
-      dbg("Restored", restored.length, "tracks — URLs:", restored.map(t => t.rawAudioUrl ? "yes" : "NO").join(","), "fileNames:", restored.map(t => t.rawFileName ?? "none").join(","));
+      if (!restored || restored.length === 0) return;
       setTracks(restored);
 
       // Ensure an AudioContext exists so the pre-decode useEffect can fire.
@@ -1692,12 +1692,7 @@ export default function Home() {
 
   const playAll = useCallback(
     async (override?: { playable?: Track[]; startOffset?: number }) => {
-      const t0 = performance.now();
       userPausedRef.current = false;
-      dbg("▶ playAll called — abCache:", abCacheRef.current.size, "bufCache:", buffersRef.current.size,
-          "tracks:", tracksRef.current.length,
-          "withURL:", tracksRef.current.filter(t => t.rawAudioUrl).length,
-          "withFileName:", tracksRef.current.filter(t => t.rawFileName).length);
 
       // --- AudioContext setup FIRST (MUST be synchronous in user gesture for iOS) ---
       const isMob = isMobileRef.current;
@@ -1727,7 +1722,6 @@ export default function Home() {
           streamDestRef.current = null;
           outputElRef.current = null;
         }
-        dbg("  Mobile ctx created, state:", ctx.state);
       } else if (!ctx || ctx.state === "closed") {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
@@ -1738,8 +1732,6 @@ export default function Home() {
       if (ctx.state === "suspended") {
         await ctx.resume().catch(() => {});
       }
-      dbg("  ctx.state after resume:", ctx.state, "at", (performance.now() - t0).toFixed(0), "ms");
-
       // --- Resolve playable tracks ---
       // Include tracks with rawFileName (can be loaded from IDB even without rawAudioUrl)
       let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.rawAudioUrl || t.rawFileName);
@@ -1747,12 +1739,10 @@ export default function Home() {
         pendingPlayableAfterMixRef.current = null;
       }
       const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
-      dbg("  playable:", playable.length, "at", (performance.now() - t0).toFixed(0), "ms");
 
       // For tracks missing rawAudioUrl but having rawFileName, load from IDB
       const needsIDB = playable.filter((t) => !t.rawAudioUrl && t.rawFileName);
       if (needsIDB.length > 0) {
-        dbg("  Loading", needsIDB.length, "tracks from IDB...");
         await Promise.all(
           needsIDB.map(async (track) => {
             try {
@@ -1768,20 +1758,16 @@ export default function Home() {
         );
         // Filter out tracks that still have no URL after IDB attempt
         playable = playable.filter((t) => t.rawAudioUrl);
-        dbg("  After IDB load: playable:", playable.length, "at", (performance.now() - t0).toFixed(0), "ms");
       }
 
       if (playable.length === 0) {
-        dbg("  ✗ No playable tracks — showing message");
         setShowPlayNoFileMessage(true);
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
         return;
       }
-      dbg("  ensureAllBuffersLoaded starting at", (performance.now() - t0).toFixed(0), "ms");
       try {
         await ensureAllBuffersLoaded(playable);
       } catch (e) {
-        dbg("  ✗ ensureAllBuffersLoaded FAILED:", e);
         setAppModal({
           type: "alert",
           message: e instanceof Error ? e.message : "Impossible de charger les pistes. Réessayez.",
@@ -1789,7 +1775,6 @@ export default function Home() {
         });
         return;
       }
-      dbg("  ✓ Buffers loaded at", (performance.now() - t0).toFixed(0), "ms — starting playback");
       if (trackPlaybackRef.current.size > 0) {
         for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
           try {
@@ -2535,9 +2520,9 @@ export default function Home() {
               </>
             ) : (
               <>
-                <Link href="/connexion" className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                <button type="button" onClick={() => setShowLoginModal(true)} className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer">
                   CONNEXION
-                </Link>
+                </button>
                 <span className="text-slate-600">|</span>
                 <Link href="/inscription" className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
                   INSCRIPTION
@@ -2615,9 +2600,9 @@ export default function Home() {
                     </>
                   ) : (
                     <>
-                      <Link href="/connexion" onClick={() => setNavMenuOpen(false)} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors">
+                      <button type="button" onClick={() => { setNavMenuOpen(false); setShowLoginModal(true); }} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
                         CONNEXION
-                      </Link>
+                      </button>
                       <Link href="/inscription" onClick={() => setNavMenuOpen(false)} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors">
                         INSCRIPTION
                       </Link>
@@ -3696,6 +3681,71 @@ export default function Home() {
           </section>
         )}
       </div>
+      {/* ─── Login Modal (stays on same page — preserves all audio state) ─── */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setShowLoginModal(false)}>
+          <div className="card p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
+            <button type="button" onClick={() => setShowLoginModal(false)} className="absolute top-3 right-3 text-slate-500 hover:text-white text-lg leading-none">&times;</button>
+            <h2 className="text-xl font-medium text-white mb-1 text-center">Connexion</h2>
+            <p className="text-tagline text-slate-500 text-center text-[10px] mb-6">Accéder à votre compte</p>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setLoginError("");
+                setLoginLoading(true);
+                try {
+                  const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+                  });
+                  const data = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    setLoginError(data.detail || "E-mail ou mot de passe incorrect.");
+                    setLoginLoading(false);
+                    return;
+                  }
+                  if (data.access_token && data.user) {
+                    localStorage.setItem("saas_mix_token", data.access_token);
+                    localStorage.setItem("saas_mix_user", JSON.stringify(data.user));
+                    setUser(data.user);
+                    setShowLoginModal(false);
+                    setLoginEmail("");
+                    setLoginPassword("");
+                    setLoginError("");
+                  }
+                } catch {
+                  setLoginError("Impossible de joindre le serveur.");
+                } finally {
+                  setLoginLoading(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label htmlFor="login-email" className="block text-tagline text-slate-500 text-[10px] mb-1">E-mail</label>
+                <input id="login-email" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required autoComplete="email"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                  placeholder="vous@exemple.com" />
+              </div>
+              <div>
+                <label htmlFor="login-password" className="block text-tagline text-slate-500 text-[10px] mb-1">Mot de passe</label>
+                <input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required autoComplete="current-password"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                  placeholder="••••••••" />
+              </div>
+              {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
+              <button type="submit" disabled={loginLoading} className="btn-primary w-full py-2.5">
+                {loginLoading ? "Connexion…" : "Se connecter"}
+              </button>
+            </form>
+            <p className="text-tagline text-slate-500 text-center text-[10px] mt-4">
+              Pas de compte ?{" "}
+              <a href="/inscription" className="text-slate-400 hover:text-white underline">Inscription</a>
+            </p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
