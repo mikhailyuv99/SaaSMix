@@ -1428,6 +1428,7 @@ export default function Home() {
             if (endedCount >= totalTracks) {
               setIsPlaying(false);
               setHasPausedPosition(false);
+              resumeFromRef.current = 0;
             }
           };
           if (track.category === "instrumental") {
@@ -1449,6 +1450,7 @@ export default function Home() {
               if (endedCount >= totalTracks) {
                 setIsPlaying(false);
                 setHasPausedPosition(false);
+                resumeFromRef.current = 0;
               }
             };
             const rawVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 0 : 1) * (track.gain / 100);
@@ -1518,6 +1520,13 @@ export default function Home() {
           if (endedCount >= totalTracks) {
             setIsPlaying(false);
             setHasPausedPosition(false);
+            if (!isMobileRef.current) {
+              const playableNext = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+              if (contextRef.current && playableNext.length > 0) {
+                startPlaybackAtOffset(contextRef.current, playableNext, 0);
+                setIsPlaying(true);
+              }
+            }
           }
         };
 
@@ -1547,6 +1556,13 @@ export default function Home() {
             if (endedCount >= totalTracks) {
               setIsPlaying(false);
               setHasPausedPosition(false);
+              if (!isMobileRef.current) {
+                const playableNext = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+                if (contextRef.current && playableNext.length > 0) {
+                  startPlaybackAtOffset(contextRef.current, playableNext, 0);
+                  setIsPlaying(true);
+                }
+              }
             }
           };
           const rawBuf = entry.raw;
