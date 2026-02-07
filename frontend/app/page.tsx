@@ -1731,24 +1731,12 @@ export default function Home() {
           const mixedEl = nodes.mixedMedia?.element;
 
           if (isMobileRef.current && rawEl && mixedEl) {
-            // Mobile: mute track, pause both, sync to same position, play both, unmute.
-            // This guarantees raw+mixed stay perfectly in sync after toggle.
-            const mainGainVal = nodes.mainGain?.gain?.value ?? 1;
-            if (nodes.mainGain) nodes.mainGain.gain.value = 0;
+            // Mobile: just switch gains. Both elements are already playing simultaneously
+            // from startPlaybackAtOffset. Mute one, unmute the other — that's it.
             try {
               if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
               if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
             } catch {}
-            const syncTime = (targetMode === "raw" ? mixedEl : rawEl).currentTime;
-            rawEl.pause();
-            mixedEl.pause();
-            rawEl.currentTime = syncTime;
-            mixedEl.currentTime = syncTime;
-            rawEl.play().catch(() => {});
-            mixedEl.play().catch(() => {});
-            setTimeout(() => {
-              if (nodes.mainGain) nodes.mainGain.gain.value = mainGainVal;
-            }, 30);
           } else {
             // PC: gains-only toggle (working perfectly, do NOT change)
             try {
