@@ -676,7 +676,6 @@ export default function Home() {
     | { type: "instrumental"; media: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null }; mainGain: GainNode };
   const trackPlaybackRef = useRef<Map<string, VocalNodes | InstrumentalNodes>>(new Map());
   const isMobileRef = useRef(false);
-  const mobilePlayGenRef = useRef(0);
   if (typeof window !== "undefined") isMobileRef.current = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
   const addTrack = useCallback(() => {
@@ -1406,157 +1405,98 @@ export default function Home() {
         } catch (_) {}
       }
 
+      // AudioBufferSourceNode playback — sample-accurate sync via scheduleAt
       let endedCount = 0;
       const totalTracks = playable.length;
-      const fullUrl = (url: string) => (url.startsWith("http") || url.startsWith("blob:") ? url : `${API_BASE}${url}`);
+      const scheduleAt = ctx.currentTime + 0.02; // 20ms in the future — all sources start at this exact sample
+      startTimeRef.current = scheduleAt - offset;
 
-      if (isMobileRef.current) {
-        // ─── MOBILE: HTMLAudioElement playback ───
-        // HTMLAudioElement.play() reliably activates the iOS audio session.
-        // Both raw and mixed elements play simultaneously; gains control which is heard.
-        const now = ctx.currentTime;
-        startTimeRef.current = now - offset;
-        const gen = ++mobilePlayGenRef.current;
-        const activeElements: HTMLAudioElement[] = [];
+      for (const track of playable) {
+        if (!track.rawAudioUrl) continue;
+        const bufEntry = buffersRef.current.get(track.id);
+        if (!bufEntry?.raw) continue; // buffer not decoded — skip
 
-        for (const track of playable) {
-          if (!track.rawAudioUrl) continue;
-          const trackMainGain = ctx.createGain();
-          trackMainGain.gain.value = Math.max(0, Math.min(2, track.gain / 100));
-          trackMainGain.connect(ctx.destination);
-          const onEnd = () => {
-            trackPlaybackRef.current.delete(track.id);
-            endedCount++;
-            if (endedCount >= totalTracks) { setIsPlaying(false); setHasPausedPosition(false); resumeFromRef.current = 0; }
-          };
-          if (track.category === "instrumental") {
-            const audio = new Audio(fullUrl(track.rawAudioUrl));
-            audio.volume = 1;
-            audio.onended = onEnd;
-            activeElements.push(audio);
-            const source = ctx.createMediaElementSource(audio);
-            source.connect(trackMainGain);
-            trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source }, mainGain: trackMainGain });
-          } else {
-            const playMixed = track.playMode === "mixed" && track.mixedAudioUrl;
-            const rawGain = ctx.createGain();
-            const mixedGain = ctx.createGain();
-            rawGain.connect(trackMainGain);
-            mixedGain.connect(trackMainGain);
-            rawGain.gain.value = playMixed ? 0 : 1;
-            mixedGain.gain.value = playMixed ? 1 : 0;
-            let vocalEnded = false;
-            const onEndVocal = () => { if (vocalEnded) return; vocalEnded = true; onEnd(); };
-            const rawAudio = new Audio(fullUrl(track.rawAudioUrl));
-            rawAudio.volume = 1;
-            rawAudio.onended = onEndVocal;
-            const rawSource = ctx.createMediaElementSource(rawAudio);
-            rawSource.connect(rawGain);
-            activeElements.push(rawAudio);
-            let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
-            if (track.mixedAudioUrl) {
-              const mixedAudio = new Audio();
-              mixedAudio.crossOrigin = "anonymous";
-              mixedAudio.preload = "auto";
-              mixedAudio.src = fullUrl(track.mixedAudioUrl);
-              mixedAudio.load();
-              mixedAudio.volume = 1;
-              mixedAudio.onended = onEndVocal;
-              const mixedSource = ctx.createMediaElementSource(mixedAudio);
-              mixedSource.connect(mixedGain);
-              mixedMedia = { element: mixedAudio, source: mixedSource };
-              activeElements.push(mixedAudio);
-            }
-            trackPlaybackRef.current.set(track.id, {
-              type: "vocal", rawMedia: { element: rawAudio, source: rawSource }, rawBufferNode: null,
-              rawUnlockGain: null, mixedMedia, mixedBufferNode: null, rawGain, mixedGain, mainGain: trackMainGain,
-            });
-          }
-        }
-        // Wait for all elements to be ready, then start simultaneously
-        const waitReady = (el: HTMLAudioElement) =>
-          new Promise<void>((resolve) => {
-            if (el.readyState >= 2) { resolve(); return; }
-            const done = () => resolve();
-            el.addEventListener("canplaythrough", done, { once: true });
-            el.addEventListener("canplay", done, { once: true });
-            el.addEventListener("error", done, { once: true });
-            setTimeout(done, 8000);
-          });
-        Promise.all(activeElements.map(waitReady)).then(() => {
-          if (gen !== mobilePlayGenRef.current) return;
-          const t = ctx.currentTime;
-          startTimeRef.current = t - offset;
-          for (const el of activeElements) { el.currentTime = offset; el.play().catch(() => {}); }
-          setIsPlaying(true);
-        });
-      } else {
-        // ─── PC: AudioBufferSourceNode playback — sample-accurate sync via scheduleAt ───
-        const scheduleAt = ctx.currentTime + 0.02;
-        startTimeRef.current = scheduleAt - offset;
+        const trackMainGain = ctx.createGain();
+        trackMainGain.gain.value = Math.max(0, Math.min(2, track.gain / 100));
+        trackMainGain.connect(ctx.destination);
 
-        for (const track of playable) {
-          if (!track.rawAudioUrl) continue;
-          const bufEntry = buffersRef.current.get(track.id);
-          if (!bufEntry?.raw) continue;
+        const safeOffset = Math.min(offset, bufEntry.raw.duration);
 
-          const trackMainGain = ctx.createGain();
-          trackMainGain.gain.value = Math.max(0, Math.min(2, track.gain / 100));
-          trackMainGain.connect(ctx.destination);
-          const safeOffset = Math.min(offset, bufEntry.raw.duration);
-
-          if (track.category === "instrumental") {
-            const src = ctx.createBufferSource();
-            src.buffer = bufEntry.raw;
-            src.connect(trackMainGain);
-            const currentSrc = src;
-            src.onended = () => {
-              const entry = trackPlaybackRef.current.get(track.id);
-              if (entry && "bufferNode" in entry && entry.bufferNode === currentSrc) {
-                trackPlaybackRef.current.delete(track.id);
-                endedCount++;
-                if (endedCount >= totalTracks) { setIsPlaying(false); setHasPausedPosition(false); resumeFromRef.current = 0; }
-              }
-            };
-            src.start(scheduleAt, safeOffset);
-            trackPlaybackRef.current.set(track.id, { type: "instrumental", bufferNode: src, mainGain: trackMainGain });
-          } else {
-            const playMixed = track.playMode === "mixed" && track.mixedAudioUrl;
-            const rawGain = ctx.createGain();
-            const mixedGain = ctx.createGain();
-            rawGain.connect(trackMainGain);
-            mixedGain.connect(trackMainGain);
-            rawGain.gain.value = playMixed ? 0 : 1;
-            mixedGain.gain.value = playMixed ? 1 : 0;
-            let vocalEnded = false;
-            const onEndVocal = () => {
-              if (vocalEnded) return; vocalEnded = true;
+        if (track.category === "instrumental") {
+          const src = ctx.createBufferSource();
+          src.buffer = bufEntry.raw;
+          src.connect(trackMainGain);
+          const currentSrc = src;
+          src.onended = () => {
+            const entry = trackPlaybackRef.current.get(track.id);
+            if (entry && "bufferNode" in entry && entry.bufferNode === currentSrc) {
               trackPlaybackRef.current.delete(track.id);
               endedCount++;
-              if (endedCount >= totalTracks) { setIsPlaying(false); setHasPausedPosition(false); resumeFromRef.current = 0; }
-            };
-            const rawSrc = ctx.createBufferSource();
-            rawSrc.buffer = bufEntry.raw;
-            rawSrc.connect(rawGain);
-            rawSrc.onended = onEndVocal;
-            rawSrc.start(scheduleAt, safeOffset);
-            let mixedBufNode: AudioBufferSourceNode | null = null;
-            if (bufEntry.mixed) {
-              const mixedSrc = ctx.createBufferSource();
-              mixedSrc.buffer = bufEntry.mixed;
-              mixedSrc.connect(mixedGain);
-              mixedSrc.onended = onEndVocal;
-              mixedSrc.start(scheduleAt, Math.min(offset, bufEntry.mixed.duration));
-              mixedBufNode = mixedSrc;
+              if (endedCount >= totalTracks) {
+                setIsPlaying(false);
+                setHasPausedPosition(false);
+                resumeFromRef.current = 0;
+              }
             }
-            trackPlaybackRef.current.set(track.id, {
-              type: "vocal", rawMedia: null, rawBufferNode: rawSrc, rawUnlockGain: null,
-              mixedMedia: null, mixedBufferNode: mixedBufNode, rawGain, mixedGain, mainGain: trackMainGain,
-            });
+          };
+          src.start(scheduleAt, safeOffset);
+          trackPlaybackRef.current.set(track.id, { type: "instrumental", bufferNode: src, mainGain: trackMainGain });
+        } else {
+          // Vocal track: raw + mixed buffer sources through separate gains
+          const playMixed = track.playMode === "mixed" && track.mixedAudioUrl;
+          const rawGain = ctx.createGain();
+          const mixedGain = ctx.createGain();
+          rawGain.connect(trackMainGain);
+          mixedGain.connect(trackMainGain);
+          rawGain.gain.value = playMixed ? 0 : 1;
+          mixedGain.gain.value = playMixed ? 1 : 0;
+
+          let vocalEnded = false;
+          const onEndVocal = () => {
+            if (vocalEnded) return;
+            vocalEnded = true;
+            trackPlaybackRef.current.delete(track.id);
+            endedCount++;
+            if (endedCount >= totalTracks) {
+              setIsPlaying(false);
+              setHasPausedPosition(false);
+              resumeFromRef.current = 0;
+            }
+          };
+
+          // Raw buffer source
+          const rawSrc = ctx.createBufferSource();
+          rawSrc.buffer = bufEntry.raw;
+          rawSrc.connect(rawGain);
+          rawSrc.onended = onEndVocal;
+          rawSrc.start(scheduleAt, safeOffset);
+
+          // Mixed buffer source (if available)
+          let mixedBufNode: AudioBufferSourceNode | null = null;
+          if (bufEntry.mixed) {
+            const mixedSafeOffset = Math.min(offset, bufEntry.mixed.duration);
+            const mixedSrc = ctx.createBufferSource();
+            mixedSrc.buffer = bufEntry.mixed;
+            mixedSrc.connect(mixedGain);
+            mixedSrc.onended = onEndVocal;
+            mixedSrc.start(scheduleAt, mixedSafeOffset);
+            mixedBufNode = mixedSrc;
           }
+
+          trackPlaybackRef.current.set(track.id, {
+            type: "vocal",
+            rawMedia: null,
+            rawBufferNode: rawSrc,
+            rawUnlockGain: null,
+            mixedMedia: null,
+            mixedBufferNode: mixedBufNode,
+            rawGain,
+            mixedGain,
+            mainGain: trackMainGain,
+          });
         }
-        setIsPlaying(true);
       }
+      setIsPlaying(true);
     },
     []
   );
@@ -1572,25 +1512,9 @@ export default function Home() {
       lastSeekRef.current = { offset: safeOffset, time: now };
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
-        if (isMobileRef.current) {
-          // Mobile: set currentTime on all HTMLAudioElements
-          const when = ctx.currentTime;
-          startTimeRef.current = when - safeOffset;
-          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-            try {
-              if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
-                nodes.media.element.currentTime = safeOffset;
-              } else if (nodes.type === "vocal") {
-                if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
-                if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
-              }
-            } catch (_) {}
-          }
-        } else {
-          // PC: stop all + recreate at new offset (sample-accurate via scheduleAt)
-          const playable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-          startPlaybackAtOffset(ctx, playable, safeOffset);
-        }
+        // Seek = stop all + recreate at new offset. Sample-accurate via scheduleAt.
+        const playable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+        startPlaybackAtOffset(ctx, playable, safeOffset);
       } else {
         resumeFromRef.current = safeOffset;
         setPausedAtSeconds(safeOffset);
@@ -1627,24 +1551,20 @@ export default function Home() {
   const playAll = useCallback(
     async (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
+      // On mobile, ALWAYS create a fresh AudioContext within this user gesture.
+      // iOS only allows AudioContext to run when created/resumed inside a direct user gesture handler.
+      // Any context created elsewhere (useEffect, async callback) is permanently suspended on iOS.
+      const isMob = isMobileRef.current;
       let ctx = contextRef.current;
-      if (!ctx || ctx.state === "closed") {
+      if (isMob || !ctx || ctx.state === "closed") {
+        if (ctx && ctx.state !== "closed") { try { ctx.close(); } catch (_) {} }
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
       }
       if (ctx.state === "suspended") {
-        ctx.resume().catch(() => {});
         unlockAudioContextSync(ctx);
         await ctx.resume().catch(() => {});
-        // If still suspended (context created outside user gesture on iOS), recreate
-        if (ctx.state === "suspended") {
-          try { ctx.close(); } catch (_) {}
-          ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-          contextRef.current = ctx;
-          unlockAudioContextSync(ctx);
-          await ctx.resume().catch(() => {});
-        }
       }
       let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
       if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
