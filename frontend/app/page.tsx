@@ -126,12 +126,25 @@ function deleteFileFromIDB(trackId: string): void {
   }).catch(() => {});
 }
 
-// ─── Module-level caches ────────────────────────────────────────────
-// These persist across component unmount/remount (client-side navigation).
-// Without this, navigating to /connexion and back destroys all cached data,
-// forcing a full re-fetch + re-decode when the user presses Play.
-const _persistentAbCache = new Map<string, ArrayBuffer>();
-const _persistentBuffersCache = new Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>();
+// ─── Persistent caches (attached to window) ────────────────────────
+// Survive component unmount/remount, module hot-reload, and client-side navigation.
+// Only destroyed on full page reload (F5 / Ctrl+R).
+function getAbCache(): Map<string, ArrayBuffer> {
+  if (typeof window === "undefined") return new Map();
+  const w = window as unknown as Record<string, unknown>;
+  if (!w.__saas_ab) w.__saas_ab = new Map<string, ArrayBuffer>();
+  return w.__saas_ab as Map<string, ArrayBuffer>;
+}
+function getBufCache(): Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }> {
+  if (typeof window === "undefined") return new Map();
+  const w = window as unknown as Record<string, unknown>;
+  if (!w.__saas_buf) w.__saas_buf = new Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>();
+  return w.__saas_buf as Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>;
+}
+
+/* eslint-disable no-console */
+function dbg(...args: unknown[]) { console.log("[SaaS Mix PlayDebug]", ...args); }
+/* eslint-enable no-console */
 
 /** Sauvegarde sérialisable d'une piste pour sessionStorage.
  *  Inclut rawAudioUrl (blob URL) — survit aux navigations client-side (login). */
@@ -373,9 +386,12 @@ export default function Home() {
 
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
-  const buffersRef = useRef(_persistentBuffersCache);
+  const buffersRef = useRef(getBufCache());
   // Cache raw ArrayBuffers so we can re-decode without re-fetching when AudioContext changes (mobile)
-  const abCacheRef = useRef(_persistentAbCache);
+  const abCacheRef = useRef(getAbCache());
+  // On remount, re-attach to the window-level Maps (in case useRef created a new wrapper)
+  buffersRef.current = getBufCache();
+  abCacheRef.current = getAbCache();
   // Mobile iOS: route AudioContext output through MediaStreamDestination → HTMLAudioElement
   // so iOS actually sends audio to the speaker (ctx.destination alone doesn't work on iOS).
   const streamDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
@@ -398,6 +414,7 @@ export default function Home() {
   // Le fichier File sera réhydraté en background par le useEffect per-track ci-dessous.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    dbg("MOUNT effect — abCache:", abCacheRef.current.size, "bufCache:", buffersRef.current.size);
     try {
       const raw = localStorage.getItem("saas_mix_user");
       if (raw) {
@@ -405,7 +422,8 @@ export default function Home() {
         if (u?.id && u?.email) setUser(u);
       }
       const restored = tracksFromStorage();
-      if (!restored || restored.length === 0) return;
+      if (!restored || restored.length === 0) { dbg("No tracks in sessionStorage"); return; }
+      dbg("Restored", restored.length, "tracks — URLs:", restored.map(t => t.rawAudioUrl ? "yes" : "NO").join(","), "fileNames:", restored.map(t => t.rawFileName ?? "none").join(","));
       setTracks(restored);
 
       // Ensure an AudioContext exists so the pre-decode useEffect can fire.
@@ -1674,15 +1692,18 @@ export default function Home() {
 
   const playAll = useCallback(
     async (override?: { playable?: Track[]; startOffset?: number }) => {
+      const t0 = performance.now();
       userPausedRef.current = false;
+      dbg("▶ playAll called — abCache:", abCacheRef.current.size, "bufCache:", buffersRef.current.size,
+          "tracks:", tracksRef.current.length,
+          "withURL:", tracksRef.current.filter(t => t.rawAudioUrl).length,
+          "withFileName:", tracksRef.current.filter(t => t.rawFileName).length);
 
       // --- AudioContext setup FIRST (MUST be synchronous in user gesture for iOS) ---
-      // This MUST happen before any await, otherwise iOS won't activate the audio session.
       const isMob = isMobileRef.current;
       let ctx = contextRef.current;
 
       if (isMob) {
-        // MOBILE: always create a FRESH AudioContext in THIS user gesture.
         if (outputElRef.current) {
           try { outputElRef.current.pause(); outputElRef.current.srcObject = null; } catch (_) {}
           outputElRef.current = null;
@@ -1694,50 +1715,73 @@ export default function Home() {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
-        // NOTE: We do NOT clear buffersRef — AudioBuffers are context-agnostic per the Web Audio API spec.
-        // Buffers pre-decoded by the mount effect / pre-decode useEffect are reusable with the new context.
 
-        // Route through MediaStreamDestination → HTMLAudioElement (iOS audio fix)
         try {
           const dest = ctx.createMediaStreamDestination();
           streamDestRef.current = dest;
           const outputEl = new Audio();
           outputEl.srcObject = dest.stream;
-          outputEl.play().catch(() => {}); // user gesture — iOS will honor this
+          outputEl.play().catch(() => {});
           outputElRef.current = outputEl;
         } catch (_) {
           streamDestRef.current = null;
           outputElRef.current = null;
         }
+        dbg("  Mobile ctx created, state:", ctx.state);
       } else if (!ctx || ctx.state === "closed") {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
       }
 
-      // Unlock + resume (still in user gesture for the first call)
       unlockAudioContextSync(ctx);
       if (ctx.state === "suspended") {
         await ctx.resume().catch(() => {});
       }
+      dbg("  ctx.state after resume:", ctx.state, "at", (performance.now() - t0).toFixed(0), "ms");
 
-      // --- Now resolve playable tracks (safe to await after AudioContext is set up) ---
-      // rawAudioUrl is persisted in sessionStorage → available immediately after client-side navigation.
-      // For stale blob URLs (full reload), decodeTrackBuffers has IDB fallback.
-      const playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.rawAudioUrl);
+      // --- Resolve playable tracks ---
+      // Include tracks with rawFileName (can be loaded from IDB even without rawAudioUrl)
+      let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.rawAudioUrl || t.rawFileName);
       if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
         pendingPlayableAfterMixRef.current = null;
       }
       const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
+      dbg("  playable:", playable.length, "at", (performance.now() - t0).toFixed(0), "ms");
+
+      // For tracks missing rawAudioUrl but having rawFileName, load from IDB
+      const needsIDB = playable.filter((t) => !t.rawAudioUrl && t.rawFileName);
+      if (needsIDB.length > 0) {
+        dbg("  Loading", needsIDB.length, "tracks from IDB...");
+        await Promise.all(
+          needsIDB.map(async (track) => {
+            try {
+              const data = await getFileFromIDB(track.id);
+              if (!data) return;
+              const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
+              const freshUrl = URL.createObjectURL(file);
+              updateTrack(track.id, { file, rawAudioUrl: freshUrl, rawFileName: null });
+              // Update local reference (React state won't update until next render)
+              (track as { rawAudioUrl: string | null }).rawAudioUrl = freshUrl;
+            } catch (_) {}
+          })
+        );
+        // Filter out tracks that still have no URL after IDB attempt
+        playable = playable.filter((t) => t.rawAudioUrl);
+        dbg("  After IDB load: playable:", playable.length, "at", (performance.now() - t0).toFixed(0), "ms");
+      }
 
       if (playable.length === 0) {
+        dbg("  ✗ No playable tracks — showing message");
         setShowPlayNoFileMessage(true);
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
         return;
       }
+      dbg("  ensureAllBuffersLoaded starting at", (performance.now() - t0).toFixed(0), "ms");
       try {
         await ensureAllBuffersLoaded(playable);
       } catch (e) {
+        dbg("  ✗ ensureAllBuffersLoaded FAILED:", e);
         setAppModal({
           type: "alert",
           message: e instanceof Error ? e.message : "Impossible de charger les pistes. Réessayez.",
@@ -1745,6 +1789,7 @@ export default function Home() {
         });
         return;
       }
+      dbg("  ✓ Buffers loaded at", (performance.now() - t0).toFixed(0), "ms — starting playback");
       if (trackPlaybackRef.current.size > 0) {
         for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
           try {
