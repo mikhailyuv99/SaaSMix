@@ -1587,26 +1587,30 @@ export default function Home() {
           const rawUnlockGain = ctx.createGain();
           rawUnlockGain.gain.value = 0;
           rawUnlockGain.connect(mainGain);
-          const srcRaw = ctx.createBufferSource();
-          srcRaw.buffer = rawBuf;
-          srcRaw.connect(rawGain);
-          srcRaw.onended = onEndVocal;
-          const durationRaw = Math.max(0, rawBuf.duration - offset);
-          srcRaw.start(now, offset, durationRaw);
+          const playMixed = track.playMode === "mixed" && track.mixedAudioUrl && entry.mixed;
+          let rawBufferNode: AudioBufferSourceNode | null = null;
           let mixedBufferNode: AudioBufferSourceNode | null = null;
-          if (track.mixedAudioUrl && entry.mixed) {
+          if (playMixed) {
             const srcMixed = ctx.createBufferSource();
-            srcMixed.buffer = entry.mixed;
+            srcMixed.buffer = entry.mixed!;
             srcMixed.connect(mixedGain);
             srcMixed.onended = onEndVocal;
-            const durationMixed = Math.max(0, entry.mixed.duration - offset);
+            const durationMixed = Math.max(0, entry.mixed!.duration - offset);
             srcMixed.start(now, offset, durationMixed);
             mixedBufferNode = srcMixed;
+          } else {
+            const srcRaw = ctx.createBufferSource();
+            srcRaw.buffer = rawBuf;
+            srcRaw.connect(rawGain);
+            srcRaw.onended = onEndVocal;
+            const durationRaw = Math.max(0, rawBuf.duration - offset);
+            srcRaw.start(now, offset, durationRaw);
+            rawBufferNode = srcRaw;
           }
           trackPlaybackRef.current.set(track.id, {
             type: "vocal",
             rawMedia: null,
-            rawBufferNode: srcRaw,
+            rawBufferNode,
             rawUnlockGain,
             mixedMedia: null,
             mixedBufferNode,
@@ -1856,12 +1860,26 @@ export default function Home() {
             if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
           } catch {}
           if (rawEl && mixedEl) {
-            const pos = targetMode === "raw" ? mixedEl.currentTime : rawEl.currentTime;
+            let masterPos = targetMode === "raw" ? mixedEl.currentTime : rawEl.currentTime;
+            for (const [otherId, otherNodes] of Array.from(trackPlaybackRef.current.entries())) {
+              if (otherId === id) continue;
+              if (otherNodes.type === "instrumental" && "media" in otherNodes && otherNodes.media?.element) {
+                masterPos = otherNodes.media.element.currentTime;
+                break;
+              }
+              if (otherNodes.type === "vocal" && (otherNodes.rawMedia?.element || otherNodes.mixedMedia?.element)) {
+                const el = otherNodes.rawMedia?.element ?? otherNodes.mixedMedia?.element;
+                if (el && !el.paused) {
+                  masterPos = el.currentTime;
+                  break;
+                }
+              }
+            }
             const active = targetMode === "raw" ? rawEl : mixedEl;
             const inactive = targetMode === "raw" ? mixedEl : rawEl;
             inactive.pause();
             inactive.volume = 0;
-            active.currentTime = pos;
+            active.currentTime = masterPos;
             active.volume = g;
             active.play().catch(() => {});
           } else {
