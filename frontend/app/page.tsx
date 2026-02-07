@@ -1559,48 +1559,59 @@ export default function Home() {
       lastSeekRef.current = { offset: safeOffset, time: now };
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
-        // Unified seek for both platforms:
-        // 1. Mute all tracks via gain (no pause — keeps MediaElementAudioSourceNode healthy)
-        // 2. Seek all elements to safeOffset
-        // 3. Wait for ALL elements to finish seeking
-        // 4. Snap all elements to exact offset (correction for drift during wait)
-        // 5. Unmute after brief delay for correction to settle
-        const allEls: HTMLAudioElement[] = [];
-        const savedGains: { gain: GainNode; value: number }[] = [];
-        for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-          try {
-            if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
-              allEls.push(nodes.media.element);
-            } else if (nodes.type === "vocal") {
-              if (nodes.rawMedia) allEls.push(nodes.rawMedia.element);
-              if (nodes.mixedMedia) allEls.push(nodes.mixedMedia.element);
-            }
-            if (nodes.mainGain) {
-              savedGains.push({ gain: nodes.mainGain, value: nodes.mainGain.gain.value });
-              nodes.mainGain.gain.value = 0;
-            }
-          } catch (_) {}
-        }
-        for (const el of allEls) el.currentTime = safeOffset;
-        const gen = ++seekGenRef.current;
-        const waitSeeked = (el: HTMLAudioElement) =>
-          new Promise<void>((resolve) => {
-            if (!el.seeking) { resolve(); return; }
-            const done = () => resolve();
-            el.addEventListener("seeked", done, { once: true });
-            setTimeout(done, 2000);
-          });
-        Promise.all(allEls.map(waitSeeked)).then(() => {
-          if (gen !== seekGenRef.current) return;
-          // Correction: snap all back to exact offset (they may have drifted a few ms while waiting)
+        if (isMobileRef.current) {
+          // Mobile: simple currentTime assignment — elements keep playing from new position
+          const when = ctx.currentTime;
+          startTimeRef.current = when - safeOffset;
+          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+            try {
+              if (nodes.type === "instrumental") {
+                if ("media" in nodes && nodes.media) {
+                  nodes.media.element.currentTime = safeOffset;
+                }
+              } else {
+                if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
+                if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
+              }
+            } catch (_) {}
+          }
+        } else {
+          // PC: mute all gains, seek all, wait all seeked, correction snap, unmute (do NOT change)
+          const allEls: HTMLAudioElement[] = [];
+          const savedGains: { gain: GainNode; value: number }[] = [];
+          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+            try {
+              if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
+                allEls.push(nodes.media.element);
+              } else if (nodes.type === "vocal") {
+                if (nodes.rawMedia) allEls.push(nodes.rawMedia.element);
+                if (nodes.mixedMedia) allEls.push(nodes.mixedMedia.element);
+              }
+              if (nodes.mainGain) {
+                savedGains.push({ gain: nodes.mainGain, value: nodes.mainGain.gain.value });
+                nodes.mainGain.gain.value = 0;
+              }
+            } catch (_) {}
+          }
           for (const el of allEls) el.currentTime = safeOffset;
-          startTimeRef.current = ctx.currentTime - safeOffset;
-          // Brief delay for the near-instant correction seek, then unmute
-          setTimeout(() => {
+          const gen = ++seekGenRef.current;
+          const waitSeeked = (el: HTMLAudioElement) =>
+            new Promise<void>((resolve) => {
+              if (!el.seeking) { resolve(); return; }
+              const done = () => resolve();
+              el.addEventListener("seeked", done, { once: true });
+              setTimeout(done, 2000);
+            });
+          Promise.all(allEls.map(waitSeeked)).then(() => {
             if (gen !== seekGenRef.current) return;
-            for (const sg of savedGains) sg.gain.gain.value = sg.value;
-          }, 30);
-        });
+            for (const el of allEls) el.currentTime = safeOffset;
+            startTimeRef.current = ctx.currentTime - safeOffset;
+            setTimeout(() => {
+              if (gen !== seekGenRef.current) return;
+              for (const sg of savedGains) sg.gain.gain.value = sg.value;
+            }, 30);
+          });
+        }
       } else {
         resumeFromRef.current = safeOffset;
         setPausedAtSeconds(safeOffset);
