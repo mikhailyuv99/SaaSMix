@@ -1546,6 +1546,11 @@ export default function Home() {
         return;
       }
 
+      // PC: schedule all starts 10ms in the future so every buffer source begins
+      // at the exact same audio sample – eliminates inter-track desync.
+      const scheduleAt = now + 0.01;
+      startTimeRef.current = scheduleAt - offset;
+
       for (const track of playable) {
         if (!track.rawAudioUrl) continue;
         const entry = buffersRef.current.get(track.id) ?? { raw: null, mixed: null };
@@ -1577,7 +1582,7 @@ export default function Home() {
           src.connect(mainGain);
           src.onended = onEnd;
           const duration = Math.max(0, entry.raw.duration - offset);
-          src.start(now, offset, duration);
+          src.start(scheduleAt, offset, duration);
           trackPlaybackRef.current.set(track.id, { type: "instrumental", bufferNode: src, mainGain });
         } else {
           const rawGain = ctx.createGain();
@@ -1620,14 +1625,14 @@ export default function Home() {
           srcRaw.buffer = rawBuf;
           srcRaw.connect(rawGain);
           srcRaw.onended = onEndVocal;
-          srcRaw.start(now, offset, Math.max(0, rawBuf.duration - offset));
+          srcRaw.start(scheduleAt, offset, Math.max(0, rawBuf.duration - offset));
           let mixedBufferNode: AudioBufferSourceNode | null = null;
           if (entry.mixed) {
             const srcMixed = ctx.createBufferSource();
             srcMixed.buffer = entry.mixed;
             srcMixed.connect(mixedGain);
             srcMixed.onended = onEndVocal;
-            srcMixed.start(now, offset, Math.max(0, entry.mixed.duration - offset));
+            srcMixed.start(scheduleAt, offset, Math.max(0, entry.mixed.duration - offset));
             mixedBufferNode = srcMixed;
           }
           trackPlaybackRef.current.set(track.id, {
