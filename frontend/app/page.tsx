@@ -586,15 +586,18 @@ export default function Home() {
         }
         if (ctx.state === "suspended") {
           ctx.resume().catch(() => {});
+          // Play non-zero buffer — iOS ignores all-zero buffers
           const numSamples = Math.max(1, Math.min(Math.ceil(ctx.sampleRate * 0.05), 4096));
           const buf = ctx.createBuffer(1, numSamples, ctx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = 1e-7;
           const src = ctx.createBufferSource();
           src.buffer = buf;
           src.connect(ctx.destination);
           src.start(0);
         }
         const au = new Audio(SILENT_WAV);
-        au.volume = 0;
+        au.volume = 0.01; // must be > 0 for iOS to activate audio session
         au.play().catch(() => {});
         audioUnlockedRef.current = true;
       } catch (_) {}
@@ -1523,14 +1526,24 @@ export default function Home() {
 
   /** Débloque l’audio sur mobile (iOS/Android) : joue un buffer silencieux dans le geste utilisateur. */
   function unlockAudioContextSync(ctx: AudioContext): void {
-    if (audioUnlockedRef.current) return;
     try {
+      // 1) Play a near-zero buffer — iOS ignores all-zero buffers and won't activate the audio session
       const numSamples = Math.max(1, Math.min(Math.ceil(ctx.sampleRate * 0.05), 4096));
       const buf = ctx.createBuffer(1, numSamples, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = 1e-7; // near-zero but NOT zero
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.connect(ctx.destination);
       src.start(0);
+      // 2) Brief oscillator at near-zero gain — most reliable iOS audio session activator
+      const osc = ctx.createOscillator();
+      const oscGain = ctx.createGain();
+      oscGain.gain.value = 0.001;
+      osc.connect(oscGain);
+      oscGain.connect(ctx.destination);
+      osc.start(0);
+      osc.stop(ctx.currentTime + 0.1);
       audioUnlockedRef.current = true;
     } catch (_) {}
   }
@@ -1548,9 +1561,6 @@ export default function Home() {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
-        // Clear pre-decoded buffers — they were decoded by the old context.
-        // ensureAllBuffersLoaded will re-decode them with the fresh context.
-        if (isMob) buffersRef.current.clear();
       }
       if (ctx.state === "suspended") {
         unlockAudioContextSync(ctx);
