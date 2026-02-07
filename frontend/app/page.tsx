@@ -1659,87 +1659,25 @@ export default function Home() {
       lastSeekRef.current = { offset: safeOffset, time: now };
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
-        const when = ctx.currentTime;
-        startTimeRef.current = when - safeOffset;
-        for (const [id, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-          try {
-            if (nodes.type === "instrumental") {
-              if ("media" in nodes && nodes.media) {
-                nodes.media.element.currentTime = safeOffset;
-              } else if ("bufferNode" in nodes && nodes.bufferNode) {
-                const buf = buffersRef.current.get(id)?.raw;
-                if (buf) {
-                  try {
-                    nodes.bufferNode.onended = null;
-                    nodes.bufferNode.stop(when);
-                    nodes.bufferNode.disconnect();
-                  } catch (_) {}
-                  const src = ctx.createBufferSource();
-                  src.buffer = buf;
-                  src.connect(nodes.mainGain);
-                  src.onended = () => {
-                    trackPlaybackRef.current.delete(id);
-                    if (trackPlaybackRef.current.size === 0) {
-                      setIsPlaying(false);
-                      setHasPausedPosition(false);
-                    }
-                  };
-                  const duration = Math.max(0, buf.duration - safeOffset);
-                  src.start(when, safeOffset, duration);
-                  trackPlaybackRef.current.set(id, { type: "instrumental", bufferNode: src, mainGain: nodes.mainGain });
+        if (!isMobileRef.current) {
+          // PC: delegate to startPlaybackAtOffset for clean, instant seek (stops old + starts new)
+          startPlaybackAtOffset(ctx, playable, safeOffset);
+        } else {
+          // Mobile: per-element currentTime update (unchanged)
+          const when = ctx.currentTime;
+          startTimeRef.current = when - safeOffset;
+          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+            try {
+              if (nodes.type === "instrumental") {
+                if ("media" in nodes && nodes.media) {
+                  nodes.media.element.currentTime = safeOffset;
                 }
+              } else {
+                if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
+                if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
               }
-            } else {
-              if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
-              if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
-              if (nodes.rawBufferNode) {
-                const rawBuf = buffersRef.current.get(id)?.raw;
-                if (rawBuf) {
-                  try {
-                    nodes.rawBufferNode.onended = null;
-                    nodes.rawBufferNode.stop(when);
-                    nodes.rawBufferNode.disconnect();
-                  } catch (_) {}
-                  const src = ctx.createBufferSource();
-                  src.buffer = rawBuf;
-                  src.connect(nodes.rawGain);
-                  src.onended = () => {
-                    trackPlaybackRef.current.delete(id);
-                    if (trackPlaybackRef.current.size === 0) {
-                      setIsPlaying(false);
-                      setHasPausedPosition(false);
-                    }
-                  };
-                  const duration = Math.max(0, rawBuf.duration - safeOffset);
-                  src.start(when, safeOffset, duration);
-                  (nodes as VocalNodes).rawBufferNode = src;
-                }
-              }
-              if (nodes.mixedBufferNode) {
-                const mixedBuf = buffersRef.current.get(id)?.mixed;
-                if (mixedBuf) {
-                  try {
-                    nodes.mixedBufferNode.onended = null;
-                    nodes.mixedBufferNode.stop(when);
-                    nodes.mixedBufferNode.disconnect();
-                  } catch (_) {}
-                  const src = ctx.createBufferSource();
-                  src.buffer = mixedBuf;
-                  src.connect(nodes.mixedGain);
-                  src.onended = () => {
-                    trackPlaybackRef.current.delete(id);
-                    if (trackPlaybackRef.current.size === 0) {
-                      setIsPlaying(false);
-                      setHasPausedPosition(false);
-                    }
-                  };
-                  const duration = Math.max(0, mixedBuf.duration - safeOffset);
-                  src.start(when, safeOffset, duration);
-                  (nodes as VocalNodes).mixedBufferNode = src;
-                }
-              }
-            }
-          } catch (_) {}
+            } catch (_) {}
+          }
         }
       } else {
         resumeFromRef.current = safeOffset;
@@ -1747,7 +1685,7 @@ export default function Home() {
         setHasPausedPosition(true);
       }
     },
-    [isPlaying]
+    [isPlaying, startPlaybackAtOffset]
   );
 
   /** Débloque l’audio sur mobile (iOS/Android) : joue un buffer silencieux dans le geste utilisateur. */
@@ -2131,20 +2069,15 @@ export default function Home() {
               } catch (_) {}
             }
           }
-          resumeFromRef.current = null;
-          setPausedAtSeconds(0);
-          setHasPausedPosition(false);
           const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
-          // Autoplay: buffer is already in buffersRef (no await ensureAllBuffersLoaded per spec).
-          if (isMobileRef.current) {
-            pendingPlayableAfterMixRef.current = patchedPlayable;
-          } else {
-            // Use playAll for robust autoplay: handles context resume, buffer loading, and cleanup
-            playAllRef.current({ playable: patchedPlayable, startOffset: 0 });
-          }
+          // After mix: stop playback and reset cursor to 0. User presses Play to hear the result.
+          pendingPlayableAfterMixRef.current = patchedPlayable;
+          resumeFromRef.current = 0;
+          setPausedAtSeconds(0);
+          setHasPausedPosition(false);
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
@@ -2188,7 +2121,7 @@ export default function Home() {
         setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
     },
-    [tracks, updateTrack, startPlaybackAtOffset]
+    [tracks, updateTrack]
   );
 
   const isVocal = (c: Category) =>
