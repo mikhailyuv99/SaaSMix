@@ -366,6 +366,10 @@ export default function Home() {
   const buffersRef = useRef<Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>>(new Map());
   // Cache raw ArrayBuffers so we can re-decode without re-fetching when AudioContext changes (mobile)
   const abCacheRef = useRef<Map<string, ArrayBuffer>>(new Map());
+  // Mobile iOS: route AudioContext output through MediaStreamDestination → HTMLAudioElement
+  // so iOS actually sends audio to the speaker (ctx.destination alone doesn't work on iOS).
+  const streamDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+  const outputElRef = useRef<HTMLAudioElement | null>(null);
   const startTimeRef = useRef<number>(0);
   const resumeFromRef = useRef<number | null>(null);
   const lastSeekRef = useRef<{ offset: number; time: number }>({ offset: -1, time: 0 });
@@ -564,6 +568,11 @@ export default function Home() {
         } catch (_) {}
         masterPlaybackRef.current = null;
       }
+      if (outputElRef.current) {
+        try { outputElRef.current.pause(); outputElRef.current.srcObject = null; } catch (_) {}
+        outputElRef.current = null;
+      }
+      streamDestRef.current = null;
       const ctx = contextRef.current;
       if (ctx) {
         try {
@@ -1410,6 +1419,10 @@ export default function Home() {
         }
       } catch (_) {}
     }
+    // Pause the iOS output element (HTMLAudioElement connected to MediaStreamDestination)
+    if (outputElRef.current) {
+      try { outputElRef.current.pause(); } catch (_) {}
+    }
   }
 
   const startPlaybackAtOffset = useCallback(
@@ -1452,7 +1465,10 @@ export default function Home() {
 
         const trackMainGain = ctx.createGain();
         trackMainGain.gain.value = Math.max(0, Math.min(2, track.gain / 100));
-        trackMainGain.connect(ctx.destination);
+        // On mobile: route through MediaStreamDestination → HTMLAudioElement (iOS audio fix)
+        // On PC: connect directly to ctx.destination
+        const audioOutput = streamDestRef.current ?? ctx.destination;
+        trackMainGain.connect(audioOutput);
 
         const safeOffset = Math.min(offset, bufEntry.raw.duration);
 
@@ -1602,12 +1618,12 @@ export default function Home() {
 
       if (isMob) {
         // MOBILE: always create a FRESH AudioContext in THIS user gesture.
-        // iOS requires the context to be created/resumed in the *current* tap to activate the audio session.
-        // Also play an HTMLAudioElement primer — iOS needs a media element play to fully activate hardware.
-        try {
-          const primer = new Audio(silentWavUrl);
-          primer.play().catch(() => {});  // non-blocking — just tickles iOS audio hardware
-        } catch (_) {}
+        // Clean up previous output element if any
+        if (outputElRef.current) {
+          try { outputElRef.current.pause(); outputElRef.current.srcObject = null; } catch (_) {}
+          outputElRef.current = null;
+        }
+        streamDestRef.current = null;
         if (ctx && ctx.state !== "closed") {
           try { ctx.close(); } catch (_) {}
         }
@@ -1615,17 +1631,31 @@ export default function Home() {
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
         // Clear decoded buffers — they must be re-decoded with the new context's decoder.
-        // The ArrayBuffer cache (abCacheRef) means no network re-fetch is needed.
         buffersRef.current.clear();
+
+        // KEY iOS FIX: route AudioContext output through MediaStreamDestination → HTMLAudioElement.
+        // iOS Safari refuses to route ctx.destination to the speaker reliably,
+        // but HTMLAudioElement.play() in a user gesture ALWAYS works.
+        try {
+          const dest = ctx.createMediaStreamDestination();
+          streamDestRef.current = dest;
+          const outputEl = new Audio();
+          outputEl.srcObject = dest.stream;
+          outputEl.play().catch(() => {}); // user gesture — iOS will honor this
+          outputElRef.current = outputEl;
+        } catch (_) {
+          // Fallback: if createMediaStreamDestination not supported, use ctx.destination
+          streamDestRef.current = null;
+          outputElRef.current = null;
+        }
       } else if (!ctx || ctx.state === "closed") {
-        // PC: create context only if none exists
+        // PC: create context only if none exists — uses ctx.destination directly
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
       }
 
-      // Always play an unlock tone through the context (even if "running") to force
-      // iOS to route audio to the speaker. Then resume if suspended.
+      // Unlock + resume (safety net for both platforms)
       unlockAudioContextSync(ctx);
       if (ctx.state === "suspended") {
         await ctx.resume().catch(() => {});
