@@ -1432,7 +1432,7 @@ export default function Home() {
 
       if (isMobileRef.current) {
         const gen = ++mobilePlaybackGenerationRef.current;
-        const mediaToPlay: HTMLAudioElement[] = [];
+        const activeElements: HTMLAudioElement[] = [];
         for (const track of playable) {
           if (!track.rawAudioUrl) continue;
           const trackMainGain = ctx.createGain();
@@ -1451,7 +1451,7 @@ export default function Home() {
             const audio = new Audio(fullUrl(track.rawAudioUrl));
             audio.volume = 1;
             audio.onended = onEnd;
-            mediaToPlay.push(audio);
+            activeElements.push(audio);
             const source = ctx.createMediaElementSource(audio);
             source.connect(trackMainGain);
             trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source }, mainGain: trackMainGain });
@@ -1484,12 +1484,10 @@ export default function Home() {
               mixedAudio.src = fullUrl(track.mixedAudioUrl);
               mixedAudio.volume = 1;
               mixedAudio.onended = onEndVocal;
-              mediaToPlay.push(mixedAudio);
               const mixedSource = ctx.createMediaElementSource(mixedAudio);
               mixedSource.connect(mixedGain);
               mixedMedia = { element: mixedAudio, source: mixedSource };
             }
-            mediaToPlay.push(rawAudio);
             trackPlaybackRef.current.set(track.id, {
               type: "vocal",
               rawMedia: { element: rawAudio, source: rawSource },
@@ -1501,43 +1499,30 @@ export default function Home() {
               mixedGain,
               mainGain: trackMainGain,
             });
+            const activeEl = playMixed && mixedMedia ? mixedMedia.element : rawAudio;
+            activeElements.push(activeEl);
           }
         }
-        for (const track of playable) {
-          if (track.category !== "instrumental" && track.mixedAudioUrl) {
-            const nodes = trackPlaybackRef.current.get(track.id);
-            if (nodes?.type === "vocal" && nodes.rawGain && nodes.mixedGain) {
-              const pm = track.playMode === "mixed";
-              nodes.rawGain.gain.value = pm ? 0 : 1;
-              nodes.mixedGain.gain.value = pm ? 1 : 0;
+        const waitReady = (el: HTMLAudioElement) =>
+          new Promise<void>((resolve) => {
+            if (el.readyState >= 2) {
+              resolve();
+              return;
             }
-          }
-        }
-        for (let i = 0; i < mediaToPlay.length; i++) {
-          mediaToPlay[i].currentTime = offset;
-          mediaToPlay[i].play().catch(() => {});
-        }
-        const loadPromises = mediaToPlay.map(
-          (el) =>
-            new Promise<void>((resolve) => {
-              if (el.readyState >= 2) {
-                resolve();
-                return;
-              }
-              const onReady = () => resolve();
-              el.addEventListener("canplaythrough", onReady, { once: true });
-              el.addEventListener("canplay", onReady, { once: true });
-              el.addEventListener("error", onReady, { once: true });
-              setTimeout(onReady, 8000);
-            })
-        );
-        Promise.all(loadPromises).then(() => {
+            const onReady = () => resolve();
+            el.addEventListener("canplaythrough", onReady, { once: true });
+            el.addEventListener("canplay", onReady, { once: true });
+            el.addEventListener("error", onReady, { once: true });
+            setTimeout(onReady, 8000);
+          });
+        Promise.all(activeElements.map(waitReady)).then(() => {
           if (gen !== mobilePlaybackGenerationRef.current) return;
-          for (let i = 0; i < mediaToPlay.length; i++) {
-            mediaToPlay[i].currentTime = offset;
+          for (let i = 0; i < activeElements.length; i++) {
+            activeElements[i].currentTime = offset;
+            activeElements[i].play().catch(() => {});
           }
+          setIsPlaying(true);
         });
-        setIsPlaying(true);
         return;
       }
 
@@ -1880,28 +1865,26 @@ export default function Home() {
             inactive.pause();
             inactive.volume = 0;
             active.volume = g;
-            requestAnimationFrame(() => {
-              let masterPos = targetMode === "raw" ? mixedEl.currentTime : rawEl.currentTime;
-              for (const [otherId, otherNodes] of Array.from(trackPlaybackRef.current.entries())) {
-                if (otherId === id) continue;
-                if (otherNodes.type === "instrumental" && "media" in otherNodes && otherNodes.media?.element) {
-                  masterPos = otherNodes.media.element.currentTime;
+            let masterPos = targetMode === "raw" ? mixedEl.currentTime : rawEl.currentTime;
+            for (const [otherId, otherNodes] of Array.from(trackPlaybackRef.current.entries())) {
+              if (otherId === id) continue;
+              if (otherNodes.type === "instrumental" && "media" in otherNodes && otherNodes.media?.element) {
+                masterPos = otherNodes.media.element.currentTime;
+                break;
+              }
+              if (otherNodes.type === "vocal" && (otherNodes.rawMedia?.element || otherNodes.mixedMedia?.element)) {
+                const tr = tracksRef.current.find((t) => t.id === otherId);
+                const el = tr?.playMode === "mixed" && otherNodes.mixedMedia?.element
+                  ? otherNodes.mixedMedia.element
+                  : otherNodes.rawMedia?.element;
+                if (el && !el.paused) {
+                  masterPos = el.currentTime;
                   break;
                 }
-                if (otherNodes.type === "vocal" && (otherNodes.rawMedia?.element || otherNodes.mixedMedia?.element)) {
-                  const tr = tracksRef.current.find((t) => t.id === otherId);
-                  const el = tr?.playMode === "mixed" && otherNodes.mixedMedia?.element
-                    ? otherNodes.mixedMedia.element
-                    : otherNodes.rawMedia?.element;
-                  if (el && !el.paused) {
-                    masterPos = el.currentTime;
-                    break;
-                  }
-                }
               }
-              active.currentTime = masterPos;
-              active.play().catch(() => {});
-            });
+            }
+            active.currentTime = masterPos;
+            active.play().catch(() => {});
           } else {
             if (rawEl) rawEl.volume = (targetMode === "raw" ? 1 : 0) * g;
             if (mixedEl) mixedEl.volume = (targetMode === "mixed" ? 1 : 0) * g;
@@ -1991,6 +1974,16 @@ export default function Home() {
 
       setMixProgress((prev) => ({ ...prev, [id]: 0 }));
       updateTrack(id, { isMixing: true });
+
+      // Resume AudioContext on user gesture (Run mix click) so it's running when mix completes for PC autoplay
+      if (typeof window !== "undefined" && !isMobileRef.current) {
+        const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        if (!contextRef.current) contextRef.current = ctx;
+        if (ctx.state === "suspended") {
+          unlockAudioContextSync(ctx);
+          ctx.resume().catch(() => {});
+        }
+      }
 
       // Une seule progression 0→99% basée sur le temps (smooth, pas de backend)
       mixSimulationStartRef.current = Date.now();
@@ -2157,6 +2150,7 @@ export default function Home() {
             setIsPlaying(false);
           } else {
             try {
+              // Context was resumed at mix start (user gesture); start playback synchronously when possible
               if (ctx.state === "suspended") {
                 unlockAudioContextSync(ctx);
                 ctx.resume().then(() => {
