@@ -1954,26 +1954,21 @@ export default function Home() {
           setHasPausedPosition(false);
 
           setMixProgress((prev) => ({ ...prev, [id]: 100 }));
-          // Toujours redémarrer toutes les pistes depuis 0 pour garder instru + vocal en phase
+          // PC + mobile : stopper la lecture en cours, débloquer le contexte, relancer toutes les pistes depuis 0 (version mixée)
+          stopAll();
+          resumeFromRef.current = null;
+          setHasPausedPosition(false);
+          if (ctx.state === "suspended") {
+            ctx.resume().catch(() => {});
+            unlockAudioContextSync(ctx);
+            await ctx.resume().catch(() => {});
+          }
           const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
-          if (isMobileRef.current) {
-            // Sur mobile : stopper la lecture, repartir de 0 au prochain Play, pas d'auto-play.
-            stopAll();
-            resumeFromRef.current = null;
-            setHasPausedPosition(false);
-            setIsPlaying(false);
-          } else {
-            if (ctx.state === "suspended") {
-              ctx.resume().catch(() => {});
-              unlockAudioContextSync(ctx);
-              await ctx.resume().catch(() => {});
-            }
-            startPlaybackAtOffset(ctx, patchedPlayable, 0);
-            setIsPlaying(true);
-          }
+          startPlaybackAtOffset(ctx, patchedPlayable, 0);
+          setIsPlaying(true);
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
