@@ -2653,9 +2653,9 @@ export default function Home() {
                   </>
                 ) : (
                   <>
-                    <div className={`flex items-center justify-center min-h-[32px] min-w-0 ${fileChooserActiveTrackId === track.id ? "" : "overflow-hidden"}`}>
-                      <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "overflow-hidden text-ellipsis"}`}>
-                        Fichier WAV{track.file ? ` ${track.file.name}` : ""}
+                    <div className="flex items-center justify-center min-h-[32px] min-w-0">
+                      <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : ""}`}>
+                        Fichier WAV
                       </span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
@@ -2879,7 +2879,6 @@ export default function Home() {
                   ) : (
                     <>
                       <div>
-                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Fichier WAV{track.file ? ` · ${track.file.name}` : ""}</span>
                         <label
                           htmlFor={`file-mob-${track.id}`}
                           className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-[10px] max-md:text-[9px]"
