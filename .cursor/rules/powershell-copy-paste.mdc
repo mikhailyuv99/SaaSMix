@@ -1,0 +1,26 @@
+---
+description: PowerShell / terminal : commandes exactes à copier-coller et étapes claires
+alwaysApply: true
+---
+
+# Instructions PowerShell et terminal (Windows)
+
+Quand tu donnes des manipulations **PowerShell** ou **terminal sous Windows** :
+
+1. **Commandes exactes** : fournis les commandes complètes à copier-coller, sans placeholders du type « cd ton-dossier » ou « remplace par ton chemin ».
+2. **Étapes numérotées** : découpe en étapes claires (1. … 2. … 3. …), une action par étape.
+3. **Un bloc par commande** : chaque commande dans un bloc de code séparé pour faciliter le copier-coller.
+
+Exemple de format attendu :
+
+```
+1. Ouvre PowerShell (ou le terminal du projet).
+
+2. Va dans le dossier backend :
+   cd "C:\Users\mikha\Desktop\SaaS Mix\backend"
+
+3. Lance le serveur :
+   python -m uvicorn main:app --reload
+```
+
+Ne pas faire : « cd dans ton backend puis lance uvicorn » sans donner les commandes exactes.

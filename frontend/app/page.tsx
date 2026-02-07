@@ -1536,15 +1536,15 @@ export default function Home() {
       const numSamples = Math.max(1, Math.min(Math.ceil(ctx.sampleRate * 0.05), 4096));
       const buf = ctx.createBuffer(1, numSamples, ctx.sampleRate);
       const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = 1e-7; // near-zero but NOT zero
+      for (let i = 0; i < data.length; i++) data[i] = 0.01; // quiet but audible enough for iOS to register
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.connect(ctx.destination);
       src.start(0);
-      // 2) Brief oscillator at near-zero gain — most reliable iOS audio session activator
+      // 2) Brief oscillator — activates iOS audio hardware after long pauses
       const osc = ctx.createOscillator();
       const oscGain = ctx.createGain();
-      oscGain.gain.value = 0.001;
+      oscGain.gain.value = 0.01;
       osc.connect(oscGain);
       oscGain.connect(ctx.destination);
       osc.start(0);
@@ -1567,19 +1567,13 @@ export default function Home() {
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
         return;
       }
-      // Create or resume AudioContext. On mobile: MUST happen synchronously in user gesture
-      // (awaiting anything before this would break the iOS user gesture chain).
-      const isMob = isMobileRef.current;
+      // Reuse existing AudioContext (preserves iOS audio session from doUnlock).
+      // Only create a new one if none exists or the old one is truly closed.
       let ctx = contextRef.current;
-      if (isMob || !ctx || ctx.state === "closed") {
+      if (!ctx || ctx.state === "closed") {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
-      }
-      // On mobile: also fire a silent HTMLAudioElement to help reactivate iOS audio hardware
-      // after long pauses. Non-blocking (no await) to preserve the user gesture chain.
-      if (isMob) {
-        try { const p = new Audio(SILENT_WAV); p.volume = 0.01; p.play().catch(() => {}); } catch (_) {}
       }
       if (ctx.state === "suspended") {
         unlockAudioContextSync(ctx);
