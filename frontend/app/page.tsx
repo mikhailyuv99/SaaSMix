@@ -1538,27 +1538,23 @@ export default function Home() {
   const playAll = useCallback(
     async (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
+      // On mobile, ALWAYS create a fresh AudioContext within this user gesture.
+      // iOS only allows AudioContext to run when created/resumed inside a direct user gesture handler.
+      // Any context created elsewhere (useEffect, async callback) is permanently suspended on iOS.
+      const isMob = isMobileRef.current;
       let ctx = contextRef.current;
-      // If context was closed (e.g. browser reclaimed it after long inactivity), create a fresh one
-      if (!ctx || ctx.state === "closed") {
+      if (isMob || !ctx || ctx.state === "closed") {
+        if (ctx && ctx.state !== "closed") { try { ctx.close(); } catch (_) {} }
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
+        // Clear pre-decoded buffers — they were decoded by the old context.
+        // ensureAllBuffersLoaded will re-decode them with the fresh context.
+        if (isMob) buffersRef.current.clear();
       }
       if (ctx.state === "suspended") {
-        ctx.resume().catch(() => {});
         unlockAudioContextSync(ctx);
         await ctx.resume().catch(() => {});
-        // If STILL suspended (e.g. context was created outside user gesture on iOS — permanently stuck),
-        // close it and create a fresh one within THIS user gesture where resume will work
-        if (ctx.state === "suspended") {
-          try { ctx.close(); } catch (_) {}
-          ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-          contextRef.current = ctx;
-          audioUnlockedRef.current = false;
-          unlockAudioContextSync(ctx);
-          await ctx.resume().catch(() => {});
-        }
       }
       let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
       if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
@@ -1625,10 +1621,6 @@ export default function Home() {
       }
       resumeFromRef.current = null;
       setHasPausedPosition(false);
-      // Re-ensure context is running — mobile browsers may re-suspend during async buffer loading
-      if (ctx.state === "suspended") {
-        await ctx.resume().catch(() => {});
-      }
       setIsPlaying(true);
       startPlaybackAtOffset(ctx, playable, startOffset);
     },
@@ -3300,20 +3292,18 @@ export default function Home() {
                   downloadMix();
                 }}
                 disabled={isRenderingMix}
-                className={`flex items-center justify-center text-center disabled:cursor-not-allowed max-lg:py-2 max-md:py-1.5 max-md:px-3 ${
+                className={`rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline disabled:cursor-not-allowed max-lg:py-2 max-md:py-1.5 max-md:px-3 ${
                   isRenderingMix
-                    ? "btn-primary border-white/30 bg-slate-800 text-white"
-                    : "btn-primary group disabled:opacity-50"
+                    ? "border border-white/30 bg-slate-800 text-white"
+                    : "border border-white/10 bg-white/5 text-slate-500 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors disabled:opacity-50"
                 }`}
               >
                 {isRenderingMix ? (
-                  <span className="text-tagline text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] max-md:text-[10px]">
+                  <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] max-md:text-[10px]">
                     RENDU<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                   </span>
                 ) : (
-                  <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors max-md:text-[10px]">
-                    TÉLÉCHARGER LE MIX
-                  </span>
+                  <span className="max-md:text-[10px]">TÉLÉCHARGER LE MIX</span>
                 )}
               </button>
               {showLoginMixMessage && !user && (
