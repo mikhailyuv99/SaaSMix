@@ -663,6 +663,8 @@ export default function Home() {
   const isMobileRef = useRef(false);
   const mobilePlaybackGenerationRef = useRef(0);
   const seekGenRef = useRef(0);
+  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const seekInProgressRef = useRef(false);
   if (typeof window !== "undefined") isMobileRef.current = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
   const addTrack = useCallback(() => {
@@ -1327,6 +1329,7 @@ export default function Home() {
   }
 
   function stopAll() {
+    if (syncIntervalRef.current) { clearInterval(syncIntervalRef.current); syncIntervalRef.current = null; }
     userPausedRef.current = true;
     const ctx = contextRef.current;
     const nodesMap = Array.from(trackPlaybackRef.current.entries());
@@ -1383,6 +1386,8 @@ export default function Home() {
 
   const startPlaybackAtOffset = useCallback(
     (ctx: AudioContext, playable: Track[], offset: number) => {
+      if (syncIntervalRef.current) { clearInterval(syncIntervalRef.current); syncIntervalRef.current = null; }
+      seekInProgressRef.current = false;
       const toStop = Array.from(trackPlaybackRef.current.entries());
       trackPlaybackRef.current.clear();
       for (const [, nodes] of toStop) {
@@ -1543,23 +1548,32 @@ export default function Home() {
           activeElements[i].play().catch(() => {});
         }
         setIsPlaying(true);
-        // Mobile: after all elements start, sync silent vocal elements to audible ones.
-        // play() is async on mobile — elements can start at slightly different times.
-        // This correction runs after elements have settled, fixing any drift.
-        if (isMobileRef.current) {
-          setTimeout(() => {
-            if (gen !== mobilePlaybackGenerationRef.current) return;
-            for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-              if (nodes.type !== "vocal" || !nodes.rawMedia || !nodes.mixedMedia) continue;
-              try {
-                const rawG = nodes.rawGain?.gain?.value ?? 0;
-                const activeEl = rawG > 0 ? nodes.rawMedia.element : nodes.mixedMedia.element;
-                const silentEl = rawG > 0 ? nodes.mixedMedia.element : nodes.rawMedia.element;
-                silentEl.currentTime = activeEl.currentTime;
-              } catch (_) {}
-            }
-          }, 150);
-        }
+        // Continuous sync: keep ALL elements locked to the AudioContext clock.
+        // Catches drift from async play(), seek timing, resume, or any other cause.
+        if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = setInterval(() => {
+          if (seekInProgressRef.current) return; // skip during PC seek (gains are muted, startTimeRef is stale)
+          const sCtx = contextRef.current;
+          if (!sCtx || trackPlaybackRef.current.size === 0) return;
+          const expectedPos = sCtx.currentTime - startTimeRef.current;
+          if (expectedPos < 0) return;
+          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+            try {
+              if (nodes.type === "instrumental" && "media" in nodes && nodes.media) {
+                if (Math.abs(nodes.media.element.currentTime - expectedPos) > 0.04) {
+                  nodes.media.element.currentTime = expectedPos;
+                }
+              } else if (nodes.type === "vocal") {
+                if (nodes.rawMedia && Math.abs(nodes.rawMedia.element.currentTime - expectedPos) > 0.04) {
+                  nodes.rawMedia.element.currentTime = expectedPos;
+                }
+                if (nodes.mixedMedia && Math.abs(nodes.mixedMedia.element.currentTime - expectedPos) > 0.04) {
+                  nodes.mixedMedia.element.currentTime = expectedPos;
+                }
+              }
+            } catch (_) {}
+          }
+        }, 200);
       });
     },
     []
@@ -1593,7 +1607,8 @@ export default function Home() {
             } catch (_) {}
           }
         } else {
-          // PC: mute all gains, seek all, wait all seeked, correction snap, unmute (do NOT change)
+          // PC: mute all gains, seek all, wait all seeked, correction snap, unmute
+          seekInProgressRef.current = true;
           const allEls: HTMLAudioElement[] = [];
           const savedGains: { gain: GainNode; value: number }[] = [];
           for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
@@ -1626,6 +1641,7 @@ export default function Home() {
             setTimeout(() => {
               if (gen !== seekGenRef.current) return;
               for (const sg of savedGains) sg.gain.gain.value = sg.value;
+              seekInProgressRef.current = false;
             }, 30);
           });
         }
