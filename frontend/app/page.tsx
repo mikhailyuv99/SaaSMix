@@ -1563,18 +1563,9 @@ export default function Home() {
 
       if (isPlaying && trackPlaybackRef.current.size > 0) {
         if (isMobileRef.current) {
-          // Mobile: pause all, seek all, wait for seeked events, then resume all
-          const els = mobileElementsRef.current;
-          for (const el of els) { try { el.pause(); } catch (_) {} }
-          for (const el of els) { try { el.currentTime = safeOffset; } catch (_) {} }
-          const waitSeeked = (el: HTMLAudioElement) =>
-            new Promise<void>((resolve) => {
-              el.addEventListener("seeked", () => resolve(), { once: true });
-              setTimeout(resolve, 3000);
-            });
-          Promise.all(els.map(waitSeeked)).then(() => {
-            for (const el of els) { el.play().catch(() => {}); }
-          });
+          // Mobile: recreate all elements at new offset (in-place seek is unreliable on iOS)
+          const seekPlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+          startMobilePlayback(seekPlayable, safeOffset);
         } else if (ctx) {
           // PC: stop all + recreate at new offset. Sample-accurate via scheduleAt.
           const seekPlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
@@ -1676,7 +1667,7 @@ export default function Home() {
           const onVocalEnd = () => { if (vocalEnded) return; vocalEnded = true; onTrackEnd(); };
 
           const rawAudio = new Audio(mkUrl(track.rawAudioUrl));
-          rawAudio.volume = isPlayingMixed ? 0 : vol;
+          rawAudio.muted = isPlayingMixed; // iOS ignores .volume — use .muted instead
           rawAudio.onended = onVocalEnd;
           allElements.push(rawAudio);
 
@@ -1687,7 +1678,7 @@ export default function Home() {
             mixedAudio.preload = "auto";
             mixedAudio.src = mkUrl(track.mixedAudioUrl);
             mixedAudio.load();
-            mixedAudio.volume = isPlayingMixed ? vol : 0;
+            mixedAudio.muted = !isPlayingMixed; // iOS ignores .volume — use .muted instead
             mixedAudio.onended = onVocalEnd;
             allElements.push(mixedAudio);
             mixedMedia = { element: mixedAudio, source: null };
@@ -1850,12 +1841,10 @@ export default function Home() {
         const nodes = trackPlaybackRef.current.get(id);
         if (nodes?.type === "vocal") {
           if (isMobileRef.current) {
-            // Mobile: switch HTMLAudioElement.volume (no GainNode)
-            const track = tracksRef.current.find((t) => t.id === id);
-            const vol = track ? Math.max(0, Math.min(1, track.gain / 100)) : 1;
+            // Mobile: switch via .muted (iOS ignores .volume — it's read-only)
             try {
-              if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = targetMode === "raw" ? vol : 0;
-              if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = targetMode === "mixed" ? vol : 0;
+              if (nodes.rawMedia?.element) nodes.rawMedia.element.muted = targetMode !== "raw";
+              if (nodes.mixedMedia?.element) nodes.mixedMedia.element.muted = targetMode !== "mixed";
             } catch {}
           } else {
             // PC: Both raw and mixed buffer sources are already playing sample-locked.
