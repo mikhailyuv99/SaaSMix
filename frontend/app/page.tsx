@@ -1840,6 +1840,14 @@ export default function Home() {
         const nodes = trackPlaybackRef.current.get(id);
         const track = tracksRef.current.find((t) => t.id === id);
         if (nodes?.type === "vocal" && track) {
+          const rawBuf = buffersRef.current.get(id)?.raw;
+          const mixedBuf = buffersRef.current.get(id)?.mixed;
+          const useBufferPath = nodes.rawBufferNode || nodes.mixedBufferNode;
+          const canSwitch = useBufferPath
+            ? (targetMode === "raw" && rawBuf) || (targetMode === "mixed" && mixedBuf)
+            : true;
+          if (!canSwitch) return;
+
           const g = Math.max(0, Math.min(1, (track.gain ?? 100) / 100));
           const rawEl = nodes.rawMedia?.element;
           const mixedEl = nodes.mixedMedia?.element;
@@ -1861,9 +1869,7 @@ export default function Home() {
             if (mixedEl) mixedEl.volume = (targetMode === "mixed" ? 1 : 0) * g;
           }
           const ctx = contextRef.current;
-          const rawBuf = buffersRef.current.get(id)?.raw;
-          const mixedBuf = buffersRef.current.get(id)?.mixed;
-          if (ctx && (nodes.rawBufferNode || nodes.mixedBufferNode) && rawBuf && (targetMode === "raw" || (targetMode === "mixed" && mixedBuf))) {
+          if (ctx && useBufferPath && rawBuf && (targetMode === "raw" || (targetMode === "mixed" && mixedBuf))) {
             const when = ctx.currentTime;
             const offset = Math.max(0, when - startTimeRef.current);
             const totalTracks = tracksRef.current.filter((t) => t.file && t.rawAudioUrl).length;
@@ -2047,6 +2053,8 @@ export default function Home() {
             let errMsg = statusData.error || "Échec inconnu";
             if (String(errMsg).includes("3221226505") || String(errMsg).includes("0xC0000409")) {
               errMsg = "Le moteur de mix a planté (crash Windows). Réessayez avec un fichier plus court, ou vérifiez les logs backend.";
+            } else if (String(errMsg).includes("Unable to allocate") || String(errMsg).includes("MiB for an array")) {
+              errMsg = "Mémoire serveur insuffisante. Essayez un fichier audio plus court (ex. < 2 minutes).";
             }
             setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
             return;
@@ -2095,12 +2103,11 @@ export default function Home() {
           preload.preload = "auto";
           preload.load();
           preloadMixedRef.current.set(id, preload);
-          resumeFromRef.current = null;
-          setHasPausedPosition(false);
           setMixProgress((prev) => ({ ...prev, [id]: 100 }));
 
           stopAll();
           resumeFromRef.current = null;
+          setPausedAtSeconds(0);
           setHasPausedPosition(false);
           const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
           const patchedPlayable = basePlayable.map((t) =>
@@ -2126,7 +2133,12 @@ export default function Home() {
           }
           clearProgress();
           updateTrack(id, { mixedAudioUrl, isMixing: false, playMode: "mixed" });
-          if (isPlayingRef.current) stopAll();
+          if (isPlayingRef.current) {
+            stopAll();
+            resumeFromRef.current = null;
+            setPausedAtSeconds(0);
+            setHasPausedPosition(false);
+          }
           const prev = preloadMixedRef.current.get(id);
           if (prev) prev.src = "";
           const preload = new Audio(fullUrl);
@@ -2150,6 +2162,8 @@ export default function Home() {
         let errMsg = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
         if (errMsg.includes("3221226505") || errMsg.includes("0xC0000409")) {
           errMsg = "Le moteur de mix a planté (crash Windows). Réessayez avec un fichier plus court, ou vérifiez les logs backend.";
+        } else if (errMsg.includes("Unable to allocate") || errMsg.includes("MiB for an array")) {
+          errMsg = "Mémoire serveur insuffisante. Essayez un fichier audio plus court (ex. < 2 minutes).";
         }
         setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
