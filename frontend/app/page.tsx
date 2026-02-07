@@ -364,6 +364,8 @@ export default function Home() {
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
   const buffersRef = useRef<Map<string, { raw: AudioBuffer | null; mixed: AudioBuffer | null }>>(new Map());
+  // Cache raw ArrayBuffers so we can re-decode without re-fetching when AudioContext changes (mobile)
+  const abCacheRef = useRef<Map<string, ArrayBuffer>>(new Map());
   const startTimeRef = useRef<number>(0);
   const resumeFromRef = useRef<number | null>(null);
   const lastSeekRef = useRef<{ offset: number; time: number }>({ offset: -1, time: 0 });
@@ -572,9 +574,23 @@ export default function Home() {
     };
   }, []);
 
-  // Déblocage audio mobile : au premier touch/click, créer le contexte, jouer un buffer silencieux + un <audio> silencieux (iOS)
-  const SILENT_WAV =
-    "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+  // Generate a proper silent WAV blob URL with REAL (quiet) audio data.
+  // The old base64 SILENT_WAV had zero data bytes — iOS Safari ignored it entirely.
+  const silentWavUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    const sr = 44100;
+    const nSamples = 4410; // 100ms
+    const dataBytes = nSamples * 2;
+    const buf = new ArrayBuffer(44 + dataBytes);
+    const v = new DataView(buf);
+    const w = (o: number, s: string) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, "RIFF"); v.setUint32(4, 36 + dataBytes, true); w(8, "WAVE");
+    w(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    w(36, "data"); v.setUint32(40, dataBytes, true);
+    for (let i = 0; i < nSamples; i++) v.setInt16(44 + i * 2, 1, true); // amplitude 1/32768 — inaudible but non-zero
+    return URL.createObjectURL(new Blob([buf], { type: "audio/wav" }));
+  }, []);
   useEffect(() => {
     function doUnlock() {
       if (audioUnlockedRef.current) return;
@@ -596,7 +612,7 @@ export default function Home() {
           src.connect(ctx.destination);
           src.start(0);
         }
-        const au = new Audio(SILENT_WAV);
+        const au = new Audio(silentWavUrl);
         au.volume = 0.01; // must be > 0 for iOS to activate audio session
         au.play().catch(() => {});
         audioUnlockedRef.current = true;
@@ -1300,15 +1316,25 @@ export default function Home() {
     if (!ctx) return;
     const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
     if (rawUrl && !entry.raw) {
-      const res = await fetch(rawUrl);
-      const buf = await res.arrayBuffer();
-      entry.raw = await ctx.decodeAudioData(buf);
+      const cacheKey = `raw:${rawUrl}`;
+      let ab = abCacheRef.current.get(cacheKey);
+      if (!ab) {
+        const res = await fetch(rawUrl);
+        ab = await res.arrayBuffer();
+        abCacheRef.current.set(cacheKey, ab); // cache the original
+      }
+      entry.raw = await ctx.decodeAudioData(ab.slice(0)); // decode a clone (decode detaches the buffer)
     }
     if (mixedUrl && !entry.mixed) {
       const fullUrl = mixedUrl.startsWith("http") ? mixedUrl : `${API_BASE}${mixedUrl}`;
-      const res = await fetch(fullUrl);
-      const buf = await res.arrayBuffer();
-      entry.mixed = await ctx.decodeAudioData(buf);
+      const cacheKey = `mixed:${fullUrl}`;
+      let ab = abCacheRef.current.get(cacheKey);
+      if (!ab) {
+        const res = await fetch(fullUrl);
+        ab = await res.arrayBuffer();
+        abCacheRef.current.set(cacheKey, ab);
+      }
+      entry.mixed = await ctx.decodeAudioData(ab.slice(0));
     }
     buffersRef.current.set(id, entry);
   }
@@ -1413,7 +1439,10 @@ export default function Home() {
       // AudioBufferSourceNode playback — sample-accurate sync via scheduleAt
       let endedCount = 0;
       const totalTracks = playable.length;
-      const scheduleAt = ctx.currentTime + 0.02; // 20ms in the future — all sources start at this exact sample
+      // On mobile: 150ms lead time gives iOS audio hardware time to fully activate after context creation.
+      // On PC: 20ms is enough (context is long-lived, hardware already active).
+      const leadTime = isMobileRef.current ? 0.15 : 0.02;
+      const scheduleAt = ctx.currentTime + leadTime;
       startTimeRef.current = scheduleAt - offset;
 
       for (const track of playable) {
@@ -1567,16 +1596,38 @@ export default function Home() {
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
         return;
       }
-      // Reuse existing AudioContext (preserves iOS audio session from doUnlock).
-      // Only create a new one if none exists or the old one is truly closed.
+      // --- AudioContext setup (mobile vs PC) ---
+      const isMob = isMobileRef.current;
       let ctx = contextRef.current;
-      if (!ctx || ctx.state === "closed") {
+
+      if (isMob) {
+        // MOBILE: always create a FRESH AudioContext in THIS user gesture.
+        // iOS requires the context to be created/resumed in the *current* tap to activate the audio session.
+        // Also play an HTMLAudioElement primer — iOS needs a media element play to fully activate hardware.
+        try {
+          const primer = new Audio(silentWavUrl);
+          primer.play().catch(() => {});  // non-blocking — just tickles iOS audio hardware
+        } catch (_) {}
+        if (ctx && ctx.state !== "closed") {
+          try { ctx.close(); } catch (_) {}
+        }
+        ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        contextRef.current = ctx;
+        audioUnlockedRef.current = false;
+        // Clear decoded buffers — they must be re-decoded with the new context's decoder.
+        // The ArrayBuffer cache (abCacheRef) means no network re-fetch is needed.
+        buffersRef.current.clear();
+      } else if (!ctx || ctx.state === "closed") {
+        // PC: create context only if none exists
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
       }
+
+      // Always play an unlock tone through the context (even if "running") to force
+      // iOS to route audio to the speaker. Then resume if suspended.
+      unlockAudioContextSync(ctx);
       if (ctx.state === "suspended") {
-        unlockAudioContextSync(ctx);
         await ctx.resume().catch(() => {});
       }
       try {
@@ -1637,7 +1688,7 @@ export default function Home() {
       setIsPlaying(true);
       startPlaybackAtOffset(ctx, playable, startOffset);
     },
-    [startPlaybackAtOffset]
+    [startPlaybackAtOffset, silentWavUrl]
   );
 
   playAllRef.current = playAll;
