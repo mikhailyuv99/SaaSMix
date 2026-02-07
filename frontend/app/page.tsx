@@ -816,6 +816,10 @@ export default function Home() {
           if (!nodes.media.source) nodes.media.element.volume = Math.min(1, g);
         }
         if (nodes.type === "vocal") {
+          // PC (Web Audio): raw/mixed gains control which buffer is heard; keep in sync with playMode
+          if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = pm === "raw" || !hm ? 1 : 0;
+          if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = pm === "mixed" && hm ? 1 : 0;
+          // Mobile (HTML5 Audio): element volumes
           if (!nodes.rawMedia?.source && !nodes.mixedMedia?.source) {
             const rawVol = (pm === "raw" || !hm ? 1 : 0) * Math.min(1, g);
             const mixedVol = (pm === "mixed" && hm ? 1 : 0) * Math.min(1, g);
@@ -2147,6 +2151,7 @@ export default function Home() {
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
+          // Autoplay: buffer is already in buffersRef (no await ensureAllBuffersLoaded per spec).
           if (isMobileRef.current) {
             pendingPlayableAfterMixRef.current = patchedPlayable;
             setIsPlaying(false);
