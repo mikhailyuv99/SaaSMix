@@ -934,11 +934,17 @@ export default function Home() {
         })();
         (async () => {
           try {
-            const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-            if (!contextRef.current) contextRef.current = ctx;
+            // Use existing context if available, otherwise create a temporary one (do NOT store in contextRef
+            // — contexts created outside user gestures are permanently suspended on iOS)
+            const existingCtx = contextRef.current;
+            const ctx = existingCtx && existingCtx.state !== "closed"
+              ? existingCtx
+              : new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+            const shouldClose = ctx !== existingCtx;
             const res = await fetch(rawAudioUrl);
             const buf = await res.arrayBuffer();
             const decoded = await ctx.decodeAudioData(buf);
+            if (shouldClose) ctx.close();
             const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
             entry.raw = decoded;
             buffersRef.current.set(id, entry);
@@ -1537,15 +1543,22 @@ export default function Home() {
       if (!ctx || ctx.state === "closed") {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
-        audioUnlockedRef.current = false; // re-unlock needed on new context
+        audioUnlockedRef.current = false;
       }
       if (ctx.state === "suspended") {
         ctx.resume().catch(() => {});
         unlockAudioContextSync(ctx);
-        await ctx.resume().catch(() => {
-          setIsPlaying(false);
-          return;
-        });
+        await ctx.resume().catch(() => {});
+        // If STILL suspended (e.g. context was created outside user gesture on iOS — permanently stuck),
+        // close it and create a fresh one within THIS user gesture where resume will work
+        if (ctx.state === "suspended") {
+          try { ctx.close(); } catch (_) {}
+          ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+          contextRef.current = ctx;
+          audioUnlockedRef.current = false;
+          unlockAudioContextSync(ctx);
+          await ctx.resume().catch(() => {});
+        }
       }
       let playable = override?.playable ?? pendingPlayableAfterMixRef.current ?? tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
       if (playable.length > 0 && pendingPlayableAfterMixRef.current != null && !override?.playable) {
@@ -3287,11 +3300,21 @@ export default function Home() {
                   downloadMix();
                 }}
                 disabled={isRenderingMix}
-                className="btn-primary group flex items-center justify-center text-center disabled:opacity-50 disabled:cursor-not-allowed max-lg:py-2 max-md:py-1.5 max-md:px-3"
+                className={`flex items-center justify-center text-center disabled:cursor-not-allowed max-lg:py-2 max-md:py-1.5 max-md:px-3 ${
+                  isRenderingMix
+                    ? "btn-primary border-white/30 bg-slate-800 text-white"
+                    : "btn-primary group disabled:opacity-50"
+                }`}
               >
-                <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors max-md:text-[10px]">
-                  {isRenderingMix ? "RENDU…" : "TÉLÉCHARGER LE MIX"}
-                </span>
+                {isRenderingMix ? (
+                  <span className="text-tagline text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] max-md:text-[10px]">
+                    RENDU<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
+                  </span>
+                ) : (
+                  <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors max-md:text-[10px]">
+                    TÉLÉCHARGER LE MIX
+                  </span>
+                )}
               </button>
               {showLoginMixMessage && !user && (
                 <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
