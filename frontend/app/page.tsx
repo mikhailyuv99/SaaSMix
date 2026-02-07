@@ -1611,6 +1611,17 @@ export default function Home() {
         pendingPlayableAfterMixRef.current = null;
       }
       const startOffset = override?.startOffset ?? resumeFromRef.current ?? 0;
+      // If no playable tracks but some are still hydrating from IDB (have rawFileName), wait up to 2s
+      if (playable.length === 0 && !override?.playable) {
+        const hydrating = tracksRef.current.some((t) => t.rawFileName && !t.rawAudioUrl);
+        if (hydrating) {
+          for (let i = 0; i < 20; i++) {
+            await new Promise((r) => setTimeout(r, 100));
+            playable = tracksRef.current.filter((t) => t.rawAudioUrl);
+            if (playable.length > 0) break;
+          }
+        }
+      }
       if (playable.length === 0) {
         setShowPlayNoFileMessage(true);
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
@@ -2057,7 +2068,15 @@ export default function Home() {
       }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
-      window.open(mixUrl, "_blank");
+      // Use anchor + click instead of window.open — iOS Safari blocks window.open in async callbacks
+      const a = document.createElement("a");
+      a.href = mixUrl;
+      a.download = "mix.wav";
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } catch (e) {
       console.error(e);
       setAppModal({ type: "alert", message: "Erreur : " + (e instanceof Error ? e.message : String(e)), onClose: () => {} });
@@ -2128,6 +2147,27 @@ export default function Home() {
     const mixBuf = masterMixBufferRef.current;
     const masterBuf = masterMasterBufferRef.current;
     if (!mixBuf || !masterBuf) return;
+    const isMob = isMobileRef.current;
+    // On mobile: create fresh AudioContext + MediaStreamDestination (same pattern as playAll)
+    if (isMob) {
+      if (outputElRef.current) {
+        try { outputElRef.current.pause(); outputElRef.current.srcObject = null; } catch (_) {}
+        outputElRef.current = null;
+      }
+      streamDestRef.current = null;
+      const oldCtx = contextRef.current;
+      if (oldCtx && oldCtx.state !== "closed") { try { oldCtx.close(); } catch (_) {} }
+      const freshCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      contextRef.current = freshCtx;
+      try {
+        const dest = freshCtx.createMediaStreamDestination();
+        streamDestRef.current = dest;
+        const outputEl = new Audio();
+        outputEl.srcObject = dest.stream;
+        outputEl.play().catch(() => {});
+        outputElRef.current = outputEl;
+      } catch (_) {}
+    }
     let ctx = contextRef.current;
     if (!ctx) {
       ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -2146,8 +2186,10 @@ export default function Home() {
     const masterGain = ctx.createGain();
     mixSource.connect(mixGain);
     masterSource.connect(masterGain);
-    mixGain.connect(ctx.destination);
-    masterGain.connect(ctx.destination);
+    // On mobile: route through MediaStreamDestination → HTMLAudioElement (same as track playback)
+    const audioOutput = streamDestRef.current ?? ctx.destination;
+    mixGain.connect(audioOutput);
+    masterGain.connect(audioOutput);
     const isMaster = masterPlaybackMode === "master";
     mixGain.gain.value = isMaster ? 0 : 1;
     masterGain.gain.value = isMaster ? 1 : 0;
@@ -2190,6 +2232,10 @@ export default function Home() {
         setMasterResumeFrom(pos);
         setMasterPlaybackCurrentTime(pos);
       }
+    }
+    // Pause the iOS output element
+    if (outputElRef.current) {
+      try { outputElRef.current.pause(); } catch (_) {}
     }
     setIsMasterResultPlaying(false);
   }, []);
