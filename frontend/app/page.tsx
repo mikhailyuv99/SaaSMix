@@ -1557,7 +1557,8 @@ export default function Home() {
       const isMob = isMobileRef.current;
       let ctx = contextRef.current;
       if (isMob || !ctx || ctx.state === "closed") {
-        if (ctx && ctx.state !== "closed") { try { ctx.close(); } catch (_) {} }
+        // On mobile: create a fresh context in THIS user gesture (iOS requires it).
+        // Do NOT close the old context — its decoded AudioBuffers must stay valid.
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
