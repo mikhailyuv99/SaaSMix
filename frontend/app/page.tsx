@@ -1920,6 +1920,9 @@ export default function Home() {
           if (!contextRef.current) contextRef.current = ctx;
           const audioRes = await fetch(fullUrl);
           const ab = await audioRes.arrayBuffer();
+          // Cache the ArrayBuffer for mobile re-decode (playAll creates fresh context and clears decoded buffers).
+          // Must clone BEFORE decodeAudioData which detaches the original.
+          abCacheRef.current.set(`mixed:${fullUrl}`, ab.slice(0));
           const decoded = await ctx.decodeAudioData(ab);
           const e = buffersRef.current.get(id);
           if (!e) throw new Error("track entry missing");
