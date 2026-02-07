@@ -813,13 +813,15 @@ export default function Home() {
         const hm = hasMixed ?? Boolean(t?.mixedAudioUrl);
         if (nodes.mainGain?.gain != null) nodes.mainGain.gain.value = g;
         if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
-          nodes.media.element.volume = Math.min(1, g);
+          if (!nodes.media.source) nodes.media.element.volume = Math.min(1, g);
         }
         if (nodes.type === "vocal") {
-          const rawVol = (pm === "raw" || !hm ? 1 : 0) * Math.min(1, g);
-          const mixedVol = (pm === "mixed" && hm ? 1 : 0) * Math.min(1, g);
-          if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
-          if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
+          if (!nodes.rawMedia?.source && !nodes.mixedMedia?.source) {
+            const rawVol = (pm === "raw" || !hm ? 1 : 0) * Math.min(1, g);
+            const mixedVol = (pm === "mixed" && hm ? 1 : 0) * Math.min(1, g);
+            if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
+            if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
+          }
         }
       } catch {
         // ignore
@@ -1427,10 +1429,11 @@ export default function Home() {
       if (isMobileRef.current) {
         const gen = ++mobilePlaybackGenerationRef.current;
         const mediaToPlay: HTMLAudioElement[] = [];
-        const mainGain = ctx.createGain();
-        mainGain.connect(ctx.destination);
         for (const track of playable) {
           if (!track.rawAudioUrl) continue;
+          const trackMainGain = ctx.createGain();
+          trackMainGain.gain.value = Math.max(0, Math.min(2, track.gain / 100));
+          trackMainGain.connect(ctx.destination);
           const onEnd = () => {
             trackPlaybackRef.current.delete(track.id);
             endedCount++;
@@ -1442,15 +1445,17 @@ export default function Home() {
           };
           if (track.category === "instrumental") {
             const audio = new Audio(fullUrl(track.rawAudioUrl));
-            audio.volume = track.gain / 100;
+            audio.volume = 1;
             audio.onended = onEnd;
             mediaToPlay.push(audio);
-            trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source: null }, mainGain });
+            const source = ctx.createMediaElementSource(audio);
+            source.connect(trackMainGain);
+            trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source }, mainGain: trackMainGain });
           } else {
             const rawGain = ctx.createGain();
             const mixedGain = ctx.createGain();
-            rawGain.connect(mainGain);
-            mixedGain.connect(mainGain);
+            rawGain.connect(trackMainGain);
+            mixedGain.connect(trackMainGain);
             rawGain.gain.value = track.playMode === "mixed" && track.mixedAudioUrl ? 0 : 1;
             mixedGain.gain.value = track.playMode === "mixed" && track.mixedAudioUrl ? 1 : 0;
             const onEndVocal = () => {
@@ -1462,46 +1467,50 @@ export default function Home() {
                 resumeFromRef.current = 0;
               }
             };
-            const rawVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 0 : 1) * (track.gain / 100);
-            const mixedVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 1 : 0) * (track.gain / 100);
             const rawAudio = new Audio(fullUrl(track.rawAudioUrl));
-            rawAudio.volume = rawVol;
+            rawAudio.volume = 1;
             rawAudio.onended = onEndVocal;
             mediaToPlay.push(rawAudio);
+            const rawSource = ctx.createMediaElementSource(rawAudio);
+            rawSource.connect(rawGain);
             let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
             if (track.mixedAudioUrl) {
               const mixedAudio = new Audio(fullUrl(track.mixedAudioUrl));
-              mixedAudio.volume = mixedVol;
+              mixedAudio.volume = 1;
               mixedAudio.onended = onEndVocal;
               mediaToPlay.push(mixedAudio);
-              mixedMedia = { element: mixedAudio, source: null };
+              const mixedSource = ctx.createMediaElementSource(mixedAudio);
+              mixedSource.connect(mixedGain);
+              mixedMedia = { element: mixedAudio, source: mixedSource };
             }
             trackPlaybackRef.current.set(track.id, {
               type: "vocal",
-              rawMedia: { element: rawAudio, source: null },
+              rawMedia: { element: rawAudio, source: rawSource },
               rawBufferNode: null,
               rawUnlockGain: null,
               mixedMedia,
               mixedBufferNode: null,
               rawGain,
               mixedGain,
-              mainGain,
+              mainGain: trackMainGain,
             });
           }
         }
-        Promise.all(
-          mediaToPlay.map(
-            (el) =>
-              new Promise<void>((resolve) => {
-                if (el.readyState >= 2) {
-                  resolve();
-                  return;
-                }
-                el.addEventListener("canplay", () => resolve(), { once: true });
-                el.addEventListener("error", () => resolve(), { once: true });
-              })
-          )
-        ).then(() => {
+        const loadPromises = mediaToPlay.map(
+          (el) =>
+            new Promise<void>((resolve) => {
+              if (el.readyState >= 2) {
+                resolve();
+                return;
+              }
+              const onReady = () => resolve();
+              el.addEventListener("canplaythrough", onReady, { once: true });
+              el.addEventListener("canplay", onReady, { once: true });
+              el.addEventListener("error", onReady, { once: true });
+              setTimeout(onReady, 8000);
+            })
+        );
+        Promise.all(loadPromises).then(() => {
           if (gen !== mobilePlaybackGenerationRef.current) return;
           for (let i = 0; i < mediaToPlay.length; i++) {
             mediaToPlay[i].currentTime = offset;
@@ -1623,7 +1632,8 @@ export default function Home() {
       lastSeekRef.current = { offset: safeOffset, time: now };
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
-        startTimeRef.current = ctx.currentTime - safeOffset;
+        const when = ctx.currentTime;
+        startTimeRef.current = when - safeOffset;
         for (const [id, nodes] of Array.from(trackPlaybackRef.current.entries())) {
           try {
             if (nodes.type === "instrumental") {
@@ -1632,7 +1642,6 @@ export default function Home() {
               } else if ("bufferNode" in nodes && nodes.bufferNode) {
                 const buf = buffersRef.current.get(id)?.raw;
                 if (buf) {
-                  const when = ctx.currentTime;
                   try {
                     nodes.bufferNode.onended = null;
                     nodes.bufferNode.stop(when);
@@ -1655,10 +1664,10 @@ export default function Home() {
               }
             } else {
               if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
+              if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
               if (nodes.rawBufferNode) {
                 const rawBuf = buffersRef.current.get(id)?.raw;
                 if (rawBuf) {
-                  const when = ctx.currentTime;
                   try {
                     nodes.rawBufferNode.onended = null;
                     nodes.rawBufferNode.stop(when);
@@ -1679,11 +1688,9 @@ export default function Home() {
                   (nodes as VocalNodes).rawBufferNode = src;
                 }
               }
-              if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
               if (nodes.mixedBufferNode) {
                 const mixedBuf = buffersRef.current.get(id)?.mixed;
                 if (mixedBuf) {
-                  const when = ctx.currentTime;
                   try {
                     nodes.mixedBufferNode.onended = null;
                     nodes.mixedBufferNode.stop(when);
