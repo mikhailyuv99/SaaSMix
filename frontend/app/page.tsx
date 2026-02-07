@@ -1567,18 +1567,19 @@ export default function Home() {
         setTimeout(() => setShowPlayNoFileMessage(false), 3000);
         return;
       }
-      // On mobile: activate iOS audio session with HTMLAudioElement primer BEFORE touching AudioContext.
-      // iOS kills the audio session after long pauses; only HTMLAudioElement.play() can reactivate it.
+      // Create or resume AudioContext. On mobile: MUST happen synchronously in user gesture
+      // (awaiting anything before this would break the iOS user gesture chain).
       const isMob = isMobileRef.current;
-      if (isMob) {
-        try { const p = new Audio(SILENT_WAV); p.volume = 0.01; await p.play(); } catch (_) {}
-      }
-      // Create or resume AudioContext (on mobile: always fresh in this user gesture)
       let ctx = contextRef.current;
       if (isMob || !ctx || ctx.state === "closed") {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
+      }
+      // On mobile: also fire a silent HTMLAudioElement to help reactivate iOS audio hardware
+      // after long pauses. Non-blocking (no await) to preserve the user gesture chain.
+      if (isMob) {
+        try { const p = new Audio(SILENT_WAV); p.volume = 0.01; p.play().catch(() => {}); } catch (_) {}
       }
       if (ctx.state === "suspended") {
         unlockAudioContextSync(ctx);
