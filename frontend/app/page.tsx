@@ -1665,8 +1665,81 @@ export default function Home() {
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
         if (!isMobileRef.current) {
-          // PC: delegate to startPlaybackAtOffset for clean, instant seek (stops old + starts new)
-          startPlaybackAtOffset(ctx, playable, safeOffset);
+          // PC: lightweight seek – only swap buffer sources on existing gain nodes.
+          // Schedule ALL starts at the same future time for sample-accurate sync.
+          const ctxNow = ctx.currentTime;
+          const startAt = ctxNow + 0.03; // 30ms in future – guarantees every source starts on the exact same sample
+          startTimeRef.current = startAt - safeOffset;
+
+          for (const [id, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+            try {
+              if (nodes.type === "instrumental") {
+                if ("bufferNode" in nodes && nodes.bufferNode) {
+                  const buf = buffersRef.current.get(id)?.raw;
+                  if (buf) {
+                    nodes.bufferNode.onended = null;
+                    try { nodes.bufferNode.stop(); nodes.bufferNode.disconnect(); } catch (_) {}
+                    const src = ctx.createBufferSource();
+                    src.buffer = buf;
+                    src.connect(nodes.mainGain);
+                    src.onended = () => {
+                      const cur = trackPlaybackRef.current.get(id);
+                      if (cur && cur.type === "instrumental" && "bufferNode" in cur && cur.bufferNode === src) {
+                        trackPlaybackRef.current.delete(id);
+                        if (trackPlaybackRef.current.size === 0) { setIsPlaying(false); setHasPausedPosition(false); }
+                      }
+                    };
+                    src.start(startAt, safeOffset, Math.max(0, buf.duration - safeOffset));
+                    trackPlaybackRef.current.set(id, { type: "instrumental", bufferNode: src, mainGain: nodes.mainGain });
+                  }
+                }
+              } else {
+                // Vocal: swap raw + mixed buffer nodes, reuse all gain nodes
+                if (nodes.rawBufferNode) {
+                  const rawBuf = buffersRef.current.get(id)?.raw;
+                  if (rawBuf) {
+                    nodes.rawBufferNode.onended = null;
+                    try { nodes.rawBufferNode.stop(); nodes.rawBufferNode.disconnect(); } catch (_) {}
+                    const src = ctx.createBufferSource();
+                    src.buffer = rawBuf;
+                    src.connect(nodes.rawGain);
+                    src.onended = () => {
+                      const cur = trackPlaybackRef.current.get(id);
+                      if (!cur || cur.type !== "vocal" || cur.rawBufferNode !== src) return;
+                      (cur as VocalNodes).rawBufferNode = null;
+                      if (!cur.rawBufferNode && !cur.mixedBufferNode) {
+                        trackPlaybackRef.current.delete(id);
+                        if (trackPlaybackRef.current.size === 0) { setIsPlaying(false); setHasPausedPosition(false); }
+                      }
+                    };
+                    src.start(startAt, safeOffset, Math.max(0, rawBuf.duration - safeOffset));
+                    (nodes as VocalNodes).rawBufferNode = src;
+                  }
+                }
+                if (nodes.mixedBufferNode) {
+                  const mixedBuf = buffersRef.current.get(id)?.mixed;
+                  if (mixedBuf) {
+                    nodes.mixedBufferNode.onended = null;
+                    try { nodes.mixedBufferNode.stop(); nodes.mixedBufferNode.disconnect(); } catch (_) {}
+                    const src = ctx.createBufferSource();
+                    src.buffer = mixedBuf;
+                    src.connect(nodes.mixedGain);
+                    src.onended = () => {
+                      const cur = trackPlaybackRef.current.get(id);
+                      if (!cur || cur.type !== "vocal" || cur.mixedBufferNode !== src) return;
+                      (cur as VocalNodes).mixedBufferNode = null;
+                      if (!cur.rawBufferNode && !cur.mixedBufferNode) {
+                        trackPlaybackRef.current.delete(id);
+                        if (trackPlaybackRef.current.size === 0) { setIsPlaying(false); setHasPausedPosition(false); }
+                      }
+                    };
+                    src.start(startAt, safeOffset, Math.max(0, mixedBuf.duration - safeOffset));
+                    (nodes as VocalNodes).mixedBufferNode = src;
+                  }
+                }
+              }
+            } catch (_) {}
+          }
         } else {
           // Mobile: per-element currentTime update (unchanged)
           const when = ctx.currentTime;
@@ -1690,7 +1763,7 @@ export default function Home() {
         setHasPausedPosition(true);
       }
     },
-    [isPlaying, startPlaybackAtOffset]
+    [isPlaying]
   );
 
   /** Débloque l’audio sur mobile (iOS/Android) : joue un buffer silencieux dans le geste utilisateur. */
