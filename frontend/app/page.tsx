@@ -1435,15 +1435,43 @@ export default function Home() {
 
       const fullUrl = (url: string) => (url.startsWith("http") || url.startsWith("blob:") ? url : `${API_BASE}${url}`);
 
-      if (isMobileRef.current) {
-        const gen = ++mobilePlaybackGenerationRef.current;
-        const activeElements: HTMLAudioElement[] = [];
-        for (const track of playable) {
-          if (!track.rawAudioUrl) continue;
-          const trackMainGain = ctx.createGain();
-          trackMainGain.gain.value = Math.max(0, Math.min(2, track.gain / 100));
-          trackMainGain.connect(ctx.destination);
-          const onEnd = () => {
+      // Use HTMLAudioElement for ALL platforms — enables instant seeking via element.currentTime
+      const gen = ++mobilePlaybackGenerationRef.current;
+      const activeElements: HTMLAudioElement[] = [];
+      for (const track of playable) {
+        if (!track.rawAudioUrl) continue;
+        const trackMainGain = ctx.createGain();
+        trackMainGain.gain.value = Math.max(0, Math.min(2, track.gain / 100));
+        trackMainGain.connect(ctx.destination);
+        const onEnd = () => {
+          trackPlaybackRef.current.delete(track.id);
+          endedCount++;
+          if (endedCount >= totalTracks) {
+            setIsPlaying(false);
+            setHasPausedPosition(false);
+            resumeFromRef.current = 0;
+          }
+        };
+        if (track.category === "instrumental") {
+          const audio = new Audio(fullUrl(track.rawAudioUrl));
+          audio.volume = 1;
+          audio.onended = onEnd;
+          activeElements.push(audio);
+          const source = ctx.createMediaElementSource(audio);
+          source.connect(trackMainGain);
+          trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source }, mainGain: trackMainGain });
+        } else {
+          const playMixed = track.playMode === "mixed" && track.mixedAudioUrl;
+          const rawGain = ctx.createGain();
+          const mixedGain = ctx.createGain();
+          rawGain.connect(trackMainGain);
+          mixedGain.connect(trackMainGain);
+          rawGain.gain.value = playMixed ? 0 : 1;
+          mixedGain.gain.value = playMixed ? 1 : 0;
+          let vocalEnded = false;
+          const onEndVocal = () => {
+            if (vocalEnded) return;
+            vocalEnded = true;
             trackPlaybackRef.current.delete(track.id);
             endedCount++;
             if (endedCount >= totalTracks) {
@@ -1452,203 +1480,69 @@ export default function Home() {
               resumeFromRef.current = 0;
             }
           };
-          if (track.category === "instrumental") {
-            const audio = new Audio(fullUrl(track.rawAudioUrl));
-            audio.volume = 1;
-            audio.onended = onEnd;
-            activeElements.push(audio);
-            const source = ctx.createMediaElementSource(audio);
-            source.connect(trackMainGain);
-            trackPlaybackRef.current.set(track.id, { type: "instrumental", media: { element: audio, source }, mainGain: trackMainGain });
-          } else {
-            const playMixed = track.playMode === "mixed" && track.mixedAudioUrl;
-            const rawGain = ctx.createGain();
-            const mixedGain = ctx.createGain();
-            rawGain.connect(trackMainGain);
-            mixedGain.connect(trackMainGain);
-            rawGain.gain.value = playMixed ? 0 : 1;
-            mixedGain.gain.value = playMixed ? 1 : 0;
-            let vocalEnded = false;
-            const onEndVocal = () => {
-              if (vocalEnded) return;
-              vocalEnded = true;
-              trackPlaybackRef.current.delete(track.id);
-              endedCount++;
-              if (endedCount >= totalTracks) {
-                setIsPlaying(false);
-                setHasPausedPosition(false);
-                resumeFromRef.current = 0;
-              }
-            };
-            const rawAudio = new Audio(fullUrl(track.rawAudioUrl));
-            rawAudio.volume = 1;
-            rawAudio.onended = onEndVocal;
-            const rawSource = ctx.createMediaElementSource(rawAudio);
-            rawSource.connect(rawGain);
-            let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
-            if (track.mixedAudioUrl) {
-              // Reuse preloaded element if available (already has data cached from mix finish)
-              const preloaded = preloadMixedRef.current.get(track.id);
-              let mixedAudio: HTMLAudioElement;
-              if (preloaded && !preloaded.error) {
-                mixedAudio = preloaded;
-                preloadMixedRef.current.delete(track.id);
-                if (!mixedAudio.crossOrigin) mixedAudio.crossOrigin = "anonymous";
-              } else {
-                mixedAudio = new Audio();
-                mixedAudio.crossOrigin = "anonymous";
-                mixedAudio.preload = "auto";
-                mixedAudio.src = fullUrl(track.mixedAudioUrl);
-                mixedAudio.load();
-              }
-              mixedAudio.volume = 1;
-              mixedAudio.onended = onEndVocal;
-              const mixedSource = ctx.createMediaElementSource(mixedAudio);
-              mixedSource.connect(mixedGain);
-              mixedMedia = { element: mixedAudio, source: mixedSource };
+          const rawAudio = new Audio(fullUrl(track.rawAudioUrl));
+          rawAudio.volume = 1;
+          rawAudio.onended = onEndVocal;
+          const rawSource = ctx.createMediaElementSource(rawAudio);
+          rawSource.connect(rawGain);
+          let mixedMedia: { element: HTMLAudioElement; source: MediaElementAudioSourceNode | null } | null = null;
+          if (track.mixedAudioUrl) {
+            // Reuse preloaded element if available (already has data cached from mix finish)
+            const preloaded = preloadMixedRef.current.get(track.id);
+            let mixedAudio: HTMLAudioElement;
+            if (preloaded && !preloaded.error) {
+              mixedAudio = preloaded;
+              preloadMixedRef.current.delete(track.id);
+              if (!mixedAudio.crossOrigin) mixedAudio.crossOrigin = "anonymous";
+            } else {
+              mixedAudio = new Audio();
+              mixedAudio.crossOrigin = "anonymous";
+              mixedAudio.preload = "auto";
+              mixedAudio.src = fullUrl(track.mixedAudioUrl);
+              mixedAudio.load();
             }
-            trackPlaybackRef.current.set(track.id, {
-              type: "vocal",
-              rawMedia: { element: rawAudio, source: rawSource },
-              rawBufferNode: null,
-              rawUnlockGain: null,
-              mixedMedia,
-              mixedBufferNode: null,
-              rawGain,
-              mixedGain,
-              mainGain: trackMainGain,
-            });
-            // Play both raw and mixed elements so Avant/Après toggle is instant (gains control which is heard)
-            activeElements.push(rawAudio);
-            if (mixedMedia) activeElements.push(mixedMedia.element);
-          }
-        }
-        const waitReady = (el: HTMLAudioElement) =>
-          new Promise<void>((resolve) => {
-            if (el.readyState >= 2) {
-              resolve();
-              return;
-            }
-            const onReady = () => resolve();
-            el.addEventListener("canplaythrough", onReady, { once: true });
-            el.addEventListener("canplay", onReady, { once: true });
-            el.addEventListener("error", onReady, { once: true });
-            setTimeout(onReady, 8000);
-          });
-        Promise.all(activeElements.map(waitReady)).then(() => {
-          if (gen !== mobilePlaybackGenerationRef.current) return;
-          for (let i = 0; i < activeElements.length; i++) {
-            activeElements[i].currentTime = offset;
-            activeElements[i].play().catch(() => {});
-          }
-          setIsPlaying(true);
-        });
-        return;
-      }
-
-      // PC: schedule all starts 10ms in the future so every buffer source begins
-      // at the exact same audio sample – eliminates inter-track desync.
-      const scheduleAt = now + 0.01;
-      startTimeRef.current = scheduleAt - offset;
-
-      for (const track of playable) {
-        if (!track.rawAudioUrl) continue;
-        const entry = buffersRef.current.get(track.id) ?? { raw: null, mixed: null };
-        if (!entry.raw) continue;
-
-        const mainGain = ctx.createGain();
-        mainGain.gain.value = track.gain / 100;
-        mainGain.connect(ctx.destination);
-
-        const onEnd = () => {
-          trackPlaybackRef.current.delete(track.id);
-          endedCount++;
-          if (endedCount >= totalTracks) {
-            setIsPlaying(false);
-            setHasPausedPosition(false);
-            if (!isMobileRef.current) {
-              const playableNext = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-              if (contextRef.current && playableNext.length > 0) {
-                startPlaybackAtOffset(contextRef.current, playableNext, 0);
-                setIsPlaying(true);
-              }
-            }
-          }
-        };
-
-        if (track.category === "instrumental") {
-          const src = ctx.createBufferSource();
-          src.buffer = entry.raw;
-          src.connect(mainGain);
-          src.onended = onEnd;
-          const duration = Math.max(0, entry.raw.duration - offset);
-          src.start(scheduleAt, offset, duration);
-          trackPlaybackRef.current.set(track.id, { type: "instrumental", bufferNode: src, mainGain });
-        } else {
-          const rawGain = ctx.createGain();
-          const mixedGain = ctx.createGain();
-          rawGain.connect(mainGain);
-          mixedGain.connect(mainGain);
-          if (!track.mixedAudioUrl) {
-            rawGain.gain.value = 1;
-            mixedGain.gain.value = 0;
-          } else {
-            rawGain.gain.value = track.playMode === "mixed" ? 0 : 1;
-            mixedGain.gain.value = track.playMode === "mixed" ? 1 : 0;
-          }
-          let pcVocalEnded = false;
-          const onEndVocal = () => {
-            if (pcVocalEnded) return;
-            pcVocalEnded = true;
-            trackPlaybackRef.current.delete(track.id);
-            endedCount++;
-            if (endedCount >= totalTracks) {
-              setIsPlaying(false);
-              setHasPausedPosition(false);
-              if (!isMobileRef.current) {
-                const playableNext = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
-                if (contextRef.current && playableNext.length > 0) {
-                  startPlaybackAtOffset(contextRef.current, playableNext, 0);
-                  setIsPlaying(true);
-                }
-              }
-            }
-          };
-          const rawBuf = entry.raw;
-          const rawUnlockGain = ctx.createGain();
-          rawUnlockGain.gain.value = 0;
-          rawUnlockGain.connect(mainGain);
-          const playMixed = track.playMode === "mixed" && track.mixedAudioUrl && !!entry.mixed;
-          rawGain.gain.value = playMixed ? 0 : 1;
-          mixedGain.gain.value = playMixed ? 1 : 0;
-          const srcRaw = ctx.createBufferSource();
-          srcRaw.buffer = rawBuf;
-          srcRaw.connect(rawGain);
-          srcRaw.onended = onEndVocal;
-          srcRaw.start(scheduleAt, offset, Math.max(0, rawBuf.duration - offset));
-          let mixedBufferNode: AudioBufferSourceNode | null = null;
-          if (entry.mixed) {
-            const srcMixed = ctx.createBufferSource();
-            srcMixed.buffer = entry.mixed;
-            srcMixed.connect(mixedGain);
-            srcMixed.onended = onEndVocal;
-            srcMixed.start(scheduleAt, offset, Math.max(0, entry.mixed.duration - offset));
-            mixedBufferNode = srcMixed;
+            mixedAudio.volume = 1;
+            mixedAudio.onended = onEndVocal;
+            const mixedSource = ctx.createMediaElementSource(mixedAudio);
+            mixedSource.connect(mixedGain);
+            mixedMedia = { element: mixedAudio, source: mixedSource };
           }
           trackPlaybackRef.current.set(track.id, {
             type: "vocal",
-            rawMedia: null,
-            rawBufferNode: srcRaw,
-            rawUnlockGain,
-            mixedMedia: null,
-            mixedBufferNode,
+            rawMedia: { element: rawAudio, source: rawSource },
+            rawBufferNode: null,
+            rawUnlockGain: null,
+            mixedMedia,
+            mixedBufferNode: null,
             rawGain,
             mixedGain,
-            mainGain,
+            mainGain: trackMainGain,
           });
+          // Play both raw and mixed elements so Avant/Après toggle is instant (gains control which is heard)
+          activeElements.push(rawAudio);
+          if (mixedMedia) activeElements.push(mixedMedia.element);
         }
       }
-      setIsPlaying(true);
+      const waitReady = (el: HTMLAudioElement) =>
+        new Promise<void>((resolve) => {
+          if (el.readyState >= 2) {
+            resolve();
+            return;
+          }
+          const onReady = () => resolve();
+          el.addEventListener("canplaythrough", onReady, { once: true });
+          el.addEventListener("canplay", onReady, { once: true });
+          el.addEventListener("error", onReady, { once: true });
+          setTimeout(onReady, 8000);
+        });
+      Promise.all(activeElements.map(waitReady)).then(() => {
+        if (gen !== mobilePlaybackGenerationRef.current) return;
+        for (let i = 0; i < activeElements.length; i++) {
+          activeElements[i].currentTime = offset;
+          activeElements[i].play().catch(() => {});
+        }
+        setIsPlaying(true);
+      });
     },
     []
   );
@@ -1664,98 +1558,20 @@ export default function Home() {
       lastSeekRef.current = { offset: safeOffset, time: now };
 
       if (isPlaying && ctx && trackPlaybackRef.current.size > 0) {
-        if (!isMobileRef.current) {
-          // PC: lightweight seek – only swap buffer sources on existing gain nodes.
-          // Schedule ALL starts at the same future time for sample-accurate sync.
-          const ctxNow = ctx.currentTime;
-          const startAt = ctxNow + 0.03; // 30ms in future – guarantees every source starts on the exact same sample
-          startTimeRef.current = startAt - safeOffset;
-
-          for (const [id, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-            try {
-              if (nodes.type === "instrumental") {
-                if ("bufferNode" in nodes && nodes.bufferNode) {
-                  const buf = buffersRef.current.get(id)?.raw;
-                  if (buf) {
-                    nodes.bufferNode.onended = null;
-                    try { nodes.bufferNode.stop(); nodes.bufferNode.disconnect(); } catch (_) {}
-                    const src = ctx.createBufferSource();
-                    src.buffer = buf;
-                    src.connect(nodes.mainGain);
-                    src.onended = () => {
-                      const cur = trackPlaybackRef.current.get(id);
-                      if (cur && cur.type === "instrumental" && "bufferNode" in cur && cur.bufferNode === src) {
-                        trackPlaybackRef.current.delete(id);
-                        if (trackPlaybackRef.current.size === 0) { setIsPlaying(false); setHasPausedPosition(false); }
-                      }
-                    };
-                    src.start(startAt, safeOffset, Math.max(0, buf.duration - safeOffset));
-                    trackPlaybackRef.current.set(id, { type: "instrumental", bufferNode: src, mainGain: nodes.mainGain });
-                  }
-                }
-              } else {
-                // Vocal: swap raw + mixed buffer nodes, reuse all gain nodes
-                if (nodes.rawBufferNode) {
-                  const rawBuf = buffersRef.current.get(id)?.raw;
-                  if (rawBuf) {
-                    nodes.rawBufferNode.onended = null;
-                    try { nodes.rawBufferNode.stop(); nodes.rawBufferNode.disconnect(); } catch (_) {}
-                    const src = ctx.createBufferSource();
-                    src.buffer = rawBuf;
-                    src.connect(nodes.rawGain);
-                    src.onended = () => {
-                      const cur = trackPlaybackRef.current.get(id);
-                      if (!cur || cur.type !== "vocal" || cur.rawBufferNode !== src) return;
-                      (cur as VocalNodes).rawBufferNode = null;
-                      if (!cur.rawBufferNode && !cur.mixedBufferNode) {
-                        trackPlaybackRef.current.delete(id);
-                        if (trackPlaybackRef.current.size === 0) { setIsPlaying(false); setHasPausedPosition(false); }
-                      }
-                    };
-                    src.start(startAt, safeOffset, Math.max(0, rawBuf.duration - safeOffset));
-                    (nodes as VocalNodes).rawBufferNode = src;
-                  }
-                }
-                if (nodes.mixedBufferNode) {
-                  const mixedBuf = buffersRef.current.get(id)?.mixed;
-                  if (mixedBuf) {
-                    nodes.mixedBufferNode.onended = null;
-                    try { nodes.mixedBufferNode.stop(); nodes.mixedBufferNode.disconnect(); } catch (_) {}
-                    const src = ctx.createBufferSource();
-                    src.buffer = mixedBuf;
-                    src.connect(nodes.mixedGain);
-                    src.onended = () => {
-                      const cur = trackPlaybackRef.current.get(id);
-                      if (!cur || cur.type !== "vocal" || cur.mixedBufferNode !== src) return;
-                      (cur as VocalNodes).mixedBufferNode = null;
-                      if (!cur.rawBufferNode && !cur.mixedBufferNode) {
-                        trackPlaybackRef.current.delete(id);
-                        if (trackPlaybackRef.current.size === 0) { setIsPlaying(false); setHasPausedPosition(false); }
-                      }
-                    };
-                    src.start(startAt, safeOffset, Math.max(0, mixedBuf.duration - safeOffset));
-                    (nodes as VocalNodes).mixedBufferNode = src;
-                  }
-                }
+        // All platforms: instant seek via element.currentTime (HTMLAudioElement)
+        const when = ctx.currentTime;
+        startTimeRef.current = when - safeOffset;
+        for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+          try {
+            if (nodes.type === "instrumental") {
+              if ("media" in nodes && nodes.media) {
+                nodes.media.element.currentTime = safeOffset;
               }
-            } catch (_) {}
-          }
-        } else {
-          // Mobile: per-element currentTime update (unchanged)
-          const when = ctx.currentTime;
-          startTimeRef.current = when - safeOffset;
-          for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
-            try {
-              if (nodes.type === "instrumental") {
-                if ("media" in nodes && nodes.media) {
-                  nodes.media.element.currentTime = safeOffset;
-                }
-              } else {
-                if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
-                if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
-              }
-            } catch (_) {}
-          }
+            } else {
+              if (nodes.rawMedia) nodes.rawMedia.element.currentTime = safeOffset;
+              if (nodes.mixedMedia) nodes.mixedMedia.element.currentTime = safeOffset;
+            }
+          } catch (_) {}
         }
       } else {
         resumeFromRef.current = safeOffset;
@@ -1883,51 +1699,17 @@ export default function Home() {
         const nodes = trackPlaybackRef.current.get(id);
         const track = tracksRef.current.find((t) => t.id === id);
         if (nodes?.type === "vocal" && track) {
-          const rawBuf = buffersRef.current.get(id)?.raw;
-          const mixedBuf = buffersRef.current.get(id)?.mixed;
-          const useBufferPath = nodes.rawBufferNode || nodes.mixedBufferNode;
-          const canSwitch = useBufferPath
-            ? (targetMode === "raw" && rawBuf) || (targetMode === "mixed" && mixedBuf)
-            : true;
-          if (!canSwitch) return;
-
-          const g = Math.max(0, Math.min(1, (track.gain ?? 100) / 100));
           const rawEl = nodes.rawMedia?.element;
           const mixedEl = nodes.mixedMedia?.element;
+          // Gains-only toggle: both elements play simultaneously, gains control which is heard.
           try {
             if (nodes.rawGain?.gain != null) nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
             if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
           } catch {}
           if (rawEl && mixedEl) {
-            // Gains-only toggle: both elements play simultaneously, gains control which is heard.
             // If an element got paused (edge case), resync and resume it.
             if (rawEl.paused && !rawEl.ended) { rawEl.currentTime = mixedEl.currentTime; rawEl.play().catch(() => {}); }
             if (mixedEl.paused && !mixedEl.ended) { mixedEl.currentTime = rawEl.currentTime; mixedEl.play().catch(() => {}); }
-          } else {
-            if (rawEl) rawEl.volume = (targetMode === "raw" ? 1 : 0) * g;
-            if (mixedEl) mixedEl.volume = (targetMode === "mixed" ? 1 : 0) * g;
-          }
-          // PC Web Audio: gains-only toggle. Both buffer sources are already playing (from startPlaybackAtOffset).
-          // Only create a missing buffer source if needed (e.g., mixed buffer loaded after playback started).
-          const ctx = contextRef.current;
-          if (ctx && useBufferPath) {
-            if (targetMode === "mixed" && !nodes.mixedBufferNode && mixedBuf) {
-              const when = ctx.currentTime;
-              const off = Math.max(0, when - startTimeRef.current);
-              const src = ctx.createBufferSource();
-              src.buffer = mixedBuf;
-              src.connect(nodes.mixedGain);
-              src.start(when, off, Math.max(0, mixedBuf.duration - off));
-              (nodes as VocalNodes).mixedBufferNode = src;
-            } else if (targetMode === "raw" && !nodes.rawBufferNode && rawBuf) {
-              const when = ctx.currentTime;
-              const off = Math.max(0, when - startTimeRef.current);
-              const src = ctx.createBufferSource();
-              src.buffer = rawBuf;
-              src.connect(nodes.rawGain);
-              src.start(when, off, Math.max(0, rawBuf.duration - off));
-              (nodes as VocalNodes).rawBufferNode = src;
-            }
           }
         }
       } catch (_) {}
