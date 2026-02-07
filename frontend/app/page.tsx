@@ -1860,11 +1860,64 @@ export default function Home() {
             if (rawEl) rawEl.volume = (targetMode === "raw" ? 1 : 0) * g;
             if (mixedEl) mixedEl.volume = (targetMode === "mixed" ? 1 : 0) * g;
           }
+          const ctx = contextRef.current;
+          const rawBuf = buffersRef.current.get(id)?.raw;
+          const mixedBuf = buffersRef.current.get(id)?.mixed;
+          if (ctx && (nodes.rawBufferNode || nodes.mixedBufferNode) && rawBuf && (targetMode === "raw" || (targetMode === "mixed" && mixedBuf))) {
+            const when = ctx.currentTime;
+            const offset = Math.max(0, when - startTimeRef.current);
+            const totalTracks = tracksRef.current.filter((t) => t.file && t.rawAudioUrl).length;
+            const onEndVocal = () => {
+              trackPlaybackRef.current.delete(id);
+              if (trackPlaybackRef.current.size === 0) {
+                setIsPlaying(false);
+                setHasPausedPosition(false);
+              }
+              const playableNext = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
+              if (contextRef.current && playableNext.length > 0 && !isMobileRef.current) {
+                startPlaybackAtOffset(contextRef.current, playableNext, 0);
+                setIsPlaying(true);
+              }
+            };
+            try {
+              if (nodes.rawBufferNode) {
+                nodes.rawBufferNode.onended = null;
+                nodes.rawBufferNode.stop(when);
+                nodes.rawBufferNode.disconnect();
+              }
+            } catch (_) {}
+            try {
+              if (nodes.mixedBufferNode) {
+                nodes.mixedBufferNode.onended = null;
+                nodes.mixedBufferNode.stop(when);
+                nodes.mixedBufferNode.disconnect();
+              }
+            } catch (_) {}
+            if (targetMode === "raw") {
+              const src = ctx.createBufferSource();
+              src.buffer = rawBuf;
+              src.connect(nodes.rawGain);
+              src.onended = onEndVocal;
+              const duration = Math.max(0, rawBuf.duration - offset);
+              src.start(when, offset, duration);
+              (nodes as VocalNodes).rawBufferNode = src;
+              (nodes as VocalNodes).mixedBufferNode = null;
+            } else if (mixedBuf) {
+              const src = ctx.createBufferSource();
+              src.buffer = mixedBuf;
+              src.connect(nodes.mixedGain);
+              src.onended = onEndVocal;
+              const duration = Math.max(0, mixedBuf.duration - offset);
+              src.start(when, offset, duration);
+              (nodes as VocalNodes).mixedBufferNode = src;
+              (nodes as VocalNodes).rawBufferNode = null;
+            }
+          }
         }
-      } catch {}
+      } catch (_) {}
       updateTrack(id, { playMode: targetMode });
     },
-    [updateTrack]
+    [updateTrack, startPlaybackAtOffset]
   );
 
   const runMix = useCallback(
@@ -1991,7 +2044,11 @@ export default function Home() {
           if (statusData.status === "error") {
             clearProgress();
             updateTrack(id, { isMixing: false });
-            setAppModal({ type: "alert", message: "Erreur lors du mix : " + (statusData.error || "Échec inconnu"), onClose: () => {} });
+            let errMsg = statusData.error || "Échec inconnu";
+            if (String(errMsg).includes("3221226505") || String(errMsg).includes("0xC0000409")) {
+              errMsg = "Le moteur de mix a planté (crash Windows). Réessayez avec un fichier plus court, ou vérifiez les logs backend.";
+            }
+            setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
             return;
           }
           path = statusData.mixedTrackUrl as string;
@@ -2090,7 +2147,10 @@ export default function Home() {
         clearProgress();
         updateTrack(id, { isMixing: false });
         console.error(e);
-        const errMsg = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
+        let errMsg = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
+        if (errMsg.includes("3221226505") || errMsg.includes("0xC0000409")) {
+          errMsg = "Le moteur de mix a planté (crash Windows). Réessayez avec un fichier plus court, ou vérifiez les logs backend.";
+        }
         setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
     },
