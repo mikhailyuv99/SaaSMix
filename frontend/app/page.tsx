@@ -359,6 +359,7 @@ export default function Home() {
     masterGain: GainNode;
   } | null>(null);
   const masterStartTimeRef = useRef<number>(0);
+  const masterResultSectionRef = useRef<HTMLElement | null>(null);
 
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
@@ -488,6 +489,15 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
+  }, [masterResult]);
+
+  // Auto-scroll to master result card when mastering finishes
+  useEffect(() => {
+    if (masterResult && masterResultSectionRef.current) {
+      setTimeout(() => {
+        masterResultSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
   }, [masterResult]);
 
   // Au démontage (ex. navigation vers Connexion/Inscription) : arrêter toute lecture pour éviter "ghost" audio au retour
@@ -1521,12 +1531,14 @@ export default function Home() {
     async (override?: { playable?: Track[]; startOffset?: number }) => {
       userPausedRef.current = false;
       let ctx = contextRef.current;
-      if (!ctx) {
+      // If context was closed (e.g. browser reclaimed it after long inactivity), create a fresh one
+      if (!ctx || ctx.state === "closed") {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
+        audioUnlockedRef.current = false; // re-unlock needed on new context
       }
       if (ctx.state === "suspended") {
-        ctx.resume().catch(() => {}); // lance le resume dans le geste, sans attendre
+        ctx.resume().catch(() => {});
         unlockAudioContextSync(ctx);
         await ctx.resume().catch(() => {
           setIsPlaying(false);
@@ -3271,9 +3283,17 @@ export default function Home() {
                   runMaster();
                 }}
                 disabled={isMastering}
-                className="h-9 px-5 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed text-tagline shrink-0 max-lg:h-8 max-lg:px-4 max-md:h-8 max-md:px-3 max-md:text-[10px]"
+                className={`h-9 px-5 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed shrink-0 max-lg:h-8 max-lg:px-4 max-md:h-8 max-md:px-3 max-md:text-[10px] ${
+                  isMastering
+                    ? "border-blue-400/40 bg-blue-950 text-blue-200"
+                    : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
+                }`}
               >
-                {isMastering ? "MASTERISATION…" : "MASTERISER"}
+                {isMastering ? (
+                  <span className="text-blue-300 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]">
+                    MASTERING<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
+                  </span>
+                ) : "MASTERISER"}
               </button>
               {showLoginMasterMessage && !user && (
                 <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
@@ -3290,7 +3310,7 @@ export default function Home() {
         )}
 
         {masterResult && (
-          <section className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
+          <section ref={masterResultSectionRef} className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
             <div className="card p-5 flex flex-col items-center text-center">
               <h2 className="text-tagline text-slate-400 mb-4">Résultat du master</h2>
               <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
