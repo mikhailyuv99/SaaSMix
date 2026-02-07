@@ -1543,6 +1543,23 @@ export default function Home() {
           activeElements[i].play().catch(() => {});
         }
         setIsPlaying(true);
+        // Mobile: after all elements start, sync silent vocal elements to audible ones.
+        // play() is async on mobile — elements can start at slightly different times.
+        // This correction runs after elements have settled, fixing any drift.
+        if (isMobileRef.current) {
+          setTimeout(() => {
+            if (gen !== mobilePlaybackGenerationRef.current) return;
+            for (const [, nodes] of Array.from(trackPlaybackRef.current.entries())) {
+              if (nodes.type !== "vocal" || !nodes.rawMedia || !nodes.mixedMedia) continue;
+              try {
+                const rawG = nodes.rawGain?.gain?.value ?? 0;
+                const activeEl = rawG > 0 ? nodes.rawMedia.element : nodes.mixedMedia.element;
+                const silentEl = rawG > 0 ? nodes.mixedMedia.element : nodes.rawMedia.element;
+                silentEl.currentTime = activeEl.currentTime;
+              } catch (_) {}
+            }
+          }, 150);
+        }
       });
     },
     []
