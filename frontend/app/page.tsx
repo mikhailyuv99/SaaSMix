@@ -319,9 +319,6 @@ export default function Home() {
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
   const [showMasterMessage, setShowMasterMessage] = useState(false);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
-  const [playbackLoading, setPlaybackLoading] = useState(false);
-  const setPlaybackLoadingRef = useRef<(v: boolean) => void>(() => {});
-  setPlaybackLoadingRef.current = setPlaybackLoading;
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
   const [showLoginMixMessage, setShowLoginMixMessage] = useState(false);
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
@@ -618,6 +615,25 @@ export default function Home() {
     }
   }, [tracks]);
 
+  // Synchroniser le gain (slider) et le volume Avant/Après avec les nodes en cours de lecture
+  useEffect(() => {
+    trackPlaybackRef.current.forEach((nodes, id) => {
+      const t = tracks.find((tr) => tr.id === id);
+      if (!t) return;
+      const g = t.gain / 100;
+      nodes.mainGain.gain.value = g;
+      if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
+        nodes.media.element.volume = g;
+      }
+      if (nodes.type === "vocal") {
+        const rawVol = (t.playMode === "raw" || !t.mixedAudioUrl ? 1 : 0) * g;
+        const mixedVol = (t.playMode === "mixed" && t.mixedAudioUrl ? 1 : 0) * g;
+        if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
+        if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
+      }
+    });
+  }, [tracks]);
+
   // Quand la fenêtre reprend le focus (ex. fermeture du sélecteur de fichiers), retirer le glow "fichier .wav"
   useEffect(() => {
     const onWindowFocus = () => setFileChooserActiveTrackId(null);
@@ -810,7 +826,19 @@ export default function Home() {
       );
       if ("gain" in updates && updates.gain !== undefined) {
         const nodes = trackPlaybackRef.current.get(id);
-        if (nodes) nodes.mainGain.gain.value = updates.gain / 100;
+        if (!nodes) return;
+        const g = updates.gain / 100;
+        nodes.mainGain.gain.value = g;
+        const track = tracksRef.current.find((t) => t.id === id);
+        if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
+          nodes.media.element.volume = g;
+        }
+        if (nodes.type === "vocal" && track) {
+          const rawVol = (track.playMode === "raw" || !track.mixedAudioUrl ? 1 : 0) * g;
+          const mixedVol = (track.playMode === "mixed" && track.mixedAudioUrl ? 1 : 0) * g;
+          if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
+          if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
+        }
       }
     },
     []
@@ -1389,7 +1417,6 @@ export default function Home() {
 
       if (isMobileRef.current) {
         const gen = ++mobilePlaybackGenerationRef.current;
-        setPlaybackLoadingRef.current?.(true);
         const mediaToPlay: HTMLAudioElement[] = [];
         const mainGain = ctx.createGain();
         mainGain.connect(ctx.destination);
@@ -1455,17 +1482,16 @@ export default function Home() {
           mediaToPlay.map(
             (el) =>
               new Promise<void>((resolve) => {
-                if (el.readyState >= 3) {
+                if (el.readyState >= 2) {
                   resolve();
                   return;
                 }
-                el.addEventListener("canplaythrough", () => resolve(), { once: true });
+                el.addEventListener("canplay", () => resolve(), { once: true });
                 el.addEventListener("error", () => resolve(), { once: true });
               })
           )
         ).then(() => {
           if (gen !== mobilePlaybackGenerationRef.current) return;
-          setPlaybackLoadingRef.current?.(false);
           for (let i = 0; i < mediaToPlay.length; i++) {
             mediaToPlay[i].currentTime = offset;
           }
@@ -1770,9 +1796,13 @@ export default function Home() {
   const togglePlayMode = useCallback(
     (id: string, targetMode: "raw" | "mixed") => {
       const nodes = trackPlaybackRef.current.get(id);
-      if (nodes?.type === "vocal") {
+      const track = tracksRef.current.find((t) => t.id === id);
+      if (nodes?.type === "vocal" && track) {
         nodes.rawGain.gain.value = targetMode === "raw" ? 1 : 0;
         nodes.mixedGain.gain.value = targetMode === "mixed" ? 1 : 0;
+        const g = track.gain / 100;
+        if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = (targetMode === "raw" ? 1 : 0) * g;
+        if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = (targetMode === "mixed" ? 1 : 0) * g;
       }
       updateTrack(id, { playMode: targetMode });
     },
@@ -1954,21 +1984,24 @@ export default function Home() {
           setHasPausedPosition(false);
 
           setMixProgress((prev) => ({ ...prev, [id]: 100 }));
-          // PC + mobile : stopper la lecture en cours, débloquer le contexte, relancer toutes les pistes depuis 0 (version mixée)
           stopAll();
           resumeFromRef.current = null;
           setHasPausedPosition(false);
-          if (ctx.state === "suspended") {
-            ctx.resume().catch(() => {});
-            unlockAudioContextSync(ctx);
-            await ctx.resume().catch(() => {});
-          }
           const basePlayable = tracksRef.current.filter((t) => t.file && t.rawAudioUrl);
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
-          startPlaybackAtOffset(ctx, patchedPlayable, 0);
-          setIsPlaying(true);
+          if (isMobileRef.current) {
+            setIsPlaying(false);
+          } else {
+            if (ctx.state === "suspended") {
+              ctx.resume().catch(() => {});
+              unlockAudioContextSync(ctx);
+              await ctx.resume().catch(() => {});
+            }
+            startPlaybackAtOffset(ctx, patchedPlayable, 0);
+            setIsPlaying(true);
+          }
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
@@ -2523,20 +2556,16 @@ export default function Home() {
             <h2 className="sr-only">Lecture</h2>
             <div className="flex justify-center gap-2 max-md:gap-1.5">
               {!isPlaying ? (
-                <div className="relative flex flex-col items-center">
+                <div className="relative">
                   <button
                     type="button"
                     onClick={() => playAll()}
-                    disabled={playbackLoading}
-                    className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9"
                     aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
                     title={undefined}
                   >
                     <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                   </button>
-                  {playbackLoading && (
-                    <p className="mt-1 text-[10px] text-slate-400">Chargement…</p>
-                  )}
                   {showPlayNoFileMessage && (
                     <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Veuillez choisir un fichier
