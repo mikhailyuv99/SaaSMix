@@ -1964,14 +1964,11 @@ export default function Home() {
           const patchedPlayable = basePlayable.map((t) =>
             t.id === id ? { ...t, mixedAudioUrl, playMode: "mixed" as const } : t
           );
-          // After mix: store patched playable for next Play press.
+          // After mix: store patched playable and reset cursor to 0 for both platforms.
           pendingPlayableAfterMixRef.current = patchedPlayable;
-          if (!isMobileRef.current) {
-            // PC: reset cursor to 0
-            resumeFromRef.current = 0;
-            setPausedAtSeconds(0);
-            setHasPausedPosition(false);
-          }
+          resumeFromRef.current = 0;
+          setPausedAtSeconds(0);
+          setHasPausedPosition(false);
           setTimeout(clearProgress, 500);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
