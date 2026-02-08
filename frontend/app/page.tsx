@@ -357,7 +357,6 @@ export default function Home() {
   const [isLoadingProject, setIsLoadingProject] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
-  const lastLoadedProjectTracksRef = useRef<Record<string, Record<string, string>>>({});
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
   const mixSimulationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mixSimulationStartRef = useRef<number>(0);
@@ -1152,24 +1151,11 @@ export default function Home() {
     }));
     const form = new FormData();
     form.append("data", JSON.stringify(payload));
-    if (isUpdate) {
-      const projectId = currentProject!.id;
-      const stored = lastLoadedProjectTracksRef.current[projectId] ?? {};
-      const trackIdsWithNewFiles = tracks
-        .filter((t) => t.file && stored[t.id] !== t.file.name)
-        .map((t) => t.id);
-      form.append("trackIdsWithNewFiles", JSON.stringify(trackIdsWithNewFiles));
-      trackIdsWithNewFiles.forEach((id) => {
-        const t = tracks.find((tr) => tr.id === id);
-        if (t?.file) form.append("files", t.file);
-      });
-      form.append("name", currentProject!.name);
-    } else {
-      tracks.forEach((t) => {
-        if (t.file) form.append("files", t.file);
-      });
-      if (name?.trim()) form.append("name", name.trim());
-    }
+    tracks.forEach((t) => {
+      if (t.file) form.append("files", t.file);
+    });
+    if (isUpdate) form.append("name", currentProject!.name);
+    else if (name?.trim()) form.append("name", name.trim());
 
     setIsSavingProject(true);
     try {
@@ -1189,12 +1175,6 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || "Erreur sauvegarde");
       if (!isUpdate) setCurrentProject({ id: data.id, name: data.name });
-      if (isUpdate && currentProject) {
-        const stored = lastLoadedProjectTracksRef.current[currentProject.id] ?? {};
-        lastLoadedProjectTracksRef.current[currentProject.id] = Object.fromEntries(
-          tracks.map((t) => [t.id, t.file?.name ?? stored[t.id] ?? ""])
-        );
-      }
       setAppModal({ type: "alert", message: isUpdate ? "Projet mis à jour." : "Projet sauvegardé avec les fichiers.", onClose: () => {} });
     } catch (e) {
       setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la sauvegarde.", onClose: () => {} });
@@ -1302,9 +1282,6 @@ export default function Home() {
           rawFileName?: string | null;
           rawFileUrl?: string;
         }>;
-        lastLoadedProjectTracksRef.current[projectId] = Object.fromEntries(
-          rawTracks.map((t) => [t.id, (t.rawFileName ?? "") || ""])
-        );
         const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
         const authHeaders = getAuthHeaders();
         const newTracks: Track[] = await Promise.all(
@@ -2214,17 +2191,16 @@ export default function Home() {
     if (specs.length === 0) return;
     setIsMastering(true);
     setMasterResult(null);
-    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
-    const headers: Record<string, string> = {};
-    if (token) headers["Authorization"] = `Bearer ${token}`;
     try {
       const form = new FormData();
       form.append("track_specs", JSON.stringify(specs));
       files.forEach((f) => form.append("files", f));
+      const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        setIsMastering(false);
         localStorage.removeItem("saas_mix_token");
         localStorage.removeItem("saas_mix_user");
         setUser(null);
@@ -2232,30 +2208,9 @@ export default function Home() {
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
-      const jobId = data.jobId as string;
-      if (!jobId) throw new Error("Réponse API invalide (jobId manquant)");
-
-      let statusData: { status: string; progress: number; step?: string; mixUrl?: string; masterUrl?: string; error?: string } = { status: "processing", progress: 0 };
-      while (statusData.status === "processing") {
-        await new Promise((r) => setTimeout(r, 500));
-        const statusRes = await fetch(`${API_BASE}/api/master/status/${encodeURIComponent(jobId)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-        if (!statusRes.ok) {
-          statusData = { status: "error", progress: 0, error: "Impossible de récupérer le statut du master" };
-          break;
-        }
-        statusData = await statusRes.json();
-      }
-
-      if (statusData.status === "error") {
-        setAppModal({ type: "alert", message: "Erreur : " + (statusData.error || "Masterisation échouée"), onClose: () => {} });
-        return;
-      }
-      const mixUrl = (statusData.mixUrl as string)?.startsWith("http") ? statusData.mixUrl : `${API_BASE}${statusData.mixUrl}`;
-      const masterUrl = (statusData.masterUrl as string)?.startsWith("http") ? statusData.masterUrl : `${API_BASE}${statusData.masterUrl}`;
-      if (!mixUrl || !masterUrl) {
-        setAppModal({ type: "alert", message: "Master terminé mais URL introuvable.", onClose: () => {} });
-        return;
-      }
+      const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
+      const masterUrl = (data.masterUrl as string).startsWith("http") ? data.masterUrl : `${API_BASE}${data.masterUrl}`;
+      // Decode waveforms BEFORE ending the mastering animation so everything is ready to play
       try {
         const decodeCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         const [mixBufRes, masterBufRes] = await Promise.all([fetch(mixUrl), fetch(masterUrl)]);

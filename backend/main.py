@@ -10,7 +10,6 @@ import sys
 import tempfile
 import threading
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from scipy.signal import resample as scipy_resample
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
@@ -81,47 +80,38 @@ TARGET_SR = 44100
 _mix_jobs: dict = {}
 _mix_jobs_lock = threading.Lock()
 
-# Jobs de master : job_id -> { status, progress, resultUrl?, mixUrl?, masterUrl?, error? }
-_master_jobs: dict = {}
-_master_jobs_lock = threading.Lock()
-
-
-def _load_one_track(args: tuple):
-    """Load one track (path, gain), return processed stereo float32 array or None. Used for parallel assembly."""
-    path, gain = args
-    if not path or not os.path.exists(path):
-        return None
-    try:
-        audio, sr = read_wav(path)
-        if audio.ndim == 1:
-            audio = np.column_stack([audio, audio])
-        elif audio.shape[1] == 1:
-            audio = np.column_stack([audio[:, 0], audio[:, 0]])
-        if sr != TARGET_SR:
-            n = int(audio.shape[0] * TARGET_SR / sr)
-            audio = scipy_resample(audio, n, axis=0).astype(np.float32)
-        audio = audio * (gain / 100.0)
-        return audio
-    except Exception:
-        return None
-
 
 def _assemble_tracks(track_paths_gains: List[tuple], output_path: str) -> bool:
     """
     Assemble plusieurs pistes (path, gain) en un seul WAV.
     gain en 0-200 (pourcentage). Résample à TARGET_SR, même longueur (pad), somme.
-    Loads each track in parallel, then sums sequentially.
     """
     if not track_paths_gains:
         return False
     try:
-        max_workers = min(8, len(track_paths_gains))
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            streams = list(executor.map(_load_one_track, track_paths_gains))
-        streams = [s for s in streams if s is not None]
+        streams = []
+        max_samples = 0
+        for path, gain in track_paths_gains:
+            if not os.path.exists(path):
+                continue
+            audio, sr = read_wav(path)
+            # mono -> stereo
+            if audio.ndim == 1:
+                audio = np.column_stack([audio, audio])
+            elif audio.shape[1] == 1:
+                audio = np.column_stack([audio[:, 0], audio[:, 0]])
+            # resample to TARGET_SR
+            if sr != TARGET_SR:
+                n = int(audio.shape[0] * TARGET_SR / sr)
+                audio = scipy_resample(audio, n, axis=0).astype(np.float32)
+            # gain (0-200 %)
+            audio = audio * (gain / 100.0)
+            streams.append(audio)
+            max_samples = max(max_samples, audio.shape[0])
+
         if not streams:
             return False
-        max_samples = max(s.shape[0] for s in streams)
+        # pad to same length
         mixed = np.zeros((max_samples, 2), dtype=np.float32)
         for s in streams:
             mixed[: s.shape[0], :] += s
@@ -336,68 +326,6 @@ def _run_mix_job(
         if os.path.exists(input_path):
             try:
                 os.remove(input_path)
-            except OSError:
-                pass
-
-
-def _run_master_job(
-    job_id: str,
-    paths_gains: list,
-    temp_paths: list,
-    mix_path: str,
-    master_path: str,
-):
-    """Background thread: assemble tracks, run master.vst3, update _master_jobs."""
-    try:
-        with _master_jobs_lock:
-            if job_id not in _master_jobs:
-                return
-            _master_jobs[job_id]["progress"] = 10
-            _master_jobs[job_id]["step"] = "Assemblage du mix..."
-        ok = _assemble_tracks(paths_gains, mix_path)
-        for p in temp_paths:
-            try:
-                os.remove(p)
-            except OSError:
-                pass
-        with _master_jobs_lock:
-            if job_id not in _master_jobs:
-                return
-            if not ok or not os.path.exists(mix_path):
-                _master_jobs[job_id]["status"] = "error"
-                _master_jobs[job_id]["error"] = "Assemblage du mix échoué"
-                return
-            _master_jobs[job_id]["progress"] = 50
-            _master_jobs[job_id]["step"] = "Mastering..."
-        if not hise_master_only(mix_path, master_path):
-            with _master_jobs_lock:
-                if job_id in _master_jobs:
-                    _master_jobs[job_id]["status"] = "error"
-                    _master_jobs[job_id]["error"] = "Master (master.vst3) a échoué"
-            return
-        if not os.path.exists(master_path):
-            with _master_jobs_lock:
-                if job_id in _master_jobs:
-                    _master_jobs[job_id]["status"] = "error"
-                    _master_jobs[job_id]["error"] = "Fichier master non créé"
-            return
-        mix_url = f"/api/download/render?id={job_id}&type=mix"
-        master_url = f"/api/download/render?id={job_id}&type=master"
-        with _master_jobs_lock:
-            if job_id in _master_jobs:
-                _master_jobs[job_id]["status"] = "done"
-                _master_jobs[job_id]["progress"] = 100
-                _master_jobs[job_id]["step"] = "Terminé"
-                _master_jobs[job_id]["mixUrl"] = mix_url
-                _master_jobs[job_id]["masterUrl"] = master_url
-    except Exception as e:
-        with _master_jobs_lock:
-            if job_id in _master_jobs:
-                _master_jobs[job_id]["status"] = "error"
-                _master_jobs[job_id]["error"] = str(e)
-        for p in temp_paths:
-            try:
-                os.remove(p)
             except OSError:
                 pass
 
@@ -654,8 +582,7 @@ async def master_render(
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
     """
-    Démarre le mastering (assemble pistes + master.vst3). Retourne immédiatement un jobId.
-    Suivre la progression via GET /api/master/status/{job_id}.
+    Assemble les pistes en mix, applique master.vst3 (--master-only), retourne mixUrl et masterUrl.
     """
     try:
         specs = json.loads(track_specs)
@@ -665,61 +592,39 @@ async def master_render(
         raise HTTPException(status_code=400, detail="Aucune piste")
     paths_gains, temp_paths = await _build_track_paths_and_gains(specs, files)
     if not paths_gains:
-        for p in temp_paths:
-            try:
-                os.remove(p)
-            except OSError:
-                pass
         raise HTTPException(status_code=400, detail="Aucune piste valide")
     os.makedirs(RENDER_DIR, exist_ok=True)
     job_id = str(uuid.uuid4())
     mix_path = os.path.join(RENDER_DIR, f"mix_{job_id}.wav")
     master_path = os.path.join(RENDER_DIR, f"master_{job_id}.wav")
-    with _master_jobs_lock:
-        _master_jobs[job_id] = {
-            "status": "processing",
-            "progress": 0,
-            "step": "Démarrage...",
-            "mixUrl": None,
-            "masterUrl": None,
-            "error": None,
+    try:
+        ok = _assemble_tracks(paths_gains, mix_path)
+        for p in temp_paths:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        if not ok or not os.path.exists(mix_path):
+            raise HTTPException(status_code=500, detail="Assemblage du mix échoué")
+        if not hise_master_only(mix_path, master_path):
+            raise HTTPException(status_code=500, detail="Master (master.vst3) a échoué")
+        if not os.path.exists(master_path):
+            raise HTTPException(status_code=500, detail="Fichier master non créé")
+        return {
+            "status": "success",
+            "mixUrl": f"/api/download/render?id={job_id}&type=mix",
+            "masterUrl": f"/api/download/render?id={job_id}&type=master",
+            "message": "Master prêt.",
         }
-    thread = threading.Thread(
-        target=_run_master_job,
-        kwargs={
-            "job_id": job_id,
-            "paths_gains": paths_gains,
-            "temp_paths": temp_paths,
-            "mix_path": mix_path,
-            "master_path": master_path,
-        },
-        daemon=True,
-    )
-    thread.start()
-    return {
-        "jobId": job_id,
-        "status": "processing",
-        "message": "Master démarré. Utilisez GET /api/master/status/{job_id} pour la progression.",
-    }
-
-
-@app.get("/api/master/status/{job_id}")
-async def master_status(job_id: str):
-    """Retourne la progression du master : status (processing|done|error), progress 0-100, step, mixUrl, masterUrl (si done), error (si error)."""
-    if not re.match(r"^[a-f0-9\-]{36}$", job_id):
-        raise HTTPException(status_code=400, detail="ID invalide")
-    with _master_jobs_lock:
-        job = _master_jobs.get(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job inconnu ou expiré")
-    return {
-        "status": job["status"],
-        "progress": job["progress"],
-        "step": job["step"],
-        "mixUrl": job.get("mixUrl"),
-        "masterUrl": job.get("masterUrl"),
-        "error": job.get("error"),
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        for p in temp_paths:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/download/render")
