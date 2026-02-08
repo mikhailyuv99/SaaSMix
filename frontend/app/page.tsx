@@ -56,7 +56,7 @@ interface Track {
 }
 
 const CATEGORY_LABELS: Record<Category, string> = {
-  lead_vocal: "LEAD VOCAL",
+  lead_vocal: "LEAD VOIX",
   adlibs_backs: "ADLIBS/BACKS",
   instrumental: "INSTRUMENTALE",
 };

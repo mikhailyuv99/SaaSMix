@@ -102,4 +102,4 @@ Pour **arrêter** le serveur : dans le terminal où il tourne, appuie sur **Ctrl
    ```
 6. Ouvrir dans le navigateur : **http://localhost:3000**
 
-Tu verras la page avec « Ajouter une piste », upload WAV, catégorie, gain, bouton **Mix** (pour Lead vocal / Adlibs), et après un mix le bouton **Sans mix (avant)** / **Avec mix** pour comparer.
+Tu verras la page avec « Ajouter une piste », upload WAV, catégorie, gain, bouton **Mix** (pour Lead voix / Adlibs), et après un mix le bouton **Sans mix (avant)** / **Avec mix** pour comparer.

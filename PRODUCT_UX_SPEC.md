@@ -9,7 +9,7 @@ Document de référence pour l’implémentation frontend et backend.
 - L’utilisateur peut **ajouter autant de pistes qu’il veut** via un bouton **« + »** en bas de la dernière piste.
 - Chaque piste :
   - **Upload** d’un fichier WAV.
-  - **Catégorie** : `Lead vocal` | `Adlibs/backs` | `Instrumental`.
+  - **Catégorie** : `Lead voix` | `Adlibs/backs` | `Instrumental`.
 - Une seule piste (ou plus) par catégorie possible ; l’ordre et le nombre sont libres.
 
 ---
@@ -24,7 +24,7 @@ Document de référence pour l’implémentation frontend et backend.
 
 ## 3. Bouton « Mix » (pistes vocales uniquement)
 
-- **Pistes Lead vocal et Adlibs/backs** : bouton **« Mix »** sur chaque piste.
+- **Pistes Lead voix et Adlibs/backs** : bouton **« Mix »** sur chaque piste.
 - **Piste Instrumental** : **pas de bouton Mix** ; uniquement le gain (voir §2).
 - Comportement du bouton **Mix** :
   - Applique la chaîne de mixage (paramètres actuels : Tone, Delay, Reverb, etc.) sur **toute la piste**.
@@ -40,7 +40,7 @@ Document de référence pour l’implémentation frontend et backend.
 
 ## 4. Traitement Adlibs/backs
 
-- **Même chaîne** que le Lead vocal (gate, de-esser, tone, delay, reverb, etc.).
+- **Même chaîne** que le Lead voix (gate, de-esser, tone, delay, reverb, etc.).
 - **Différence** : application d’un **EQ supplémentaire** pour changer un peu le rendu (caractère distinct du lead).
 
 ---

@@ -8,7 +8,7 @@ Résumé de l’état du projet et des prochaines étapes possibles.
 
 | Fonctionnalité | État |
 |----------------|------|
-| **Pistes** | OK – Ajout de pistes, upload WAV, catégorie (Lead vocal / Adlibs / Instrumental) |
+| **Pistes** | OK – Ajout de pistes, upload WAV, catégorie (Lead voix / Adlibs / Instrumental) |
 | **Gain par piste** | OK – Slider 0–200 %, appliqué en temps réel pendant la lecture |
 | **Bouton Mix (vocaux)** | OK – Envoi au backend, « Mix en cours… », puis piste mixée |
 | **Paramètres mix** | OK – Delay, Reverb, Tone low/mid/high, Air, BPM, division delay (panneau repliable) |
@@ -57,7 +57,7 @@ C’est la prochaine grosse feature « produit » après le mix par piste.
 ---
 
 ### 5. **Adlibs/backs – EQ supplémentaire** (spec §4)
-- Même chaîne que le lead vocal pour l’instant.
+- Même chaîne que le lead voix pour l’instant.
 - Plus tard : en backend, appliquer un **EQ en plus** sur les adlibs/backs pour les différencier du lead. Pas de changement d’UI nécessaire au début.
 
 ---

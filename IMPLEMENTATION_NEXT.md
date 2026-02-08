@@ -33,9 +33,9 @@ Suite à la spec UX ([PRODUCT_UX_SPEC.md](PRODUCT_UX_SPEC.md)), voici l’ordre 
 - **À faire** :
   - État : liste de pistes `{ id, file, category, gain, rawAudioUrl?, mixedAudioUrl?, mixParams?, isMixing?, mixProgress?, playMode? }`. Garder **brut** et **mixé** pour chaque piste vocale (pas seulement le mixé).
   - Bouton **“+”** en bas pour ajouter une piste.
-  - Par piste : upload WAV, select **catégorie** (Lead vocal | Adlibs/backs | Instrumental).
+  - Par piste : upload WAV, select **catégorie** (Lead voix | Adlibs/backs | Instrumental).
   - **Gain** : slider par piste (valeur 0–100 % ou 0–2 en linéaire). Pour l’instant stocker la valeur ; le “temps réel” viendra à l’étape 3.
-  - Si catégorie = Lead vocal ou Adlibs/backs : afficher **bouton “Mix”** + (optionnel) panneau réduit pour Tone/Delay/Reverb.
+  - Si catégorie = Lead voix ou Adlibs/backs : afficher **bouton “Mix”** + (optionnel) panneau réduit pour Tone/Delay/Reverb.
   - Si catégorie = Instrumental : **pas** de bouton Mix.
   - **Pendant le Mix** : afficher un **pourcentage** sur la piste (ex. « Mix en cours… 42 % »). Rien d’autre ne change.
   - **Après le Mix** : la piste a à la fois `rawAudioUrl` (brut) et `mixedAudioUrl` (mixé). Par défaut le player joue la version mixée. **Bouton « Avant / Après »** (ou « Sans mix » / « Avec mix ») : basculer entre brut et mixé pour que l’user puisse comparer l’avant/après mix sur la même piste (même player, juste la source qui change).
