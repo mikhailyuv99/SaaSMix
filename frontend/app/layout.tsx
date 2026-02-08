@@ -22,11 +22,11 @@ export default function RootLayout({
         <div className="relative z-10 min-h-screen flex flex-col">
           <div className="flex-1">{children}</div>
           <footer className="border-t border-white/10 py-4 px-4 mt-auto">
-            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-[10px] sm:text-xs text-slate-500">
+            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-tagline text-[10px] sm:text-xs text-slate-500">
               <span>© {new Date().getFullYear()} 99SIBERIA</span>
-              <Link href="/mentions-legales" className="hover:text-slate-300 transition-colors">Mentions légales</Link>
-              <Link href="/politique-confidentialite" className="hover:text-slate-300 transition-colors">Politique de confidentialité</Link>
-              <Link href="/cgu" className="hover:text-slate-300 transition-colors">CGU</Link>
+              <Link href="/mentions-legales" className="hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">Mentions légales</Link>
+              <Link href="/politique-confidentialite" className="hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">Politique de confidentialité</Link>
+              <Link href="/cgu" className="hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">CGU</Link>
             </div>
           </footer>
         </div>
