@@ -8,6 +8,13 @@ import { ManageSubscriptionModal } from "./components/ManageSubscriptionModal";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+function formatApiError(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (msg === "Failed to fetch" || /NetworkError|Load failed|Failed to fetch/i.test(String(msg)))
+    return "Impossible de joindre le serveur (api.siberiamix.com). Vérifiez votre connexion ou réessayez.";
+  return msg;
+}
+
 type Category = "lead_vocal" | "adlibs_backs" | "instrumental";
 
 export interface MixParams {
@@ -2132,12 +2139,10 @@ export default function Home() {
         clearProgress();
         updateTrack(id, { isMixing: false });
         console.error(e);
-        let errMsg = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
-        if (errMsg.includes("3221226505") || errMsg.includes("0xC0000409")) {
-          errMsg = "Le moteur de mix a planté (crash Windows). Réessayez avec un fichier plus court, ou vérifiez les logs backend.";
-        } else if (errMsg.includes("Unable to allocate") || errMsg.includes("MiB for an array")) {
-          errMsg = "Mémoire serveur insuffisante. Essayez un fichier audio plus court (ex. < 2 minutes).";
-        }
+        let errMsg = formatApiError(e);
+        const raw = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
+        if (raw.includes("3221226505") || raw.includes("0xC0000409")) errMsg = "Le moteur de mix a planté (crash Windows). Réessayez avec un fichier plus court, ou vérifiez les logs backend.";
+        else if (raw.includes("Unable to allocate") || raw.includes("MiB for an array")) errMsg = "Mémoire serveur insuffisante. Essayez un fichier audio plus court (ex. < 2 minutes).";
         setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
     },
@@ -2199,7 +2204,7 @@ export default function Home() {
       URL.revokeObjectURL(blobUrl);
     } catch (e) {
       console.error(e);
-      setAppModal({ type: "alert", message: "Erreur : " + (e instanceof Error ? e.message : String(e)), onClose: () => {} });
+      setAppModal({ type: "alert", message: "Erreur : " + formatApiError(e), onClose: () => {} });
     } finally {
       setIsRenderingMix(false);
     }
@@ -2261,7 +2266,7 @@ export default function Home() {
       setMasterPlaybackMode("master");
     } catch (e) {
       console.error(e);
-      setAppModal({ type: "alert", message: "Erreur : " + (e instanceof Error ? e.message : String(e)), onClose: () => {} });
+      setAppModal({ type: "alert", message: "Erreur : " + formatApiError(e), onClose: () => {} });
     } finally {
       setIsMastering(false);
     }
@@ -2535,8 +2540,32 @@ export default function Home() {
                   )}
                 </div>
                 <span className="text-slate-600">|</span>
-                <span className="truncate max-w-[200px]" title={user.email}>{user.email}</span>
+                <span className="truncate max-w-[200px]" title={user.email}>{user.email}{isPro && <span className="ml-1.5 text-emerald-400">Pro</span>}</span>
                 <span className="text-slate-600">|</span>
+                {!isPro && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setSubscriptionModalOpen(true)}
+                      className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                    >
+                      PASSER EN PRO
+                    </button>
+                    <span className="text-slate-600">|</span>
+                  </>
+                )}
+                {isPro && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setManageSubscriptionModalOpen(true)}
+                      className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                    >
+                      GÉRER MON ABONNEMENT
+                    </button>
+                    <span className="text-slate-600">|</span>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -2557,6 +2586,10 @@ export default function Home() {
                 <span className="text-slate-600">|</span>
                 <button type="button" onClick={() => { setAuthMode("register"); setShowLoginModal(true); }} className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer">
                   INSCRIPTION
+                </button>
+                <span className="text-slate-600">|</span>
+                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-emerald-400/90 hover:text-emerald-300 transition-colors cursor-pointer" title="Connectez-vous pour accéder à l’abonnement Pro">
+                  PASSER EN PRO
                 </button>
               </>
             )}
