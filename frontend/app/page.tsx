@@ -2540,7 +2540,7 @@ export default function Home() {
                   )}
                 </div>
                 <span className="text-slate-600">|</span>
-                <span className="truncate max-w-[200px]" title={user.email}>{user.email}{isPro && <span className="ml-1.5 text-emerald-400">Pro</span>}</span>
+                <span className="truncate max-w-[200px]" title={user.email}>{user.email}</span>
                 <span className="text-slate-600">|</span>
                 {!isPro && (
                   <>
@@ -2648,7 +2648,6 @@ export default function Home() {
                       )}
                       <p className="px-4 py-2 text-[10px] text-slate-600 truncate max-w-[220px] mx-auto" title={user.email}>
                         {user.email}
-                        {isPro && <span className="ml-1.5 text-emerald-400">Pro</span>}
                       </p>
                       {user && !isPro && (
                         <button

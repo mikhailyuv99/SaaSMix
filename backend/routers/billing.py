@@ -41,15 +41,18 @@ def billing_me(user: User = Depends(get_current_user_row)):
 
 
 def _subscription_interval(sub) -> str:
-    """Déduit month/year depuis les items (price récurrent)."""
+    """Déduit month/year depuis les items (price récurrent). Utiliser .get(), pas getattr, car StripeObject est dict-like et sub.items serait la méthode dict."""
     try:
-        if getattr(sub, "items", None) and getattr(sub.items, "data", None) and len(sub.items.data) > 0:
-            item = sub.items.data[0]
-            price = getattr(item, "price", None)
-            if price is not None:
-                recurring = getattr(price, "recurring", None)
-                if recurring and getattr(recurring, "interval", None) == "year":
-                    return "year"
+        items_obj = sub.get("items") if sub else None
+        if items_obj is not None:
+            data = items_obj.get("data") if hasattr(items_obj, "get") else None
+            if data and len(data) > 0:
+                item = data[0]
+                price = item.get("price") if hasattr(item, "get") else None
+                if price is not None and hasattr(price, "get"):
+                    recurring = price.get("recurring")
+                    if recurring and (recurring.get("interval") if hasattr(recurring, "get") else None) == "year":
+                        return "year"
     except (AttributeError, KeyError, TypeError, IndexError):
         pass
     return "month"
@@ -75,22 +78,33 @@ def get_subscription(user: User = Depends(get_current_user_row)):
             sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
         except stripe.StripeError:
             return {"subscription": None}
-    if not sub or getattr(sub, "status", None) not in ("active", "trialing"):
+    if not sub or sub.get("status") not in ("active", "trialing"):
         return {"subscription": None}
     interval = _subscription_interval(sub)
-    raw_end = getattr(sub, "current_period_end", None)
-    if raw_end is None and hasattr(sub, "get"):
-        raw_end = sub.get("current_period_end")
+
+    # StripeObject est dict-like : utiliser .get() uniquement (getattr(sub, "items") renverrait dict.items())
+    raw_end = sub.get("current_period_end")
     try:
         current_period_end = int(raw_end) if raw_end is not None else None
     except (TypeError, ValueError):
         current_period_end = None
     if not current_period_end or current_period_end <= 0:
+        items_obj = sub.get("items")
+        if items_obj is not None:
+            data = items_obj.get("data") if hasattr(items_obj, "get") else None
+            if data and len(data) > 0:
+                raw_end = data[0].get("current_period_end") if hasattr(data[0], "get") else None
+                try:
+                    if raw_end is not None:
+                        current_period_end = int(raw_end)
+                except (TypeError, ValueError):
+                    pass
+    if not current_period_end or current_period_end <= 0:
         current_period_end = None
     return {
         "subscription": {
             "current_period_end": current_period_end,
-            "cancel_at_period_end": bool(getattr(sub, "cancel_at_period_end", False)),
+            "cancel_at_period_end": bool(sub.get("cancel_at_period_end", False)),
             "interval": interval,
         }
     }
