@@ -2729,7 +2729,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => removeTrack(track.id)}
-                className="absolute top-4 right-4 p-2 rounded text-slate-500 hover:bg-white/5 hover:text-slate-300 transition-colors z-10 max-lg:top-2 max-lg:right-2 max-lg:p-1.5"
+                className="absolute top-4 right-4 p-2 rounded text-slate-500 hover:bg-white/5 hover:text-slate-300 transition-colors z-10 max-lg:top-0.5 max-lg:right-2 max-lg:p-1.5"
                 title="Supprimer la piste"
               >
                 ✕
