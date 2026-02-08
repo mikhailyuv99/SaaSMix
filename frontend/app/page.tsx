@@ -2588,7 +2588,7 @@ export default function Home() {
                   INSCRIPTION
                 </button>
                 <span className="text-slate-600">|</span>
-                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-emerald-400/90 hover:text-emerald-300 transition-colors cursor-pointer" title="Connectez-vous pour accéder à l’abonnement Pro">
+                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer" title="Connectez-vous pour accéder à l’abonnement Pro">
                   PASSER EN PRO
                 </button>
               </>
