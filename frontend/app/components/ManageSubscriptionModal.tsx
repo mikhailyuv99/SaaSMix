@@ -108,8 +108,10 @@ function UpdateCardForm({
   );
 }
 
-function formatPeriodEnd(ts: number): string {
+function formatPeriodEnd(ts: number | null | undefined): string {
+  if (ts == null || ts <= 0) return "—";
   const d = new Date(ts * 1000);
+  if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 }
 
@@ -125,13 +127,15 @@ export function ManageSubscriptionModal({
   onSubscriptionUpdated: () => void;
 }) {
   const [subscription, setSubscription] = useState<{
-    current_period_end: number;
+    current_period_end: number | null;
     cancel_at_period_end: boolean;
     interval: "month" | "year";
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [showUpdateCard, setShowUpdateCard] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -147,8 +151,11 @@ export function ManageSubscriptionModal({
       .finally(() => setLoading(false));
   }, [isOpen, getAuthHeaders]);
 
-  const handleCancel = async () => {
-    if (!confirm("Annuler l'abonnement ? Vous garderez l'accès Pro jusqu'à la fin de la période en cours.")) return;
+  const handleCancelClick = () => setShowCancelConfirm(true);
+
+  const handleCancelConfirm = async () => {
+    setShowCancelConfirm(false);
+    setCancelError(null);
     setCancelLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/billing/cancel-subscription`, {
@@ -160,10 +167,10 @@ export function ManageSubscriptionModal({
         onSubscriptionUpdated();
         setSubscription((s) => (s ? { ...s, cancel_at_period_end: true } : null));
       } else {
-        alert(data.detail || "Erreur lors de l'annulation.");
+        setCancelError(data.detail || "Erreur lors de l'annulation.");
       }
     } catch {
-      alert("Erreur réseau.");
+      setCancelError("Erreur réseau.");
     } finally {
       setCancelLoading(false);
     }
@@ -205,6 +212,9 @@ export function ManageSubscriptionModal({
                 <>Prochaine facturation le <strong>{formatPeriodEnd(subscription.current_period_end)}</strong>.</>
               )}
             </p>
+            {cancelError && (
+              <p className="text-red-400 text-sm">{cancelError}</p>
+            )}
             <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
               <button
                 type="button"
@@ -216,7 +226,7 @@ export function ManageSubscriptionModal({
               {!subscription.cancel_at_period_end && (
                 <button
                   type="button"
-                  onClick={handleCancel}
+                  onClick={handleCancelClick}
                   disabled={cancelLoading}
                   className="w-full rounded-lg border border-red-500/50 text-red-400 px-4 py-2.5 text-sm hover:bg-red-500/10 transition-colors disabled:opacity-50"
                 >
@@ -224,6 +234,29 @@ export function ManageSubscriptionModal({
                 </button>
               )}
             </div>
+            {showCancelConfirm && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-[#0f0f0f]/95 border border-white/10 p-4">
+                <div className="text-center max-w-sm">
+                  <p className="text-slate-200 text-sm mb-4">Annuler l&apos;abonnement ? Vous garderez l&apos;accès Pro jusqu&apos;à la fin de la période en cours.</p>
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowCancelConfirm(false)}
+                      className="px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-slate-200 text-sm hover:bg-white/10"
+                    >
+                      Non
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelConfirm}
+                      className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm hover:bg-red-500/30"
+                    >
+                      Oui, annuler
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <p className="text-slate-400 text-sm">Aucun abonnement actif.</p>

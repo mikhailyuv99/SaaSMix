@@ -40,6 +40,21 @@ def billing_me(user: User = Depends(get_current_user_row)):
     }
 
 
+def _subscription_interval(sub) -> str:
+    """Déduit month/year depuis les items (price récurrent)."""
+    try:
+        if getattr(sub, "items", None) and getattr(sub.items, "data", None) and len(sub.items.data) > 0:
+            item = sub.items.data[0]
+            price = getattr(item, "price", None)
+            if price is not None:
+                recurring = getattr(price, "recurring", None)
+                if recurring and getattr(recurring, "interval", None) == "year":
+                    return "year"
+    except (AttributeError, KeyError, TypeError, IndexError):
+        pass
+    return "month"
+
+
 @router.get("/subscription")
 def get_subscription(user: User = Depends(get_current_user_row)):
     """
@@ -49,25 +64,36 @@ def get_subscription(user: User = Depends(get_current_user_row)):
     if not user.stripe_subscription_id or not STRIPE_SECRET:
         return {"subscription": None}
     stripe.api_key = STRIPE_SECRET
+    sub = None
     try:
         sub = stripe.Subscription.retrieve(
             user.stripe_subscription_id,
             expand=["items.data.price"],
         )
-        if sub.status not in ("active", "trialing"):
-            return {"subscription": None}
-        item = sub.items.data[0] if sub.items.data else None
-        price = item.price if item and getattr(item, "price", None) else None
-        interval = "year" if price and getattr(price, "recurring", None) and getattr(price.recurring, "interval", None) == "year" else "month"
-        return {
-            "subscription": {
-                "current_period_end": sub.current_period_end,
-                "cancel_at_period_end": sub.cancel_at_period_end,
-                "interval": interval,
-            }
-        }
     except stripe.StripeError:
+        try:
+            sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
+        except stripe.StripeError:
+            return {"subscription": None}
+    if not sub or getattr(sub, "status", None) not in ("active", "trialing"):
         return {"subscription": None}
+    interval = _subscription_interval(sub)
+    raw_end = getattr(sub, "current_period_end", None)
+    if raw_end is None and hasattr(sub, "get"):
+        raw_end = sub.get("current_period_end")
+    try:
+        current_period_end = int(raw_end) if raw_end is not None else None
+    except (TypeError, ValueError):
+        current_period_end = None
+    if not current_period_end or current_period_end <= 0:
+        current_period_end = None
+    return {
+        "subscription": {
+            "current_period_end": current_period_end,
+            "cancel_at_period_end": bool(getattr(sub, "cancel_at_period_end", False)),
+            "interval": interval,
+        }
+    }
 
 
 @router.post("/cancel-subscription")
@@ -156,7 +182,7 @@ def create_subscription(
             "customer": customer_id,
             "items": [{"price": body.price_id}],
             "default_payment_method": body.payment_method_id,
-            "expand": ["latest_invoice.payment_intent"],
+            "expand": ["latest_invoice.confirmation_secret"],
             "metadata": {"saas_mix_user_id": user.id},
         }
         if STRIPE_PRICE_ANNUAL and body.price_id == STRIPE_PRICE_ANNUAL:
@@ -170,14 +196,24 @@ def create_subscription(
         db.refresh(user)
 
         if subscription.status == "incomplete" and subscription.latest_invoice:
-            payment_intent = subscription.latest_invoice.payment_intent
-            if isinstance(payment_intent, dict):
-                client_secret = payment_intent.get("client_secret")
-                status_pi = payment_intent.get("status")
-            else:
-                client_secret = getattr(payment_intent, "client_secret", None)
-                status_pi = getattr(payment_intent, "status", None)
-            if status_pi == "requires_action" and client_secret:
+            client_secret = None
+            inv = subscription.latest_invoice
+            # Nouvelle API Stripe (2025+) : invoice.confirmation_secret.client_secret
+            try:
+                confirmation_secret = getattr(inv, "confirmation_secret", None) if inv else None
+                if confirmation_secret:
+                    client_secret = getattr(confirmation_secret, "client_secret", None) or (confirmation_secret.get("client_secret") if isinstance(confirmation_secret, dict) else None)
+            except (KeyError, AttributeError, TypeError):
+                pass
+            # Fallback : invoice.payments.data[0].payment.payment_intent (ancienne structure ou expand)
+            if not client_secret and getattr(inv, "payments", None) and getattr(inv.payments, "data", None) and len(inv.payments.data) > 0:
+                first_payment = inv.payments.data[0]
+                payment = getattr(first_payment, "payment", None) if first_payment else None
+                if payment:
+                    pi = getattr(payment, "payment_intent", None) or (payment.get("payment_intent") if isinstance(payment, dict) else None)
+                    if pi:
+                        client_secret = getattr(pi, "client_secret", None) or (pi.get("client_secret") if isinstance(pi, dict) else None)
+            if client_secret:
                 return {"status": "requires_action", "client_secret": client_secret}
 
         return {"status": "success", "isPro": user.plan == "pro"}
