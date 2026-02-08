@@ -121,7 +121,8 @@ async def update_project(
     db: Session = Depends(get_db),
     name: str | None = Form(None, description="Nom du projet (optionnel, garde l’actuel si absent)"),
     data: str = Form(..., description="JSON array des pistes"),
-    files: list[UploadFile] = File(default=[], description="Fichiers WAV dans l’ordre des pistes avec fichier"),
+    files: list[UploadFile] = File(default=[], description="Fichiers WAV (ordre = trackIdsWithNewFiles si fourni)"),
+    track_ids_with_new_files: str | None = Form(None, alias="trackIdsWithNewFiles"),
 ):
     """Met à jour un projet existant : data + fichiers. Si name fourni, renomme le projet."""
     if not re.match(r"^[a-f0-9\-]{36}$", project_id):
@@ -141,37 +142,77 @@ async def update_project(
 
     user_id = current_user["user_id"]
     project_dir = _project_dir(user_id, project_id)
-    if os.path.isdir(project_dir):
+    ids_with_new_files: list[str] = []
+    if track_ids_with_new_files:
         try:
-            for name_file in os.listdir(project_dir):
-                p = os.path.join(project_dir, name_file)
-                if os.path.isfile(p):
-                    os.remove(p)
-        except OSError:
+            ids_with_new_files = json.loads(track_ids_with_new_files)
+        except json.JSONDecodeError:
             pass
-    else:
-        os.makedirs(project_dir, exist_ok=True)
+        if not isinstance(ids_with_new_files, list):
+            ids_with_new_files = []
 
-    file_index = 0
-    for t in tracks_data:
-        if not isinstance(t, dict) or "id" not in t:
-            continue
-        raw_file_name = (t.get("rawFileName") or "").strip()
-        if not raw_file_name:
-            continue
-        if file_index >= len(files):
-            break
-        upload = files[file_index]
-        if upload.filename and upload.filename.lower().endswith(".wav"):
-            path = _track_file_path(user_id, project_id, t["id"])
-            try:
-                content = await upload.read()
-                with open(path, "wb") as f:
-                    f.write(content)
+    def _safe_id(tid: str) -> str:
+        return re.sub(r"[^a-zA-Z0-9\-_]", "", str(tid)) or "track"
+    track_safe_ids_in_data = {_safe_id(t["id"]) for t in tracks_data if isinstance(t, dict) and t.get("id")}
+
+    if ids_with_new_files:
+        os.makedirs(project_dir, exist_ok=True)
+        file_index = 0
+        for track_id in ids_with_new_files:
+            if file_index >= len(files):
+                break
+            upload = files[file_index]
+            if upload.filename and upload.filename.lower().endswith(".wav"):
+                path = _track_file_path(user_id, project_id, track_id)
+                try:
+                    content = await upload.read()
+                    with open(path, "wb") as f:
+                        f.write(content)
+                except OSError:
+                    pass
+            file_index += 1
+        for t in tracks_data:
+            if isinstance(t, dict) and (t.get("rawFileName") or "").strip():
                 t["hasStoredFile"] = True
+        if os.path.isdir(project_dir):
+            for name_file in os.listdir(project_dir):
+                base = os.path.splitext(name_file)[0]
+                if name_file.endswith(".wav") and base and base not in track_safe_ids_in_data:
+                    try:
+                        os.remove(os.path.join(project_dir, name_file))
+                    except OSError:
+                        pass
+    else:
+        if os.path.isdir(project_dir):
+            try:
+                for name_file in os.listdir(project_dir):
+                    p = os.path.join(project_dir, name_file)
+                    if os.path.isfile(p):
+                        os.remove(p)
             except OSError:
                 pass
-        file_index += 1
+        else:
+            os.makedirs(project_dir, exist_ok=True)
+        file_index = 0
+        for t in tracks_data:
+            if not isinstance(t, dict) or "id" not in t:
+                continue
+            raw_file_name = (t.get("rawFileName") or "").strip()
+            if not raw_file_name:
+                continue
+            if file_index >= len(files):
+                break
+            upload = files[file_index]
+            if upload.filename and upload.filename.lower().endswith(".wav"):
+                path = _track_file_path(user_id, project_id, t["id"])
+                try:
+                    content = await upload.read()
+                    with open(path, "wb") as f:
+                        f.write(content)
+                    t["hasStoredFile"] = True
+                except OSError:
+                    pass
+            file_index += 1
 
     if name is not None and name.strip():
         project.name = name.strip()
