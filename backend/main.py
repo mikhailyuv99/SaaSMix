@@ -20,11 +20,12 @@ from presets import list_presets
 from mixing_service import MixingService
 from test_hise_direct import render as hise_render, master_only as hise_master_only
 from test_hise_direct import read_wav, write_wav
-from database import engine, Base
-from models import Project  # noqa: F401 - enregistre la table projects avec Base
+from database import engine, Base, DATABASE_URL
+from models import Project, User  # noqa: F401 - Project enregistre la table avec Base
 from routers.auth import router as auth_router
 from routers.projects import router as projects_router
-from dependencies import get_current_user
+from routers.billing import router as billing_router
+from dependencies import get_current_user, get_current_user_row
 
 # Create the FastAPI app
 app = FastAPI(
@@ -42,6 +43,8 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "https://siberiamix.netlify.app",
+        "https://siberiamix.com",
+        "https://www.siberiamix.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -50,8 +53,29 @@ app.add_middleware(
 
 # Créer les tables (users, projects, etc.) au démarrage
 Base.metadata.create_all(bind=engine)
+
+
+def _migrate_users_billing_columns():
+    """Ajoute les colonnes billing à la table users si elles n'existent pas (SQLite)."""
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        if "sqlite" in DATABASE_URL:
+            r = conn.execute(text("PRAGMA table_info(users)"))
+            names = [row[1] for row in r]
+            if "plan" not in names:
+                conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(32) NOT NULL DEFAULT 'free'"))
+            if "stripe_customer_id" not in names:
+                conn.execute(text("ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR(255)"))
+            if "stripe_subscription_id" not in names:
+                conn.execute(text("ALTER TABLE users ADD COLUMN stripe_subscription_id VARCHAR(255)"))
+            conn.commit()
+
+
+_migrate_users_billing_columns()
+
 app.include_router(auth_router)
 app.include_router(projects_router)
+app.include_router(billing_router)
 
 # Initialize mixing service
 mixing_service = MixingService()
@@ -525,14 +549,16 @@ async def _build_track_paths_and_gains(track_specs: list, files: List[UploadFile
 
 @app.post("/api/render/mix")
 async def render_mix(
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_row),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
     """
     Assemble toutes les pistes (gains + vocaux mixés ou brut) en un seul WAV.
-    Retourne l'URL de téléchargement du mix.
+    Réservé aux abonnés Pro. Retourne 402 si plan gratuit.
     """
+    if (current_user.plan or "free") != "pro":
+        raise HTTPException(status_code=402, detail="Téléchargement réservé aux abonnés Pro. Passez en Pro pour débloquer.")
     try:
         specs = json.loads(track_specs)
     except json.JSONDecodeError:
@@ -577,13 +603,16 @@ async def render_mix(
 
 @app.post("/api/master")
 async def master_render(
-    current_user: dict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_row),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
     """
     Assemble les pistes en mix, applique master.vst3 (--master-only), retourne mixUrl et masterUrl.
+    Réservé aux abonnés Pro. Retourne 402 si plan gratuit.
     """
+    if (current_user.plan or "free") != "pro":
+        raise HTTPException(status_code=402, detail="Master réservé aux abonnés Pro. Passez en Pro pour débloquer.")
     try:
         specs = json.loads(track_specs)
     except json.JSONDecodeError:
@@ -642,3 +671,51 @@ async def download_render(id: str, type: str = "mix"):
         media_type="audio/wav",
         filename=f"{type}_render.wav",
     )
+
+
+# --- Webhook Stripe : met à jour le plan utilisateur (abo actif / annulé) ---
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "").strip()
+
+
+@app.post("/api/webhooks/stripe")
+async def stripe_webhook(request: Request):
+    """Reçoit les événements Stripe (subscription created/updated/deleted) pour garder plan en sync."""
+    import stripe
+    from database import SessionLocal
+
+    body = await request.body()
+    sig = request.headers.get("stripe-signature", "")
+    if not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=500, detail="STRIPE_WEBHOOK_SECRET manquant")
+    stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "").strip()
+    try:
+        event = stripe.Webhook.construct_event(body, sig, STRIPE_WEBHOOK_SECRET)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Body invalide")
+    except stripe.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Signature Stripe invalide")
+
+    db = SessionLocal()
+    try:
+        if event["type"] in ("customer.subscription.created", "customer.subscription.updated"):
+            sub = event["data"]["object"]
+            customer_id = sub.get("customer")
+            status = sub.get("status")
+            sub_id = sub.get("id")
+            user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
+            if user:
+                user.stripe_subscription_id = sub_id
+                user.plan = "pro" if status in ("active", "trialing") else "free"
+                db.commit()
+        elif event["type"] == "customer.subscription.deleted":
+            sub = event["data"]["object"]
+            customer_id = sub.get("customer")
+            user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
+            if user:
+                user.stripe_subscription_id = None
+                user.plan = "free"
+                db.commit()
+    finally:
+        db.close()
+
+    return {"received": True}

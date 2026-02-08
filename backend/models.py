@@ -15,6 +15,10 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     # SQLite gère mal timezone=True, on utilise DateTime simple
     created_at = Column(DateTime(), server_default=func.now())
+    # Billing: plan = free | pro (lié au compte, rappelé à chaque connexion)
+    plan = Column(String(32), nullable=False, default="free")
+    stripe_customer_id = Column(String(255), nullable=True, index=True)
+    stripe_subscription_id = Column(String(255), nullable=True)
 
 
 class Project(Base):

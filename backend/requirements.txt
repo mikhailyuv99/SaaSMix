@@ -33,6 +33,9 @@ torchaudio==2.1.0
 tensorboard==2.15.1
 tqdm==4.66.1
 
+# Payments
+stripe>=7.0.0
+
 # Utilities
 pydantic==2.5.0
 pydantic-settings==2.1.0

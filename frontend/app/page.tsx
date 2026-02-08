@@ -3,6 +3,8 @@
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import Link from "next/link";
 import { CustomSelect } from "./components/CustomSelect";
+import { SubscriptionModal } from "./components/SubscriptionModal";
+import { ManageSubscriptionModal } from "./components/ManageSubscriptionModal";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -344,6 +346,9 @@ export default function Home() {
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
   const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const [isPro, setIsPro] = useState(false);
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+  const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -1074,6 +1079,22 @@ export default function Home() {
     if (token) h["Authorization"] = `Bearer ${token}`;
     return h;
   }, []);
+
+  const fetchBilling = useCallback(async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/billing/me`, { headers: getAuthHeaders() });
+      if (res.status === 401) return;
+      const data = await res.json().catch(() => ({}));
+      setIsPro(Boolean(data.isPro));
+    } catch (_) {}
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+    if (token) fetchBilling();
+  }, [user?.id, fetchBilling]);
 
   const doCreateNewProject = useCallback(async (name: string) => {
     const defaultTracks = getDefaultTracks();
@@ -2158,6 +2179,10 @@ export default function Home() {
         setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
+      if (res.status === 402) {
+        setSubscriptionModalOpen(true);
+        return;
+      }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       // Fetch as blob and download locally — avoids popup/new tab on all platforms
@@ -2205,6 +2230,10 @@ export default function Home() {
         localStorage.removeItem("saas_mix_user");
         setUser(null);
         setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
+        return;
+      }
+      if (res.status === 402) {
+        setSubscriptionModalOpen(true);
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
@@ -2586,7 +2615,26 @@ export default function Home() {
                       )}
                       <p className="px-4 py-2 text-[10px] text-slate-600 truncate max-w-[220px] mx-auto" title={user.email}>
                         {user.email}
+                        {isPro && <span className="ml-1.5 text-emerald-400">Pro</span>}
                       </p>
+                      {user && !isPro && (
+                        <button
+                          type="button"
+                          onClick={() => { setNavMenuOpen(false); setSubscriptionModalOpen(true); }}
+                          className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
+                        >
+                          PASSER EN PRO
+                        </button>
+                      )}
+                      {user && isPro && (
+                        <button
+                          type="button"
+                          onClick={() => { setNavMenuOpen(false); setManageSubscriptionModalOpen(true); }}
+                          className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
+                        >
+                          GÉRER MON ABONNEMENT
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => {
@@ -3683,6 +3731,19 @@ export default function Home() {
           </section>
         )}
       </div>
+      {/* ─── Subscription Pro (modal Stripe Elements, sans quitter la page) ─── */}
+      <SubscriptionModal
+        isOpen={subscriptionModalOpen}
+        onClose={() => setSubscriptionModalOpen(false)}
+        onSuccess={() => { fetchBilling(); }}
+        getAuthHeaders={getAuthHeaders}
+      />
+      <ManageSubscriptionModal
+        isOpen={manageSubscriptionModalOpen}
+        onClose={() => setManageSubscriptionModalOpen(false)}
+        getAuthHeaders={getAuthHeaders}
+        onSubscriptionUpdated={() => { fetchBilling(); }}
+      />
       {/* ─── Auth Modal (login + register — stays on same page, preserves all audio state) ─── */}
       {showLoginModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }}>
@@ -3715,6 +3776,7 @@ export default function Home() {
                         localStorage.setItem("saas_mix_token", data.access_token);
                         localStorage.setItem("saas_mix_user", JSON.stringify(data.user));
                         setUser(data.user);
+                        fetchBilling();
                         setShowLoginModal(false);
                         setLoginEmail("");
                         setLoginPassword("");
