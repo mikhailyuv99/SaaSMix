@@ -29,14 +29,31 @@ class UpdatePaymentMethodBody(BaseModel):
 
 
 @router.get("/me")
-def billing_me(user: User = Depends(get_current_user_row)):
+def billing_me(
+    user: User = Depends(get_current_user_row),
+    db: Session = Depends(get_db),
+):
     """
     Retourne le plan de l'utilisateur connecté.
-    Utilisé au chargement et après souscription pour mettre à jour l'UI sans refresh.
+    Si l'utilisateur a un stripe_subscription_id mais plan=free (webhook raté ou BDD réinit),
+    on resynchronise depuis Stripe pour rétablir l'accès Pro.
     """
+    plan = user.plan or "free"
+    if plan == "free" and user.stripe_subscription_id and STRIPE_SECRET:
+        try:
+            stripe.api_key = STRIPE_SECRET
+            sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
+            status = sub.get("status") if sub else None
+            if status in ("active", "trialing"):
+                user.plan = "pro"
+                db.commit()
+                db.refresh(user)
+                plan = "pro"
+        except stripe.StripeError:
+            pass
     return {
-        "plan": user.plan or "free",
-        "isPro": (user.plan or "free") == "pro",
+        "plan": plan,
+        "isPro": plan == "pro",
     }
 
 
