@@ -15,7 +15,7 @@ from dependencies import get_current_user_row
 router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 STRIPE_SECRET = os.environ.get("STRIPE_SECRET_KEY", "").strip()
-# Price ID annuel : essai 3 jours uniquement pour l'annuel
+# Price ID annuel (pas d'essai gratuit)
 STRIPE_PRICE_ANNUAL = os.environ.get("STRIPE_PRICE_ANNUAL", "").strip()
 
 
@@ -199,8 +199,6 @@ def create_subscription(
             "expand": ["latest_invoice.confirmation_secret"],
             "metadata": {"saas_mix_user_id": user.id},
         }
-        if STRIPE_PRICE_ANNUAL and body.price_id == STRIPE_PRICE_ANNUAL:
-            kwargs["trial_period_days"] = 3
         subscription = stripe.Subscription.create(**kwargs)
 
         user.stripe_subscription_id = subscription.id
