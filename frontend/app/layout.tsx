@@ -34,7 +34,10 @@ export const metadata = {
     images: ['/logo-black.png'],
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/icon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
     apple: '/logo-black.png',
   },
   robots: {
@@ -52,7 +55,8 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" href="/icon.png" />
+        <link rel="alternate icon" href="/favicon.ico" />
       </head>
       <body className={`${inter.className} antialiased text-slate-200`}>
         <JsonLd />
