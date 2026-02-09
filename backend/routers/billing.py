@@ -34,13 +34,14 @@ def billing_me(
     db: Session = Depends(get_db),
 ):
     """
-    Retourne le plan de l'utilisateur connecté.
+    Retourne le plan de l'utilisateur connectÃ©.
     Si l'utilisateur a un stripe_subscription_id mais plan=free (webhook raté ou BDD réinit),
     on resynchronise depuis Stripe pour rétablir l'accès Pro.
     """
     plan = user.plan or "free"
-    if plan == "free" and STRIPE_SECRET:
+    if STRIPE_SECRET:
         stripe.api_key = STRIPE_SECRET
+        plan = "free"
         try:
             if user.stripe_subscription_id:
                 sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
@@ -51,7 +52,6 @@ def billing_me(
                     db.refresh(user)
                     plan = "pro"
             elif user.stripe_customer_id:
-                # Sub ID manquant en BDD (ex: réinit) mais customer existe dans Stripe → on retrouve l'abo actif ou en trial
                 subs = None
                 for status_filter in ("active", "trialing"):
                     subs = stripe.Subscription.list(customer=user.stripe_customer_id, status=status_filter, limit=1)
@@ -65,31 +65,32 @@ def billing_me(
                     db.refresh(user)
                     plan = "pro"
             elif user.email:
-                # BDD réinit: plus aucun id Stripe en base → on cherche le customer par email
-                customers = stripe.Customer.list(email=user.email, limit=1)
-                if customers.get("data"):
-                    customer_id = customers["data"][0].get("id")
-                    for status_filter in ("active", "trialing"):
-                        subs = stripe.Subscription.list(customer=customer_id, status=status_filter, limit=1)
-                        if subs.get("data"):
-                            sub = subs["data"][0]
-                            user.stripe_customer_id = customer_id
-                            user.stripe_subscription_id = sub.get("id")
-                            user.plan = "pro"
-                            db.commit()
-                            db.refresh(user)
-                            plan = "pro"
-                            break
+                email = (user.email or "").strip().lower()
+                if email:
+                    customers = stripe.Customer.list(email=email, limit=5)
+                    for cust in (customers.get("data") or []):
+                            cid = cust.get("id")
+                            for status_filter in ("active", "trialing"):
+                                subs = stripe.Subscription.list(customer=cid, status=status_filter, limit=1)
+                                if subs.get("data"):
+                                    sub = subs["data"][0]
+                                    user.stripe_customer_id = cid
+                                    user.stripe_subscription_id = sub.get("id")
+                                    user.plan = "pro"
+                                    db.commit()
+                                    db.refresh(user)
+                                    plan = "pro"
+                                    break
+                    if plan == "pro":
+                        break
         except stripe.StripeError:
-            pass
-    return {
-        "plan": plan,
-        "isPro": plan == "pro",
-    }
+            plan = user.plan or "free"
+
+    return {"plan": plan, "isPro": plan == "pro"}
 
 
 def _subscription_interval(sub) -> str:
-    """Déduit month/year depuis les items (price récurrent). Utiliser .get(), pas getattr, car StripeObject est dict-like et sub.items serait la méthode dict."""
+    """DÃ©duit month/year depuis les items (price rÃ©current). Utiliser .get(), pas getattr, car StripeObject est dict-like et sub.items serait la mÃ©thode dict."""
     try:
         items_obj = sub.get("items") if sub else None
         if items_obj is not None:
@@ -109,7 +110,7 @@ def _subscription_interval(sub) -> str:
 @router.get("/subscription")
 def get_subscription(user: User = Depends(get_current_user_row)):
     """
-    Détails de l'abonnement Stripe (pour la page "Gérer mon abonnement").
+    DÃ©tails de l'abonnement Stripe (pour la page "GÃ©rer mon abonnement").
     Retourne current_period_end, cancel_at_period_end, interval (month|year).
     """
     if not user.stripe_subscription_id or not STRIPE_SECRET:
@@ -163,13 +164,13 @@ def cancel_subscription(
     user: User = Depends(get_current_user_row),
     db: Session = Depends(get_db),
 ):
-    """Annule l'abonnement à la fin de la période en cours (accès conservé jusqu'à cette date)."""
+    """Annule l'abonnement Ã  la fin de la pÃ©riode en cours (accÃ¨s conservÃ© jusqu'Ã  cette date)."""
     if not user.stripe_subscription_id or not STRIPE_SECRET:
         raise HTTPException(status_code=400, detail="Aucun abonnement actif.")
     stripe.api_key = STRIPE_SECRET
     try:
         stripe.Subscription.modify(user.stripe_subscription_id, cancel_at_period_end=True)
-        return {"status": "ok", "message": "Abonnement annulé. Accès conservé jusqu'à la fin de la période."}
+        return {"status": "ok", "message": "Abonnement annulÃ©. AccÃ¨s conservÃ© jusqu'Ã  la fin de la pÃ©riode."}
     except stripe.StripeError as e:
         raise HTTPException(status_code=400, detail=str(getattr(e, "user_message", e)))
 
@@ -180,9 +181,9 @@ def update_payment_method(
     user: User = Depends(get_current_user_row),
     db: Session = Depends(get_db),
 ):
-    """Met à jour le moyen de paiement par défaut (carte) pour l'abonnement."""
+    """Met Ã  jour le moyen de paiement par dÃ©faut (carte) pour l'abonnement."""
     if not STRIPE_SECRET:
-        raise HTTPException(status_code=500, detail="Stripe non configuré.")
+        raise HTTPException(status_code=500, detail="Stripe non configurÃ©.")
     stripe.api_key = STRIPE_SECRET
     customer_id = user.stripe_customer_id
     if not customer_id:
@@ -200,7 +201,7 @@ def update_payment_method(
             )
         return {"status": "ok"}
     except stripe.error.CardError as e:
-        raise HTTPException(status_code=400, detail=e.user_message or "Carte refusée.")
+        raise HTTPException(status_code=400, detail=e.user_message or "Carte refusÃ©e.")
     except stripe.StripeError as e:
         raise HTTPException(status_code=400, detail=str(getattr(e, "user_message", e)))
 
@@ -212,12 +213,12 @@ def create_subscription(
     db: Session = Depends(get_db),
 ):
     """
-    Crée un abonnement Stripe (mensuel ou annuel) pour l'utilisateur connecté.
+    CrÃ©e un abonnement Stripe (mensuel ou annuel) pour l'utilisateur connectÃ©.
     Le front envoie le payment_method_id (Stripe Elements) et le price_id (mensuel ou annuel).
-    L'abonnement est lié au compte (stripe_customer_id, stripe_subscription_id, plan) et sera rappelé à chaque connexion.
+    L'abonnement est liÃ© au compte (stripe_customer_id, stripe_subscription_id, plan) et sera rappelÃ© Ã  chaque connexion.
     """
     if not STRIPE_SECRET:
-        raise HTTPException(status_code=500, detail="Stripe non configuré (STRIPE_SECRET_KEY)")
+        raise HTTPException(status_code=500, detail="Stripe non configurÃ© (STRIPE_SECRET_KEY)")
     stripe.api_key = STRIPE_SECRET
 
     try:
@@ -278,6 +279,6 @@ def create_subscription(
 
         return {"status": "success", "isPro": user.plan == "pro"}
     except stripe.error.CardError as e:
-        raise HTTPException(status_code=400, detail=e.user_message or "Carte refusée.")
+        raise HTTPException(status_code=400, detail=e.user_message or "Carte refusÃ©e.")
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e.user_message) if getattr(e, "user_message", None) else "Erreur Stripe.")
