@@ -3,8 +3,17 @@ SaaS Mix - Main FastAPI Application
 This is the entry point for our backend API server.
 """
 
-import json
 import os
+from pathlib import Path
+
+# Toujours charger .env (service Windows / NSSM ne le fait pas)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+except ImportError:
+    pass
+
+import json
 import re
 import sys
 import tempfile
@@ -306,26 +315,27 @@ def _run_mix_job(
                 _mix_jobs[job_id]["percent"] = percent
                 _mix_jobs[job_id]["step"] = step
 
+    kwargs = dict(
+        deesser=deesser,
+        noise_gate=noise_gate,
+        delay=delay,
+        bpm=bpm,
+        delay_division=delay_division,
+        tone_low=tone_low,
+        tone_mid=tone_mid,
+        tone_high=tone_high,
+        air=air,
+        reverb=reverb,
+        reverb_mode=reverb_mode,
+        phone_fx=phone_fx,
+        robot=robot,
+        doubler=doubler,
+    )
     try:
-        ok, err_msg = hise_render(
-            input_path,
-            output_path,
-            deesser=deesser,
-            noise_gate=noise_gate,
-            delay=delay,
-            bpm=bpm,
-            delay_division=delay_division,
-            tone_low=tone_low,
-            tone_mid=tone_mid,
-            tone_high=tone_high,
-            air=air,
-            reverb=reverb,
-            reverb_mode=reverb_mode,
-            phone_fx=phone_fx,
-            robot=robot,
-            doubler=doubler,
-            progress_callback=progress_callback,
-        )
+        try:
+            ok, err_msg = hise_render(input_path, output_path, progress_callback=progress_callback, **kwargs)
+        except TypeError:
+            ok, err_msg = hise_render(input_path, output_path, **kwargs)
         with _mix_jobs_lock:
             if job_id not in _mix_jobs:
                 return
@@ -705,7 +715,7 @@ async def stripe_webhook(request: Request):
             user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
             if user:
                 user.stripe_subscription_id = sub_id
-                user.plan = "pro" if status == "active" else "free"
+                user.plan = "pro" if status in ("active", "trialing") else "free"
                 db.commit()
         elif event["type"] == "customer.subscription.deleted":
             sub = event["data"]["object"]

@@ -34,58 +34,56 @@ def billing_me(
     db: Session = Depends(get_db),
 ):
     """
-    Retourne le plan de l'utilisateur connectÃ©.
-    Si l'utilisateur a un stripe_subscription_id mais plan=free (webhook raté ou BDD réinit),
-    on resynchronise depuis Stripe pour rétablir l'accès Pro.
+    Retourne le plan. Si la BDD dit free mais Stripe a un abo actif (DB réinit, webhook raté),
+    on restaure plan + ids depuis Stripe pour que l'abonnement soit toujours reconnu.
     """
     plan = user.plan or "free"
-    if STRIPE_SECRET:
+    if plan == "free" and STRIPE_SECRET:
         stripe.api_key = STRIPE_SECRET
-        plan = "free"
         try:
             if user.stripe_subscription_id:
                 sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
-                status = sub.get("status") if sub else None
-                if status in ("active", "trialing"):
+                if sub and sub.get("status") in ("active", "trialing"):
                     user.plan = "pro"
                     db.commit()
                     db.refresh(user)
                     plan = "pro"
-            elif user.stripe_customer_id:
-                subs = None
+            if plan == "free" and user.stripe_customer_id:
                 for status_filter in ("active", "trialing"):
-                    subs = stripe.Subscription.list(customer=user.stripe_customer_id, status=status_filter, limit=1)
+                    subs = stripe.Subscription.list(
+                        customer=user.stripe_customer_id, status=status_filter, limit=1
+                    )
                     if subs.get("data"):
+                        sub = subs["data"][0]
+                        user.stripe_subscription_id = sub.get("id")
+                        user.plan = "pro"
+                        db.commit()
+                        db.refresh(user)
+                        plan = "pro"
                         break
-                if subs and subs.get("data"):
-                    sub = subs["data"][0]
-                    user.stripe_subscription_id = sub.get("id")
-                    user.plan = "pro"
-                    db.commit()
-                    db.refresh(user)
-                    plan = "pro"
-            elif user.email:
+            if plan == "free" and user.email:
                 email = (user.email or "").strip().lower()
                 if email:
                     customers = stripe.Customer.list(email=email, limit=5)
                     for cust in (customers.get("data") or []):
-                            cid = cust.get("id")
-                            for status_filter in ("active", "trialing"):
-                                subs = stripe.Subscription.list(customer=cid, status=status_filter, limit=1)
-                                if subs.get("data"):
-                                    sub = subs["data"][0]
-                                    user.stripe_customer_id = cid
-                                    user.stripe_subscription_id = sub.get("id")
-                                    user.plan = "pro"
-                                    db.commit()
-                                    db.refresh(user)
-                                    plan = "pro"
-                                    break
-                    if plan == "pro":
-                        break
+                        cid = cust.get("id")
+                        for status_filter in ("active", "trialing"):
+                            subs = stripe.Subscription.list(
+                                customer=cid, status=status_filter, limit=1
+                            )
+                            if subs.get("data"):
+                                sub = subs["data"][0]
+                                user.stripe_customer_id = cid
+                                user.stripe_subscription_id = sub.get("id")
+                                user.plan = "pro"
+                                db.commit()
+                                db.refresh(user)
+                                plan = "pro"
+                                break
+                        if plan == "pro":
+                            break
         except stripe.StripeError:
-            plan = user.plan or "free"
-
+            pass
     return {"plan": plan, "isPro": plan == "pro"}
 
 
