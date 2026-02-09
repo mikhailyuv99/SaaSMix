@@ -705,7 +705,7 @@ async def stripe_webhook(request: Request):
             user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
             if user:
                 user.stripe_subscription_id = sub_id
-                user.plan = "pro" if status in ("active", "trialing") else "free"
+                user.plan = "pro" if status == "active" else "free"
                 db.commit()
         elif event["type"] == "customer.subscription.deleted":
             sub = event["data"]["object"]

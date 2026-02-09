@@ -39,16 +39,27 @@ def billing_me(
     on resynchronise depuis Stripe pour rétablir l'accès Pro.
     """
     plan = user.plan or "free"
-    if plan == "free" and user.stripe_subscription_id and STRIPE_SECRET:
+    if plan == "free" and STRIPE_SECRET:
+        stripe.api_key = STRIPE_SECRET
         try:
-            stripe.api_key = STRIPE_SECRET
-            sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
-            status = sub.get("status") if sub else None
-            if status in ("active", "trialing"):
-                user.plan = "pro"
-                db.commit()
-                db.refresh(user)
-                plan = "pro"
+            if user.stripe_subscription_id:
+                sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
+                status = sub.get("status") if sub else None
+                if status == "active":
+                    user.plan = "pro"
+                    db.commit()
+                    db.refresh(user)
+                    plan = "pro"
+            elif user.stripe_customer_id:
+                # Sub ID manquant en BDD (ex: réinit) mais customer existe dans Stripe → on retrouve l'abo actif
+                subs = stripe.Subscription.list(customer=user.stripe_customer_id, status="active", limit=1)
+                if subs.get("data"):
+                    sub = subs["data"][0]
+                    user.stripe_subscription_id = sub.get("id")
+                    user.plan = "pro"
+                    db.commit()
+                    db.refresh(user)
+                    plan = "pro"
         except stripe.StripeError:
             pass
     return {
@@ -95,7 +106,7 @@ def get_subscription(user: User = Depends(get_current_user_row)):
             sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
         except stripe.StripeError:
             return {"subscription": None}
-    if not sub or sub.get("status") not in ("active", "trialing"):
+    if not sub or sub.get("status") != "active":
         return {"subscription": None}
     interval = _subscription_interval(sub)
 
@@ -219,7 +230,7 @@ def create_subscription(
         subscription = stripe.Subscription.create(**kwargs)
 
         user.stripe_subscription_id = subscription.id
-        if subscription.status in ("active", "trialing"):
+        if subscription.status == "active":
             user.plan = "pro"
         db.commit()
         db.refresh(user)
