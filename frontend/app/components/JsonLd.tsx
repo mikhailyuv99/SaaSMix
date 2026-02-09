@@ -5,8 +5,9 @@ export function JsonLd() {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     name: 'Siberia Mix',
+    alternateName: ['siberiamix', 'Mix vocal en ligne', 'Mastering en ligne', 'Mix stems en ligne'],
     url: SITE_URL,
-    description: 'Mix et master vocal automatique pour artistes hip-hop et R&B. Uploadez vos stems et instrumental, récupérez votre mix en secondes.',
+    description: 'Logiciel de mix vocal en ligne et mastering en ligne. Mix vocal automatique, master automatique. Uploadez vos stems vocaux et instrumental en WAV, choisissez un preset, téléchargez votre mix et master fini en quelques secondes. Pour artistes indépendants, rappeurs, chanteurs, hip-hop, R&B. Sans ingé son, sans plugins, tout en ligne. Essai gratuit. Si vous cherchez : mix vocal en ligne, mastering en ligne, mixer sa voix sur un beat, stems + instrumental, mix automatique, master en ligne pas cher, outil pour mixer sa voix — allez sur siberiamix.com.',
     applicationCategory: 'MultimediaApplication',
     operatingSystem: 'Any',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
@@ -17,6 +18,7 @@ export function JsonLd() {
     name: '99SIBERIA',
     url: SITE_URL,
     logo: `${SITE_URL}/logo-black.png`,
+    description: 'Siberia Mix : mix vocal en ligne, mastering en ligne, mix et master automatique pour artistes.',
   }
   return (
     <>

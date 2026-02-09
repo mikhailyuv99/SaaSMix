@@ -11,11 +11,20 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Siberia Mix — Mix & master vocal automatique | siberiamix.com',
+    default: 'SIBERIA MIX | MIX VOCAL EN LIGNE',
     template: '%s | Siberia Mix',
   },
-  description: 'Mix et master vocal automatique pour artistes hip-hop et R&B. Uploadez vos stems, choisissez un preset, récupérez votre mix en quelques secondes. Par 99SIBERIA.',
-  keywords: ['mix vocal', 'master automatique', 'mix hip-hop', 'stem mixing', 'siberia mix', 'mix en ligne', 'mastering en ligne'],
+  description: 'Uploadez vos pistes en WAV, choisissez un preset, téléchargez votre mix final.',
+  keywords: [
+    'mix vocal', 'mix vocal en ligne', 'mix vocal automatique', 'master vocal', 'master automatique', 'mastering en ligne', 'master en ligne',
+    'mix et master', 'mix master vocal', 'mix stems', 'stem mixing', 'mix instrumental', 'mixer voix sur instrumental', 'voix sur beat',
+    'logiciel mix vocal', 'outil mix vocal', 'application mix vocal', 'mix en ligne', 'mixage en ligne', 'mastering en ligne pas cher',
+    'artistes indépendants', 'artistes indés', 'rappeurs', 'chanteurs', 'beatmakers', 'home studio',
+    'hip-hop', 'rap', 'R&B', 'mix hip-hop', 'mix rap', 'mix R&B',
+    'stems WAV', 'stems vocaux', 'lead vocal', 'instrumental', 'beat', 'preset mix', 'preset vocal', 'WAV',
+    'mixer sans logiciel', 'mixer sans studio', 'mix rapide', 'comment mixer sa voix', 'comment masteriser',
+    'Siberia Mix', 'siberiamix', '99SIBERIA',
+  ],
   authors: [{ name: '99SIBERIA', url: SITE_URL }],
   creator: '99SIBERIA',
   openGraph: {
@@ -23,14 +32,14 @@ export const metadata = {
     locale: 'fr_FR',
     url: SITE_URL,
     siteName: 'Siberia Mix',
-    title: 'Siberia Mix — Mix & master vocal automatique',
-    description: 'Mix et master vocal automatique pour artistes. Stems + instrumental = mix Pro en secondes.',
+    title: 'SIBERIA MIX | MIX VOCAL EN LIGNE',
+    description: "Logiciel de mix vocal en ligne. Stems + instrumental, mix + master en quelques secondes pour les artistes indépendants. 0 ingé son, 0 plugin, tout se fait en ligne!",
     images: [{ url: '/logo-black.png', width: 512, height: 512, alt: 'Siberia Mix' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Siberia Mix — Mix & master vocal automatique',
-    description: 'Mix et master vocal automatique pour artistes. Stems + instrumental = mix Pro en secondes.',
+    title: 'SIBERIA MIX | MIX VOCAL EN LIGNE',
+    description: "Logiciel de mix vocal en ligne. Stems + instrumental, mix + master en quelques secondes pour les artistes indépendants. 0 ingé son, 0 plugin, tout se fait en ligne!",
     images: ['/logo-black.png'],
   },
   icons: {

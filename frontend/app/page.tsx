@@ -2703,7 +2703,7 @@ export default function Home() {
             />
           </h1>
           <p className="text-tagline text-slate-500 max-md:text-[10px] max-md:px-2">
-            Mix & master automatique pour les artistes indépendants
+            Mix & master automatisé pour les artistes indépendants
           </p>
         </header>
 
