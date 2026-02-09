@@ -1,0 +1,14 @@
+# Siberia Mix
+
+> Siberia Mix est un service en ligne de mix et master vocal automatique pour artistes hip-hop et R&B. L'utilisateur uploade ses stems vocaux et son instrumental (WAV), choisit un preset, et reçoit un mix complet + vocal traité en quelques secondes. Produit par 99SIBERIA.
+
+- Site principal : application web de mix vocal (upload, presets, rendu).
+- Abonnement Pro : fonctionnalités avancées via Stripe (siberiamix.com).
+- Stack : backend FastAPI (Python), frontend Next.js, traitement audio (HISE VST3, librosa).
+
+## Liens principaux
+
+- [Accueil / Application](https://siberiamix.com): Page principale pour mixer vos stems
+- [Mentions légales](https://siberiamix.com/mentions-legales)
+- [Politique de confidentialité](https://siberiamix.com/politique-confidentialite)
+- [CGU](https://siberiamix.com/cgu)

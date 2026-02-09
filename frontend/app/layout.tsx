@@ -1,13 +1,47 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import { StarryCeiling } from './components/StarryCeiling'
+import { JsonLd } from './components/JsonLd'
 import Link from 'next/link'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
+
 export const metadata = {
-  title: 'Siberia Mix — Mix & master automatique | siberiamix.com',
-  description: 'Mixs et masters automatique pour les artistes indépendants. Siberia Mix par siberiamix.com',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Siberia Mix — Mix & master vocal automatique | siberiamix.com',
+    template: '%s | Siberia Mix',
+  },
+  description: 'Mix et master vocal automatique pour artistes hip-hop et R&B. Uploadez vos stems, choisissez un preset, récupérez votre mix en quelques secondes. Par 99SIBERIA.',
+  keywords: ['mix vocal', 'master automatique', 'mix hip-hop', 'stem mixing', 'siberia mix', 'mix en ligne', 'mastering en ligne'],
+  authors: [{ name: '99SIBERIA', url: SITE_URL }],
+  creator: '99SIBERIA',
+  openGraph: {
+    type: 'website',
+    locale: 'fr_FR',
+    url: SITE_URL,
+    siteName: 'Siberia Mix',
+    title: 'Siberia Mix — Mix & master vocal automatique',
+    description: 'Mix et master vocal automatique pour artistes. Stems + instrumental = mix Pro en secondes.',
+    images: [{ url: '/logo-black.png', width: 512, height: 512, alt: 'Siberia Mix' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Siberia Mix — Mix & master vocal automatique',
+    description: 'Mix et master vocal automatique pour artistes. Stems + instrumental = mix Pro en secondes.',
+    images: ['/logo-black.png'],
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/logo-black.png',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
 }
 
 export default function RootLayout({
@@ -18,6 +52,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${inter.className} antialiased text-slate-200`}>
+        <JsonLd />
         {/* <StarryCeiling /> */}
         <div className="relative z-10 min-h-screen flex flex-col">
           <div className="flex-1">{children}</div>
