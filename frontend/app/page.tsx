@@ -3347,12 +3347,12 @@ export default function Home() {
                   </div>
                   {/* Ligne 3 : même grille 3 colonnes que L2 — col1 Doubler+FX robot (1 box), col2 BPM (taille Delay), col3 FX tel+Air (1 box) */}
                   <div className="grid grid-cols-3 gap-4 min-h-[3rem] items-end">
-                    <div className="flex flex-col min-w-0 gap-2">
-                      <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                    <div className="flex flex-row items-center justify-between min-w-0">
+                      <label className={`flex items-center gap-2 text-tagline text-xs uppercase tracking-wider shrink-0 ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
                         <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
                         Doubler
                       </label>
-                      <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                      <label className={`flex items-center gap-2 text-tagline text-xs uppercase tracking-wider shrink-0 ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
                         <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
                         FX robot
                       </label>
@@ -3375,12 +3375,12 @@ export default function Home() {
                         />
                       </div>
                     </div>
-                    <div className="flex flex-col min-w-0 gap-2">
-                      <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                    <div className="flex flex-row items-center justify-between min-w-0">
+                      <label className={`flex items-center gap-2 text-tagline text-xs uppercase tracking-wider shrink-0 ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
                         <input type="checkbox" checked={track.mixParams.phone_fx} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, phone_fx: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
                         FX téléphone
                       </label>
-                      <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                      <label className={`flex items-center gap-2 text-tagline text-xs uppercase tracking-wider shrink-0 ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
                         <input type="checkbox" checked={track.mixParams.air} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, air: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
                         Air
                       </label>
