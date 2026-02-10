@@ -27,7 +27,7 @@ from fastapi.responses import FileResponse, Response
 from typing import Optional, List
 from presets import list_presets
 from mixing_service import MixingService
-from test_hise_direct import render as hise_render, master_only as hise_master_only
+from test_hise_direct import render as hise_render, master_only as hise_master_only, get_vst_status
 from test_hise_direct import read_wav, write_wav
 from database import engine, Base, DATABASE_URL
 from models import Project, User  # noqa: F401 - Project enregistre la table avec Base
@@ -172,6 +172,12 @@ async def health_check():
         "status": "healthy",
         "service": "saas-mix-api"
     }
+
+
+@app.get("/api/debug/vst-status")
+async def debug_vst_status():
+    """Diagnostic : chemins host + VST3 (GlobalMix/Project1). Pour vérifier le déploiement sans lancer de mix."""
+    return get_vst_status()
 
 
 @app.get("/api/presets")

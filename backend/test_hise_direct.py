@@ -27,6 +27,7 @@ if not _def.exists():
 HOST_EXE = _def
 VST3_PATH = Path(r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3\Project1.vst3")
 EQ_PATHS = []  # [Path eq1, eq2, ... eq9] rempli depuis vst_config ou VST_BASE
+_VST_MAP = {}  # stem -> Path, rempli quand VST_BASE est défini (pour diagnostic)
 try:
     from vst_config import VST_PATHS
     def _vst_path(name):
@@ -72,10 +73,16 @@ if os.environ.get("VST_BASE"):
         try:
             for f in _base.rglob("*.vst3"):
                 stem = f.stem.lower()
+                # Sur Windows, .vst3 peut être un bundle (dossier) ou un DLL interne (Contents/.../X.vst3).
+                # Préférer le bundle (dossier) pour que le host reçoive la racine du plugin.
                 if stem not in _vst_map:
+                    _vst_map[stem] = f
+                elif f.is_dir() and not _vst_map[stem].is_dir():
                     _vst_map[stem] = f
         except Exception:
             pass
+    _VST_MAP.clear()
+    _VST_MAP.update(_vst_map)
     def _vst_by_name(name: str, alt: str = None) -> Path:
         for key in (name.lower(), (alt or "").lower()):
             if key and key in _vst_map:
@@ -86,8 +93,15 @@ if os.environ.get("VST_BASE"):
         return _base / f"{name}.vst3"
 
     VST3_PATH = _vst_map.get("globalmix") or _vst_by_name("globalmix") or _vst_map.get("project1") or _vst_by_name("project1")
-    EQ_PATHS = [_vst_map.get(f"eq{i}") or _vst_by_name(f"eq{i}") for i in range(1, 10)]
-    EQ_PATHS = [p for p in EQ_PATHS if p and p.exists()]
+    # EQ1..EQ9 : accepter eq1, eq 1, eq-1, eq_1 pour compatibilité noms sur VPS
+    def _eq_path(i):
+        for name in (f"eq{i}", f"eq {i}", f"eq-{i}", f"eq_{i}"):
+            p = _vst_map.get(name) or _vst_by_name(name)
+            if p and p.exists():
+                return p
+        return None
+    EQ_PATHS = [_eq_path(i) for i in range(1, 10)]
+    EQ_PATHS = [p for p in EQ_PATHS if p]
     MASTER_PATH = _vst_map.get("master") or _vst_by_name("master")
     REVERB1_PATH = _vst_map.get("reverb1") or _vst_by_name("reverb1")
     REVERB2_PATH = _vst_map.get("reverb2") or _vst_by_name("reverb2")
@@ -157,6 +171,22 @@ if sys.platform == "linux":
                     ROBOT_PATH = r
     except Exception as e:
         print("Linux/R2: chaîne HISE non disponible:", e)
+
+
+def get_vst_status():
+    """État des chemins VST (host + plugin principal) pour diagnostic déploiement."""
+    vst_base = os.environ.get("VST_BASE", "")
+    base_exists = Path(vst_base).exists() if vst_base else False
+    return {
+        "HOST_EXE": str(HOST_EXE),
+        "HOST_EXE_exists": HOST_EXE.exists(),
+        "VST3_PATH": str(VST3_PATH),
+        "VST3_PATH_exists": VST3_PATH.exists(),
+        "VST_BASE": vst_base or "(not set)",
+        "VST_BASE_exists": base_exists,
+        "plugins_in_VST_BASE": sorted(_VST_MAP.keys()) if _VST_MAP else [],
+        "main_plugin": "GlobalMix" if (VST3_PATH and "globalmix" in str(VST3_PATH).lower()) else "Project1",
+    }
 
 
 def read_wav(path: str):
@@ -646,6 +676,23 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, deesser_mode: 
     _total_weight = sum(WEIGHTS.get(s, 5) for s in _steps) or 100
     _cumul_weight = [0]  # mutable
 
+    # Log résolution VST3 (diagnostic déploiement VPS : GlobalMix vs Project1, EQs)
+    _vst_base = os.environ.get("VST_BASE", "(not set)")
+    _main_plugin = "GlobalMix" if (VST3_PATH and "globalmix" in str(VST3_PATH).lower()) else "Project1"
+    print(f"[VST] VST_BASE={_vst_base}")
+    print(f"[VST] HOST_EXE={HOST_EXE} exists={HOST_EXE.exists()}")
+    print(f"[VST] Main plugin: {_main_plugin} -> VST3_PATH={VST3_PATH} exists={VST3_PATH.exists()}")
+    if _main_plugin != "GlobalMix":
+        print(f"[VST] WARNING: GlobalMix not used (path has no 'globalmix'); using {_main_plugin}. Check VST_BASE contains GlobalMix.vst3.")
+    print(f"[VST] EQ_PATHS count={len(EQ_PATHS)} use_eq_chain={len(EQ_PATHS) >= 9}")
+    if EQ_PATHS:
+        for i, p in enumerate(EQ_PATHS[:4]):
+            print(f"[VST]   EQ{i+1}={p} exists={p.exists()}")
+        if len(EQ_PATHS) > 4:
+            print(f"[VST]   ... EQ5..EQ{len(EQ_PATHS)}")
+    else:
+        print(f"[VST]   (no EQs: put eq1.vst3..eq9.vst3 or EQ1..EQ9 in VST_BASE, or use subfolders EQ1/Binaries/Compiled/VST3/EQ1.vst3)")
+
     def _step_weight(step_label: str) -> int:
         """Poids pour un libellé de fin d'étape (ex. 'Noise gate OK', 'VST3 OK')."""
         for key in WEIGHTS:
@@ -661,13 +708,30 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, deesser_mode: 
             progress_callback(min(100, pct), step)
 
     if not HOST_EXE.exists():
-        msg = f"hise_vst3_host introuvable: {HOST_EXE}"
+        vst_base = os.environ.get("VST_BASE", "(not set)")
+        msg = (
+            f"hise_vst3_host introuvable: {HOST_EXE}. "
+            f"Sur le VPS, définir HISE_VST3_HOST_EXE (ex: C:\\app\\hise_vst3_host.exe). "
+            f"VST_BASE={vst_base}"
+        )
         print(f"ERREUR: {msg}")
         return False, msg
     if not VST3_PATH.exists():
-        msg = f"VST3 principal (GlobalMix) introuvable: {VST3_PATH}"
+        vst_base = os.environ.get("VST_BASE", "(not set)")
+        plugins = sorted(_VST_MAP.keys()) if _VST_MAP else []
+        msg = (
+            f"VST3 principal (GlobalMix/Project1) introuvable: {VST3_PATH}. "
+            f"VST_BASE={vst_base} (exists={Path(vst_base).exists() if vst_base else False}). "
+            f"Plugins trouvés dans VST_BASE: {plugins or 'aucun'}. "
+            f"Sur le VPS, mettre GlobalMix.vst3 (ou Project1.vst3) dans le dossier VST_BASE et définir VST_BASE dans le service (NSSM)."
+        )
         print(f"ERREUR: {msg}")
         return False, msg
+    if os.environ.get("REQUIRE_GLOBALMIX", "").strip().lower() in ("1", "true", "yes"):
+        if "globalmix" not in str(VST3_PATH).lower():
+            msg = f"REQUIRE_GLOBALMIX=1 but main plugin is not GlobalMix: {VST3_PATH}. Put GlobalMix.vst3 in VST_BASE."
+            print(f"ERREUR: {msg}")
+            return False, msg
     if not Path(input_wav).exists():
         msg = f"Fichier d'entrée introuvable: {input_wav}"
         print(f"ERREUR: {msg}")
@@ -761,8 +825,9 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, deesser_mode: 
 
     _progress("Chaîne principale (VST3)")
     cmd = [str(HOST_EXE), str(VST3_PATH), vst_input, vst_output, str(VST_BLOCK_SIZE)]
-    print("1. Rendu GlobalMix (VST3)...")
     cwd = str(VST3_PATH.parent) if VST3_PATH.parent else None
+    print("1. Rendu GlobalMix (VST3)...")
+    print(f"[VST] Run: cmd={cmd} cwd={cwd}")
     vst_weight = WEIGHTS["Chaîne principale (VST3)"]
     start_pct = round((_cumul_weight[0] / _total_weight) * 100) if _total_weight else 0
     end_pct = round(((_cumul_weight[0] + vst_weight) / _total_weight) * 100) if _total_weight else 100
@@ -788,7 +853,11 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, deesser_mode: 
 
     if returncode != 0:
         err = (stderr or stdout or "").strip() or f"code sortie {returncode}"
-        print("ERREUR:", err, f"(code sortie {returncode})")
+        print("ERREUR hise_vst3_host (GlobalMix):", err, f"(code sortie {returncode})")
+        if stdout:
+            print("[VST] stdout:", stdout)
+        if stderr:
+            print("[VST] stderr:", stderr)
         Path(normalized_input).unlink(missing_ok=True)
         return False, err
 
