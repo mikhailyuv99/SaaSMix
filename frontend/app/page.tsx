@@ -3303,7 +3303,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Paramètres mix desktop : L1 Basses/Mids/Aigus, L2 Reverb/Delay/De-esser, L3 Doubler | FX robot | BPM | FX tel | Air (5 colonnes) — mobile inchangé */}
+              {/* Paramètres mix desktop : L1 Basses/Mids/Aigus, L2 Reverb/Delay/De-esser, L3 col1 Doubler+FX robot | col2 BPM (taille Delay) | col3 FX tel+Air — mobile inchangé */}
               {track.paramsOpen && isVocal(track.category) && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-col gap-4 max-lg:hidden">
                   {/* Ligne 1 : Basses, Mids, Aigus */}
@@ -3345,19 +3345,23 @@ export default function Home() {
                       <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                     </div>
                   </div>
-                  {/* Ligne 3 : Doubler | FX robot | BPM (centré) | FX téléphone | Air — 5 colonnes, espacement égal */}
-                  <div className="grid grid-cols-5 gap-3 min-h-[2.5rem] items-center">
-                    <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
-                      <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      Doubler
-                    </label>
-                    <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
-                      <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      FX robot
-                    </label>
-                    <div className="flex justify-center items-center min-w-0">
-                      <div className="flex items-center justify-center gap-1.5 w-[5rem] min-h-[2rem] rounded-lg border border-white/10 bg-white/5 px-2 py-1">
-                        <span className={`text-tagline text-[10px] uppercase tracking-wider shrink-0 ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>BPM</span>
+                  {/* Ligne 3 : même grille 3 colonnes que L2 — col1 Doubler+FX robot (1 box), col2 BPM (taille Delay), col3 FX tel+Air (1 box) */}
+                  <div className="grid grid-cols-3 gap-4 min-h-[3rem] items-end">
+                    <div className="flex flex-col min-w-0 gap-2">
+                      <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
+                        Doubler
+                      </label>
+                      <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
+                        FX robot
+                      </label>
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <label className="flex items-center justify-center gap-2 mb-1.5">
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>BPM</span>
+                      </label>
+                      <div className="flex items-center w-full min-w-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 box-border min-h-[2.25rem]">
                         <input
                           type="number"
                           min={60}
@@ -3367,18 +3371,20 @@ export default function Home() {
                           onFocus={() => setFocusedBpmTrackId(track.id)}
                           onBlur={() => setFocusedBpmTrackId(null)}
                           onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); setFocusedBpmTrackId(null); } }}
-                          className={`input-bpm w-10 bg-transparent border-none text-tagline text-center text-sm focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}
+                          className={`input-bpm w-full bg-transparent border-none text-tagline text-center focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}
                         />
                       </div>
                     </div>
-                    <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
-                      <input type="checkbox" checked={track.mixParams.phone_fx} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, phone_fx: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      FX téléphone
-                    </label>
-                    <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
-                      <input type="checkbox" checked={track.mixParams.air} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, air: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      Air
-                    </label>
+                    <div className="flex flex-col min-w-0 gap-2">
+                      <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <input type="checkbox" checked={track.mixParams.phone_fx} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, phone_fx: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
+                        FX téléphone
+                      </label>
+                      <label className={`flex items-center justify-center gap-2 text-tagline text-xs uppercase tracking-wider ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <input type="checkbox" checked={track.mixParams.air} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, air: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
+                        Air
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}
