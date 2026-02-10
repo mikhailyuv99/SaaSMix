@@ -8,6 +8,9 @@ import { ManageSubscriptionModal } from "./components/ManageSubscriptionModal";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+/** Types d'input où Espace = caractère espace (on ne fait pas play/pause) */
+const INPUT_TYPES_FOR_TYPING = ["text", "search", "email", "url", "tel", "password", "number"];
+
 function formatApiError(e: unknown): string {
   const msg = e instanceof Error ? e.message : String(e);
   if (msg === "Failed to fetch" || /NetworkError|Load failed|Failed to fetch/i.test(String(msg)))
@@ -1858,7 +1861,7 @@ export default function Home() {
 
   playAllRef.current = playAll;
 
-  // Espace = uniquement play/pause (ou espace dans les champs texte). Interception en capture pour que rien d'autre (seek, waveform, bouton) ne réagisse.
+  // Espace = play/pause partout sauf champs de saisie texte (BPM, carte, etc.). Gain, boutons, file : Space = play/pause sans recliquer.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== "Space" || e.repeat) return;
@@ -1868,7 +1871,8 @@ export default function Home() {
         (target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT" ||
           target.isContentEditable ||
-          (target.tagName === "INPUT" && (target as HTMLInputElement).type !== "file"));
+          (target.tagName === "INPUT" &&
+            INPUT_TYPES_FOR_TYPING.includes((target as HTMLInputElement).type)));
       if (isTypingField) return;
       e.preventDefault();
       e.stopPropagation();
