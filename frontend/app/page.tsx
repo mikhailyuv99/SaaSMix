@@ -355,6 +355,21 @@ export default function Home() {
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
   const [projectBpm, setProjectBpm] = useState(120);
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
+
+  // BPM box : wheel non-passive pour que le scroll ne défile pas la page
+  useEffect(() => {
+    const el = bpmBoxRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -1 : 1;
+      const step = e.shiftKey ? 10 : 1;
+      setProjectBpm((b) => Math.max(1, Math.min(300, b + delta * step)));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [tracks.length]);
+
   const [showLoginMixMessage, setShowLoginMixMessage] = useState(false);
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
   const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
@@ -430,6 +445,7 @@ export default function Home() {
   const isFirstSaveRef = useRef(true);
   const playAllRef = useRef<(override?: { playable?: Track[]; startOffset?: number }) => void>(() => {});
   const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
+  const bpmBoxRef = useRef<HTMLDivElement | null>(null);
 
   // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage.
   // rawAudioUrl (blob URL) survit aux navigations client-side (login) et est restauré directement.
@@ -2811,7 +2827,7 @@ export default function Home() {
           return (
           <section className="mb-8 max-lg:mb-6 max-md:mb-4">
             <h2 className="sr-only">Lecture</h2>
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-8 max-lg:gap-6 max-md:gap-4">
               <div className="flex justify-center gap-2 max-md:gap-1.5">
                 {!isPlaying ? (
                   <div className="relative">
@@ -2837,17 +2853,12 @@ export default function Home() {
                 )}
               </div>
               <div
-                className="flex flex-col items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 select-none"
+                ref={bpmBoxRef}
+                className="flex flex-row items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 select-none"
                 title="Molette pour modifier le BPM du projet (1–300)"
-                onWheel={(e) => {
-                  e.preventDefault();
-                  const delta = e.deltaY > 0 ? -1 : 1;
-                  const step = e.shiftKey ? 10 : 1;
-                  setProjectBpm((b) => Math.max(1, Math.min(300, b + delta * step)));
-                }}
               >
-                <span className="text-tagline text-[10px] uppercase tracking-wider text-slate-500">BPM projet</span>
-                <span className="text-tagline text-lg tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.5)]">{projectBpm}</span>
+                <span className="text-tagline text-[10px] uppercase tracking-wider text-slate-500">BPM</span>
+                <span className="text-tagline text-sm tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.5)]">{projectBpm}</span>
               </div>
             </div>
           </section>
