@@ -461,6 +461,32 @@ def apply_noise_gate(audio: np.ndarray, sr: int, threshold_db: float = -45.0,
     return audio * gate_env
 
 
+def apply_doubler_stereo(audio: np.ndarray, sr: int,
+                         delay_ms: float = 20.0, wet_gain: float = 0.4) -> np.ndarray:
+    """
+    Doubler stéréo symétrique (DSP) : L_out = L + R_retardé * wet, R_out = R + L_retardé * wet.
+    Remplace doubler.vst3. Si entrée mono, duplique en stéréo puis applique le cross-delay.
+    """
+    if audio.ndim == 1:
+        audio = np.column_stack([audio, audio])
+    n = audio.shape[0]
+    delay_samples = max(0, min(n - 1, int(delay_ms * sr / 1000)))
+    if delay_samples == 0:
+        return audio.copy()
+    L = audio[:, 0].astype(np.float64)
+    R = audio[:, 1].astype(np.float64)
+    # Retard : décalage sans wrap (zéros au début)
+    L_delayed = np.zeros_like(L)
+    L_delayed[delay_samples:] = R[:-delay_samples]
+    R_delayed = np.zeros_like(R)
+    R_delayed[delay_samples:] = L[:-delay_samples]
+    L_out = L + wet_gain * L_delayed
+    R_out = R + wet_gain * R_delayed
+    out = np.column_stack([L_out, R_out]).astype(np.float32)
+    np.clip(out, -1.0, 1.0, out=out)
+    return out
+
+
 def apply_tone_control(audio: np.ndarray, sr: int,
                        tone_low: int = 2, tone_mid: int = 2, tone_high: int = 2,
                        air: bool = False) -> np.ndarray:
@@ -857,24 +883,15 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, deesser_mode: 
             print(f"5. Reverb skip: reverb{reverb_mode}.vst3 introuvable ({reverb_path})")
             _progress("Reverb skip", done=True)
 
-    # Étape 6 : Doubler (doubler.vst3) — après Reverb, avant Robot
-    if doubler and DOUBLER_PATH and DOUBLER_PATH.exists():
+    # Étape 6 : Doubler (DSP stéréo symétrique) — après Reverb, avant Robot
+    if doubler:
         _progress("Doubler")
-        print("6. Doubler (doubler.vst3)...")
-        temp_doubler_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-        cmd = [str(HOST_EXE), str(DOUBLER_PATH), output_wav, temp_doubler_out, str(VST_BLOCK_SIZE)]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0 and Path(temp_doubler_out).exists():
-            shutil.copy(temp_doubler_out, output_wav)
-            print("   Doubler OK")
-            _progress("Doubler OK", done=True)
-        else:
-            print("   Doubler skip:", result.stderr or result.stdout or "sortie absente")
-            _progress("Doubler skip", done=True)
-        Path(temp_doubler_out).unlink(missing_ok=True)
-    elif doubler:
-        print("6. Doubler skip: doubler.vst3 introuvable")
-        _progress("Doubler skip", done=True)
+        print("6. Doubler (DSP)...")
+        audio, sr = read_wav(output_wav)
+        audio_out = apply_doubler_stereo(audio, sr, delay_ms=20.0, wet_gain=0.4)
+        write_wav(output_wav, audio_out, sr)
+        print("   Doubler OK")
+        _progress("Doubler OK", done=True)
 
     # Étape 7 : FX robot (robot.vst3) — après Doubler si coché, sinon après Reverb
     if robot and ROBOT_PATH and ROBOT_PATH.exists():
@@ -953,7 +970,7 @@ if __name__ == "__main__":
         print("  --tone-low=1|2|3   Basses: 1=EQ1, 2=EQ2, 3=EQ3 (default 2)")
         print("  --tone-mid=1|2|3   Mids: 1=EQ4, 2=EQ5, 3=EQ6 (default 2)")
         print("  --tone-high=1|2|3  Aigus: 1=EQ7, 2=EQ8, 3=EQ9 (default 2)")
-        print("Chaîne: [EQ1-9] → Gate → [FX téléphone] → GlobalMix/Project1 → De-esser → [Air] → Gain → Delay → Reverb → [doubler] → [robot]")
+        print("Chaîne: [EQ1-9] → Gate → [FX téléphone] → GlobalMix → De-esser → [Air] → Gain → Delay → Reverb → [Doubler DSP] → [robot]")
         sys.exit(1)
 
     # Mode master seul : input WAV mixé → master.vst3 → output

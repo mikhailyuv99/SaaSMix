@@ -32,7 +32,6 @@ _DEFAULT_OBJECTS = [
     "reverb1.vst3.zip",
     "reverb2.vst3.zip",
     "reverb3new.vst3.zip",
-    "doubler.vst3.zip",
     "robot.vst3.zip",
 ]
 

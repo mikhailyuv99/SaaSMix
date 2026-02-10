@@ -15,7 +15,7 @@ Ordre **établi** à respecter dans `test_hise_direct.py`.
 | 6 | **Gain +4.5 dB** | Uniquement si Reverb 2 ou 3 |
 | 7 | **Delay** | Ping-pong, BPM + division (1/4, 1/2, 1/8) |
 | 8 | **Reverb** | reverb1 / reverb2 / reverb3 (VST3) |
-| 9 | **Doubler** (si coché) | doubler.vst3 (HISE) |
+| 9 | **Doubler** (si coché) | DSP Python (stéréo symétrique, cross-delay ~20 ms, wet 0.4) |
 | 10 | **FX robot** (si coché) | robot.vst3 (HISE) |
 
 ---
