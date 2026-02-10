@@ -350,10 +350,10 @@ export default function Home() {
   const [gainSliderHoveredTrackId, setGainSliderHoveredTrackId] = useState<string | null>(null);
   const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
   const [fileChooserActiveTrackId, setFileChooserActiveTrackId] = useState<string | null>(null);
-  const [focusedBpmTrackId, setFocusedBpmTrackId] = useState<string | null>(null);
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
   const [showMasterMessage, setShowMasterMessage] = useState(false);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
+  const [projectBpm, setProjectBpm] = useState(120);
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
   const [showLoginMixMessage, setShowLoginMixMessage] = useState(false);
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
@@ -1945,7 +1945,7 @@ export default function Home() {
       form.append("delay", String(p.delay));
       form.append("reverb", String(p.reverb));
       form.append("reverb_mode", String(p.reverb_mode));
-      form.append("bpm", String(p.bpm));
+      form.append("bpm", String(projectBpm));
       form.append("delay_division", p.delay_division);
       form.append("tone_low", String(p.tone_low));
       form.append("tone_mid", String(p.tone_mid));
@@ -2154,7 +2154,7 @@ export default function Home() {
         setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
     },
-    [tracks, updateTrack]
+    [tracks, updateTrack, projectBpm]
   );
 
   const isVocal = (c: Category) =>
@@ -2811,29 +2811,44 @@ export default function Home() {
           return (
           <section className="mb-8 max-lg:mb-6 max-md:mb-4">
             <h2 className="sr-only">Lecture</h2>
-            <div className="flex justify-center gap-2 max-md:gap-1.5">
-              {!isPlaying ? (
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => playAll()}
-                    className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9"
-                    aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
-                    title={undefined}
-                  >
-                    <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex justify-center gap-2 max-md:gap-1.5">
+                {!isPlaying ? (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => playAll()}
+                      className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9"
+                      aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
+                      title={undefined}
+                    >
+                      <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                    {showPlayNoFileMessage && (
+                      <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                        Veuillez choisir un fichier
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <button type="button" onClick={stopAll} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9" aria-label="Pause">
+                    <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                   </button>
-                  {showPlayNoFileMessage && (
-                    <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
-                      Veuillez choisir un fichier
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <button type="button" onClick={stopAll} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9" aria-label="Pause">
-                  <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                </button>
-              )}
+                )}
+              </div>
+              <div
+                className="flex flex-col items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 select-none"
+                title="Molette pour modifier le BPM du projet (1–300)"
+                onWheel={(e) => {
+                  e.preventDefault();
+                  const delta = e.deltaY > 0 ? -1 : 1;
+                  const step = e.shiftKey ? 10 : 1;
+                  setProjectBpm((b) => Math.max(1, Math.min(300, b + delta * step)));
+                }}
+              >
+                <span className="text-tagline text-[10px] uppercase tracking-wider text-slate-500">BPM projet</span>
+                <span className="text-tagline text-lg tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.5)]">{projectBpm}</span>
+              </div>
             </div>
           </section>
           );
@@ -3345,8 +3360,8 @@ export default function Home() {
                       <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                     </div>
                   </div>
-                  {/* Ligne 3 : même grille 3 colonnes que L2 — col1 Doubler+FX robot (1 box), col2 BPM (taille Delay), col3 FX tel+Air (1 box) */}
-                  <div className="grid grid-cols-3 gap-4 min-h-[3rem] items-end">
+                  {/* Ligne 3 : Doubler+FX robot | FX tel+Air (BPM = projet, sous le bouton Play) */}
+                  <div className="grid grid-cols-2 gap-4 min-h-[3rem] items-end">
                     <div className="flex flex-row items-center justify-between min-w-0">
                       <label className={`flex items-center gap-2 text-tagline text-xs uppercase tracking-wider shrink-0 ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
                         <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
@@ -3356,24 +3371,6 @@ export default function Home() {
                         <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
                         FX robot
                       </label>
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <label className="flex items-center justify-center gap-2 mb-1.5">
-                        <span className={`text-tagline text-xs uppercase tracking-wider ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>BPM</span>
-                      </label>
-                      <div className="flex items-center w-full min-w-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2 box-border min-h-[2.25rem]">
-                        <input
-                          type="number"
-                          min={60}
-                          max={200}
-                          value={track.mixParams.bpm}
-                          onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, bpm: Number(e.target.value) || 120 } })}
-                          onFocus={() => setFocusedBpmTrackId(track.id)}
-                          onBlur={() => setFocusedBpmTrackId(null)}
-                          onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); setFocusedBpmTrackId(null); } }}
-                          className={`input-bpm w-full bg-transparent border-none text-tagline text-center focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}
-                        />
-                      </div>
                     </div>
                     <div className="flex flex-row items-center justify-between min-w-0">
                       <label className={`flex items-center gap-2 text-tagline text-xs uppercase tracking-wider shrink-0 ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
@@ -3444,21 +3441,6 @@ export default function Home() {
                           <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           <span>Doubler</span>
                         </label>
-                      </div>
-                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <span className={`text-tagline text-[10px] max-md:text-[9px] ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>BPM</span>
-                        <div className="flex items-center h-9 w-full min-w-0 rounded-lg border border-white/10 bg-white/5 px-2 box-border">
-                          <input
-                            type="number"
-                            min={60}
-                            max={200}
-                            value={track.mixParams.bpm}
-                            onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, bpm: Number(e.target.value) || 120 } })}
-                            onFocus={() => setFocusedBpmTrackId(track.id)}
-                            onBlur={() => setFocusedBpmTrackId(null)}
-                            className={`input-bpm w-full min-w-0 bg-transparent border-none text-center focus:outline-none focus:ring-0 p-0 text-[10px] max-md:text-[9px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${focusedBpmTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}
-                          />
-                        </div>
                       </div>
                 </div>
               )}
