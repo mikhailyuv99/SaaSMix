@@ -3,8 +3,9 @@ Test direct : appelle hise_vst3_host (Windows .exe ou Linux binaire depuis R2) a
 """
 import os
 
-# Taille de bloc pour le host VST3 (plus grand = moins d'appels processBlock, rendu souvent plus rapide)
-VST_BLOCK_SIZE = int(os.environ.get("VST_BLOCK_SIZE", "2048"))
+# Taille de bloc pour le host VST3 (plus grand = moins d'appels processBlock = rendu plus rapide). 8192 par défaut pour ~2-4x plus rapide qu'en 2048.
+# En cas de souci (artefact, crash), définir VST_BASE ou VST_BLOCK_SIZE=4096 / 2048 dans l'env.
+VST_BLOCK_SIZE = int(os.environ.get("VST_BLOCK_SIZE", "8192"))
 import subprocess
 import sys
 import tempfile

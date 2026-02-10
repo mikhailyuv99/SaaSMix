@@ -88,6 +88,8 @@ Si `VST_BASE` pointe vers un dossier qui contient des **sous-dossiers par plugin
 - Optionnel : `HISE_VST3_HOST_EXE` = chemin complet vers `hise_vst3_host.exe`
 - Optionnel : `VST_BASE` si tu utilises le schéma “dossier unique” ci‑dessus
 
+- Optionnel : `VST_BLOCK_SIZE` = taille de bloc VST3 (défaut 8192 ; 4096 ou 2048 si artefact)
+
 Pas besoin de **R2_*** ni de **VST_LINUX_DIR** : on est sous Windows.
 
 ---
