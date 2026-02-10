@@ -1861,33 +1861,6 @@ export default function Home() {
 
   playAllRef.current = playAll;
 
-  // Espace = play/pause. Si un résultat master existe : Space contrôle le master (section Résultat du master). Sinon : Space contrôle les pistes (section mix).
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || e.repeat) return;
-      const target = document.activeElement as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLElement | null;
-      const isTypingField =
-        target &&
-        (target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable ||
-          (target.tagName === "INPUT" &&
-            INPUT_TYPES_FOR_TYPING.includes((target as HTMLInputElement).type)));
-      if (isTypingField) return;
-      e.preventDefault();
-      e.stopPropagation();
-      if (masterResult) {
-        if (isMasterResultPlaying) stopMasterPlayback();
-        else startMasterPlayback();
-        return;
-      }
-      if (isPlaying) stopAll();
-      else playAll();
-    };
-    window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [isPlaying, playAll, stopAll, masterResult, isMasterResultPlaying, startMasterPlayback, stopMasterPlayback]);
-
   const lastTogglePlayModeRef = useRef<{ id: string; ts: number } | null>(null);
   const togglePlayMode = useCallback(
     (id: string, targetMode: "raw" | "mixed") => {
@@ -2398,6 +2371,33 @@ export default function Home() {
     }
     setIsMasterResultPlaying(false);
   }, []);
+
+  // Espace = play/pause. Si un résultat master existe : Space contrôle le master. Sinon : Space contrôle les pistes (section mix). (Doit être après startMasterPlayback/stopMasterPlayback.)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+      const target = document.activeElement as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLElement | null;
+      const isTypingField =
+        target &&
+        (target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable ||
+          (target.tagName === "INPUT" &&
+            INPUT_TYPES_FOR_TYPING.includes((target as HTMLInputElement).type)));
+      if (isTypingField) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (masterResult) {
+        if (isMasterResultPlaying) stopMasterPlayback();
+        else startMasterPlayback();
+        return;
+      }
+      if (isPlaying) stopAll();
+      else playAll();
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [isPlaying, playAll, stopAll, masterResult, isMasterResultPlaying, startMasterPlayback, stopMasterPlayback]);
 
   const toggleMasterPlaybackMode = useCallback(() => {
     const nodes = masterPlaybackRef.current;
