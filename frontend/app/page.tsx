@@ -1859,17 +1859,18 @@ export default function Home() {
   playAllRef.current = playAll;
 
   // Espace = play / pause partout, sauf dans les champs de saisie (BPM, carte, nom projet, etc.)
+  // On n'exclut pas <input type="file"> : après avoir choisi un fichier le focus peut rester dessus, Espace ne doit pas rouvrir le sélecteur
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== "Space" || e.repeat) return;
-      const target = document.activeElement as HTMLElement | null;
-      const isInputField =
+      const target = document.activeElement as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | HTMLElement | null;
+      const isTypingField =
         target &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
+        (target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT" ||
-          target.isContentEditable);
-      if (isInputField) return;
+          target.isContentEditable ||
+          (target.tagName === "INPUT" && (target as HTMLInputElement).type !== "file"));
+      if (isTypingField) return;
       e.preventDefault();
       if (isPlaying) stopAll();
       else playAll();
