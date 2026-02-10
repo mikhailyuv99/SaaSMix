@@ -73,6 +73,10 @@ if os.environ.get("HISE_VST3_HOST_EXE"):
 
 Comme ça, sur le serveur tu définis `HISE_VST3_HOST_EXE=C:\app\hise_vst3_host.exe` et un `vst_config` qui pointe vers `C:\app\vst3\...`.
 
+**C) Structure HISE (sous-dossiers)**  
+Si `VST_BASE` pointe vers un dossier qui contient des **sous-dossiers par plugin** (comme après un export HISE), le code essaie automatiquement ce layout quand le chemin plat n'existe pas :  
+`VST_BASE\Project1\Binaries\Compiled\VST3\Project1.vst3`, idem pour master, reverb1, reverb2, reverb3new, doubler, robot. Tu peux donc avoir soit des `.vst3` plats (ou dans `vst3\`), soit cette structure en sous-dossiers ; le fallback est géré dans `test_hise_direct.py`.
+
 ---
 
 ## 4. Variables d’environnement (serveur Windows)

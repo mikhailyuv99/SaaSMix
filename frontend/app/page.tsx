@@ -1858,6 +1858,27 @@ export default function Home() {
 
   playAllRef.current = playAll;
 
+  // Espace = play / pause (sauf si focus dans un input/textarea)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+      const target = document.activeElement as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      )
+        return;
+      e.preventDefault();
+      if (isPlaying) stopAll();
+      else playAll();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isPlaying, playAll, stopAll]);
+
   const lastTogglePlayModeRef = useRef<{ id: string; ts: number } | null>(null);
   const togglePlayMode = useCallback(
     (id: string, targetMode: "raw" | "mixed") => {

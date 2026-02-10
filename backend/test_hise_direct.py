@@ -82,6 +82,25 @@ if os.environ.get("VST_BASE"):
     DOUBLER_PATH = _vst_map.get("doubler") or _vst_by_name("doubler")
     ROBOT_PATH = _vst_map.get("robot") or _vst_by_name("robot")
 
+    # Fallback: structure HISE (name/Binaries/Compiled/VST3/name.vst3) si chemins plats absents
+    def _vst_full(base: Path, name: str) -> Path:
+        return base / name / "Binaries" / "Compiled" / "VST3" / f"{name}.vst3"
+
+    if not VST3_PATH.exists():
+        VST3_PATH = _vst_full(_base, "Project1")
+    if not MASTER_PATH.exists():
+        MASTER_PATH = _vst_full(_base, "master")
+    if not REVERB1_PATH.exists():
+        REVERB1_PATH = _vst_full(_base, "reverb1")
+    if not REVERB2_PATH.exists():
+        REVERB2_PATH = _vst_full(_base, "reverb2")
+    if not REVERB3_PATH.exists():
+        REVERB3_PATH = _vst_full(_base, "reverb3new")
+    if not DOUBLER_PATH.exists():
+        DOUBLER_PATH = _vst_full(_base, "doubler")
+    if not ROBOT_PATH.exists():
+        ROBOT_PATH = _vst_full(_base, "robot")
+
 # Linux (production Render) : utiliser binaires téléchargés depuis R2
 if sys.platform == "linux":
     try:

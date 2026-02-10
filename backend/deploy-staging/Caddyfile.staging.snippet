@@ -1,0 +1,10 @@
+# ===========================================
+# Snippet Caddy pour le backend STAGING
+# À ajouter dans ton Caddyfile existant (au même niveau que le bloc api.siberiamix.com).
+# Puis : recharger Caddy (voir SETUP_STAGING_VPS.md).
+# ===========================================
+# Crée aussi un enregistrement DNS chez OVH : api-staging.siberiamix.com → IP du VPS.
+
+api-staging.siberiamix.com {
+    reverse_proxy localhost:8001
+}

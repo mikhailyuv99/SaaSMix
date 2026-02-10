@@ -52,6 +52,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "https://siberiamix.netlify.app",
+        "https://stagingsiberiamix.netlify.app",
         "https://siberiamix.com",
         "https://www.siberiamix.com",
     ],
