@@ -17,7 +17,17 @@ if R2_VST_PREFIX:
 # Tu peux surcharger via R2_VST_OBJECTS (séparés par des virgules) si besoin.
 _DEFAULT_OBJECTS = [
     "hise_vst3_host",
+    "GlobalMix.vst3.zip",
     "Project1.vst3.zip",
+    "eq1.vst3.zip",
+    "eq2.vst3.zip",
+    "eq3.vst3.zip",
+    "eq4.vst3.zip",
+    "eq5.vst3.zip",
+    "eq6.vst3.zip",
+    "eq7.vst3.zip",
+    "eq8.vst3.zip",
+    "eq9.vst3.zip",
     "master.vst3.zip",
     "reverb1.vst3.zip",
     "reverb2.vst3.zip",

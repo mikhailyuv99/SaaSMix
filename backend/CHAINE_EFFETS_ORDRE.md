@@ -6,16 +6,17 @@ Ordre **établi** à respecter dans `test_hise_direct.py`.
 
 | # | Étape | Détail |
 |---|--------|--------|
-| 1 | **Noise gate** | Avant VST3 (threshold -50 dB, lookahead 10 ms) |
-| 2 | **FX téléphone** (si coché) | EQ après le gate, juste avant le 1er VST3 — voir § FX téléphone |
-| 3 | **VST3** | Project1.vst3 (chaîne HISE) |
-| 4 | **De-esser** | FFT (threshold -15 dB, range 12 dB, 7–14 kHz) |
-| 5 | **Tone** | Basses / Mids / Aigus / Air — voir § Tone (ordre interne ci‑dessous) |
+| 0a | **EQ Basses / Mids / Highs** | EQ1–EQ9 (3 VST3 en série selon réglages Basses/Mids/Aigus 1–2–3), avant Gate |
+| 1 | **Noise gate** | Threshold -50 dB, lookahead 10 ms |
+| 2 | **FX téléphone** (si coché) | EQ Python (HPF 900, peak 1650, LPF 5500) — voir § FX téléphone |
+| 3 | **GlobalMix (VST3)** | Chaîne principale (remplace Project1.vst3) |
+| 4 | **De-esser** | FFT, 3 modes : léger (1), moyen (2), fort (3) — avant Delay |
+| 5 | **Air** | +2 dB shelf from 12,5 kHz (Python) |
 | 6 | **Gain +4.5 dB** | Uniquement si Reverb 2 ou 3 |
 | 7 | **Delay** | Ping-pong, BPM + division (1/4, 1/2, 1/8) |
 | 8 | **Reverb** | reverb1 / reverb2 / reverb3 (VST3) |
 | 9 | **Doubler** (si coché) | doubler.vst3 (HISE) |
-| 10 | **FX robot** (si coché) | robot.vst3 (HISE) — après doubler si coché, sinon après reverb |
+| 10 | **FX robot** (si coché) | robot.vst3 (HISE) |
 
 ---
 
@@ -30,32 +31,28 @@ Ordre **établi** à respecter dans `test_hise_direct.py`.
 
 ---
 
-## Tone (Basses, Mids, Aigus, Air)
+## Air (seul reste de l’ancien Tone)
 
 - **Position** : après De-esser, avant Gain / Delay.
-- **Ordre d’application** dans le bloc Tone (un seul passage `apply_tone_control`) :
-  1. **Basses** (tone_low)
-  2. **Mids** (tone_mid)
-  3. **Aigus** (tone_high)
-  4. **Air**
+- **Effet** : shelf +2 dB à partir de 12,5 kHz (implémentation Python `apply_tone_control(..., air=True)`).
 
-### Paramètres par réglage
+---
 
-| Réglage | Valeur UI | Effet | Paramètres techniques |
-|---------|-----------|--------|------------------------|
-| **Basses** | 1 | Coupe en dessous de 150 Hz | HPF 150 Hz (Butterworth ordre 2) |
-| **Basses** | 2 | Neutre | Aucun traitement |
-| **Basses** | 3 | Boost 150–200 Hz | Bande 150–200 Hz (LP 200 Hz + HP 150 Hz), +2 dB |
-| **Mids** | 1 | Coupe 400 Hz–4 kHz | Bande 400–4 kHz (HP 400 Hz + LP 4 kHz), -2 dB |
-| **Mids** | 2 | Neutre | Aucun traitement |
-| **Mids** | 3 | Boost 400 Hz–4 kHz | Même bande, +2 dB |
-| **Aigus** | 1 | Coupe au-dessus de 9 kHz | Shelf haut : contenu > 9 kHz (HP 9 kHz), -2 dB |
-| **Aigus** | 2 | Neutre | Aucun traitement |
-| **Aigus** | 3 | Boost au-dessus de 9 kHz | Shelf haut : contenu > 9 kHz, +2 dB |
-| **Air** | off | Rien | — |
-| **Air** | on | Boost au-dessus de 12,5 kHz | Shelf haut : contenu > 12 500 Hz (HP 12,5 kHz), +2 dB |
+## EQ VST3 (début de chaîne)
 
-Tous les boosts/coupes sont en **±2 dB** (sauf FX téléphone). Filtres : Butterworth ordre 2. Les bandes sont extraites puis additionnées au signal avec le gain correspondant (`boost_2` = 10^(2/20)-1, `cut_2` = 10^(-2/20)-1).
+Les réglages **Basses 1|2|3**, **Mids 1|2|3**, **Aigus 1|2|3** (UI) sont reliés aux **9 VST3** EQ1–EQ9 en **début de chaîne** (avant Gate et FX téléphone) :
+
+- **EQ1** = Basses 1, **EQ2** = Basses 2, **EQ3** = Basses 3  
+- **EQ4** = Mids 1, **EQ5** = Mids 2, **EQ6** = Mids 3  
+- **EQ7** = Aigus 1, **EQ8** = Aigus 2, **EQ9** = Aigus 3  
+
+Détails : **`EQ_VST3_MAPPING.md`**.
+
+## De-esser (3 modes)
+
+- **Position** : après GlobalMix, avant Delay.
+- **Modes** : 1 = léger (threshold -12 dB, range 6 dB), 2 = moyen (-15 dB, 12 dB), 3 = fort (-18 dB, 16 dB).
+- **UI** : case « De-esser » + select Léger / Moyen / Fort sur la même ligne.
 
 ---
 

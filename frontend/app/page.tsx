@@ -24,6 +24,8 @@ export interface MixParams {
   delay: boolean;
   reverb: boolean;
   reverb_mode: 1 | 2 | 3;
+  deesser: boolean;
+  deesser_mode: 1 | 2 | 3;
   tone_low: 1 | 2 | 3;
   tone_mid: 1 | 2 | 3;
   tone_high: 1 | 2 | 3;
@@ -39,6 +41,8 @@ const DEFAULT_MIX_PARAMS: MixParams = {
   delay: true,
   reverb: true,
   reverb_mode: 2,
+  deesser: true,
+  deesser_mode: 2,
   tone_low: 2,
   tone_mid: 2,
   tone_high: 2,
@@ -196,7 +200,7 @@ function tracksFromStorage(): Track[] | null {
       mixedAudioUrl: t.mixedAudioUrl ?? null,
       isMixing: false,
       playMode: "mixed" as const,
-      mixParams: t.mixParams ?? { ...DEFAULT_MIX_PARAMS },
+      mixParams: { ...DEFAULT_MIX_PARAMS, ...(t.mixParams || {}) },
       paramsOpen: false,
       rawFileName: t.rawFileName ?? null,
     }));
@@ -347,7 +351,6 @@ export default function Home() {
   const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
   const [fileChooserActiveTrackId, setFileChooserActiveTrackId] = useState<string | null>(null);
   const [focusedBpmTrackId, setFocusedBpmTrackId] = useState<string | null>(null);
-  const [focusedToneSelect, setFocusedToneSelect] = useState<{ trackId: string; type: "tone_low" | "tone_mid" | "tone_high" } | null>(null);
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
   const [showMasterMessage, setShowMasterMessage] = useState(false);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
@@ -1326,7 +1329,7 @@ export default function Home() {
               mixedAudioUrl: t.mixedAudioUrl ?? null,
               isMixing: false,
               playMode: "mixed",
-              mixParams: t.mixParams ?? { ...DEFAULT_MIX_PARAMS },
+              mixParams: { ...DEFAULT_MIX_PARAMS, ...(t.mixParams || {}) },
               paramsOpen: false,
               rawFileName: t.rawFileName ?? null,
             };
@@ -1937,15 +1940,17 @@ export default function Home() {
       form.append("file", track.file);
       form.append("category", track.category);
       const p = track.mixParams;
+      form.append("deesser", String(p.deesser));
+      form.append("deesser_mode", String(p.deesser_mode));
       form.append("delay", String(p.delay));
       form.append("reverb", String(p.reverb));
       form.append("reverb_mode", String(p.reverb_mode));
+      form.append("bpm", String(p.bpm));
+      form.append("delay_division", p.delay_division);
       form.append("tone_low", String(p.tone_low));
       form.append("tone_mid", String(p.tone_mid));
       form.append("tone_high", String(p.tone_high));
       form.append("air", String(p.air));
-      form.append("bpm", String(p.bpm));
-      form.append("delay_division", p.delay_division);
       form.append("phone_fx", String(p.phone_fx));
       form.append("doubler", String(p.doubler));
       form.append("robot", String(p.robot));
@@ -3298,79 +3303,90 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Paramètres mix : vocal = tout, instrumental = basses/mids/aigus uniquement — affichage PC uniquement */}
-              {track.paramsOpen && (
+              {/* Paramètres mix : Basses/Mids/Aigus (EQ1-9) + delay/reverb/robot/etc. (vocal uniquement) — affichage PC */}
+              {track.paramsOpen && isVocal(track.category) && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-3 gap-4 max-lg:hidden">
-                  {/* Basses / Mids / Aigus : pour toutes les pistes */}
-                  <div>
-                    <span className={focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_low" ? "text-tagline block mb-1 text-center text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline block mb-1 text-center"}>Basses</span>
-                    <CustomSelect
-                      value={track.mixParams.tone_low}
-                      onChange={(v) =>
-                        updateTrack(track.id, {
-                          mixParams: {
-                            ...track.mixParams,
-                            tone_low: Number(v) as 1 | 2 | 3,
-                          },
-                        })
-                      }
-                      onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_low" })}
-                      onBlur={() => setFocusedToneSelect(null)}
-                      className="w-full"
-                      options={[
-                        { value: 1, label: "1" },
-                        { value: 2, label: "2" },
-                        { value: 3, label: "3" },
-                      ]}
-                    />
-                  </div>
-                  <div>
-                    <span className={focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_mid" ? "text-tagline block mb-1 text-center text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline block mb-1 text-center"}>Mids</span>
-                    <CustomSelect
-                      value={track.mixParams.tone_mid}
-                      onChange={(v) =>
-                        updateTrack(track.id, {
-                          mixParams: {
-                            ...track.mixParams,
-                            tone_mid: Number(v) as 1 | 2 | 3,
-                          },
-                        })
-                      }
-                      onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_mid" })}
-                      onBlur={() => setFocusedToneSelect(null)}
-                      className="w-full"
-                      options={[
-                        { value: 1, label: "1" },
-                        { value: 2, label: "2" },
-                        { value: 3, label: "3" },
-                      ]}
-                    />
-                  </div>
-                  <div>
-                    <span className={focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_high" ? "text-tagline block mb-1 text-center text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline block mb-1 text-center"}>Aigus</span>
-                    <CustomSelect
-                      value={track.mixParams.tone_high}
-                      onChange={(v) =>
-                        updateTrack(track.id, {
-                          mixParams: {
-                            ...track.mixParams,
-                            tone_high: Number(v) as 1 | 2 | 3,
-                          },
-                        })
-                      }
-                      onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_high" })}
-                      onBlur={() => setFocusedToneSelect(null)}
-                      className="w-full"
-                      options={[
-                        { value: 1, label: "1" },
-                        { value: 2, label: "2" },
-                        { value: 3, label: "3" },
-                      ]}
-                    />
-                  </div>
-                  {/* Delay + Division, Reverb + Reverb box, Air + BPM : vocal uniquement */}
-                  {isVocal(track.category) && (
-                    <>
+                  <>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-tagline block mb-1 text-center">Basses</span>
+                        <CustomSelect
+                          value={track.mixParams.tone_low}
+                          onChange={(v) =>
+                            updateTrack(track.id, {
+                              mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 },
+                            })
+                          }
+                          className="w-full"
+                          options={[
+                            { value: 1, label: "1" },
+                            { value: 2, label: "2" },
+                            { value: 3, label: "3" },
+                          ]}
+                        />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-tagline block mb-1 text-center">Mids</span>
+                        <CustomSelect
+                          value={track.mixParams.tone_mid}
+                          onChange={(v) =>
+                            updateTrack(track.id, {
+                              mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 },
+                            })
+                          }
+                          className="w-full"
+                          options={[
+                            { value: 1, label: "1" },
+                            { value: 2, label: "2" },
+                            { value: 3, label: "3" },
+                          ]}
+                        />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-tagline block mb-1 text-center">Aigus</span>
+                        <CustomSelect
+                          value={track.mixParams.tone_high}
+                          onChange={(v) =>
+                            updateTrack(track.id, {
+                              mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 },
+                            })
+                          }
+                          className="w-full"
+                          options={[
+                            { value: 1, label: "1" },
+                            { value: 2, label: "2" },
+                            { value: 3, label: "3" },
+                          ]}
+                        />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <label className="flex items-center justify-center gap-2 mb-2">
+                          <input
+                            type="checkbox"
+                            checked={track.mixParams.deesser}
+                            onChange={(e) =>
+                              updateTrack(track.id, {
+                                mixParams: { ...track.mixParams, deesser: e.target.checked },
+                              })
+                            }
+                            className="checkbox-reglages rounded border border-white/10 bg-white/5"
+                          />
+                          <span className={track.mixParams.deesser ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>De-esser</span>
+                        </label>
+                        <CustomSelect
+                          value={track.mixParams.deesser_mode}
+                          onChange={(v) =>
+                            updateTrack(track.id, {
+                              mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 },
+                            })
+                          }
+                          className="w-full"
+                          options={[
+                            { value: 1, label: "Léger" },
+                            { value: 2, label: "Moyen" },
+                            { value: 3, label: "Fort" },
+                          ]}
+                        />
+                      </div>
                       <div className="flex flex-col min-w-0">
                         <label className="flex items-center justify-center gap-2 mb-4">
                           <input
@@ -3540,28 +3556,31 @@ export default function Home() {
                         </label>
                       </div>
                     </>
-                  )}
                 </div>
               )}
 
-              {/* Réglages mobile / tablette : 8 LIGNES HORIZONTALES, toutes alignées (même hauteur de ligne, même largeur colonne label, même hauteur box). PC non touché. */}
-              {track.paramsOpen && (
+              {/* Réglages mobile / tablette : vocal uniquement. PC non touché. */}
+              {track.paramsOpen && isVocal(track.category) && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06] lg:hidden flex flex-col gap-2">
-                  {/* Grille : colonne label 5.5rem fixe, colonne control 1fr — toutes les lignes min-h-[2.25rem] et h-9 pour les selects */}
-                  <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                    <span className={`text-tagline text-[10px] max-md:text-[9px] ${focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_low" ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Basses</span>
-                    <CustomSelect value={track.mixParams.tone_low} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 } })} onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_low" })} onBlur={() => setFocusedToneSelect(null)} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
-                  </div>
-                  <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                    <span className={`text-tagline text-[10px] max-md:text-[9px] ${focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_mid" ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Mids</span>
-                    <CustomSelect value={track.mixParams.tone_mid} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 } })} onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_mid" })} onBlur={() => setFocusedToneSelect(null)} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
-                  </div>
-                  <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                    <span className={`text-tagline text-[10px] max-md:text-[9px] ${focusedToneSelect?.trackId === track.id && focusedToneSelect?.type === "tone_high" ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Aigus</span>
-                    <CustomSelect value={track.mixParams.tone_high} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 } })} onFocus={() => setFocusedToneSelect({ trackId: track.id, type: "tone_high" })} onBlur={() => setFocusedToneSelect(null)} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
-                  </div>
-                  {isVocal(track.category) && (
-                    <>
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                        <span className="text-tagline text-[10px] max-md:text-[9px] text-slate-500">Basses</span>
+                        <CustomSelect value={track.mixParams.tone_low} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
+                      </div>
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                        <span className="text-tagline text-[10px] max-md:text-[9px] text-slate-500">Mids</span>
+                        <CustomSelect value={track.mixParams.tone_mid} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
+                      </div>
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                        <span className="text-tagline text-[10px] max-md:text-[9px] text-slate-500">Aigus</span>
+                        <CustomSelect value={track.mixParams.tone_high} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "1" }, { value: 2, label: "2" }, { value: 3, label: "3" }]} />
+                      </div>
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                          <input type="checkbox" checked={track.mixParams.deesser} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
+                          De-esser
+                        </label>
+                        <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
+                      </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
                           <input type="checkbox" checked={track.mixParams.reverb} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
@@ -3611,8 +3630,6 @@ export default function Home() {
                           />
                         </div>
                       </div>
-                    </>
-                  )}
                 </div>
               )}
 

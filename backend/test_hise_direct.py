@@ -26,11 +26,22 @@ if not _def.exists():
     _def = _project_root / "hise_vst3_host" / "build" / "hise_vst3_host_artefacts" / "Release" / "hise_vst3_host.exe"
 HOST_EXE = _def
 VST3_PATH = Path(r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3\Project1.vst3")
+EQ_PATHS = []  # [Path eq1, eq2, ... eq9] rempli depuis vst_config ou VST_BASE
 try:
     from vst_config import VST_PATHS
     def _vst_path(name):
         p = VST_PATHS.get(name) or ""
         return Path(p) if p else None
+    # Chaîne principale : GlobalMix si dispo, sinon Project1
+    _globalmix = _vst_path("globalmix")
+    if _globalmix and _globalmix.exists():
+        VST3_PATH = _globalmix
+    else:
+        _proj1 = _vst_path("hise_vocal_chain")
+        if _proj1:
+            VST3_PATH = _proj1
+    EQ_PATHS = [_vst_path(f"eq{i}") for i in range(1, 10)]
+    EQ_PATHS = [p for p in EQ_PATHS if p and p.exists()]
     MASTER_PATH = _vst_path("master")
     REVERB1_PATH = _vst_path("reverb1")
     REVERB2_PATH = _vst_path("reverb2")
@@ -74,7 +85,9 @@ if os.environ.get("VST_BASE"):
                 return p
         return _base / f"{name}.vst3"
 
-    VST3_PATH = _vst_map.get("project1") or _vst_by_name("project1")
+    VST3_PATH = _vst_map.get("globalmix") or _vst_by_name("globalmix") or _vst_map.get("project1") or _vst_by_name("project1")
+    EQ_PATHS = [_vst_map.get(f"eq{i}") or _vst_by_name(f"eq{i}") for i in range(1, 10)]
+    EQ_PATHS = [p for p in EQ_PATHS if p and p.exists()]
     MASTER_PATH = _vst_map.get("master") or _vst_by_name("master")
     REVERB1_PATH = _vst_map.get("reverb1") or _vst_by_name("reverb1")
     REVERB2_PATH = _vst_map.get("reverb2") or _vst_by_name("reverb2")
@@ -87,7 +100,17 @@ if os.environ.get("VST_BASE"):
         return base / name / "Binaries" / "Compiled" / "VST3" / f"{name}.vst3"
 
     if not VST3_PATH.exists():
-        VST3_PATH = _vst_full(_base, "Project1")
+        VST3_PATH = _vst_full(_base, "GlobalMix") if _base.joinpath("GlobalMix").exists() else _vst_full(_base, "Project1")
+    if not EQ_PATHS or len(EQ_PATHS) < 9:
+        EQ_PATHS = []
+        for i in range(1, 10):
+            p = _vst_full(_base, f"EQ{i}")
+            if p.exists():
+                EQ_PATHS.append(p)
+            else:
+                q = _base / f"eq{i}.vst3"
+                if q.exists():
+                    EQ_PATHS.append(q)
     if not MASTER_PATH.exists():
         MASTER_PATH = _vst_full(_base, "master")
     if not REVERB1_PATH.exists():
@@ -109,9 +132,11 @@ if sys.platform == "linux":
             host = get_linux_host_path()
             if host:
                 HOST_EXE = host
-                vst3 = get_linux_vst_path("Project1")
+                vst3 = get_linux_vst_path("GlobalMix") or get_linux_vst_path("Project1")
                 if vst3:
                     VST3_PATH = vst3
+                eq_list = [get_linux_vst_path(f"eq{i}") for i in range(1, 10)]
+                EQ_PATHS = [p for p in eq_list if p and p.exists()]
                 master = get_linux_vst_path("master")
                 if master:
                     MASTER_PATH = master
@@ -536,10 +561,20 @@ def apply_phone_eq(audio: np.ndarray, sr: int,
     return out.astype(np.float32)
 
 
-def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bool = True,
+# De-esser : 1=leger, 2=moyen, 3=fort (threshold_db, range_db)
+DEESSER_PRESETS = {
+    1: (-12.0, 6.0),   # léger
+    2: (-15.0, 12.0),  # moyen (défaut)
+    3: (-18.0, 16.0),  # fort
+}
+
+
+def render(input_wav: str, output_wav: str, deesser: bool = True, deesser_mode: int = 2,
+           noise_gate: bool = True,
            delay: bool = False, bpm: float = 120.0,
            delay_division: str = "1/4",
-           tone_low: int = 2, tone_mid: int = 2, tone_high: int = 2, air: bool = False,
+           tone_low: int = 2, tone_mid: int = 2, tone_high: int = 2,
+           air: bool = False,
            reverb: bool = False, reverb_mode: int = 2,
            phone_fx: bool = False, robot: bool = False, doubler: bool = False,
            progress_callback: Optional[Callable[[int, str], None]] = None):
@@ -548,17 +583,23 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
     Pourcentage pondéré par le temps réel des étapes (VST3 principal et reverb = lourds)."""
     # Poids par étape (reflète le temps réel : chaîne VST3 et reverb dominent)
     WEIGHTS = {
+        "EQ Basses": 2,
+        "EQ Mids": 2,
+        "EQ Highs": 2,
         "Noise gate": 2,
         "FX téléphone": 2,
         "Chaîne principale (VST3)": 52,
         "De-esser": 5,
-        "Tone": 4,
+        "Air": 4,
         "Delay": 4,
         "Reverb": 18,
         "Doubler": 4,
         "FX robot": 4,
     }
     _steps = []
+    use_eq_chain = len(EQ_PATHS) >= 9
+    if use_eq_chain:
+        _steps.extend(["EQ Basses", "EQ Mids", "EQ Highs"])
     if noise_gate:
         _steps.append("Noise gate")
     if phone_fx:
@@ -566,8 +607,8 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
     _steps.append("Chaîne principale (VST3)")
     if deesser:
         _steps.append("De-esser")
-    if tone_low != 2 or tone_mid != 2 or tone_high != 2 or air:
-        _steps.append("Tone")
+    if air:
+        _steps.append("Air")
     if delay:
         _steps.append("Delay")
     if reverb:
@@ -598,7 +639,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         print(f"ERREUR: {msg}")
         return False, msg
     if not VST3_PATH.exists():
-        msg = f"VST3 introuvable: {VST3_PATH}"
+        msg = f"VST3 principal (GlobalMix) introuvable: {VST3_PATH}"
         print(f"ERREUR: {msg}")
         return False, msg
     if not Path(input_wav).exists():
@@ -617,13 +658,38 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
     vst_input = normalized_input
     temp_gated = None
     temp_phone = None
+    temp_eq = None
 
     _progress("Préparation")
+    # Étape 0a : EQ1–EQ9 en début de chaîne (Basses → Mids → Highs)
+    if use_eq_chain:
+        tl, tm, th = max(1, min(3, tone_low)), max(1, min(3, tone_mid)), max(1, min(3, tone_high))
+        current = normalized_input
+        cwd = str(EQ_PATHS[0].parent) if EQ_PATHS[0].parent else None
+        for step_name, eq_idx in [("EQ Basses", tl - 1), ("EQ Mids", 3 + (tm - 1)), ("EQ Highs", 6 + (th - 1))]:
+            _progress(step_name)
+            eq_path = EQ_PATHS[eq_idx]
+            temp_eq_next = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+            cmd_eq = [str(HOST_EXE), str(eq_path), current, temp_eq_next, str(VST_BLOCK_SIZE)]
+            r = subprocess.run(cmd_eq, capture_output=True, text=True, cwd=cwd)
+            if r.returncode != 0 or not Path(temp_eq_next).exists():
+                if temp_eq:
+                    Path(temp_eq).unlink(missing_ok=True)
+                err = (r.stderr or r.stdout or "").strip() or f"EQ {step_name} a échoué"
+                Path(normalized_input).unlink(missing_ok=True)
+                return False, err
+            if temp_eq and temp_eq != normalized_input:
+                Path(temp_eq).unlink(missing_ok=True)
+            temp_eq = temp_eq_next
+            current = temp_eq_next
+            _progress(f"{step_name} OK", done=True)
+        vst_input = current
+
     # Étape 0 : Noise gate (avant VST3)
     if noise_gate:
         _progress("Noise gate")
         print("0. Noise gate...")
-        audio, sr = read_wav(normalized_input)
+        audio, sr = read_wav(vst_input)
         if audio.ndim == 2 and audio.shape[1] == 2:
             left = apply_noise_gate(audio[:, 0], sr, threshold_db=-50.0, lookahead_ms=10.0)
             right = apply_noise_gate(audio[:, 1], sr, threshold_db=-50.0, lookahead_ms=10.0)
@@ -657,7 +723,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
 
     _progress("Chaîne principale (VST3)")
     cmd = [str(HOST_EXE), str(VST3_PATH), vst_input, vst_output, str(VST_BLOCK_SIZE)]
-    print("1. Rendu VST3...")
+    print("1. Rendu GlobalMix (VST3)...")
     cwd = str(VST3_PATH.parent) if VST3_PATH.parent else None
     vst_weight = WEIGHTS["Chaîne principale (VST3)"]
     start_pct = round((_cumul_weight[0] / _total_weight) * 100) if _total_weight else 0
@@ -697,33 +763,33 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
     print("   VST3 OK")
     _progress("VST3 OK", done=True)
 
-    # Étape 2 : De-esser (Python FFT, sans Pro-DS pour le SaaS)
+    # Étape 2 : De-esser (Python FFT) — 3 modes : léger (1), moyen (2), fort (3), avant delay
     if deesser:
         _progress("De-esser")
-        print("2. De-esser (FFT)...")
+        mode = max(1, min(3, deesser_mode))
+        th_db, rng_db = DEESSER_PRESETS.get(mode, DEESSER_PRESETS[2])
+        print(f"2. De-esser (FFT, mode {mode} = {'léger' if mode == 1 else 'moyen' if mode == 2 else 'fort'})...")
         audio, sr = read_wav(vst_output)
         if audio.ndim == 2 and audio.shape[1] == 2:
-            left = apply_deesser(audio[:, 0], sr, threshold_db=-15.0, range_db=12.0)
-            right = apply_deesser(audio[:, 1], sr, threshold_db=-15.0, range_db=12.0)
+            left = apply_deesser(audio[:, 0], sr, threshold_db=th_db, range_db=rng_db)
+            right = apply_deesser(audio[:, 1], sr, threshold_db=th_db, range_db=rng_db)
             audio_out = np.column_stack([left, right])
         else:
-            audio_out = apply_deesser(audio.flatten(), sr, threshold_db=-15.0, range_db=12.0)
+            audio_out = apply_deesser(audio.flatten(), sr, threshold_db=th_db, range_db=rng_db)
         write_wav(output_wav, audio_out, sr)
         print("   De-esser OK")
         Path(temp_vst_output).unlink(missing_ok=True)
         _progress("De-esser OK", done=True)
 
-    # Étape 3 : Tone presets (avant delay)
-    if tone_low != 2 or tone_mid != 2 or tone_high != 2 or air:
-        _progress("Tone")
-        print("3. Tone (low/mid/high + air)...")
+    # Air : +2 dB shelf from 12.5 kHz (sans tone low/mid/high)
+    if air:
+        _progress("Air")
+        print("3. Air (+2dB from 12.5kHz)...")
         audio, sr = read_wav(output_wav)
-        audio_tone = apply_tone_control(
-            audio, sr, tone_low=tone_low, tone_mid=tone_mid, tone_high=tone_high, air=air
-        )
-        write_wav(output_wav, audio_tone, sr)
-        print("   Tone OK")
-        _progress("Tone OK", done=True)
+        audio_air = apply_tone_control(audio, sr, tone_low=2, tone_mid=2, tone_high=2, air=True)
+        write_wav(output_wav, audio_air, sr)
+        print("   Air OK")
+        _progress("Air OK", done=True)
 
     # Gain +4.5 dB avant delay uniquement pour reverb2 et reverb3 (reverb1 pas assez présente)
     if reverb and reverb_mode in (2, 3):
@@ -833,6 +899,8 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, noise_gate: bo
         Path(temp_gated).unlink(missing_ok=True)
     if temp_phone:
         Path(temp_phone).unlink(missing_ok=True)
+    if temp_eq:
+        Path(temp_eq).unlink(missing_ok=True)
     Path(normalized_input).unlink(missing_ok=True)
 
     _progress("Terminé")
@@ -872,19 +940,20 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: python test_hise_direct.py <input.wav> <output.wav> [options]")
         print("Options:")
-        print("  --no-deesser     Skip de-esser")
+        print("  --no-deesser       Skip de-esser")
+        print("  --deesser-mode=1|2|3  De-esser: 1=leger, 2=moyen, 3=fort (default 2)")
         print("  --no-gate        Skip noise gate")
         print("  --delay          Add ping-pong delay")
         print("  --bpm=120        Set tempo (default: auto-detect)")
         print("  --div=1/4        Delay division: 1/4, 1/2, 1/8 (default 1/4)")
-        print("  --tone-low=1|2|3   Low: 1=HPF 150Hz, 2=normal, 3=+2dB 150-200Hz (default 2)")
-        print("  --tone-mid=1|2|3   Mid: 1=-2dB 400-4k, 2=normal, 3=+2dB 400-4k (default 2)")
-        print("  --tone-high=1|2|3  High: 1=-2dB from 9k, 2=normal, 3=+2dB from 9k (default 2)")
-        print("  --air              Air on: +2dB shelf from 12500Hz")
+        print("  --air              Air: +2dB shelf from 12.5kHz")
         print("  --reverb           Reverb en fin de chaîne (défaut: reverb2)")
         print("  --reverb=1|2|3     Reverb: 1=leger, 2=moyen, 3=large (défaut 2)")
         print("  --master-only      Uniquement master.vst3 (input = WAV déjà mixé, output = masterisé)")
-        print("Chaîne: Gate → [FX téléphone EQ] → VST3 → De-esser → Tone → Gain → Delay → Reverb → [doubler.vst3] → [robot.vst3]")
+        print("  --tone-low=1|2|3   Basses: 1=EQ1, 2=EQ2, 3=EQ3 (default 2)")
+        print("  --tone-mid=1|2|3   Mids: 1=EQ4, 2=EQ5, 3=EQ6 (default 2)")
+        print("  --tone-high=1|2|3  Aigus: 1=EQ7, 2=EQ8, 3=EQ9 (default 2)")
+        print("Chaîne: [EQ1-9] → Gate → [FX téléphone] → GlobalMix/Project1 → De-esser → [Air] → Gain → Delay → Reverb → [doubler] → [robot]")
         sys.exit(1)
 
     # Mode master seul : input WAV mixé → master.vst3 → output
@@ -914,6 +983,13 @@ if __name__ == "__main__":
         sys.exit(0)
 
     no_deesser = "--no-deesser" in sys.argv
+    deesser_mode = 2
+    for arg in sys.argv:
+        if arg.startswith("--deesser-mode="):
+            try:
+                deesser_mode = max(1, min(3, int(arg.split("=")[1])))
+            except Exception:
+                pass
     no_gate = "--no-gate" in sys.argv
     use_delay = "--delay" in sys.argv
     use_reverb = "--reverb" in sys.argv or any(a.startswith("--reverb=") for a in sys.argv)
@@ -941,33 +1017,30 @@ if __name__ == "__main__":
         if arg.startswith("--div="):
             div = arg.split("=")[1]
 
-    tone_low = 2
-    tone_mid = 2
-    tone_high = 2
-    air = "--air" in sys.argv
+    use_air = "--air" in sys.argv
+    tone_low, tone_mid, tone_high = 2, 2, 2
     for arg in sys.argv:
         if arg.startswith("--tone-low="):
             try:
-                tone_low = int(arg.split("=")[1])
-                tone_low = max(1, min(3, tone_low))
+                tone_low = max(1, min(3, int(arg.split("=")[1])))
             except Exception:
                 pass
         elif arg.startswith("--tone-mid="):
             try:
-                tone_mid = int(arg.split("=")[1])
-                tone_mid = max(1, min(3, tone_mid))
+                tone_mid = max(1, min(3, int(arg.split("=")[1])))
             except Exception:
                 pass
         elif arg.startswith("--tone-high="):
             try:
-                tone_high = int(arg.split("=")[1])
-                tone_high = max(1, min(3, tone_high))
+                tone_high = max(1, min(3, int(arg.split("=")[1])))
             except Exception:
                 pass
 
-    ok, err = render(sys.argv[1], sys.argv[2], deesser=not no_deesser, noise_gate=not no_gate,
+    ok, err = render(sys.argv[1], sys.argv[2], deesser=not no_deesser, deesser_mode=deesser_mode,
+                     noise_gate=not no_gate,
                      delay=use_delay, bpm=bpm, delay_division=div,
-                     tone_low=tone_low, tone_mid=tone_mid, tone_high=tone_high, air=air,
+                     tone_low=tone_low, tone_mid=tone_mid, tone_high=tone_high,
+                     air=use_air,
                      reverb=use_reverb, reverb_mode=reverb_mode)
     if not ok:
         sys.exit(1)

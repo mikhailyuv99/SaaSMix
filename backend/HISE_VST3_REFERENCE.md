@@ -74,6 +74,7 @@ hise_vst3_host.exe <plugin.vst3> <input.wav> <output.wav> [block_size]
 | `hise_vst3_host/main.cpp` | Charge le VST3, lit/écrit WAV, appelle le plugin (blocs 48 kHz). |
 | `backend/vst_config.py` | Chemins des VST (dont HISE). |
 | `backend/vst_preset_chain.py` | `_hise_host_exe()`, `_process_via_hise_host()` ; pour `hise_vocal_chain`, utilise le host si l’exe est trouvé. |
+| `backend/EQ_VST3_MAPPING.md` | Mapping EQ1–EQ9 → ancien Tone (Basses/Mids/Aigus) pour les futurs VST3 en début de chaîne. |
 | `backend/HISE_NEXT_STEPS.md` | Résumé “Option A / Option B”. |
 | `hise_vst3_host/README.md` | Build et déploiement du host. |
 

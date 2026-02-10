@@ -4,8 +4,19 @@
 VST3 = r"C:\Program Files\Common Files\VST3"
 
 VST_PATHS = {
-    # Plugin HISE (ta chaîne vocal) – remplis après export VST3 depuis HISE
+    # Plugin HISE (chaîne vocal principale) – GlobalMix remplace Project1
     "hise_vocal_chain": r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3\Project1.vst3",
+    "globalmix": r"C:\Users\mikha\Desktop\HISE\GlobalMix\Binaries\Compiled\VST3\GlobalMix.vst3",
+    # EQ1–EQ9 (début de chaîne : Basses / Mids / Aigus)
+    "eq1": r"C:\Users\mikha\Desktop\HISE\EQ1\Binaries\Compiled\VST3\EQ1.vst3",
+    "eq2": r"C:\Users\mikha\Desktop\HISE\EQ2\Binaries\Compiled\VST3\EQ2.vst3",
+    "eq3": r"C:\Users\mikha\Desktop\HISE\EQ3\Binaries\Compiled\VST3\EQ3.vst3",
+    "eq4": r"C:\Users\mikha\Desktop\HISE\EQ4\Binaries\Compiled\VST3\EQ4.vst3",
+    "eq5": r"C:\Users\mikha\Desktop\HISE\EQ5\Binaries\Compiled\VST3\EQ5.vst3",
+    "eq6": r"C:\Users\mikha\Desktop\HISE\EQ6\Binaries\Compiled\VST3\EQ6.vst3",
+    "eq7": r"C:\Users\mikha\Desktop\HISE\EQ7\Binaries\Compiled\VST3\EQ7.vst3",
+    "eq8": r"C:\Users\mikha\Desktop\HISE\EQ8\Binaries\Compiled\VST3\EQ8.vst3",
+    "eq9": r"C:\Users\mikha\Desktop\HISE\EQ9\Binaries\Compiled\VST3\EQ9.vst3",
     # Master HISE (limiter / glue, appliqué au mix final)
     "master": r"C:\Users\mikha\Desktop\HISE\master\Binaries\Compiled\VST3\master.vst3",
     # Reverb HISE (1=leger, 2=moyen défaut, 3=large) — chaque reverb a son projet HISE
