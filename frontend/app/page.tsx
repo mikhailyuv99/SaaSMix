@@ -3054,7 +3054,7 @@ export default function Home() {
                         }
                         className="group w-full h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
                       >
-                        <span className={`transition-colors ${track.paramsOpen ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)]"}`}>
+                        <span className="text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
                           {track.paramsOpen ? "Masquer" : "Réglages"}
                         </span>
                       </button>
