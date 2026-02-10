@@ -1858,19 +1858,18 @@ export default function Home() {
 
   playAllRef.current = playAll;
 
-  // Espace = play / pause (sauf si focus dans un input/textarea)
+  // Espace = play / pause partout, sauf dans les champs de saisie (BPM, carte, nom projet, etc.)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== "Space" || e.repeat) return;
       const target = document.activeElement as HTMLElement | null;
-      if (
+      const isInputField =
         target &&
         (target.tagName === "INPUT" ||
           target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT" ||
-          target.isContentEditable)
-      )
-        return;
+          target.isContentEditable);
+      if (isInputField) return;
       e.preventDefault();
       if (isPlaying) stopAll();
       else playAll();
