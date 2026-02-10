@@ -687,29 +687,41 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, deesser_mode: 
     temp_eq = None
 
     _progress("Préparation")
-    # Étape 0a : EQ1–EQ9 en début de chaîne (Basses → Mids → Highs)
+    # Étape 0a : EQ Basses, Mids, Highs en parallèle (même entrée pour les 3, puis mix = comme un seul EQ multi-bandes)
     if use_eq_chain:
         tl, tm, th = max(1, min(3, tone_low)), max(1, min(3, tone_mid)), max(1, min(3, tone_high))
-        current = normalized_input
         cwd = str(EQ_PATHS[0].parent) if EQ_PATHS[0].parent else None
-        for step_name, eq_idx in [("EQ Basses", tl - 1), ("EQ Mids", 3 + (tm - 1)), ("EQ Highs", 6 + (th - 1))]:
-            _progress(step_name)
-            eq_path = EQ_PATHS[eq_idx]
-            temp_eq_next = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
-            cmd_eq = [str(HOST_EXE), str(eq_path), current, temp_eq_next, str(VST_BLOCK_SIZE)]
-            r = subprocess.run(cmd_eq, capture_output=True, text=True, cwd=cwd)
-            if r.returncode != 0 or not Path(temp_eq_next).exists():
-                if temp_eq:
-                    Path(temp_eq).unlink(missing_ok=True)
-                err = (r.stderr or r.stdout or "").strip() or f"EQ {step_name} a échoué"
-                Path(normalized_input).unlink(missing_ok=True)
-                return False, err
-            if temp_eq and temp_eq != normalized_input:
-                Path(temp_eq).unlink(missing_ok=True)
-            temp_eq = temp_eq_next
-            current = temp_eq_next
-            _progress(f"{step_name} OK", done=True)
-        vst_input = current
+        temp_basses = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+        temp_mids = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+        temp_highs = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+        try:
+            for step_name, eq_idx, temp_out in [
+                ("EQ Basses", tl - 1, temp_basses),
+                ("EQ Mids", 3 + (tm - 1), temp_mids),
+                ("EQ Highs", 6 + (th - 1), temp_highs),
+            ]:
+                _progress(step_name)
+                eq_path = EQ_PATHS[eq_idx]
+                cmd_eq = [str(HOST_EXE), str(eq_path), normalized_input, temp_out, str(VST_BLOCK_SIZE)]
+                r = subprocess.run(cmd_eq, capture_output=True, text=True, cwd=cwd)
+                if r.returncode != 0 or not Path(temp_out).exists():
+                    err = (r.stderr or r.stdout or "").strip() or f"EQ {step_name} a échoué"
+                    Path(normalized_input).unlink(missing_ok=True)
+                    return False, err
+                _progress(f"{step_name} OK", done=True)
+            # Combiner les 3 sorties (moyenne) = comme un seul EQ qui traite les 3 bandes en même temps
+            audio_b, sr_b = read_wav(temp_basses)
+            audio_m, sr_m = read_wav(temp_mids)
+            audio_h, sr_h = read_wav(temp_highs)
+            n_samples = min(audio_b.shape[0], audio_m.shape[0], audio_h.shape[0])
+            audio_combined = (audio_b[:n_samples].astype(np.float64) + audio_m[:n_samples].astype(np.float64) + audio_h[:n_samples].astype(np.float64)) / 3.0
+            audio_combined = np.clip(audio_combined, -1.0, 1.0).astype(np.float32)
+            temp_eq = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
+            write_wav(temp_eq, audio_combined, sr_b)
+            vst_input = temp_eq
+        finally:
+            for p in (temp_basses, temp_mids, temp_highs):
+                Path(p).unlink(missing_ok=True)
 
     # Étape 0 : Noise gate (avant VST3)
     if noise_gate:
