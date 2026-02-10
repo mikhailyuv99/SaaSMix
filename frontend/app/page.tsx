@@ -1858,8 +1858,7 @@ export default function Home() {
 
   playAllRef.current = playAll;
 
-  // Espace = play / pause partout, sauf dans les champs de saisie (BPM, carte, nom projet, etc.)
-  // On n'exclut pas <input type="file"> : après avoir choisi un fichier le focus peut rester dessus, Espace ne doit pas rouvrir le sélecteur
+  // Espace = uniquement play/pause (ou espace dans les champs texte). Interception en capture pour que rien d'autre (seek, waveform, bouton) ne réagisse.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== "Space" || e.repeat) return;
@@ -1872,11 +1871,12 @@ export default function Home() {
           (target.tagName === "INPUT" && (target as HTMLInputElement).type !== "file"));
       if (isTypingField) return;
       e.preventDefault();
+      e.stopPropagation();
       if (isPlaying) stopAll();
       else playAll();
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [isPlaying, playAll, stopAll]);
 
   const lastTogglePlayModeRef = useRef<{ id: string; ts: number } | null>(null);
