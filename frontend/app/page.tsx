@@ -2265,6 +2265,7 @@ export default function Home() {
       } catch (_) {
         // Waveform decode failed — still show result, useEffect will retry
       }
+      stopAll();
       setMasterResult({ mixUrl, masterUrl });
       setMasterPlaybackMode("master");
     } catch (e) {
@@ -2273,7 +2274,7 @@ export default function Home() {
     } finally {
       setIsMastering(false);
     }
-  }, [buildTrackSpecsAndFiles, tracks]);
+  }, [buildTrackSpecsAndFiles, tracks, stopAll]);
 
   const startMasterPlayback = useCallback((offset?: number, mode?: "mix" | "master") => {
     const mixBuf = masterMixBufferRef.current;
