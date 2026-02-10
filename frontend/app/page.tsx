@@ -1861,7 +1861,7 @@ export default function Home() {
 
   playAllRef.current = playAll;
 
-  // Espace = play/pause partout sauf champs de saisie texte (BPM, carte, etc.). Gain, boutons, file : Space = play/pause sans recliquer.
+  // Espace = play/pause. Si un résultat master existe : Space contrôle le master (section Résultat du master). Sinon : Space contrôle les pistes (section mix).
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== "Space" || e.repeat) return;
@@ -1876,12 +1876,17 @@ export default function Home() {
       if (isTypingField) return;
       e.preventDefault();
       e.stopPropagation();
+      if (masterResult) {
+        if (isMasterResultPlaying) stopMasterPlayback();
+        else startMasterPlayback();
+        return;
+      }
       if (isPlaying) stopAll();
       else playAll();
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [isPlaying, playAll, stopAll]);
+  }, [isPlaying, playAll, stopAll, masterResult, isMasterResultPlaying, startMasterPlayback, stopMasterPlayback]);
 
   const lastTogglePlayModeRef = useRef<{ id: string; ts: number } | null>(null);
   const togglePlayMode = useCallback(
@@ -2297,7 +2302,7 @@ export default function Home() {
     }
   }, [buildTrackSpecsAndFiles, tracks]);
 
-  const startMasterPlayback = useCallback((offset?: number) => {
+  const startMasterPlayback = useCallback((offset?: number, mode?: "mix" | "master") => {
     const mixBuf = masterMixBufferRef.current;
     const masterBuf = masterMasterBufferRef.current;
     if (!mixBuf || !masterBuf) return;
@@ -2344,7 +2349,7 @@ export default function Home() {
     const audioOutput = streamDestRef.current ?? ctx.destination;
     mixGain.connect(audioOutput);
     masterGain.connect(audioOutput);
-    const isMaster = masterPlaybackMode === "master";
+    const isMaster = mode !== undefined ? mode === "master" : masterPlaybackMode === "master";
     mixGain.gain.value = isMaster ? 0 : 1;
     masterGain.gain.value = isMaster ? 1 : 0;
 
