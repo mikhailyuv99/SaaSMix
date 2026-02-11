@@ -445,26 +445,47 @@ def apply_noise_gate(audio: np.ndarray, sr: int, threshold_db: float = -45.0,
 
 
 def apply_doubler_stereo(audio: np.ndarray, sr: int,
-                         delay_ms: float = 20.0, wet_gain: float = 0.4) -> np.ndarray:
+                         detune_cents: float = 7.0, delay_ms: float = 8.0,
+                         wet_gain: float = 0.22) -> np.ndarray:
     """
-    Doubler stéréo symétrique (DSP) : L_out = L + R_retardé * wet, R_out = R + L_retardé * wet.
-    Remplace doubler.vst3. Si entrée mono, duplique en stéréo puis applique le cross-delay.
+    Micro-pitch doubler : élargit le stéréo en créant deux copies légèrement
+    détunées (+N cents à gauche, -N cents à droite) avec un petit delay Haas.
+    Sonne comme un vrai doublage vocal, pas comme un chorus.
     """
     if audio.ndim == 1:
         audio = np.column_stack([audio, audio])
     n = audio.shape[0]
-    delay_samples = max(0, min(n - 1, int(delay_ms * sr / 1000)))
-    if delay_samples == 0:
-        return audio.copy()
-    L = audio[:, 0].astype(np.float64)
-    R = audio[:, 1].astype(np.float64)
-    # Retard : décalage sans wrap (zéros au début)
-    L_delayed = np.zeros_like(L)
-    L_delayed[delay_samples:] = R[:-delay_samples]
-    R_delayed = np.zeros_like(R)
-    R_delayed[delay_samples:] = L[:-delay_samples]
-    L_out = L + wet_gain * L_delayed
-    R_out = R + wet_gain * R_delayed
+
+    # Mono sum pour créer les copies doublées
+    mono = (audio[:, 0].astype(np.float64) + audio[:, 1].astype(np.float64)) * 0.5
+
+    # Pitch shift par resampling (quelques cents = naturel, pas de chorus)
+    shift_up = 2.0 ** (detune_cents / 1200.0)    # ~1.004
+    shift_down = 2.0 ** (-detune_cents / 1200.0)  # ~0.996
+
+    indices_up = np.arange(n, dtype=np.float64) * shift_up
+    indices_down = np.arange(n, dtype=np.float64) * shift_down
+
+    def _resample(signal, indices):
+        idx = np.clip(indices, 0, len(signal) - 1)
+        lo = np.floor(idx).astype(int)
+        hi = np.minimum(lo + 1, len(signal) - 1)
+        frac = idx - lo
+        return signal[lo] * (1.0 - frac) + signal[hi] * frac
+
+    doubled_L = _resample(mono, indices_up)
+    doubled_R = _resample(mono, indices_down)
+
+    # Petit delay Haas pour renforcer la largeur
+    delay_samples = max(0, min(n - 1, int(delay_ms * sr / 1000.0)))
+    if delay_samples > 0:
+        doubled_L = np.concatenate([np.zeros(delay_samples), doubled_L[:-delay_samples]])
+        doubled_R = np.concatenate([np.zeros(delay_samples), doubled_R[:-delay_samples]])
+
+    # Mix : signal original + copies détunées à faible volume
+    L_out = audio[:, 0].astype(np.float64) + wet_gain * doubled_L
+    R_out = audio[:, 1].astype(np.float64) + wet_gain * doubled_R
+
     out = np.column_stack([L_out, R_out]).astype(np.float32)
     np.clip(out, -1.0, 1.0, out=out)
     return out
