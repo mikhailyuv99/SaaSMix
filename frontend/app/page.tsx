@@ -381,6 +381,7 @@ export default function Home() {
   const [showLoginMixMessage, setShowLoginMixMessage] = useState(false);
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
   const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
+  const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
   const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [isPro, setIsPro] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
@@ -3636,15 +3637,45 @@ export default function Home() {
                 </div>
               )}
               {user ? (
-                <a
-                  href={masterResult.masterUrl}
-                  download="master.wav"
-                  className="btn-primary group inline-flex items-center justify-center text-center mt-2"
+                <button
+                  type="button"
+                  disabled={isDownloadingMaster}
+                  onClick={async () => {
+                    setIsDownloadingMaster(true);
+                    try {
+                      const res = await fetch(masterResult.masterUrl);
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "master.wav";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch {
+                      /* fallback : ouvre l'URL directement */
+                      window.open(masterResult.masterUrl, "_blank");
+                    } finally {
+                      setIsDownloadingMaster(false);
+                    }
+                  }}
+                  className={`inline-flex items-center justify-center text-center mt-2 rounded-lg px-4 py-2.5 text-tagline disabled:cursor-not-allowed ${
+                    isDownloadingMaster
+                      ? "border border-white/30 bg-slate-800 text-white"
+                      : "btn-primary group"
+                  }`}
                 >
-                  <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
-                    TÉLÉCHARGER LE MASTER
-                  </span>
-                </a>
+                  {isDownloadingMaster ? (
+                    <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
+                      TÉLÉCHARGEMENT<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
+                    </span>
+                  ) : (
+                    <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                      TÉLÉCHARGER LE MASTER
+                    </span>
+                  )}
+                </button>
               ) : (
                 <button
                   type="button"
