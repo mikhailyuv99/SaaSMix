@@ -18,6 +18,7 @@ VST_PATHS = {
     "eq8": r"C:\Users\mikha\Desktop\HISE\EQ8\Binaries\Compiled\VST3\EQ8.vst3",
     "eq9": r"C:\Users\mikha\Desktop\HISE\EQ9\Binaries\Compiled\VST3\EQ9.vst3",
     # Master HISE (limiter / glue, appliqué au mix final)
+    "master2": r"C:\Users\mikha\Desktop\HISE\master2\Binaries\Compiled\VST3\master2.vst3",
     "master": r"C:\Users\mikha\Desktop\HISE\master\Binaries\Compiled\VST3\master.vst3",
     # Reverb HISE (1=leger, 2=moyen défaut, 3=large) — chaque reverb a son projet HISE
     "reverb1": r"C:\Users\mikha\Desktop\HISE\reverb1\Binaries\Compiled\VST3\reverb1.vst3",

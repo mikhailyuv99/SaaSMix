@@ -31,14 +31,14 @@ try:
     def _vst_path(name):
         p = VST_PATHS.get(name) or ""
         return Path(p) if p else None
-    MASTER_PATH = _vst_path("master")
+    MASTER_PATH = _vst_path("master2") or _vst_path("master")
     REVERB1_PATH = _vst_path("reverb1")
     REVERB2_PATH = _vst_path("reverb2")
     REVERB3_PATH = _vst_path("reverb3")
     DOUBLER_PATH = _vst_path("doubler")
     ROBOT_PATH = _vst_path("robot")
 except Exception:
-    MASTER_PATH = Path(r"C:\Users\mikha\Desktop\HISE\master\Binaries\Compiled\VST3\master.vst3")
+    MASTER_PATH = Path(r"C:\Users\mikha\Desktop\HISE\master2\Binaries\Compiled\VST3\master2.vst3")
     _base = Path(r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3")
     REVERB1_PATH = _base / "reverb1.vst3"
     REVERB2_PATH = _base / "reverb2.vst3"
@@ -75,7 +75,7 @@ if os.environ.get("VST_BASE"):
         return _base / f"{name}.vst3"
 
     VST3_PATH = _vst_map.get("project1") or _vst_by_name("project1")
-    MASTER_PATH = _vst_map.get("master") or _vst_by_name("master")
+    MASTER_PATH = _vst_map.get("master2") or _vst_map.get("master") or _vst_by_name("master2", "master")
     REVERB1_PATH = _vst_map.get("reverb1") or _vst_by_name("reverb1")
     REVERB2_PATH = _vst_map.get("reverb2") or _vst_by_name("reverb2")
     REVERB3_PATH = _vst_map.get("reverb3new") or _vst_map.get("reverb3") or _vst_by_name("reverb3new", "reverb3")
@@ -93,7 +93,7 @@ if sys.platform == "linux":
                 vst3 = get_linux_vst_path("Project1")
                 if vst3:
                     VST3_PATH = vst3
-                master = get_linux_vst_path("master")
+                master = get_linux_vst_path("master2") or get_linux_vst_path("master")
                 if master:
                     MASTER_PATH = master
                 r1 = get_linux_vst_path("reverb1")
@@ -133,7 +133,7 @@ def get_vst_status():
         },
         "HOST_EXE": _info("host", HOST_EXE),
         "Project1 (VST3_PATH)": _info("Project1", VST3_PATH),
-        "master": _info("master", MASTER_PATH),
+        "master (master2)": _info("master2", MASTER_PATH),
         "reverb1": _info("reverb1", REVERB1_PATH),
         "reverb2": _info("reverb2", REVERB2_PATH),
         "reverb3": _info("reverb3", REVERB3_PATH),
