@@ -32,6 +32,7 @@ export interface MixParams {
   air: boolean;
   bpm: number;
   delay_division: "1/4" | "1/2" | "1/8";
+  delay_intensity: 1 | 2 | 3;
   phone_fx: boolean;
   doubler: boolean;
   robot: boolean;
@@ -49,6 +50,7 @@ const DEFAULT_MIX_PARAMS: MixParams = {
   air: false,
   bpm: 120,
   delay_division: "1/4",
+  delay_intensity: 2,
   phone_fx: false,
   doubler: false,
   robot: false,
@@ -1959,6 +1961,7 @@ export default function Home() {
       form.append("deesser", String(p.deesser));
       form.append("deesser_mode", String(p.deesser_mode));
       form.append("delay", String(p.delay));
+      form.append("delay_intensity", String(p.delay_intensity));
       form.append("reverb", String(p.reverb));
       form.append("reverb_mode", String(p.reverb_mode));
       form.append("bpm", String(projectBpm));
@@ -3368,7 +3371,10 @@ export default function Home() {
                         <input type="checkbox" checked={track.mixParams.delay} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
                         <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Delay</span>
                       </label>
-                      <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
+                      <div className="grid grid-cols-2 gap-1">
+                        <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
+                        <CustomSelect value={track.mixParams.delay_intensity} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_intensity: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
+                      </div>
                     </div>
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
@@ -3434,7 +3440,10 @@ export default function Home() {
                           <input type="checkbox" checked={track.mixParams.delay} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Delay
                         </label>
-                        <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
+                        <div className="grid grid-cols-2 gap-1 min-w-0">
+                          <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
+                          <CustomSelect value={track.mixParams.delay_intensity} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_intensity: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
+                        </div>
                       </div>
                       <div className="flex items-center justify-between min-h-[2.25rem] px-0 text-tagline text-[10px] max-md:text-[9px]">
                         <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
