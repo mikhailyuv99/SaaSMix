@@ -357,6 +357,7 @@ export default function Home() {
   const [showMasterMessage, setShowMasterMessage] = useState(false);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
   const [projectBpm, setProjectBpm] = useState(120);
+  const [bpmInput, setBpmInput] = useState("120");
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
 
   // BPM box : wheel non-passive pour que le scroll ne défile pas la page
@@ -367,7 +368,11 @@ export default function Home() {
       e.preventDefault();
       const delta = e.deltaY > 0 ? -1 : 1;
       const step = e.shiftKey ? 10 : 1;
-      setProjectBpm((b) => Math.max(1, Math.min(300, b + delta * step)));
+      setProjectBpm((b) => {
+        const next = Math.max(1, Math.min(300, b + delta * step));
+        setBpmInput(String(next));
+        return next;
+      });
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
@@ -2868,8 +2873,19 @@ export default function Home() {
                   type="number"
                   min={1}
                   max={300}
-                  value={projectBpm}
-                  onChange={(e) => setProjectBpm(Math.max(1, Math.min(300, Number(e.target.value) || 120)))}
+                  value={bpmInput}
+                  onChange={(e) => setBpmInput(e.target.value)}
+                  onBlur={() => {
+                    const n = Number(bpmInput);
+                    if (!bpmInput || isNaN(n) || n < 1) {
+                      setProjectBpm(120);
+                      setBpmInput("120");
+                    } else {
+                      const clamped = Math.max(1, Math.min(300, Math.round(n)));
+                      setProjectBpm(clamped);
+                      setBpmInput(String(clamped));
+                    }
+                  }}
                   className="w-12 text-center bg-transparent border-none text-tagline text-sm tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.5)] focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none max-lg:w-14"
                 />
               </div>
