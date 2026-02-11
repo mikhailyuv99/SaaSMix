@@ -445,40 +445,38 @@ def apply_noise_gate(audio: np.ndarray, sr: int, threshold_db: float = -45.0,
 
 
 def apply_doubler_stereo(audio: np.ndarray, sr: int,
-                         detune_cents: float = 7.0,
-                         wet_gain: float = 0.22) -> np.ndarray:
+                         width: float = 0.35) -> np.ndarray:
     """
-    Micro-pitch widener : élargit le stéréo en mélangeant deux copies légèrement
-    détunées (+N cents à gauche, -N cents à droite), sans aucun delay.
-    La voix reste parfaitement calée mais sonne plus large.
+    Stereo widener par décorrélation allpass.
+    Aucun delay audible, aucun pitch shift, aucun doublage — la voix reste unique
+    mais sonne plus large. Utilise une chaîne de filtres allpass à delays très courts
+    (< 2ms, inaudibles) qui décorrèlent la phase entre L et R.
     """
     if audio.ndim == 1:
         audio = np.column_stack([audio, audio])
-    n = audio.shape[0]
 
-    # Mono sum pour créer les copies détunées
     mono = (audio[:, 0].astype(np.float64) + audio[:, 1].astype(np.float64)) * 0.5
 
-    # Pitch shift par resampling (quelques cents = imperceptible, juste de la largeur)
-    shift_up = 2.0 ** (detune_cents / 1200.0)    # ~1.004
-    shift_down = 2.0 ** (-detune_cents / 1200.0)  # ~0.996
+    # Chaîne de filtres allpass avec delays courts (nombres premiers de samples)
+    # Chaque filtre décorrèle une bande de fréquences différente
+    # Delays < 2ms = inaudibles individuellement, mais ensemble ils créent de la largeur
+    delay_times_ms = [0.27, 0.63, 0.98, 1.53, 2.02]
+    coeff = 0.7
 
-    indices_up = np.arange(n, dtype=np.float64) * shift_up
-    indices_down = np.arange(n, dtype=np.float64) * shift_down
+    decorrelated = mono.copy()
+    for d_ms in delay_times_ms:
+        d_samples = max(1, int(d_ms * sr / 1000.0))
+        b = np.zeros(d_samples + 1)
+        b[0] = coeff
+        b[-1] = 1.0
+        a_filt = np.zeros(d_samples + 1)
+        a_filt[0] = 1.0
+        a_filt[-1] = coeff
+        decorrelated = lfilter(b, a_filt, decorrelated)
 
-    def _resample(signal, indices):
-        idx = np.clip(indices, 0, len(signal) - 1)
-        lo = np.floor(idx).astype(int)
-        hi = np.minimum(lo + 1, len(signal) - 1)
-        frac = idx - lo
-        return signal[lo] * (1.0 - frac) + signal[hi] * frac
-
-    doubled_L = _resample(mono, indices_up)
-    doubled_R = _resample(mono, indices_down)
-
-    # Mix : signal original + copies détunées (pas de delay = vocal parfaitement alignée)
-    L_out = audio[:, 0].astype(np.float64) + wet_gain * doubled_L
-    R_out = audio[:, 1].astype(np.float64) + wet_gain * doubled_R
+    # L reçoit +decorrelated, R reçoit -decorrelated → largeur stéréo
+    L_out = audio[:, 0].astype(np.float64) + width * decorrelated
+    R_out = audio[:, 1].astype(np.float64) - width * decorrelated
 
     out = np.column_stack([L_out, R_out]).astype(np.float32)
     np.clip(out, -1.0, 1.0, out=out)
