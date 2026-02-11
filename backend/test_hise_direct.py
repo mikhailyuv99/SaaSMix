@@ -116,12 +116,29 @@ if sys.platform == "linux":
 
 
 def get_vst_status():
-    """État des chemins VST (host + plugin principal) pour diagnostic déploiement."""
+    """État de TOUS les chemins VST (host + chaque plugin) pour diagnostic déploiement."""
+    def _info(name, p):
+        if p is None:
+            return {"path": None, "exists": False}
+        return {"path": str(p), "exists": p.exists()}
+
+    vst_base = os.environ.get("VST_BASE", "NOT SET")
+    host_env = os.environ.get("HISE_VST3_HOST_EXE", "NOT SET")
+
     return {
-        "HOST_EXE": str(HOST_EXE),
-        "HOST_EXE_exists": HOST_EXE.exists(),
-        "VST3_PATH": str(VST3_PATH),
-        "VST3_PATH_exists": VST3_PATH.exists(),
+        "env": {
+            "HISE_VST3_HOST_EXE": host_env,
+            "VST_BASE": vst_base,
+            "VST_BLOCK_SIZE": VST_BLOCK_SIZE,
+        },
+        "HOST_EXE": _info("host", HOST_EXE),
+        "Project1 (VST3_PATH)": _info("Project1", VST3_PATH),
+        "master": _info("master", MASTER_PATH),
+        "reverb1": _info("reverb1", REVERB1_PATH),
+        "reverb2": _info("reverb2", REVERB2_PATH),
+        "reverb3": _info("reverb3", REVERB3_PATH),
+        "doubler": _info("doubler", DOUBLER_PATH),
+        "robot": _info("robot", ROBOT_PATH),
     }
 
 
