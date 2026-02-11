@@ -348,6 +348,7 @@ export default function Home() {
   } | null>(null);
   const [masterPlaybackCurrentTime, setMasterPlaybackCurrentTime] = useState(0);
   const [isMasterResultPlaying, setIsMasterResultPlaying] = useState(false);
+  const [activePlayer, setActivePlayer] = useState<"mix" | "master">("mix");
   const [masterResumeFrom, setMasterResumeFrom] = useState(0);
   const [gainSliderHoveredTrackId, setGainSliderHoveredTrackId] = useState<string | null>(null);
   const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
@@ -2292,6 +2293,7 @@ export default function Home() {
       stopAll();
       setMasterResult({ mixUrl, masterUrl });
       setMasterPlaybackMode("master");
+      setActivePlayer("master");
     } catch (e) {
       console.error(e);
       setAppModal({ type: "alert", message: "Erreur : " + formatApiError(e), onClose: () => {} });
@@ -2397,7 +2399,8 @@ export default function Home() {
     setIsMasterResultPlaying(false);
   }, []);
 
-  // Espace = play/pause. Si un résultat master existe : Space contrôle le master. Sinon : Space contrôle les pistes (section mix). (Doit être après startMasterPlayback/stopMasterPlayback.)
+  // Espace = play/pause du dernier player cliqué (mix ou master).
+  // Si aucun master n'existe, Space contrôle toujours le mix.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== "Space" || e.repeat) return;
@@ -2412,7 +2415,7 @@ export default function Home() {
       if (isTypingField) return;
       e.preventDefault();
       e.stopPropagation();
-      if (masterResult) {
+      if (activePlayer === "master" && masterResult) {
         if (isMasterResultPlaying) stopMasterPlayback();
         else startMasterPlayback();
         return;
@@ -2422,7 +2425,7 @@ export default function Home() {
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [isPlaying, playAll, stopAll, masterResult, isMasterResultPlaying, startMasterPlayback, stopMasterPlayback]);
+  }, [isPlaying, playAll, stopAll, masterResult, isMasterResultPlaying, startMasterPlayback, stopMasterPlayback, activePlayer]);
 
   const toggleMasterPlaybackMode = useCallback(() => {
     const nodes = masterPlaybackRef.current;
@@ -2836,7 +2839,7 @@ export default function Home() {
                   <div className="relative">
                     <button
                       type="button"
-                      onClick={() => playAll()}
+                      onClick={() => { setActivePlayer("mix"); playAll(); }}
                       className="w-11 h-11 flex items-center justify-center rounded-lg border border-white/20 bg-white text-[#060608] hover:bg-white/90 transition-colors max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9"
                       aria-label={hasPausedPosition ? "Reprendre" : "Play tout"}
                       title={undefined}
@@ -2850,7 +2853,7 @@ export default function Home() {
                     )}
                   </div>
                 ) : (
-                  <button type="button" onClick={stopAll} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9" aria-label="Pause">
+                  <button type="button" onClick={() => { setActivePlayer("mix"); stopAll(); }} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg max-lg:w-10 max-lg:h-10 max-md:w-9 max-md:h-9" aria-label="Pause">
                     <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                   </button>
                 )}
@@ -3559,7 +3562,7 @@ export default function Home() {
                 {!isMasterResultPlaying ? (
                   <button
                     type="button"
-                    onClick={() => startMasterPlayback()}
+                    onClick={() => { setActivePlayer("master"); startMasterPlayback(); }}
                     disabled={!masterWaveforms}
                     className="btn-primary-accent disabled:opacity-50 w-11 h-11 flex items-center justify-center rounded-lg"
                     aria-label={masterResumeFrom > 0 ? "Reprendre" : "Play"}
@@ -3567,7 +3570,7 @@ export default function Home() {
                     <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                   </button>
                 ) : (
-                  <button type="button" onClick={stopMasterPlayback} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg" aria-label="Pause">
+                  <button type="button" onClick={() => { setActivePlayer("master"); stopMasterPlayback(); }} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg" aria-label="Pause">
                     <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                   </button>
                 )}
