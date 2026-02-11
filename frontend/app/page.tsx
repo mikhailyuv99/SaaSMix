@@ -2594,7 +2594,7 @@ export default function Home() {
                     onClick={saveProject}
                     className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    {isSavingProject ? "SAUVEGARDE…" : "SAUVEGARDER"}
+                    {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                   </button>
                   {user && currentProject && (
                     <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-500 text-[10px] whitespace-nowrap max-w-[140px] truncate" title={currentProject.name}>
@@ -2702,7 +2702,7 @@ export default function Home() {
                         onClick={() => { setNavMenuOpen(false); saveProject(); }}
                         className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                       >
-                        {isSavingProject ? "SAUVEGARDE…" : "SAUVEGARDER"}
+                        {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                       </button>
                       {user && currentProject && (
                         <p className="px-4 py-1.5 text-[10px] text-slate-600 truncate max-w-[220px] mx-auto" title={currentProject.name}>
@@ -2808,7 +2808,7 @@ export default function Home() {
                         onClick={() => loadProject(p.id)}
                         className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
                       >
-                        Charger
+                        {isLoadingProject ? <span className="animate-dots">Chargement</span> : "Charger"}
                       </button>
                       <button
                         type="button"
