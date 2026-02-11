@@ -858,7 +858,7 @@ def render(input_wav: str, output_wav: str, deesser: bool = True, deesser_mode: 
         _progress("Doubler")
         print("6. Doubler (DSP)...")
         audio, sr = read_wav(output_wav)
-        audio_out = apply_doubler_stereo(audio, sr, delay_ms=20.0, wet_gain=0.4)
+        audio_out = apply_doubler_stereo(audio, sr)
         write_wav(output_wav, audio_out, sr)
         print("   Doubler OK")
         _progress("Doubler OK", done=True)
