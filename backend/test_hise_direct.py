@@ -445,21 +445,21 @@ def apply_noise_gate(audio: np.ndarray, sr: int, threshold_db: float = -45.0,
 
 
 def apply_doubler_stereo(audio: np.ndarray, sr: int,
-                         detune_cents: float = 7.0, delay_ms: float = 8.0,
+                         detune_cents: float = 7.0,
                          wet_gain: float = 0.22) -> np.ndarray:
     """
-    Micro-pitch doubler : élargit le stéréo en créant deux copies légèrement
-    détunées (+N cents à gauche, -N cents à droite) avec un petit delay Haas.
-    Sonne comme un vrai doublage vocal, pas comme un chorus.
+    Micro-pitch widener : élargit le stéréo en mélangeant deux copies légèrement
+    détunées (+N cents à gauche, -N cents à droite), sans aucun delay.
+    La voix reste parfaitement calée mais sonne plus large.
     """
     if audio.ndim == 1:
         audio = np.column_stack([audio, audio])
     n = audio.shape[0]
 
-    # Mono sum pour créer les copies doublées
+    # Mono sum pour créer les copies détunées
     mono = (audio[:, 0].astype(np.float64) + audio[:, 1].astype(np.float64)) * 0.5
 
-    # Pitch shift par resampling (quelques cents = naturel, pas de chorus)
+    # Pitch shift par resampling (quelques cents = imperceptible, juste de la largeur)
     shift_up = 2.0 ** (detune_cents / 1200.0)    # ~1.004
     shift_down = 2.0 ** (-detune_cents / 1200.0)  # ~0.996
 
@@ -476,13 +476,7 @@ def apply_doubler_stereo(audio: np.ndarray, sr: int,
     doubled_L = _resample(mono, indices_up)
     doubled_R = _resample(mono, indices_down)
 
-    # Petit delay Haas pour renforcer la largeur
-    delay_samples = max(0, min(n - 1, int(delay_ms * sr / 1000.0)))
-    if delay_samples > 0:
-        doubled_L = np.concatenate([np.zeros(delay_samples), doubled_L[:-delay_samples]])
-        doubled_R = np.concatenate([np.zeros(delay_samples), doubled_R[:-delay_samples]])
-
-    # Mix : signal original + copies détunées à faible volume
+    # Mix : signal original + copies détunées (pas de delay = vocal parfaitement alignée)
     L_out = audio[:, 0].astype(np.float64) + wet_gain * doubled_L
     R_out = audio[:, 1].astype(np.float64) + wet_gain * doubled_R
 
