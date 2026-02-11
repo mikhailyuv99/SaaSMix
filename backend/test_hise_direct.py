@@ -115,6 +115,16 @@ if sys.platform == "linux":
         print("Linux/R2: chaîne HISE non disponible:", e)
 
 
+def get_vst_status():
+    """État des chemins VST (host + plugin principal) pour diagnostic déploiement."""
+    return {
+        "HOST_EXE": str(HOST_EXE),
+        "HOST_EXE_exists": HOST_EXE.exists(),
+        "VST3_PATH": str(VST3_PATH),
+        "VST3_PATH_exists": VST3_PATH.exists(),
+    }
+
+
 def read_wav(path: str):
     """Lit un WAV en float32. Supporte PCM 16/24/32-bit, float, et WAVE_FORMAT_EXTENSIBLE (65534)."""
     try:
