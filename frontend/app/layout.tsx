@@ -7,7 +7,8 @@ import Link from 'next/link'
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
-const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, '')}/logo-black.png`
+// Use a lighter image for social previews (Instagram/Facebook often fail when > ~200KB)
+const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, '')}/logo-og.png`
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),

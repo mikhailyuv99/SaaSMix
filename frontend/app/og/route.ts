@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://siberiamix.com";
-const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, "")}/logo-black.png`;
+// Lighter image for crawlers (keep under ~200KB so Instagram mobile loads it)
+const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, "")}/logo-og.png`;
 
 /**
  * Serves minimal HTML with only Open Graph / Twitter meta tags.
