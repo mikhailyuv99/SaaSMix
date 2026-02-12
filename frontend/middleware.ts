@@ -2,21 +2,19 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Facebook/Instagram crawlers sometimes send Range headers; the server then
- * responds with 206 Partial Content. Instagram mobile can fail to show the
- * link preview when it gets 206. Strip Range for these crawlers so they get 200.
+ * Facebook/Instagram crawlers: serve a minimal 200 HTML with only OG meta tags
+ * so the link preview (and image) always loads. The main page can return 206
+ * for Range requests, which breaks the preview on Instagram.
  */
 export function middleware(request: NextRequest) {
   const ua = request.headers.get("user-agent") || "";
   const isFbCrawler =
     /facebookexternalhit|Facebot|Instagram/i.test(ua);
 
-  if (isFbCrawler && request.headers.get("range")) {
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.delete("range");
-    return NextResponse.next({
-      request: { headers: requestHeaders },
-    });
+  if (isFbCrawler && request.nextUrl.pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/og";
+    return NextResponse.rewrite(url);
   }
 
   return NextResponse.next();
