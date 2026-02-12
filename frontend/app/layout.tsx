@@ -7,7 +7,6 @@ import Link from 'next/link'
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
-// Use a lighter image for social previews (Instagram/Facebook often fail when > ~200KB)
 const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, '')}/logo-og.png`
 
 export const metadata = {
@@ -36,7 +35,7 @@ export const metadata = {
     siteName: 'Siberia Mix',
     title: 'SIBERIA MIX | MIX VOCAL EN LIGNE',
     description: "Logiciel de mix vocal en ligne. Stems + instrumental, mix + master en quelques secondes pour les artistes indépendants. 0 ingé son, 0 plugin, tout se fait en ligne!",
-    images: [{ url: OG_IMAGE_URL, width: 512, height: 512, alt: 'Siberia Mix' }],
+    images: [{ url: OG_IMAGE_URL, width: 1200, height: 630, alt: 'Siberia Mix' }],
   },
   twitter: {
     card: 'summary_large_image',

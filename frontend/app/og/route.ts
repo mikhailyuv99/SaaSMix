@@ -19,8 +19,8 @@ export function GET(request: NextRequest) {
   <meta property="og:title" content="SIBERIA MIX | MIX VOCAL EN LIGNE" />
   <meta property="og:description" content="Logiciel de mix vocal en ligne. Stems + instrumental, mix + master en quelques secondes pour les artistes indépendants. 0 ingé son, 0 plugin, tout se fait en ligne!" />
   <meta property="og:image" content="${OG_IMAGE_URL}" />
-  <meta property="og:image:width" content="512" />
-  <meta property="og:image:height" content="512" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Siberia Mix" />
   <meta property="og:site_name" content="Siberia Mix" />
   <meta property="og:locale" content="fr_FR" />
