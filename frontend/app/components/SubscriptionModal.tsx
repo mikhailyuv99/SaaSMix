@@ -102,7 +102,7 @@ function SubscriptionForm({
             onClick={() => setSelectedPriceId(PRICE_ID_MONTHLY)}
             className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-200 hover:bg-white/10 hover:border-white/30 transition-colors"
           >
-            <span className="font-medium">9,99 €</span>
+            <span className="font-medium">19,99 €</span>
             <span className="text-tagline text-slate-500 block text-[10px]">/ mois</span>
           </button>
           <button
@@ -110,14 +110,14 @@ function SubscriptionForm({
             onClick={() => setSelectedPriceId(PRICE_ID_ANNUAL)}
             className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-200 hover:bg-white/10 hover:border-white/30 transition-colors"
           >
-            <span className="font-medium">99,99 €</span>
+            <span className="font-medium">199,99 €</span>
             <span className="text-tagline text-slate-500 block text-[10px]">/ an (~2 mois offerts)</span>
           </button>
         </div>
       ) : (
         <>
           <p className="text-tagline text-slate-500 text-[10px]">
-            {selectedPriceId === PRICE_ID_ANNUAL ? "Abonnement annuel (99,99 €/an)" : "Abonnement mensuel (9,99 €/mois)"}
+            {selectedPriceId === PRICE_ID_ANNUAL ? "Abonnement annuel (199,99 €/an)" : "Abonnement mensuel (19,99 €/mois)"}
           </p>
           <div className="rounded-lg border border-white/10 bg-white/5 p-3">
             <CardElement options={CARD_OPTIONS} />
