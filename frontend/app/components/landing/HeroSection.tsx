@@ -173,9 +173,6 @@ export function HeroSection() {
             <span className="text-sm text-slate-400">
               ou cliquez pour choisir un fichier
             </span>
-            <span className="mt-6 text-xs text-slate-400">
-              Aperçu pleine longueur · Pas de CB · Vous gardez vos droits
-            </span>
           </button>
         </div>
       </div>

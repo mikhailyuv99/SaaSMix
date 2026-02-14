@@ -46,10 +46,10 @@ export function BeforeAfterSection() {
             </div>
           ))}
         </div>
-        <div className="mx-auto mt-5 max-w-3xl text-center observe-stagger-4">
+        <div className="mx-auto mt-5 max-w-2xl text-center observe-stagger-4">
           <Link
             href="/mix"
-            className="btn-cta-primary inline-flex rounded-xl px-6 py-3.5 text-sm font-semibold"
+            className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto"
           >
             Mixer votre propre morceau
           </Link>
