@@ -100,7 +100,7 @@ export function HeroSection() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1fr,380px] lg:gap-16">
         <div className="max-w-xl">
           <h1
-            className="hero-heading-shadow font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-up"
+            className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-up"
             style={{ animationDelay: "0.1s", animationFillMode: "both" }}
           >
             <span className="gradient-text">Le site n°1</span>
@@ -108,19 +108,19 @@ export function HeroSection() {
             <span className="text-white">de mix vocal en ligne</span>
           </h1>
           <p
-            className="hero-text-shadow mt-5 text-lg text-slate-300 sm:text-xl animate-fade-up"
+            className="mt-5 text-lg text-slate-300 sm:text-xl animate-fade-up"
             style={{ animationDelay: "0.25s", animationFillMode: "both" }}
           >
             Transformez vos pistes brutes en un morceau fini en quelques minutes.
           </p>
           <p
-            className="hero-text-shadow mt-3 text-sm text-slate-500 sm:text-base animate-fade-up"
+            className="mt-3 text-sm text-slate-500 sm:text-base animate-fade-up"
             style={{ animationDelay: "0.3s", animationFillMode: "both" }}
           >
             Zéro ingé son, zéro plugin — tout se fait en ligne.
           </p>
           <ul
-            className="hero-text-shadow mt-6 space-y-2 animate-fade-up"
+            className="mt-6 space-y-2 animate-fade-up"
             style={{ animationDelay: "0.4s", animationFillMode: "both" }}
           >
             {[
@@ -160,7 +160,7 @@ export function HeroSection() {
               isDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
             }`}
           >
-            <span className="hero-text-shadow font-heading text-base font-medium text-white sm:text-lg">
+            <span className="font-heading text-base font-medium text-white sm:text-lg">
               {isDragging ? "Déposez le fichier" : "Glissez vos pistes ici"}
             </span>
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white" aria-hidden>
@@ -170,10 +170,10 @@ export function HeroSection() {
                 <line x1={12} y1={3} x2={12} y2={15} />
               </svg>
             </span>
-            <span className="hero-text-shadow text-sm text-slate-500">
+            <span className="text-sm text-slate-500">
               ou cliquez pour choisir un fichier
             </span>
-            <span className="hero-text-shadow mt-6 text-xs text-slate-500">
+            <span className="mt-6 text-xs text-slate-500">
               Aperçu pleine longueur · Pas de CB · Vous gardez vos droits
             </span>
           </button>

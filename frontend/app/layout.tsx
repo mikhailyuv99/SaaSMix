@@ -3,6 +3,7 @@ import { StarryCeiling } from './components/StarryCeiling'
 import { JsonLd } from './components/JsonLd'
 import { Header } from './components/Header'
 import { PageBackground } from './components/PageBackground'
+import { LandingTheme } from './components/LandingTheme'
 import Link from 'next/link'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
@@ -80,15 +81,19 @@ export default function RootLayout({
         <div className="relative min-h-screen flex flex-col">
           <PageBackground />
           <Header />
-          <div className="relative z-10 flex-1">{children}</div>
-          <footer className="py-6 px-4 mt-auto">
-            <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-[11px] sm:text-xs text-slate-500">
-              <span className="font-heading font-medium">© {new Date().getFullYear()} 99SIBERIA</span>
-              <Link href="/mentions-legales" className="transition-colors hover:text-white">Mentions légales</Link>
-              <Link href="/politique-confidentialite" className="transition-colors hover:text-white">Politique de confidentialité</Link>
-              <Link href="/cgu" className="transition-colors hover:text-white">CGU</Link>
-            </div>
-          </footer>
+          <LandingTheme>
+            <>
+              <div className="relative z-10 flex-1">{children}</div>
+              <footer className="py-6 px-4 mt-auto">
+                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-[11px] sm:text-xs text-slate-500">
+                  <span className="font-heading font-medium">© {new Date().getFullYear()} 99SIBERIA</span>
+                  <Link href="/mentions-legales" className="transition-colors hover:text-white">Mentions légales</Link>
+                  <Link href="/politique-confidentialite" className="transition-colors hover:text-white">Politique de confidentialité</Link>
+                  <Link href="/cgu" className="transition-colors hover:text-white">CGU</Link>
+                </div>
+              </footer>
+            </>
+          </LandingTheme>
         </div>
       </body>
     </html>

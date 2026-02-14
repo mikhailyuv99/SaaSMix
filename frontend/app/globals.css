@@ -159,12 +159,103 @@
   background-clip: text;
 }
 
-/* Lisibilité du texte hero sur fond clair/sans overlay */
-.hero-heading-shadow {
-  filter: drop-shadow(0 0 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
+/* Landing: texte sombre partout pour lisibilité sur fond clair */
+.landing-dark-text {
+  color: #1e293b;
 }
-.hero-text-shadow {
-  text-shadow: 0 0 16px rgba(0, 0, 0, 0.75), 0 1px 3px rgba(0, 0, 0, 0.9);
+.landing-dark-text .gradient-text {
+  background: none;
+  -webkit-text-fill-color: #0f172a;
+  color: #0f172a;
+}
+.landing-dark-text h1,
+.landing-dark-text h2,
+.landing-dark-text h3 {
+  color: #0f172a !important;
+}
+.landing-dark-text p,
+.landing-dark-text li {
+  color: #334155 !important;
+}
+.landing-dark-text a {
+  color: #334155 !important;
+}
+.landing-dark-text a:hover {
+  color: #0f172a !important;
+}
+.landing-dark-text .landing-card {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(15, 23, 42, 0.15);
+}
+.landing-dark-text .landing-card:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: rgba(15, 23, 42, 0.2);
+}
+.landing-dark-text .faq-question {
+  color: #0f172a !important;
+}
+.landing-dark-text .faq-question:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+.landing-dark-text [class*="text-slate-400"],
+.landing-dark-text [class*="text-slate-500"] {
+  color: #475569 !important;
+}
+.landing-dark-text .contact-input {
+  background: rgba(255, 255, 255, 0.4) !important;
+  border-color: rgba(15, 23, 42, 0.2) !important;
+  color: #0f172a !important;
+}
+.landing-dark-text .contact-input::placeholder {
+  color: #64748b !important;
+}
+.landing-dark-text .hero-dropzone {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(15, 23, 42, 0.2) !important;
+}
+.landing-dark-text .hero-dropzone span {
+  color: #0f172a !important;
+}
+.landing-dark-text .hero-dropzone .text-slate-500 {
+  color: #475569 !important;
+}
+.landing-dark-text .hero-dropzone [class*="bg-white/10"] {
+  background: rgba(15, 23, 42, 0.25) !important;
+}
+.landing-dark-text .hero-dropzone [class*="bg-white/10"] svg {
+  color: #0f172a;
+}
+.landing-dark-text footer {
+  color: #475569 !important;
+}
+.landing-dark-text footer a {
+  color: #475569 !important;
+}
+.landing-dark-text footer a:hover {
+  color: #0f172a !important;
+}
+.landing-dark-text [class*="text-white"] {
+  color: #0f172a !important;
+}
+.landing-dark-text [class*="text-slate-300"] {
+  color: #334155 !important;
+}
+.landing-dark-text span[class*="bg-white/10"],
+.landing-dark-text span[class*="bg-white/5"] {
+  background: rgba(15, 23, 42, 0.2) !important;
+  color: #0f172a !important;
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+.landing-dark-text [class*="border-white/25"],
+.landing-dark-text [class*="border-white/10"],
+.landing-dark-text [class*="border-white/15"] {
+  border-color: rgba(15, 23, 42, 0.2) !important;
+}
+.landing-dark-text [class*="ring-white/10"] {
+  --tw-ring-color: rgba(15, 23, 42, 0.15) !important;
+}
+.landing-dark-text svg.text-slate-400 {
+  color: #475569 !important;
 }
 
 .btn-cta-primary {
