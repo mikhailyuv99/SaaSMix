@@ -2918,8 +2918,11 @@ export default function Home() {
                         htmlFor={`file-${track.id}`}
                         className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
                         onClick={() => setFileChooserActiveTrackId(track.id)}
+                        aria-label="Choisir un fichier WAV"
                       >
-                        <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
+                        <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}`} aria-hidden>
+                          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        </span>
                       </label>
                       <input
                         id={`file-${track.id}`}
@@ -3007,8 +3010,11 @@ export default function Home() {
                         htmlFor={`file-${track.id}`}
                         className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
                         onClick={() => setFileChooserActiveTrackId(track.id)}
+                        aria-label="Choisir un fichier WAV"
                       >
-                        <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
+                        <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}`} aria-hidden>
+                          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        </span>
                       </label>
                       <input
                         id={`file-${track.id}`}
@@ -3163,8 +3169,11 @@ export default function Home() {
                         <label
                           htmlFor={`file-mob-${track.id}`}
                           className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-sm max-md:text-xs"
+                          aria-label={!track.file ? "Choisir un fichier WAV" : "Changer le fichier"}
                         >
-                          <span className={!track.file ? "glow-blink-slow" : "text-slate-400"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
+                          <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow" : "text-slate-400"}`} aria-hidden>
+                          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        </span>
                         </label>
                         <input
                           id={`file-mob-${track.id}`}
@@ -3219,8 +3228,11 @@ export default function Home() {
                         <label
                           htmlFor={`file-mob-${track.id}`}
                           className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-sm max-md:text-xs"
+                          aria-label={!track.file ? "Choisir un fichier WAV" : "Changer le fichier"}
                         >
-                          <span className={!track.file ? "glow-blink-slow" : "text-slate-400"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
+                          <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow" : "text-slate-400"}`} aria-hidden>
+                          <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        </span>
                         </label>
                         <input
                           id={`file-mob-${track.id}`}
@@ -3340,7 +3352,7 @@ export default function Home() {
                     </button>
                   </div>
                   <div className="h-0 overflow-visible relative">
-                    <p className="absolute top-[0.15rem] left-0 right-0 text-tagline text-slate-400 text-sm max-md:text-xs text-center truncate w-full pointer-events-none" title={track.file?.name ?? track.rawFileName ?? ""}>
+                    <p className="absolute top-[0.15rem] left-0 right-0 text-tagline text-slate-400 text-[10px] max-md:text-[9px] text-center truncate w-full pointer-events-none" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName ?? ""}
                     </p>
                   </div>
@@ -3502,7 +3514,7 @@ export default function Home() {
             <p className="font-heading text-xs uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors max-md:text-[10px]">Ajouter une piste</p>
           </div>
 
-          <div className="flex flex-row flex-wrap items-center justify-center gap-10 w-full max-md:gap-8">
+          <div className="flex flex-row flex-wrap items-center justify-between w-full max-md:gap-6 gap-x-8">
             {tracks.length > 0 ? (
               !isPlaying ? (
                 <button
