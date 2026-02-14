@@ -63,15 +63,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <html lang="fr" style={{ fontFamily: "'Outfit', sans-serif" }}>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/png" href="/icon.png" />
         <link rel="alternate icon" href="/favicon.ico" />
         {process.env.NEXT_PUBLIC_FB_APP_ID ? (
           <meta property="fb:app_id" content={process.env.NEXT_PUBLIC_FB_APP_ID} />
         ) : null}
       </head>
-      <body className="antialiased text-slate-200" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <body className="antialiased text-slate-200" style={{ fontFamily: "'Outfit', sans-serif" }}>
         <JsonLd />
         {/* <StarryCeiling /> */}
         <div className="relative min-h-screen flex flex-col">

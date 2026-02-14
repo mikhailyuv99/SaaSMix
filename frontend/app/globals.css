@@ -1,12 +1,9 @@
-/* Police inline (base64) = zéro requête réseau, marche partout */
-@import './fonts/inline.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Outfit', sans-serif;
   --accent: 248 250 252;
   --accent-dim: 148 163 184;
   --glow: 255 255 255;
@@ -19,7 +16,7 @@
 @layer base {
   html, body {
     margin: 0;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Outfit', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
@@ -329,7 +326,7 @@
   animation: loading-dots 1.2s steps(4, end) infinite;
 }
 
-/* Force Plus Jakarta Sans partout (priorité max) */
+/* Force Outfit partout */
 html, body, html *, body * {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif !important;
+  font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
 }
