@@ -207,7 +207,7 @@ export function HowItWorks() {
               Essayer ces 4 étapes avec vos pistes
             </Link>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8">
+          <div className="flex flex-nowrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8 whitespace-nowrap">
             <span>Aperçu pleine longueur</span>
             <span>Pas de carte bancaire</span>
             <span>Vous gardez vos droits</span>

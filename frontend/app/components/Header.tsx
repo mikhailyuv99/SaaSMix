@@ -28,11 +28,16 @@ export function Header() {
               </a>
             </>
           )}
-          <Link
-            href={isHome ? "/mix" : "/"}
-            className="rounded-lg border border-white/30 bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:border-white/40 shrink-0"
-          >
-            {isHome ? "Charger un fichier" : "Accueil"}
+          {!isHome && (
+            <Link href="/" className="text-sm text-white/90 transition-colors hover:text-white">
+              Accueil
+            </Link>
+          )}
+          <Link href="/connexion" className="text-sm text-white/90 transition-colors hover:text-white shrink-0">
+            Connexion
+          </Link>
+          <Link href="/inscription" className="rounded-lg border border-white/30 bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:border-white/40 shrink-0">
+            Inscription
           </Link>
         </div>
       </div>
