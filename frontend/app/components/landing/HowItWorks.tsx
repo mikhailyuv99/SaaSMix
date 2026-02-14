@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ObserveSection } from "../ObserveSection";
 import { ObserveElement } from "../ObserveElement";
+
+/** Play-button blue-gray from landing (Aperçu pleine longueur) */
+const CIRCLE_BG = "#2C313B";
 
 const steps = [
   {
@@ -66,9 +69,30 @@ function StepIcon({ icon }: { icon: string }) {
 
 export function HowItWorks() {
   const [expanded, setExpanded] = useState<number | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [lineProgress, setLineProgress] = useState(0);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const onScroll = () => {
+      const rect = section.getBoundingClientRect();
+      const viewportH = window.innerHeight;
+      const sectionH = rect.height;
+      const sectionTop = rect.top;
+      // 0 when section top touches bottom of viewport, 1 when section bottom touches top of viewport
+      const progress = (viewportH - sectionTop) / (viewportH + sectionH);
+      setLineProgress(Math.min(1, Math.max(0, progress)));
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <section id="comment-ca-marche" className="scroll-mt-20 px-4 py-6 sm:py-8">
+    <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 px-4 py-6 sm:py-8">
       <ObserveSection>
         <div className="mx-auto max-w-3xl text-center">
           <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
@@ -83,11 +107,20 @@ export function HowItWorks() {
         </div>
 
         <div className="relative mx-auto mt-8 max-w-4xl sm:mt-10">
-          {/* Ligne verticale (pleine hauteur) */}
+          {/* Ligne verticale : fond + progression blanche lumineuse */}
           <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-white/20" />
+          <div
+            className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-white transition-all duration-500 ease-out"
+            style={{
+              height: `${lineProgress * 100}%`,
+              boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
+            }}
+          />
 
           {steps.map((step, i) => {
             const isLeft = i % 2 === 0;
+            const threshold = (i + 0.5) / steps.length;
+            const isGlowing = lineProgress >= threshold;
             return (
               <div
                 key={step.num}
@@ -118,9 +151,24 @@ export function HowItWorks() {
                   )}
                 </div>
 
-                {/* Centre : cercle sur la ligne */}
-                <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white/30 bg-[#0a0a0a] font-heading text-sm font-bold text-white shadow-lg sm:h-12 sm:w-12">
-                  {step.num}
+                {/* Centre : cercle sur la ligne (couleur play button + glow au scroll) */}
+                <div
+                  className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 font-heading text-sm font-bold shadow-lg transition-all duration-500 sm:h-12 sm:w-12 ${
+                    isGlowing
+                      ? "border-white/80 bg-white/15 text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]"
+                      : "border-white/25 text-white/90"
+                  }`}
+                  style={{ backgroundColor: isGlowing ? undefined : CIRCLE_BG }}
+                >
+                  {isGlowing && (
+                    <span
+                      className="pointer-events-none absolute inset-0 rounded-full"
+                      style={{
+                        boxShadow: "0 0 20px rgba(255,255,255,0.4), inset 0 0 20px rgba(255,255,255,0.1)",
+                      }}
+                    />
+                  )}
+                  <span className="relative z-[1]">{step.num}</span>
                 </div>
 
                 {/* Partie droite */}
