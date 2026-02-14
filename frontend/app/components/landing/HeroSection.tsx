@@ -96,7 +96,7 @@ export function HeroSection() {
   const onClickCard = () => inputRef.current?.click();
 
   return (
-    <section className="relative min-h-0 overflow-hidden px-4 pt-6 pb-0 sm:pt-8 sm:pb-0">
+    <section className="relative min-h-0 overflow-hidden px-4 pt-6 pb-10 sm:pt-8 sm:pb-12">
       <div className="mx-auto grid max-w-6xl items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12">
         <div className="max-w-xl">
           <h1
