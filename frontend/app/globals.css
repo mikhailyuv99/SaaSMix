@@ -334,8 +334,16 @@ html, body, html *, body * {
 input, textarea, select, button {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
 }
-/* Cartes landing (FAQ, contact, glissez-déposez) */
+/* Cartes landing (FAQ, contact) + zone glissez-déposez */
 .landing-card,
-.landing-card * {
+.landing-card *,
+.landing-card input::placeholder,
+.landing-card textarea::placeholder {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}
+/* Zone glissez-déposez : Plus Jakarta + tout en caps */
+.hero-dropzone,
+.hero-dropzone * {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  text-transform: uppercase !important;
 }
