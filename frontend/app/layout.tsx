@@ -80,9 +80,9 @@ export default function RootLayout({
         {/* <StarryCeiling /> */}
         <div className="relative min-h-screen flex flex-col">
           <PageBackground />
-          <Header />
           <LandingTheme>
             <>
+              <Header />
               <div className="relative z-10 flex-1">{children}</div>
               <footer className="py-6 px-4 mt-auto">
                 <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-[11px] sm:text-xs text-slate-500">
