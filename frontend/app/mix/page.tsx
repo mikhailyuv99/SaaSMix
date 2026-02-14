@@ -3537,7 +3537,7 @@ export default function Home() {
 
             <div
               ref={bpmBoxRef}
-              className="flex flex-row items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-3 py-2 select-none overflow-visible shrink-0"
+              className="flex flex-row items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-3 py-2 select-none overflow-visible shrink-0 min-w-[8rem]"
               title="Molette (desktop) ou toucher la valeur (mobile) pour saisir le BPM (1–300)"
             >
               <span className="text-tagline text-xs max-md:text-[10px] uppercase tracking-wider text-slate-400">BPM</span>
