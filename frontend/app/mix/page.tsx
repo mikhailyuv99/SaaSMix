@@ -2880,9 +2880,23 @@ export default function Home() {
           </div>
         )}
 
-        <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3 space-y-4 max-lg:space-y-3 max-md:space-y-2.5`} aria-label="Pistes">
+        <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
+          <div className="flex flex-row gap-4 max-lg:gap-3 max-md:gap-2.5 items-start">
+            <button
+              type="button"
+              onClick={addTrack}
+              className="group shrink-0 w-[7rem] max-md:w-[6rem] rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 max-lg:p-4 flex flex-col items-center justify-center gap-2 transition-colors hover:border-white/15 hover:bg-white/[0.06] focus:outline-none focus:ring-0 min-h-[8rem] max-md:min-h-[7rem]"
+              aria-label="Ajouter une piste"
+            >
+              <svg className="w-6 h-6 max-md:w-5 max-md:h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span className="font-heading text-xs uppercase tracking-[0.2em] text-slate-400 text-center">Ajouter une piste</span>
+            </button>
+            <div className="flex-1 min-w-0 space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.length === 0 && (
-            <p className="text-center text-slate-400 text-sm py-6 font-heading">Ajoutez votre première piste ci‑dessous.</p>
+            <p className="text-center text-slate-400 text-sm py-6 font-heading">Ajoutez votre première piste avec la carte à gauche.</p>
           )}
           {tracks.map((track) => (
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
@@ -3490,6 +3504,8 @@ export default function Home() {
 
             </div>
           ))}
+            </div>
+          </div>
         </section>
 
         {showPlayNoFileMessage && (
@@ -3498,23 +3514,8 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex flex-row flex-wrap items-center justify-between gap-4 px-4 py-4 max-lg:px-3 max-lg:py-3 w-full">
-          <div className="group flex flex-col items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={addTrack}
-              className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0 focus:outline-none focus:ring-0"
-              aria-label="Ajouter une piste"
-            >
-              <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </button>
-            <p className="font-heading text-xs uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors max-md:text-[10px]">Ajouter une piste</p>
-          </div>
-
-          <div className="flex flex-row items-center gap-3 flex-1 min-w-0 justify-end flex-wrap">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 py-4 max-lg:px-3 max-lg:py-3 w-full max-w-6xl mx-auto">
+            <div className="flex items-center justify-center">
             {tracks.length > 0 ? (
               !isPlaying ? (
                 <button
@@ -3534,7 +3535,9 @@ export default function Home() {
             ) : (
               <div className="w-12 h-12 max-md:w-11 max-md:h-11 shrink-0" />
             )}
+            </div>
 
+            <div className="flex items-center justify-center">
             <div
               ref={bpmBoxRef}
               className="h-10 max-md:h-9 rounded-lg px-4 flex flex-row items-center justify-center gap-2 border border-white/10 bg-white/5 select-none overflow-visible shrink-0 min-w-[7.5rem] text-tagline text-xs max-md:text-[10px]"
@@ -3567,10 +3570,13 @@ export default function Home() {
                 />
               </div>
             </div>
+            </div>
 
+            {tracks.length === 0 && <div />}
+            {tracks.length === 0 && <div />}
             {tracks.length > 0 && (
               <>
-                <div className="relative shrink-0">
+                <div className="relative shrink-0 flex items-center justify-center">
                   <button
                     type="button"
                     onClick={() => {
@@ -3598,7 +3604,7 @@ export default function Home() {
                     </p>
                   )}
                 </div>
-                <div className="relative shrink-0">
+                <div className="relative shrink-0 flex items-center justify-center">
                   <button
                     type="button"
                     onClick={() => {

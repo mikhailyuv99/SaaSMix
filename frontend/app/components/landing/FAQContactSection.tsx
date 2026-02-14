@@ -31,11 +31,23 @@ const faqs = [
   {
     q: "Ça marche sur mobile et tablette ?",
     a: "Oui. Siberia Mix fonctionne dans le navigateur sur Mac, PC, tablette et smartphone. Aucune installation n’est requise.",
+  },
+  {
+    q: "Puis-je réutiliser le même projet plus tard ?",
+    a: "Oui. Vos projets et pistes sont enregistrés. Vous pouvez revenir modifier le mix, changer des réglages ou retélécharger le fichier tant que votre session est active.",
+  },
+  {
+    q: "Quelle est la durée maximale d'un morceau ?",
+    a: "Les limites dépendent de votre formule. En général, les morceaux de quelques minutes sont gérés sans problème. Les détails seront précisés dans les offres.",
+  },
+  {
+    q: "Le mix est-il fait par une IA ?",
+    a: "Siberia Mix combine des algorithmes de traitement du signal et des réglages inspirés des pratiques de mix professionnel, pour un résultat cohérent et rapide.",
   }
 ];
 
 export function FAQContactSection() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [formState, setFormState] = useState({ name: "", email: "", message: "" });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,7 +74,7 @@ export function FAQContactSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-5 grid max-w-5xl gap-8 lg:grid-cols-[1fr,400px] lg:items-end">
+        <div className="mx-auto mt-5 grid max-w-5xl gap-8 lg:grid-cols-[1fr,400px] lg:items-stretch">
           <div className="space-y-3 observe-stagger-1">
             {faqs.map((faq, i) => (
               <div
@@ -102,13 +114,13 @@ export function FAQContactSection() {
             ))}
           </div>
 
-          <div className="observe-stagger-2 w-full">
-            <div className="landing-card font-sans p-6 shadow-xl shadow-black/20">
+          <div className="observe-stagger-2 flex flex-col w-full min-h-0">
+            <div className="landing-card font-sans p-6 shadow-xl shadow-black/20 flex flex-col flex-1 min-h-0">
               <h3 className="font-heading font-semibold text-white">Nous contacter</h3>
               <p className="mt-1 text-sm text-slate-400">
                 Un message ou une question ? Envoyez-nous un mail.
               </p>
-              <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+              <form onSubmit={handleSubmit} className="mt-5 space-y-4 flex flex-col flex-1 min-h-0">
                 <div>
                   <label htmlFor="contact-name" className="mb-1 block text-xs font-medium text-slate-400">
                     Nom
@@ -160,7 +172,7 @@ export function FAQContactSection() {
                   Envoyer
                 </button>
               </form>
-              <div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-5">
+              <div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-5 mt-auto">
                 <span className="text-xs text-slate-400">Ou suivez-nous :</span>
                 <a
                   href={INSTAGRAM_URL}

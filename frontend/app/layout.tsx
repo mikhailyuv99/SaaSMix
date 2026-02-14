@@ -86,7 +86,7 @@ export default function RootLayout({
               <div className="relative z-10 flex-1">{children}</div>
               <footer className="py-6 px-4 mt-auto">
                 <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-[11px] sm:text-xs text-slate-400">
-                  <span className="font-heading font-medium">© {new Date().getFullYear()} 99SIBERIA</span>
+                  <span className="font-heading font-medium">© 2026 Siberia Mix</span>
                   <Link href="/mentions-legales" className="transition-colors hover:text-white">Mentions légales</Link>
                   <Link href="/politique-confidentialite" className="transition-colors hover:text-white">Politique de confidentialité</Link>
                   <Link href="/cgu" className="transition-colors hover:text-white">CGU</Link>
