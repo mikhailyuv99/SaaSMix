@@ -2881,22 +2881,9 @@ export default function Home() {
         )}
 
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
-          <div className="flex flex-row gap-4 max-lg:gap-3 max-md:gap-2.5 items-start">
-            <button
-              type="button"
-              onClick={addTrack}
-              className="group shrink-0 w-[7rem] max-md:w-[6rem] rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 max-lg:p-4 flex flex-col items-center justify-center gap-2 transition-colors hover:border-white/15 hover:bg-white/[0.06] focus:outline-none focus:ring-0 min-h-[8rem] max-md:min-h-[7rem]"
-              aria-label="Ajouter une piste"
-            >
-              <svg className="w-6 h-6 max-md:w-5 max-md:h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span className="font-heading text-xs uppercase tracking-[0.2em] text-slate-400 text-center">Ajouter une piste</span>
-            </button>
-            <div className="flex-1 min-w-0 space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
+          <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.length === 0 && (
-            <p className="text-center text-slate-400 text-sm py-6 font-heading">Ajoutez votre première piste avec la carte à gauche.</p>
+            <p className="text-center text-slate-400 text-sm py-6 font-heading">Ajoutez votre première piste ci-dessous.</p>
           )}
           {tracks.map((track) => (
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
@@ -3504,7 +3491,21 @@ export default function Home() {
 
             </div>
           ))}
-            </div>
+          </div>
+
+          <div className="flex justify-center mt-0">
+            <button
+              type="button"
+              onClick={addTrack}
+              className="group w-full max-w-2xl rounded-b-xl border border-t-0 border-white/10 bg-white/[0.03] backdrop-blur-sm py-4 max-lg:py-3 flex items-center justify-center gap-2 transition-colors hover:border-white/15 hover:bg-white/[0.06] focus:outline-none focus:ring-0"
+              aria-label="Ajouter une piste"
+            >
+              <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span className="font-heading text-sm uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors">Ajouter une piste</span>
+            </button>
           </div>
         </section>
 
