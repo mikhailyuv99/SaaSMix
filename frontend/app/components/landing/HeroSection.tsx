@@ -125,7 +125,7 @@ export function HeroSection() {
           >
             {[
               "Mix en quelques minutes",
-              "Voix qui s'intègrent au beat",
+              "Voix qui s'intègrent à l'instrumentale",
               "Export WAV prêt à sortir",
             ].map((item, i) => (
               <li key={i} className="flex items-center gap-3 text-slate-400">

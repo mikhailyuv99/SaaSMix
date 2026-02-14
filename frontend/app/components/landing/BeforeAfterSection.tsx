@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ObserveSection } from "../ObserveSection";
 
 const demos = [
-  { id: 1, title: "Hip-Hop", artist: "Démo à venir", desc: "Voix claire sur beat, prête à sortir." },
+  { id: 1, title: "Hip-Hop", artist: "Démo à venir", desc: "Voix claire sur instrumentale, prête à sortir." },
   { id: 2, title: "R&B", artist: "Démo à venir", desc: "Mix chaleureux et spatial." },
   { id: 3, title: "Rap", artist: "Démo à venir", desc: "Punch et présence vocale." },
 ];

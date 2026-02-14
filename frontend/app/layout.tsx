@@ -18,11 +18,11 @@ export const metadata = {
   description: 'Le site n°1 de mix vocal en ligne. Transformez vos pistes brutes en un morceau fini en quelques minutes. Zéro ingé son, zéro plugin.',
   keywords: [
     'mix vocal', 'mix vocal en ligne', 'mix vocal automatique', 'master vocal', 'master automatique', 'mastering en ligne', 'master en ligne',
-    'mix et master', 'mix master vocal', 'mix stems', 'stem mixing', 'mix instrumental', 'mixer voix sur instrumental', 'voix sur beat',
+    'mix et master', 'mix master vocal', 'mix stems', 'stem mixing', 'mix instrumental', 'mixer voix sur instrumental', 'voix sur instrumentale',
     'logiciel mix vocal', 'outil mix vocal', 'application mix vocal', 'mix en ligne', 'mixage en ligne', 'mastering en ligne pas cher',
     'artistes indépendants', 'artistes indés', 'rappeurs', 'chanteurs', 'beatmakers', 'home studio',
     'hip-hop', 'rap', 'R&B', 'mix hip-hop', 'mix rap', 'mix R&B',
-    'stems WAV', 'stems vocaux', 'lead vocal', 'instrumental', 'beat', 'mix vocal automatique', 'WAV',
+    'stems WAV', 'stems vocaux', 'lead vocal', 'instrumental', 'instrumentale', 'mix vocal automatique', 'WAV',
     'mixer sans logiciel', 'mixer sans studio', 'mix rapide', 'comment mixer sa voix', 'comment masteriser',
     'Siberia Mix', 'siberiamix', '99SIBERIA',
   ],

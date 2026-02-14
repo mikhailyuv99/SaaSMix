@@ -12,7 +12,7 @@ const steps = [
   {
     num: 1,
     title: "Uploadez vos stems et votre instrumental",
-    desc: "Glissez-déposez vos pistes vocales et votre beat en WAV. Compatible navigateur sur Mac, PC, tablette et mobile.",
+    desc: "Glissez-déposez vos pistes vocales et votre instrumentale en WAV. Compatible navigateur sur Mac, PC, tablette et mobile.",
     icon: "upload",
   },
   {

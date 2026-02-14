@@ -3,7 +3,7 @@ import { ObserveSection } from "../ObserveSection";
 const features = [
   {
     title: "Mix vocal intelligent",
-    desc: "Voix qui s'intègrent au beat : vous réglez de-esser, réverb, delay et tonalité selon vos goûts, puis le moteur applique le mix.",
+    desc: "Voix qui s'intègrent à l'instrumentale : vous réglez de-esser, réverb, delay et tonalité selon vos goûts, puis le moteur applique le mix.",
   },
   {
     title: "Réglages à la carte",
@@ -16,6 +16,14 @@ const features = [
   {
     title: "Sans installation",
     desc: "Tout se fait dans le navigateur. Aucun logiciel à installer, aucun plugin à configurer.",
+  },
+  {
+    title: "Aperçu illimité",
+    desc: "Écoutez le résultat en pleine longueur avant de télécharger. Ajustez vos réglages et relancez le mix autant que nécessaire.",
+  },
+  {
+    title: "Mastering inclus",
+    desc: "Une fois le mix validé, lancez le mastering en un clic pour un rendu prêt à distribuer, sans passer par un autre outil.",
   },
 ];
 
@@ -34,16 +42,24 @@ export function FeaturesSection() {
             Un workflow simple pour des résultats pro.
           </p>
         </div>
-        <div className="mx-auto mt-5 grid max-w-4xl gap-6 sm:grid-cols-2 sm:mt-6">
-          {features.map((f, i) => (
-            <div
-              key={f.title}
-              className={`landing-card relative overflow-hidden p-6 pl-6 before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:bg-gradient-to-b before:from-white/20 before:to-white/5 before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100 ${i === 0 ? "observe-stagger-1" : i === 1 ? "observe-stagger-2" : i === 2 ? "observe-stagger-3" : "observe-stagger-4"}`}
-            >
-              <h3 className="font-heading font-semibold text-white">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-400">{f.desc}</p>
-            </div>
-          ))}
+        <div className="mx-auto mt-5 max-w-4xl sm:mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm">
+          <table className="w-full border-collapse">
+            <tbody>
+              {features.map((f, i) => (
+                <tr
+                  key={f.title}
+                  className={`border-b border-white/10 last:border-b-0 transition-colors hover:bg-white/[0.03] ${i === 0 ? "observe-stagger-1" : i === 1 ? "observe-stagger-2" : i === 2 ? "observe-stagger-3" : i === 3 ? "observe-stagger-4" : i === 4 ? "observe-stagger-4" : "observe-stagger-4"}`}
+                >
+                  <td className="font-heading font-semibold text-white align-top py-4 pl-5 pr-4 sm:pl-6 sm:pr-5 w-[38%] min-w-[8rem] sm:w-[32%]">
+                    {f.title}
+                  </td>
+                  <td className="text-sm leading-relaxed text-slate-400 py-4 pr-5 pl-4 sm:pr-6 sm:pl-5">
+                    {f.desc}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </ObserveSection>
     </section>
