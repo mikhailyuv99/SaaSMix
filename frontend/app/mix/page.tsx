@@ -3640,8 +3640,6 @@ export default function Home() {
           </div>
         </div>
 
-        </div>
-
         {masterResult && (
           <section ref={masterResultSectionRef} className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
