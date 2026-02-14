@@ -7,10 +7,10 @@ module.exports = {
   ],
   theme: {
     fontFamily: {
-      sans: ['Syne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-      serif: ['Syne', 'ui-serif', 'Georgia', 'serif'],
+      sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      serif: ['Plus Jakarta Sans', 'ui-serif', 'Georgia', 'serif'],
       mono: ['ui-monospace', 'monospace'],
-      heading: ['Syne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      heading: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
     },
     extend: {},
   },

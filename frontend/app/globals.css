@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Syne', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   --accent: 248 250 252;
   --accent-dim: 148 163 184;
   --glow: 255 255 255;
@@ -16,7 +16,7 @@
 @layer base {
   html, body {
     margin: 0;
-    font-family: 'Syne', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
@@ -326,7 +326,7 @@
   animation: loading-dots 1.2s steps(4, end) infinite;
 }
 
-/* Force Syne partout */
+/* Force Plus Jakarta Sans partout */
 html, body, html *, body * {
-  font-family: 'Syne', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
 }
