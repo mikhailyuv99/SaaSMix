@@ -31,15 +31,7 @@ const faqs = [
   {
     q: "Ça marche sur mobile et tablette ?",
     a: "Oui. Siberia Mix fonctionne dans le navigateur sur Mac, PC, tablette et smartphone. Aucune installation n’est requise.",
-  },
-  {
-    q: "L'outil s'adapte-t-il à mon style de musique ?",
-    a: "Vous pilotez le rendu en choisissant vos réglages : de-esser, réverb, delay, tonalité, etc. Écoutez l'aperçu, ajustez à votre goût puis exportez le fichier final.",
-  },
-  {
-    q: "Puis-je annuler ou me faire rembourser ?",
-    a: "Les conditions d’annulation et de remboursement sont détaillées dans nos CGU. En cas de question, contactez-nous via le formulaire ou par e-mail.",
-  },
+  }
 ];
 
 export function FAQContactSection() {
@@ -70,7 +62,7 @@ export function FAQContactSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-5 grid max-w-5xl gap-8 lg:grid-cols-[1fr,400px]">
+        <div className="mx-auto mt-5 grid max-w-5xl gap-8 lg:grid-cols-[1fr,400px] lg:items-stretch">
           <div className="space-y-3 observe-stagger-1">
             {faqs.map((faq, i) => (
               <div
@@ -110,13 +102,13 @@ export function FAQContactSection() {
             ))}
           </div>
 
-          <div className="observe-stagger-2 lg:sticky lg:top-24 lg:self-start">
-            <div className="landing-card font-sans p-6 shadow-xl shadow-black/20">
+          <div className="observe-stagger-2 lg:flex lg:flex-col">
+            <div className="landing-card font-sans p-6 shadow-xl shadow-black/20 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
               <h3 className="font-heading font-semibold text-white">Nous contacter</h3>
               <p className="mt-1 text-sm text-slate-500">
                 Un message ou une question ? Envoyez-nous un mail.
               </p>
-              <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+              <form onSubmit={handleSubmit} className="mt-5 flex min-h-0 flex-1 flex-col space-y-4">
                 <div>
                   <label htmlFor="contact-name" className="mb-1 block text-xs font-medium text-slate-500">
                     Nom
@@ -146,17 +138,16 @@ export function FAQContactSection() {
                     placeholder="vous@exemple.com"
                   />
                 </div>
-                <div>
+                <div className="min-h-0 flex-1 flex flex-col">
                   <label htmlFor="contact-message" className="mb-1 block text-xs font-medium text-slate-500">
                     Message
                   </label>
                   <textarea
                     id="contact-message"
-                    rows={4}
                     value={formState.message}
                     onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    className="contact-input w-full min-h-[100px] flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="Votre message..."
                   />
                 </div>
