@@ -12,8 +12,8 @@ import {
 export default function HomePage() {
   return (
     <main className="min-h-screen font-heading">
-      <TrustBullets />
       <HeroSection />
+      <TrustBullets />
       <HowItWorks />
       <VideoSection />
       <BeforeAfterSection />

@@ -15,7 +15,7 @@ const items = [
 
 export function TrustBullets() {
   return (
-    <section className="px-4 pt-2 pb-4 sm:pt-3 sm:pb-5">
+    <section className="px-4 -mt-2 pb-4 sm:-mt-1 sm:pb-5">
       <ObserveSection>
         <div className="mx-auto flex max-w-4xl flex-col gap-8 sm:flex-row sm:justify-between sm:gap-10">
           {items.map((item, i) => (
