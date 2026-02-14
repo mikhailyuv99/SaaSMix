@@ -2615,57 +2615,57 @@ export default function Home() {
         </div>
       )}
 
-      <div className="mx-auto max-w-4xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
+      <div className="mx-auto max-w-6xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
-          <nav className="max-lg:hidden flex justify-center items-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:gap-1.5 max-md:mb-3 max-md:text-xs">
+          <nav className="max-lg:hidden flex flex-nowrap justify-center items-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:gap-1.5 max-md:mb-3 max-md:text-xs">
             {user ? (
               <>
                 <button
                   type="button"
                   onClick={() => { setShowProjectsModal(true); fetchProjectsList(); }}
-                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   MES PROJETS
                 </button>
-                <span className="text-slate-400">|</span>
+                <span className="text-slate-400 shrink-0">|</span>
                 <button
                   type="button"
                   disabled={isSavingProject}
                   onClick={createNewProject}
-                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
+                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   title="Créer un nouveau projet et l’enregistrer dans Mes projets"
                 >
                   CRÉER UN PROJET
                 </button>
-                <span className="text-slate-400">|</span>
+                <span className="text-slate-400 shrink-0">|</span>
                 <div className="relative flex flex-col items-center">
                   <button
                     type="button"
                     disabled={isSavingProject}
                     onClick={saveProject}
-                    className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
+                    className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
                     {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                   </button>
                   {user && currentProject && (
-                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-400 text-xs whitespace-nowrap max-w-[140px] truncate" title={currentProject.name}>
+                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-400 text-xs whitespace-nowrap" title={currentProject.name}>
                       {currentProject.name}
                     </span>
                   )}
                 </div>
-                <span className="text-slate-400">|</span>
-                <span className="truncate max-w-[200px]" title={user.email}>{user.email}</span>
-                <span className="text-slate-400">|</span>
+                <span className="text-slate-400 shrink-0">|</span>
+                <span className="whitespace-nowrap shrink-0" title={user.email}>{user.email}</span>
+                <span className="text-slate-400 shrink-0">|</span>
                 {!isPro && (
                   <>
                     <button
                       type="button"
                       onClick={() => setSubscriptionModalOpen(true)}
-                      className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                      className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
                     >
                       PASSER EN PRO
                     </button>
-                    <span className="text-slate-400">|</span>
+                    <span className="text-slate-400 shrink-0">|</span>
                   </>
                 )}
                 {isPro && (
@@ -2673,11 +2673,11 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setManageSubscriptionModalOpen(true)}
-                      className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                      className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
                     >
                       GÉRER MON ABONNEMENT
                     </button>
-                    <span className="text-slate-400">|</span>
+                    <span className="text-slate-400 shrink-0">|</span>
                   </>
                 )}
                 <button
@@ -2687,22 +2687,22 @@ export default function Home() {
                     localStorage.removeItem("saas_mix_user");
                     setUser(null);
                   }}
-                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   DÉCONNEXION
                 </button>
               </>
             ) : (
               <>
-                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer">
+                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0">
                   CONNEXION
                 </button>
-                <span className="text-slate-400">|</span>
-                <button type="button" onClick={() => { setAuthMode("register"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer">
+                <span className="text-slate-400 shrink-0">|</span>
+                <button type="button" onClick={() => { setAuthMode("register"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0">
                   INSCRIPTION
                 </button>
-                <span className="text-slate-400">|</span>
-                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer" title="Connectez-vous pour accéder à l’abonnement Pro">
+                <span className="text-slate-400 shrink-0">|</span>
+                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0" title="Connectez-vous pour accéder à l’abonnement Pro">
                   PASSER EN PRO
                 </button>
               </>
