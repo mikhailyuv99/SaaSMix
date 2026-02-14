@@ -1,27 +1,233 @@
+/* Plus Jakarta Sans – fichiers dans public/fonts/ (servis en /fonts/) */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-latin-400-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-latin-700-normal.woff2') format('woff2');
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --accent: 248 250 252;
+  --accent-dim: 148 163 184;
+  --glow: 255 255 255;
+  --glow-intensity: 0.06;
+  --section-bg: rgba(255, 255, 255, 0.02);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-hover-border: rgba(255, 255, 255, 0.15);
+}
+
 @layer base {
   body {
     margin: 0;
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-      "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
-    background-color: #000;
+    background-color: #000000;
     color: #e2e8f0;
-    background-image: linear-gradient(
-      180deg,
-      #000 0%,
-      #0a0a0a 25%,
-      #141414 50%,
-      #0a0a0a 75%,
-      #000 100%
-    );
     background-attachment: fixed;
   }
+}
+
+/* ----- Landing: scroll & entrance animations ----- */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.03); }
+  50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.06); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-delay-1 { animation-delay: 0.1s; }
+.animate-delay-2 { animation-delay: 0.2s; }
+.animate-delay-3 { animation-delay: 0.3s; }
+.animate-delay-4 { animation-delay: 0.4s; }
+.animate-delay-5 { animation-delay: 0.5s; }
+.animate-delay-6 { animation-delay: 0.6s; }
+
+/* When parent gets .in-view, children animate */
+.observe-section {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.observe-section.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.observe-section .observe-stagger-1,
+.observe-section .observe-stagger-2,
+.observe-section .observe-stagger-3,
+.observe-section .observe-stagger-4,
+.observe-section .observe-stagger-5,
+.observe-section .observe-stagger-6 {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.observe-section.in-view .observe-stagger-1 { opacity: 1; transform: translateY(0); transition-delay: 0.05s; }
+.observe-section.in-view .observe-stagger-2 { opacity: 1; transform: translateY(0); transition-delay: 0.1s; }
+.observe-section.in-view .observe-stagger-3 { opacity: 1; transform: translateY(0); transition-delay: 0.15s; }
+.observe-section.in-view .observe-stagger-4 { opacity: 1; transform: translateY(0); transition-delay: 0.2s; }
+.observe-section.in-view .observe-stagger-5 { opacity: 1; transform: translateY(0); transition-delay: 0.25s; }
+.observe-section.in-view .observe-stagger-6 { opacity: 1; transform: translateY(0); transition-delay: 0.3s; }
+
+/* Per-element AOS (e.g. timeline steps) */
+.observe-step {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.observe-step.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Premium landing cards */
+.landing-card {
+  @apply rounded-2xl border transition-all duration-300;
+  border-color: var(--card-border);
+  background: var(--section-bg);
+}
+
+.landing-card:hover {
+  border-color: var(--card-hover-border);
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.4);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.85) 50%, rgba(226, 232, 240, 0.9) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-cta-primary {
+  @apply relative overflow-hidden rounded-xl px-8 py-4 text-base font-semibold text-black transition-all duration-300;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.btn-cta-primary:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.btn-cta-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.btn-cta-primary:hover::after {
+  opacity: 1;
+  animation: shimmer 1.2s ease-in-out;
+}
+
+.btn-cta-secondary {
+  @apply rounded-xl border border-white/20 bg-white/5 px-8 py-4 text-base font-medium text-white transition-all duration-300 hover:bg-white/10;
+}
+
+.btn-cta-secondary:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 @layer components {
@@ -154,3 +360,4 @@
   content: "";
   animation: loading-dots 1.2s steps(4, end) infinite;
 }
+
