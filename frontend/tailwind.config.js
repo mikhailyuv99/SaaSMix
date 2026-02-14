@@ -7,10 +7,10 @@ module.exports = {
   ],
   theme: {
     fontFamily: {
-      sans: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-      serif: ['Outfit', 'ui-serif', 'Georgia', 'serif'],
+      sans: ['Syne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      serif: ['Syne', 'ui-serif', 'Georgia', 'serif'],
       mono: ['ui-monospace', 'monospace'],
-      heading: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      heading: ['Syne', 'ui-sans-serif', 'system-ui', 'sans-serif'],
     },
     extend: {},
   },
