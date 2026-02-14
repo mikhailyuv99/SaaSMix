@@ -334,11 +334,31 @@ html, body, html *, body * {
 input, textarea, select, button {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
 }
-/* Cartes landing (FAQ, contact) + zone glissez-déposez */
+/* Cartes landing (FAQ, contact) */
 .landing-card,
-.landing-card *,
+.landing-card * {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}
+/* Placeholders formulaire contact (Votre nom, vous@exemple.com, Votre message...) */
 .landing-card input::placeholder,
-.landing-card textarea::placeholder {
+.landing-card textarea::placeholder,
+.landing-card input::-webkit-input-placeholder,
+.landing-card textarea::-webkit-input-placeholder {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}
+/* Bouton Envoyer et texte des questions FAQ */
+.landing-card button,
+.landing-card .btn-cta-primary {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}
+/* Champs contact (Votre nom, vous@exemple.com, Votre message...) */
+.contact-input,
+.contact-input::placeholder,
+.contact-input::-webkit-input-placeholder {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}
+.faq-question,
+.faq-question * {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Zone glissez-déposez : Plus Jakarta + tout en caps */
