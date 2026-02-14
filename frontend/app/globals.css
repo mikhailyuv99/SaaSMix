@@ -361,6 +361,21 @@ input, textarea, select, button {
 .faq-question * {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
 }
+/* FAQ + Contact : tout en majuscules comme le reste du site */
+.landing-card,
+.landing-card * {
+  text-transform: uppercase !important;
+}
+.landing-card input::placeholder,
+.landing-card textarea::placeholder,
+.landing-card input::-webkit-input-placeholder,
+.landing-card textarea::-webkit-input-placeholder {
+  text-transform: uppercase !important;
+}
+.contact-input,
+.contact-input::placeholder {
+  text-transform: uppercase !important;
+}
 /* Zone glissez-déposez : Plus Jakarta + tout en caps */
 .hero-dropzone,
 .hero-dropzone * {
