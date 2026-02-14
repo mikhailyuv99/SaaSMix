@@ -81,8 +81,9 @@ export function HowItWorks() {
       const viewportH = window.innerHeight;
       const sectionH = rect.height;
       const sectionTop = rect.top;
-      // 0 when section top touches bottom of viewport, 1 when section bottom touches top of viewport
-      const progress = (viewportH - sectionTop) / (viewportH + sectionH);
+      // Progress 0→1 over ~50% of section scroll so step 4 is reached without scrolling too far
+      const effectiveHeight = viewportH + sectionH * 0.5;
+      const progress = (viewportH - sectionTop) / effectiveHeight;
       setLineProgress(Math.min(1, Math.max(0, progress)));
     };
 
