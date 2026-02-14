@@ -1,11 +1,6 @@
-/* Plus Jakarta Sans – fichiers dans public/fonts/ (servis en /fonts/) */
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/plus-jakarta-sans-latin-400-normal.woff2') format('woff2');
-}
+/* Plus Jakarta Sans – 400 depuis app/fonts (bundlé), reste depuis public */
+@import './fonts/font-face.css';
+
 @font-face {
   font-family: 'Plus Jakarta Sans';
   font-style: italic;
@@ -361,3 +356,7 @@
   animation: loading-dots 1.2s steps(4, end) infinite;
 }
 
+/* Force Plus Jakarta Sans partout (priorité max) */
+html, body, html *, body * {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif !important;
+}

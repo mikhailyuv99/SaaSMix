@@ -1,0 +1,8 @@
+/* Police 400 bundlée par Next (app/fonts/) – toujours disponible */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./plus-jakarta-sans-latin-400-normal.woff2') format('woff2');
+}
