@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export-background": "node scripts/export-background.mjs"
   },
   "dependencies": {
     "@fontsource/plus-jakarta-sans": "^5.2.8",
@@ -27,6 +28,8 @@
     "@types/react-dom": "^18.2.18",
     "eslint": "^8.56.0",
     "eslint-config-next": "14.0.4",
+    "puppeteer": "^23.11.1",
+    "sharp": "^0.33.5",
     "typescript": "^5.3.3"
   }
 }
