@@ -3493,11 +3493,11 @@ export default function Home() {
           ))}
           </div>
 
-          <div className="flex justify-center mt-0">
+          <div className="mt-4 max-lg:mt-3 max-md:mt-2.5">
             <button
               type="button"
               onClick={addTrack}
-              className="group w-full max-w-2xl rounded-b-xl border border-t-0 border-white/10 bg-white/[0.03] backdrop-blur-sm py-4 max-lg:py-3 flex items-center justify-center gap-2 transition-colors hover:border-white/15 hover:bg-white/[0.06] focus:outline-none focus:ring-0"
+              className="group w-full max-w-2xl mx-auto rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm py-5 max-lg:py-4 flex items-center justify-center gap-2 transition-colors hover:border-white/15 hover:bg-white/[0.06] focus:outline-none focus:ring-0"
               aria-label="Ajouter une piste"
             >
               <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -3515,7 +3515,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 py-4 max-lg:px-3 max-lg:py-3 w-full max-w-6xl mx-auto">
+        <div className={`grid gap-3 px-4 py-4 max-lg:px-3 max-lg:py-3 w-full max-w-6xl mx-auto ${tracks.length > 0 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1"}`}>
             <div className="flex items-center justify-center">
             {tracks.length > 0 ? (
               !isPlaying ? (
@@ -3538,6 +3538,7 @@ export default function Home() {
             )}
             </div>
 
+            {tracks.length > 0 && (
             <div className="flex items-center justify-center">
             <div
               ref={bpmBoxRef}
@@ -3572,9 +3573,8 @@ export default function Home() {
               </div>
             </div>
             </div>
+            )}
 
-            {tracks.length === 0 && <div />}
-            {tracks.length === 0 && <div />}
             {tracks.length > 0 && (
               <>
                 <div className="relative shrink-0 flex items-center justify-center">
