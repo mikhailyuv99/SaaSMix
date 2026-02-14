@@ -2471,6 +2471,7 @@ export default function Home() {
       if (isTypingField) return;
       e.preventDefault();
       e.stopPropagation();
+      (document.activeElement as HTMLElement)?.blur();
       if (activePlayer === "master" && masterResult) {
         if (isMasterResultPlaying) stopMasterPlayback();
         else startMasterPlayback();
