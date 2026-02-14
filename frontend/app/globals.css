@@ -330,3 +330,12 @@
 html, body, html *, body * {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
 }
+/* Formulaires et boutons (n’héritent pas toujours) */
+input, textarea, select, button {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}
+/* Cartes landing (FAQ, contact, glissez-déposez) */
+.landing-card,
+.landing-card * {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+}

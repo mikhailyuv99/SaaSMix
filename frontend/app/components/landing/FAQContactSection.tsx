@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { ObserveSection } from "../ObserveSection";
@@ -55,7 +55,7 @@ export function FAQContactSection() {
   };
 
   return (
-    <section id="faq-contact" className="scroll-mt-20 px-4 py-6 sm:py-8">
+    <section id="faq-contact" className="scroll-mt-20 px-4 py-6 sm:py-8 font-sans">
       <ObserveSection>
         <div className="mx-auto max-w-3xl text-center">
           <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-500 observe-stagger-1">
@@ -109,7 +109,7 @@ export function FAQContactSection() {
           </div>
 
           <div className="observe-stagger-2 lg:sticky lg:top-24 lg:self-start">
-            <div className="landing-card p-6 shadow-xl shadow-black/20">
+            <div className="landing-card font-sans p-6 shadow-xl shadow-black/20">
               <h3 className="font-heading font-semibold text-white">Nous contacter</h3>
               <p className="mt-1 text-sm text-slate-500">
                 Un message ou une question ? Envoyez-nous un mail.
