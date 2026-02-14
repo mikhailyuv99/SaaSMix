@@ -27,7 +27,7 @@ export function TrustBullets() {
                 {"iconNode" in item && item.iconNode ? item.iconNode : item.icon}
               </span>
               <div className="flex-1">
-                <p className="font-heading font-semibold text-white">{item.label}</p>
+                <p className="font-heading font-semibold text-white whitespace-nowrap">{item.label}</p>
                 <p className="mt-0.5 text-sm text-slate-400">{item.desc}</p>
               </div>
             </div>
