@@ -96,8 +96,8 @@ export function HeroSection() {
   const onClickCard = () => inputRef.current?.click();
 
   return (
-    <section className="relative min-h-[80vh] overflow-hidden px-4 pt-6 pb-0 sm:pt-8 sm:pb-0">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1fr,380px] lg:gap-16">
+    <section className="relative min-h-0 overflow-hidden px-4 pt-6 pb-0 sm:pt-8 sm:pb-0">
+      <div className="mx-auto grid max-w-6xl items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12">
         <div className="max-w-xl">
           <h1
             className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-up"
@@ -108,7 +108,7 @@ export function HeroSection() {
             <span className="text-white">de mix vocal en ligne</span>
           </h1>
           <p
-            className="mt-5 text-lg text-slate-400 sm:text-xl animate-fade-up"
+            className="mt-4 text-lg text-slate-400 sm:text-xl animate-fade-up"
             style={{ animationDelay: "0.25s", animationFillMode: "both" }}
           >
             Transformez vos pistes brutes en un morceau fini en quelques minutes.
@@ -120,7 +120,7 @@ export function HeroSection() {
             Zéro ingé son, zéro plugin — tout se fait en ligne.
           </p>
           <ul
-            className="mt-6 space-y-2 animate-fade-up"
+            className="mt-4 space-y-2 animate-fade-up"
             style={{ animationDelay: "0.4s", animationFillMode: "both" }}
           >
             {[
@@ -156,7 +156,7 @@ export function HeroSection() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            className={`hero-dropzone font-sans uppercase flex min-h-[260px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[300px] ${
+            className={`hero-dropzone font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-6 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
               isDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
             }`}
           >
