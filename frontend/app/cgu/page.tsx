@@ -4,13 +4,13 @@ import Link from "next/link";
 
 export default function CGUPage() {
   return (
-    <div className="min-h-screen bg-[#060608] text-slate-200 p-6">
+    <div className="min-h-screen bg-[#060608] text-slate-400 p-6">
       <div className="max-w-2xl mx-auto">
-        <Link href="/" className="text-slate-500 hover:text-white text-sm mb-6 inline-block">
+        <Link href="/" className="text-slate-400 hover:text-white text-sm mb-6 inline-block">
           ← Retour à l&apos;accueil
         </Link>
         <h1 className="text-2xl font-semibold text-white mb-6">Conditions générales d&apos;utilisation (CGU)</h1>
-        <div className="card p-6 space-y-6 text-sm text-slate-300">
+        <div className="card p-6 space-y-6 text-sm text-slate-400">
           <p>
             L&apos;utilisation du site et des services proposés par <strong>99SIBERIA</strong> implique l&apos;acceptation des présentes conditions générales d&apos;utilisation.
           </p>

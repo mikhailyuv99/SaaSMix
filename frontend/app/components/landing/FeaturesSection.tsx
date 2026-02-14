@@ -24,7 +24,7 @@ export function FeaturesSection() {
     <section className="px-4 py-6 sm:py-8">
       <ObserveSection>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-500 observe-stagger-1">
+          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
             Fonctionnalités
           </p>
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2">

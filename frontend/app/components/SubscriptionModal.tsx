@@ -100,23 +100,23 @@ function SubscriptionForm({
           <button
             type="button"
             onClick={() => setSelectedPriceId(PRICE_ID_MONTHLY)}
-            className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-200 hover:bg-white/10 hover:border-white/30 transition-colors"
+            className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-400 hover:bg-white/10 hover:border-white/30 transition-colors"
           >
             <span className="font-medium">19,99 €</span>
-            <span className="text-tagline text-slate-500 block text-[10px]">/ mois</span>
+            <span className="text-tagline text-slate-400 block text-[10px]">/ mois</span>
           </button>
           <button
             type="button"
             onClick={() => setSelectedPriceId(PRICE_ID_ANNUAL)}
-            className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-200 hover:bg-white/10 hover:border-white/30 transition-colors"
+            className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-400 hover:bg-white/10 hover:border-white/30 transition-colors"
           >
             <span className="font-medium">199,99 €</span>
-            <span className="text-tagline text-slate-500 block text-[10px]">/ an (~2 mois offerts)</span>
+            <span className="text-tagline text-slate-400 block text-[10px]">/ an (~2 mois offerts)</span>
           </button>
         </div>
       ) : (
         <>
-          <p className="text-tagline text-slate-500 text-[10px]">
+          <p className="text-tagline text-slate-400 text-[10px]">
             {selectedPriceId === PRICE_ID_ANNUAL ? "Abonnement annuel (199,99 €/an)" : "Abonnement mensuel (19,99 €/mois)"}
           </p>
           <div className="rounded-lg border border-white/10 bg-white/5 p-3">
@@ -170,9 +170,9 @@ export function SubscriptionModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="card p-6 max-w-md w-full relative" onClick={(e) => e.stopPropagation()}>
-        <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-500 hover:text-white text-lg leading-none">&times;</button>
+        <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
         <h2 className="text-xl font-medium text-white mb-1">Passer en Pro</h2>
-        <p className="text-tagline text-slate-500 text-[10px] mb-6">Débloquez les téléchargements mix + master. Abonnement lié à votre compte.</p>
+        <p className="text-tagline text-slate-400 text-[10px] mb-6">Débloquez les téléchargements mix + master. Abonnement lié à votre compte.</p>
         {stripePromise && (
           <Elements stripe={stripePromise}>
             <SubscriptionForm onSuccess={onSuccess} onClose={onClose} getAuthHeaders={getAuthHeaders} />

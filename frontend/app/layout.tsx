@@ -75,7 +75,7 @@ export default function RootLayout({
           <meta property="fb:app_id" content={process.env.NEXT_PUBLIC_FB_APP_ID} />
         ) : null}
       </head>
-      <body className="antialiased text-slate-200 uppercase" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <body className="antialiased text-slate-400 uppercase" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <JsonLd />
         {/* <StarryCeiling /> */}
         <div className="relative min-h-screen flex flex-col">
@@ -85,7 +85,7 @@ export default function RootLayout({
               <Header />
               <div className="relative z-10 flex-1">{children}</div>
               <footer className="py-6 px-4 mt-auto">
-                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-[11px] sm:text-xs text-slate-500">
+                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-[11px] sm:text-xs text-slate-400">
                   <span className="font-heading font-medium">© {new Date().getFullYear()} 99SIBERIA</span>
                   <Link href="/mentions-legales" className="transition-colors hover:text-white">Mentions légales</Link>
                   <Link href="/politique-confidentialite" className="transition-colors hover:text-white">Politique de confidentialité</Link>

@@ -165,7 +165,7 @@ export function CustomSelect({
             key={String(opt.value)}
             role="option"
             aria-selected={opt.value === value}
-            className={`cursor-pointer px-3 py-2 text-tagline text-slate-500 whitespace-nowrap transition-colors text-center ${
+            className={`cursor-pointer px-3 py-2 text-tagline text-slate-400 whitespace-nowrap transition-colors text-center ${
               isHighlighted
                 ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]"
                 : ""

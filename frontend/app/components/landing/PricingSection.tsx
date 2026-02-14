@@ -33,7 +33,7 @@ export function PricingSection() {
     <section id="tarifs" className="scroll-mt-20 px-4 py-6 sm:py-8">
       <ObserveSection>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-500 observe-stagger-1">
+          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
             Tarification
           </p>
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2">
@@ -56,21 +56,21 @@ export function PricingSection() {
               }`}
             >
               {plan.featured && (
-                <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-300">
+                <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
                   Populaire
                 </span>
               )}
               <h3 className="mt-3 font-heading text-xl font-semibold text-white">{plan.name}</h3>
-              <p className="text-sm text-slate-500">{plan.subtitle}</p>
+              <p className="text-sm text-slate-400">{plan.subtitle}</p>
               <p className="mt-5 font-heading text-2xl font-bold text-white">{plan.price}</p>
               <p className="mt-1 text-sm text-slate-400">{plan.tokens}</p>
-              <p className="mt-4 text-sm text-slate-500">
+              <p className="mt-4 text-sm text-slate-400">
                 Un 4ᵉ plan annuel (basé sur Pro avec réduction) sera disponible.
               </p>
               <div className="mt-6">
                 <span
                   className={`inline-block w-full rounded-xl border px-4 py-2.5 text-center text-sm ${
-                    plan.featured ? "border-white/20 bg-white/5 text-slate-300" : "border-white/15 bg-white/5 text-slate-400"
+                    plan.featured ? "border-white/20 bg-white/5 text-slate-400" : "border-white/15 bg-white/5 text-slate-400"
                   }`}
                 >
                   {plan.cta}
@@ -79,7 +79,7 @@ export function PricingSection() {
             </div>
           ))}
         </div>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-slate-500 observe-stagger-4">
+        <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-slate-400 observe-stagger-4">
           Les tarifs et volumes de tokens seront fixés prochainement. En attendant, vous pouvez{" "}
           <Link
             href="/mix"

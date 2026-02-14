@@ -298,7 +298,7 @@ const Waveform = memo(function Waveform({
               y2={50 + halfH}
               stroke="currentColor"
               strokeWidth="1.5"
-              className="text-slate-500"
+              className="text-slate-400"
             />
           );
         })}
@@ -2532,7 +2532,7 @@ export default function Home() {
             {appModal.type === "prompt" && (
               <>
                 <div className="p-4 border-b border-white/10">
-                  <p className="text-tagline text-slate-300 text-center text-sm tracking-wide">{appModal.title}</p>
+                  <p className="text-tagline text-slate-400 text-center text-sm tracking-wide">{appModal.title}</p>
                 </div>
                 <div className="p-4">
                   <input
@@ -2558,14 +2558,14 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => { appModal.onCancel(); setAppModal(null); }}
-                    className="flex-1 py-3 text-tagline text-slate-500 hover:bg-white/5 transition-colors text-sm"
+                    className="flex-1 py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm"
                   >
                     Annuler
                   </button>
                   <button
                     type="button"
                     onClick={() => { appModal.onConfirm(promptInputValue); setAppModal(null); }}
-                    className="flex-1 py-3 text-tagline text-slate-300 hover:bg-white/5 transition-colors text-sm border-l border-white/10"
+                    className="flex-1 py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm border-l border-white/10"
                   >
                     OK
                   </button>
@@ -2575,20 +2575,20 @@ export default function Home() {
             {appModal.type === "confirm" && (
               <>
                 <div className="p-4">
-                  <p className="text-tagline text-slate-300 text-center text-sm tracking-wide">{appModal.message}</p>
+                  <p className="text-tagline text-slate-400 text-center text-sm tracking-wide">{appModal.message}</p>
                 </div>
                 <div className="flex border-t border-white/10">
                   <button
                     type="button"
                     onClick={() => { appModal.onCancel(); setAppModal(null); }}
-                    className="flex-1 py-3 text-tagline text-slate-500 hover:bg-white/5 transition-colors text-sm"
+                    className="flex-1 py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm"
                   >
                     Non
                   </button>
                   <button
                     type="button"
                     onClick={() => { appModal.onConfirm(); setAppModal(null); }}
-                    className="flex-1 py-3 text-tagline text-slate-300 hover:bg-white/5 transition-colors text-sm border-l border-white/10"
+                    className="flex-1 py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm border-l border-white/10"
                   >
                     Oui
                   </button>
@@ -2598,13 +2598,13 @@ export default function Home() {
             {appModal.type === "alert" && (
               <>
                 <div className="p-4">
-                  <p className="text-tagline text-slate-300 text-center text-sm tracking-wide">{appModal.message}</p>
+                  <p className="text-tagline text-slate-400 text-center text-sm tracking-wide">{appModal.message}</p>
                 </div>
                 <div className="border-t border-white/10">
                   <button
                     type="button"
                     onClick={() => { appModal.onClose(); setAppModal(null); }}
-                    className="w-full py-3 text-tagline text-slate-300 hover:bg-white/5 transition-colors text-sm"
+                    className="w-full py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm"
                   >
                     OK
                   </button>
@@ -2617,55 +2617,55 @@ export default function Home() {
 
       <div className="mx-auto max-w-4xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
-          <nav className="max-lg:hidden flex justify-center items-center gap-2 mb-4 font-heading text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:gap-1.5 max-md:mb-3 max-md:text-[10px]">
+          <nav className="max-lg:hidden flex justify-center items-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:gap-1.5 max-md:mb-3 max-md:text-[10px]">
             {user ? (
               <>
                 <button
                   type="button"
                   onClick={() => { setShowProjectsModal(true); fetchProjectsList(); }}
-                  className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
                 >
                   MES PROJETS
                 </button>
-                <span className="text-slate-600">|</span>
+                <span className="text-slate-400">|</span>
                 <button
                   type="button"
                   disabled={isSavingProject}
                   onClick={createNewProject}
-                  className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
+                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
                   title="Créer un nouveau projet et l’enregistrer dans Mes projets"
                 >
                   CRÉER UN PROJET
                 </button>
-                <span className="text-slate-600">|</span>
+                <span className="text-slate-400">|</span>
                 <div className="relative flex flex-col items-center">
                   <button
                     type="button"
                     disabled={isSavingProject}
                     onClick={saveProject}
-                    className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
+                    className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                   </button>
                   {user && currentProject && (
-                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-500 text-[10px] whitespace-nowrap max-w-[140px] truncate" title={currentProject.name}>
+                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-400 text-[10px] whitespace-nowrap max-w-[140px] truncate" title={currentProject.name}>
                       {currentProject.name}
                     </span>
                   )}
                 </div>
-                <span className="text-slate-600">|</span>
+                <span className="text-slate-400">|</span>
                 <span className="truncate max-w-[200px]" title={user.email}>{user.email}</span>
-                <span className="text-slate-600">|</span>
+                <span className="text-slate-400">|</span>
                 {!isPro && (
                   <>
                     <button
                       type="button"
                       onClick={() => setSubscriptionModalOpen(true)}
-                      className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                      className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
                     >
                       PASSER EN PRO
                     </button>
-                    <span className="text-slate-600">|</span>
+                    <span className="text-slate-400">|</span>
                   </>
                 )}
                 {isPro && (
@@ -2673,11 +2673,11 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setManageSubscriptionModalOpen(true)}
-                      className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                      className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
                     >
                       GÉRER MON ABONNEMENT
                     </button>
-                    <span className="text-slate-600">|</span>
+                    <span className="text-slate-400">|</span>
                   </>
                 )}
                 <button
@@ -2687,22 +2687,22 @@ export default function Home() {
                     localStorage.removeItem("saas_mix_user");
                     setUser(null);
                   }}
-                  className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
                 >
                   DÉCONNEXION
                 </button>
               </>
             ) : (
               <>
-                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer">
+                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer">
                   CONNEXION
                 </button>
-                <span className="text-slate-600">|</span>
-                <button type="button" onClick={() => { setAuthMode("register"); setShowLoginModal(true); }} className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer">
+                <span className="text-slate-400">|</span>
+                <button type="button" onClick={() => { setAuthMode("register"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer">
                   INSCRIPTION
                 </button>
-                <span className="text-slate-600">|</span>
-                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-500 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer" title="Connectez-vous pour accéder à l’abonnement Pro">
+                <span className="text-slate-400">|</span>
+                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer" title="Connectez-vous pour accéder à l’abonnement Pro">
                   PASSER EN PRO
                 </button>
               </>
@@ -2714,7 +2714,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setNavMenuOpen((o) => !o)}
-              className="text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] p-2 -m-2 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"
+              className="text-tagline text-slate-400 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] p-2 -m-2 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"
               aria-label="Menu"
               aria-expanded={navMenuOpen}
             >
@@ -2729,7 +2729,7 @@ export default function Home() {
                   aria-hidden
                   onClick={() => setNavMenuOpen(false)}
                 />
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[200px] py-2 rounded-lg bg-[#0f0f0f] border border-white/10 shadow-xl text-tagline text-slate-500 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] text-center">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[200px] py-2 rounded-lg bg-[#0f0f0f] border border-white/10 shadow-xl text-tagline text-slate-400 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] text-center">
                   {user ? (
                     <>
                       <button
@@ -2756,11 +2756,11 @@ export default function Home() {
                         {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                       </button>
                       {user && currentProject && (
-                        <p className="px-4 py-1.5 text-[10px] text-slate-600 truncate max-w-[220px] mx-auto" title={currentProject.name}>
+                        <p className="px-4 py-1.5 text-[10px] text-slate-400 truncate max-w-[220px] mx-auto" title={currentProject.name}>
                           {currentProject.name}
                         </p>
                       )}
-                      <p className="px-4 py-2 text-[10px] text-slate-600 truncate max-w-[220px] mx-auto" title={user.email}>
+                      <p className="px-4 py-2 text-[10px] text-slate-400 truncate max-w-[220px] mx-auto" title={user.email}>
                         {user.email}
                       </p>
                       {user && !isPro && (
@@ -2828,7 +2828,7 @@ export default function Home() {
               </div>
               <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
                 {projectsList.length === 0 && !isLoadingProject && (
-                  <p className="text-slate-500 text-sm">Aucun projet sauvegardé.</p>
+                  <p className="text-slate-400 text-sm">Aucun projet sauvegardé.</p>
                 )}
                 {projectsList.map((p) => (
                   <div
@@ -2838,7 +2838,7 @@ export default function Home() {
                     <div className="min-w-0 flex-1">
                       <p className="text-white truncate">{p.name}</p>
                       {p.created_at && (
-                        <p className="text-slate-500 text-xs mt-0.5">
+                        <p className="text-slate-400 text-xs mt-0.5">
                           {new Date(p.created_at).toLocaleDateString("fr-FR", { dateStyle: "short" })}
                         </p>
                       )}
@@ -2878,14 +2878,14 @@ export default function Home() {
 
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3 space-y-4 max-lg:space-y-3 max-md:space-y-2.5`} aria-label="Pistes">
           {tracks.length === 0 && (
-            <p className="text-center text-slate-500 text-sm py-6 font-heading">Ajoutez votre première piste ci‑dessous.</p>
+            <p className="text-center text-slate-400 text-sm py-6 font-heading">Ajoutez votre première piste ci‑dessous.</p>
           )}
           {tracks.map((track) => (
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
               <button
                 type="button"
                 onClick={() => removeTrack(track.id)}
-                className="absolute top-4 right-4 p-2 rounded text-slate-500 hover:bg-white/5 hover:text-slate-300 transition-colors z-10 max-lg:top-0.5 max-lg:right-2 max-lg:p-1.5"
+                className="absolute top-4 right-4 p-2 rounded text-slate-400 hover:bg-white/5 hover:text-slate-400 transition-colors z-10 max-lg:top-0.5 max-lg:right-2 max-lg:p-1.5"
                 title="Supprimer la piste"
               >
                 ✕
@@ -2915,7 +2915,7 @@ export default function Home() {
                         className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
                         onClick={() => setFileChooserActiveTrackId(track.id)}
                       >
-                        <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
+                        <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
                       </label>
                       <input
                         id={`file-${track.id}`}
@@ -3004,7 +3004,7 @@ export default function Home() {
                         className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
                         onClick={() => setFileChooserActiveTrackId(track.id)}
                       >
-                        <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
+                        <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
                       </label>
                       <input
                         id={`file-${track.id}`}
@@ -3046,7 +3046,7 @@ export default function Home() {
                         )}
                       </button>
                       {noFileMessageTrackId === track.id && (
-                        <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                        <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                           Veuillez choisir un fichier
                         </p>
                       )}
@@ -3061,7 +3061,7 @@ export default function Home() {
                         }
                         className="group w-full h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
                       >
-                        <span className="text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                        <span className="text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
                           {track.paramsOpen ? "Masquer" : "Réglages"}
                         </span>
                       </button>
@@ -3088,7 +3088,7 @@ export default function Home() {
                         >
                           AVANT
                         </span>
-                        <span className="text-slate-500">/</span>
+                        <span className="text-slate-400">/</span>
                         <span
                           className={
                             track.mixedAudioUrl && track.playMode === "mixed"
@@ -3155,12 +3155,12 @@ export default function Home() {
                   {track.category === "instrumental" ? (
                     <>
                       <div>
-                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Fichier WAV</span>
+                        <span className="text-tagline text-slate-400 text-[10px] block mb-1 max-md:text-[9px]">Fichier WAV</span>
                         <label
                           htmlFor={`file-mob-${track.id}`}
                           className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-[10px] max-md:text-[9px]"
                         >
-                          <span className={!track.file ? "glow-blink-slow" : "text-slate-500"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
+                          <span className={!track.file ? "glow-blink-slow" : "text-slate-400"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
                         </label>
                         <input
                           id={`file-mob-${track.id}`}
@@ -3175,7 +3175,7 @@ export default function Home() {
                         />
                       </div>
                       <div>
-                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Catégorie</span>
+                        <span className="text-tagline text-slate-400 text-[10px] block mb-1 max-md:text-[9px]">Catégorie</span>
                         <CustomSelect
                           value={track.category}
                           onChange={(v) => {
@@ -3190,7 +3190,7 @@ export default function Home() {
                         />
                       </div>
                       <div>
-                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Gain {track.gain}%</span>
+                        <span className="text-tagline text-slate-400 text-[10px] block mb-1 max-md:text-[9px]">Gain {track.gain}%</span>
                         <input
                           type="range"
                           min="0"
@@ -3216,7 +3216,7 @@ export default function Home() {
                           htmlFor={`file-mob-${track.id}`}
                           className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-[10px] max-md:text-[9px]"
                         >
-                          <span className={!track.file ? "glow-blink-slow" : "text-slate-500"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
+                          <span className={!track.file ? "glow-blink-slow" : "text-slate-400"}>{!track.file ? "CHOISIR UN FICHIER" : "CHANGER"}</span>
                         </label>
                         <input
                           id={`file-mob-${track.id}`}
@@ -3261,7 +3261,7 @@ export default function Home() {
                           onClick={() => updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
                           className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-[10px] max-md:text-[9px] hover:bg-white/10"
                         >
-                          <span className={track.paramsOpen ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}>{track.paramsOpen ? "Masquer" : "Réglages"}</span>
+                          <span className={track.paramsOpen ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}>{track.paramsOpen ? "Masquer" : "Réglages"}</span>
                         </button>
                         <button
                           type="button"
@@ -3270,12 +3270,12 @@ export default function Home() {
                           className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-[10px] max-md:text-[9px] hover:bg-white/10 disabled:opacity-50 col-span-2 flex items-center justify-center gap-1"
                         >
                           <span className={track.mixedAudioUrl && track.playMode === "raw" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>AVANT</span>
-                          <span className="text-slate-500">/</span>
+                          <span className="text-slate-400">/</span>
                           <span className={track.mixedAudioUrl && track.playMode === "mixed" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]" : "text-slate-400"}>APRÈS</span>
                         </button>
                       </div>
                       <div>
-                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Catégorie</span>
+                        <span className="text-tagline text-slate-400 text-[10px] block mb-1 max-md:text-[9px]">Catégorie</span>
                         <CustomSelect
                           value={track.category}
                           onChange={(v) => {
@@ -3290,7 +3290,7 @@ export default function Home() {
                         />
                       </div>
                       <div>
-                        <span className="text-tagline text-slate-500 text-[10px] block mb-1 max-md:text-[9px]">Gain {track.gain}%</span>
+                        <span className="text-tagline text-slate-400 text-[10px] block mb-1 max-md:text-[9px]">Gain {track.gain}%</span>
                         <input
                           type="range"
                           min="0"
@@ -3308,7 +3308,7 @@ export default function Home() {
                   )}
                 </div>
                 {noFileMessageTrackId === track.id && (
-                  <p className="text-tagline text-slate-300 text-[10px] max-md:text-[9px] text-center">Choisir un fichier pour mixer.</p>
+                  <p className="text-tagline text-slate-400 text-[10px] max-md:text-[9px] text-center">Choisir un fichier pour mixer.</p>
                 )}
               </div>
 
@@ -3336,7 +3336,7 @@ export default function Home() {
                     </button>
                   </div>
                   <div className="h-0 overflow-visible relative">
-                    <p className="absolute top-[0.15rem] left-0 right-0 text-tagline text-slate-500 text-[10px] max-md:text-[9px] text-center truncate w-full pointer-events-none" title={track.file?.name ?? track.rawFileName ?? ""}>
+                    <p className="absolute top-[0.15rem] left-0 right-0 text-tagline text-slate-400 text-[10px] max-md:text-[9px] text-center truncate w-full pointer-events-none" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName ?? ""}
                     </p>
                   </div>
@@ -3366,14 +3366,14 @@ export default function Home() {
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
                         <input type="checkbox" checked={track.mixParams.reverb} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Reverb</span>
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>Reverb</span>
                       </label>
                       <CustomSelect value={track.mixParams.reverb_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb_mode: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
                         <input type="checkbox" checked={track.mixParams.delay} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Delay</span>
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>Delay</span>
                       </label>
                       <div className="grid grid-cols-2 gap-1">
                         <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
@@ -3383,7 +3383,7 @@ export default function Home() {
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
                         <input type="checkbox" checked={track.mixParams.deesser} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>De-esser</span>
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>De-esser</span>
                       </label>
                       <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                     </div>
@@ -3392,19 +3392,19 @@ export default function Home() {
                   <div className="grid grid-cols-4 gap-4 min-h-[3rem] items-end">
                     <label className="flex flex-col items-center justify-center gap-1.5 min-w-0">
                       <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Doubler</span>
+                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>Doubler</span>
                     </label>
                     <label className="flex flex-col items-center justify-center gap-1.5 min-w-0">
                       <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>FX robot</span>
+                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>FX robot</span>
                     </label>
                     <label className="flex flex-col items-center justify-center gap-1.5 min-w-0">
                       <input type="checkbox" checked={track.mixParams.phone_fx} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, phone_fx: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>FX téléphone</span>
+                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>FX téléphone</span>
                     </label>
                     <label className="flex flex-col items-center justify-center gap-1.5 min-w-0">
                       <input type="checkbox" checked={track.mixParams.air} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, air: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>Air</span>
+                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>Air</span>
                     </label>
                   </div>
                 </div>
@@ -3426,21 +3426,21 @@ export default function Home() {
                         <CustomSelect value={track.mixParams.tone_high} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.deesser} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           De-esser
                         </label>
                         <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.reverb} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Reverb
                         </label>
                         <CustomSelect value={track.mixParams.reverb_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-[10px] max-md:text-[9px]" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <label className={`flex items-center gap-1.5 text-tagline text-[10px] max-md:text-[9px] ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.delay} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Delay
                         </label>
@@ -3450,21 +3450,21 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between min-h-[2.25rem] px-0 text-tagline text-[10px] max-md:text-[9px]">
-                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.phone_fx} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, phone_fx: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           FX téléphone
                         </label>
-                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           <span>FX robot</span>
                         </label>
                       </div>
                       <div className="flex items-center justify-between min-h-[2.25rem] px-0 text-tagline text-[10px] max-md:text-[9px]">
-                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.air} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, air: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Air
                         </label>
-                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-500"}`}>
+                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           <span>Doubler</span>
                         </label>
@@ -3477,7 +3477,7 @@ export default function Home() {
         </section>
 
         {showPlayNoFileMessage && (
-          <div className="fixed left-1/2 top-24 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-lg bg-[#0a0a0a]/98 border border-white/20 shadow-xl shadow-black/50 text-tagline text-slate-200 text-sm text-center whitespace-nowrap">
+          <div className="fixed left-1/2 top-24 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-lg bg-[#0a0a0a]/98 border border-white/20 shadow-xl shadow-black/50 text-tagline text-slate-400 text-sm text-center whitespace-nowrap">
             Veuillez d&apos;abord sélectionner un fichier pour chaque piste
           </div>
         )}
@@ -3495,7 +3495,7 @@ export default function Home() {
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
             </button>
-            <p className="font-heading text-xs uppercase tracking-[0.2em] text-slate-500 group-hover:text-white transition-colors max-md:text-[10px]">Ajouter une piste</p>
+            <p className="font-heading text-xs uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors max-md:text-[10px]">Ajouter une piste</p>
           </div>
 
           <div className="flex flex-row flex-wrap items-center justify-center gap-10 w-full max-md:gap-8">
@@ -3524,7 +3524,7 @@ export default function Home() {
               className="flex flex-row items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-3 py-2 select-none overflow-visible shrink-0"
               title="Molette (desktop) ou toucher la valeur (mobile) pour saisir le BPM (1–300)"
             >
-              <span className="text-tagline text-xs max-md:text-[10px] uppercase tracking-wider text-slate-500">BPM</span>
+              <span className="text-tagline text-xs max-md:text-[10px] uppercase tracking-wider text-slate-400">BPM</span>
               <div className="relative inline-flex items-center justify-center min-w-[2.25rem] h-5 max-md:h-4 cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
                 <span className="text-tagline text-xs max-md:text-[10px] tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] pointer-events-none">
                   {bpmInput}
@@ -3565,7 +3565,7 @@ export default function Home() {
                     className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
                       isRenderingMix
                         ? "border border-white/30 bg-slate-800 text-white"
-                        : "border border-white/10 bg-white/5 text-slate-500 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors disabled:opacity-50"
+                        : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors disabled:opacity-50"
                     }`}
                   >
                     {isRenderingMix ? (
@@ -3577,7 +3577,7 @@ export default function Home() {
                     )}
                   </button>
                   {showLoginMixMessage && !user && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Connectez-vous pour télécharger le mix.
                     </p>
                   )}
@@ -3603,12 +3603,12 @@ export default function Home() {
                     ) : "MASTERISER"}
                   </button>
                   {showLoginMasterMessage && !user && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Connectez-vous pour masteriser.
                     </p>
                   )}
                   {user && showMasterMessage && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Veuillez d&apos;abord effectuer un mix
                     </p>
                   )}
@@ -3654,7 +3654,7 @@ export default function Home() {
                   >
                     AVANT
                   </span>
-                  <span className="text-slate-500">/</span>
+                  <span className="text-slate-400">/</span>
                   <span
                     className={
                       masterPlaybackMode === "mix"
@@ -3720,7 +3720,7 @@ export default function Home() {
                       TÉLÉCHARGEMENT<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                     </span>
                   ) : (
-                    <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                    <span className="text-tagline text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
                       TÉLÉCHARGER LE MASTER
                     </span>
                   )}
@@ -3731,11 +3731,11 @@ export default function Home() {
                   onClick={() => { setShowLoginMasterDownloadMessage(true); setTimeout(() => setShowLoginMasterDownloadMessage(false), 4000); }}
                   className="btn-primary group inline-flex items-center justify-center text-center mt-2 relative"
                 >
-                  <span className="text-tagline text-slate-500 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                  <span className="text-tagline text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
                     TÉLÉCHARGER LE MASTER
                   </span>
                   {showLoginMasterDownloadMessage && !user && (
-                    <span className="absolute left-1/2 top-full -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-300 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg z-10">
+                    <span className="absolute left-1/2 top-full -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-[10px] leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg z-10">
                       Connectez-vous pour télécharger le master.
                     </span>
                   )}
@@ -3771,12 +3771,12 @@ export default function Home() {
       {showLoginModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }}>
           <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md shadow-xl shadow-black/40 p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }} className="absolute top-3 right-3 text-slate-500 hover:text-white text-lg leading-none">&times;</button>
+            <button type="button" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
 
             {authMode === "login" ? (
               <>
                 <h2 className="text-xl font-medium text-white mb-1 text-center">Connexion</h2>
-                <p className="text-tagline text-slate-500 text-center text-[10px] mb-6">Accéder à votre compte</p>
+                <p className="text-tagline text-slate-400 text-center text-[10px] mb-6">Accéder à votre compte</p>
                 {registerSuccess && <p className="text-center text-green-400 text-sm mb-4">Compte créé. Connectez-vous.</p>}
                 <form
                   onSubmit={async (e) => {
@@ -3815,15 +3815,15 @@ export default function Home() {
                   className="space-y-4"
                 >
                   <div>
-                    <label htmlFor="login-email" className="block text-tagline text-slate-500 text-[10px] mb-1">E-mail</label>
+                    <label htmlFor="login-email" className="block text-tagline text-slate-400 text-[10px] mb-1">E-mail</label>
                     <input id="login-email" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required autoComplete="email"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                       placeholder="vous@exemple.com" />
                   </div>
                   <div>
-                    <label htmlFor="login-password" className="block text-tagline text-slate-500 text-[10px] mb-1">Mot de passe</label>
+                    <label htmlFor="login-password" className="block text-tagline text-slate-400 text-[10px] mb-1">Mot de passe</label>
                     <input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required autoComplete="current-password"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                       placeholder="••••••••" />
                   </div>
                   {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
@@ -3831,7 +3831,7 @@ export default function Home() {
                     {loginLoading ? "Connexion…" : "Se connecter"}
                   </button>
                 </form>
-                <p className="text-tagline text-slate-500 text-center text-[10px] mt-4">
+                <p className="text-tagline text-slate-400 text-center text-[10px] mt-4">
                   Pas de compte ?{" "}
                   <button type="button" onClick={() => { setAuthMode("register"); setLoginError(""); }} className="text-slate-400 hover:text-white underline cursor-pointer">Inscription</button>
                 </p>
@@ -3839,7 +3839,7 @@ export default function Home() {
             ) : (
               <>
                 <h2 className="text-xl font-medium text-white mb-1 text-center">Inscription</h2>
-                <p className="text-tagline text-slate-500 text-center text-[10px] mb-6">Créer un compte</p>
+                <p className="text-tagline text-slate-400 text-center text-[10px] mb-6">Créer un compte</p>
                 <form
                   onSubmit={async (e) => {
                     e.preventDefault();
@@ -3870,15 +3870,15 @@ export default function Home() {
                   className="space-y-4"
                 >
                   <div>
-                    <label htmlFor="register-email" className="block text-tagline text-slate-500 text-[10px] mb-1">E-mail</label>
+                    <label htmlFor="register-email" className="block text-tagline text-slate-400 text-[10px] mb-1">E-mail</label>
                     <input id="register-email" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required autoComplete="email"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                       placeholder="vous@exemple.com" />
                   </div>
                   <div>
-                    <label htmlFor="register-password" className="block text-tagline text-slate-500 text-[10px] mb-1">Mot de passe (8 caractères min.)</label>
+                    <label htmlFor="register-password" className="block text-tagline text-slate-400 text-[10px] mb-1">Mot de passe (8 caractères min.)</label>
                     <input id="register-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required minLength={8} autoComplete="new-password"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                       placeholder="••••••••" />
                   </div>
                   {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
@@ -3886,7 +3886,7 @@ export default function Home() {
                     {loginLoading ? "Création…" : "Créer mon compte"}
                   </button>
                 </form>
-                <p className="text-tagline text-slate-500 text-center text-[10px] mt-4">
+                <p className="text-tagline text-slate-400 text-center text-[10px] mt-4">
                   Déjà un compte ?{" "}
                   <button type="button" onClick={() => { setAuthMode("login"); setLoginError(""); }} className="text-slate-400 hover:text-white underline cursor-pointer">Connexion</button>
                 </p>

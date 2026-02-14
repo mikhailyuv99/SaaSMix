@@ -22,7 +22,7 @@ export function VideoSection() {
       <ObserveSection>
         <div className="mx-auto max-w-4xl">
           <div className="text-center observe-stagger-1">
-            <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-500">
+            <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400">
               Tutoriel
             </p>
             <h2 className="mt-2 font-heading text-2xl font-bold text-white sm:text-3xl">
@@ -44,13 +44,13 @@ export function VideoSection() {
                   className="h-full w-full"
                 />
               ) : (
-                <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-white/[0.03] text-slate-500">
-                  <svg className="h-14 w-14 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-white/[0.03] text-slate-400">
+                  <svg className="h-14 w-14 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <p className="text-sm font-medium">Vidéo à venir</p>
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-slate-400">
                     Ajoutez l’ID YouTube dans <code className="rounded bg-white/10 px-1.5 py-0.5 text-[10px]">NEXT_PUBLIC_YOUTUBE_EXPLAINER_VIDEO_ID</code>
                   </p>
                 </div>

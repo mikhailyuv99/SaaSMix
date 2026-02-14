@@ -108,13 +108,13 @@ export function HeroSection() {
             <span className="text-white">de mix vocal en ligne</span>
           </h1>
           <p
-            className="mt-5 text-lg text-slate-300 sm:text-xl animate-fade-up"
+            className="mt-5 text-lg text-slate-400 sm:text-xl animate-fade-up"
             style={{ animationDelay: "0.25s", animationFillMode: "both" }}
           >
             Transformez vos pistes brutes en un morceau fini en quelques minutes.
           </p>
           <p
-            className="mt-3 text-sm text-slate-500 sm:text-base animate-fade-up"
+            className="mt-3 text-sm text-slate-400 sm:text-base animate-fade-up"
             style={{ animationDelay: "0.3s", animationFillMode: "both" }}
           >
             Zéro ingé son, zéro plugin — tout se fait en ligne.
@@ -128,7 +128,7 @@ export function HeroSection() {
               "Voix qui s'intègrent au beat",
               "Export WAV prêt à sortir",
             ].map((item, i) => (
-              <li key={i} className="flex items-center gap-3 text-slate-300">
+              <li key={i} className="flex items-center gap-3 text-slate-400">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs text-white">
                   ✓
                 </span>
@@ -170,10 +170,10 @@ export function HeroSection() {
                 <line x1={12} y1={3} x2={12} y2={15} />
               </svg>
             </span>
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-slate-400">
               ou cliquez pour choisir un fichier
             </span>
-            <span className="mt-6 text-xs text-slate-500">
+            <span className="mt-6 text-xs text-slate-400">
               Aperçu pleine longueur · Pas de CB · Vous gardez vos droits
             </span>
           </button>

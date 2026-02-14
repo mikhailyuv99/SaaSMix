@@ -12,7 +12,7 @@ export function BeforeAfterSection() {
     <section className="px-4 py-6 sm:py-8">
       <ObserveSection>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-500 observe-stagger-1">
+          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
             Avant / Après
           </p>
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2">
@@ -29,13 +29,13 @@ export function BeforeAfterSection() {
               className={`landing-card group p-5 sm:p-6 ${i === 0 ? "observe-stagger-1" : i === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
             >
               <div
-                className="flex h-28 items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.03] text-slate-500 transition-colors group-hover:border-white/25 sm:h-32"
+                className="flex h-28 items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/[0.03] text-slate-400 transition-colors group-hover:border-white/25 sm:h-32"
                 style={{ animation: "pulse-soft 3s ease-in-out infinite" }}
               >
                 <span className="text-xs font-medium sm:text-sm">Avant / Après</span>
               </div>
               <p className="mt-4 font-heading font-semibold text-white">{demo.title}</p>
-              <p className="text-sm text-slate-500">{demo.artist}</p>
+              <p className="text-sm text-slate-400">{demo.artist}</p>
               <p className="mt-1 text-sm text-slate-400">{demo.desc}</p>
               <Link
                 href="/mix"

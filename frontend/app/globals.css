@@ -85,7 +85,7 @@
 }
 
 .bg-fade-in {
-  animation: bg-fade-in 0.7s ease-out forwards;
+  animation: bg-fade-in 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .animate-fade-up {
@@ -219,7 +219,7 @@
     @apply rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm;
   }
   .text-tagline {
-    @apply uppercase tracking-[0.2em] text-[11px] sm:text-xs text-slate-500;
+    @apply uppercase tracking-[0.2em] text-[11px] sm:text-xs text-slate-400;
   }
   .btn-primary {
     @apply rounded-lg px-4 py-2.5 text-sm font-medium text-white border border-white/10 bg-white/5 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608] hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed;
@@ -228,7 +228,7 @@
     @apply btn-primary border-white/20 bg-white text-[#060608] hover:bg-white/90;
   }
   .btn-secondary {
-    @apply rounded-lg px-4 py-2 text-sm font-medium border border-white/10 bg-transparent text-slate-300 transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608];
+    @apply rounded-lg px-4 py-2 text-sm font-medium border border-white/10 bg-transparent text-slate-400 transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608];
   }
   /* Menus déroulants : même style que le site (fond sombre, bordure, texte clair) */
   select {

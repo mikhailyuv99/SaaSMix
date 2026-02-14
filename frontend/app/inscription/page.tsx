@@ -43,10 +43,10 @@ export default function InscriptionPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="card p-6 w-full max-w-sm">
         <h1 className="text-xl font-medium text-white mb-1 text-center">Inscription</h1>
-        <p className="text-tagline text-slate-500 text-center text-[10px] mb-6">Créer un compte</p>
+        <p className="text-tagline text-slate-400 text-center text-[10px] mb-6">Créer un compte</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-tagline text-slate-500 text-[10px] mb-1">E-mail</label>
+            <label htmlFor="email" className="block text-tagline text-slate-400 text-[10px] mb-1">E-mail</label>
             <input
               id="email"
               type="email"
@@ -54,12 +54,12 @@ export default function InscriptionPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
               placeholder="vous@exemple.com"
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-tagline text-slate-500 text-[10px] mb-1">Mot de passe (8 caractères min.)</label>
+            <label htmlFor="password" className="block text-tagline text-slate-400 text-[10px] mb-1">Mot de passe (8 caractères min.)</label>
             <input
               id="password"
               type="password"
@@ -68,7 +68,7 @@ export default function InscriptionPage() {
               required
               minLength={8}
               autoComplete="new-password"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
               placeholder="••••••••"
             />
           </div>
@@ -77,12 +77,12 @@ export default function InscriptionPage() {
             {loading ? "Création…" : "Créer mon compte"}
           </button>
         </form>
-        <p className="text-tagline text-slate-500 text-center text-[10px] mt-4">
+        <p className="text-tagline text-slate-400 text-center text-[10px] mt-4">
           Déjà un compte ?{" "}
           <Link href="/connexion" className="text-slate-400 hover:text-white underline">Connexion</Link>
         </p>
       </div>
-      <Link href="/" className="text-tagline text-slate-500 text-[10px] mt-6 hover:text-white">← Retour à l'accueil</Link>
+      <Link href="/" className="text-tagline text-slate-400 text-[10px] mt-6 hover:text-white">← Retour à l'accueil</Link>
     </div>
   );
 }

@@ -71,7 +71,7 @@ export function HowItWorks() {
     <section id="comment-ca-marche" className="scroll-mt-20 px-4 py-6 sm:py-8">
       <ObserveSection>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-500 observe-stagger-1">
+          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
             Process
           </p>
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2">
@@ -104,7 +104,7 @@ export function HowItWorks() {
                           <button
                             type="button"
                             onClick={() => setExpanded(expanded === step.num ? null : step.num)}
-                            className="mt-2 flex items-center gap-1 text-sm text-slate-500 hover:text-white transition-colors"
+                            className="mt-2 flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
                           >
                             Lire la suite
                             <svg className={`h-4 w-4 transition-transform ${expanded === step.num ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,7 +134,7 @@ export function HowItWorks() {
                           <button
                             type="button"
                             onClick={() => setExpanded(expanded === step.num ? null : step.num)}
-                            className="mt-2 flex items-center gap-1 text-sm text-slate-500 hover:text-white transition-colors"
+                            className="mt-2 flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
                           >
                             Lire la suite
                             <svg className={`h-4 w-4 transition-transform ${expanded === step.num ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -158,7 +158,7 @@ export function HowItWorks() {
               Essayer ces 4 étapes avec vos pistes
             </Link>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 sm:gap-8">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8">
             <span>Aperçu pleine longueur</span>
             <span>Pas de carte bancaire</span>
             <span>Vous gardez vos droits</span>

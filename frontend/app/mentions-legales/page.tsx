@@ -4,13 +4,13 @@ import Link from "next/link";
 
 export default function MentionsLegalesPage() {
   return (
-    <div className="min-h-screen bg-[#060608] text-slate-200 p-6">
+    <div className="min-h-screen bg-[#060608] text-slate-400 p-6">
       <div className="max-w-2xl mx-auto">
-        <Link href="/" className="text-slate-500 hover:text-white text-sm mb-6 inline-block">
+        <Link href="/" className="text-slate-400 hover:text-white text-sm mb-6 inline-block">
           ← Retour à l&apos;accueil
         </Link>
         <h1 className="text-2xl font-semibold text-white mb-6">Mentions légales</h1>
-        <div className="card p-6 space-y-6 text-sm text-slate-300">
+        <div className="card p-6 space-y-6 text-sm text-slate-400">
           <section>
             <h2 className="text-white font-medium mb-2">Éditeur du site</h2>
             <p>
@@ -30,7 +30,7 @@ export default function MentionsLegalesPage() {
             <h2 className="text-white font-medium mb-2">Contact</h2>
             <p>
               Pour toute question relative aux mentions légales ou au site, vous pouvez nous contacter à l&apos;adresse :{" "}
-              <a href="mailto:99siberia@gmail.com" className="text-slate-300 hover:text-white underline">99siberia@gmail.com</a>.
+              <a href="mailto:99siberia@gmail.com" className="text-slate-400 hover:text-white underline">99siberia@gmail.com</a>.
             </p>
           </section>
           <section>

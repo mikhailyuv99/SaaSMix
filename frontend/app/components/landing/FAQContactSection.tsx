@@ -51,7 +51,7 @@ export function FAQContactSection() {
     <section id="faq-contact" className="scroll-mt-20 px-4 py-6 sm:py-8 font-sans">
       <ObserveSection>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-500 observe-stagger-1">
+          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
             Support
           </p>
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2">
@@ -105,12 +105,12 @@ export function FAQContactSection() {
           <div className="observe-stagger-2 w-full">
             <div className="landing-card font-sans p-6 shadow-xl shadow-black/20">
               <h3 className="font-heading font-semibold text-white">Nous contacter</h3>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-400">
                 Un message ou une question ? Envoyez-nous un mail.
               </p>
               <form onSubmit={handleSubmit} className="mt-5 space-y-4">
                 <div>
-                  <label htmlFor="contact-name" className="mb-1 block text-xs font-medium text-slate-500">
+                  <label htmlFor="contact-name" className="mb-1 block text-xs font-medium text-slate-400">
                     Nom
                   </label>
                   <input
@@ -119,12 +119,12 @@ export function FAQContactSection() {
                     value={formState.name}
                     onChange={(e) => setFormState((s) => ({ ...s, name: e.target.value }))}
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    className="contact-input w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="Votre nom"
                   />
                 </div>
                 <div>
-                  <label htmlFor="contact-email" className="mb-1 block text-xs font-medium text-slate-500">
+                  <label htmlFor="contact-email" className="mb-1 block text-xs font-medium text-slate-400">
                     E-mail
                   </label>
                   <input
@@ -134,12 +134,12 @@ export function FAQContactSection() {
                     onChange={(e) => setFormState((s) => ({ ...s, email: e.target.value }))}
                     required
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    className="contact-input w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="vous@exemple.com"
                   />
                 </div>
                 <div>
-                  <label htmlFor="contact-message" className="mb-1 block text-xs font-medium text-slate-500">
+                  <label htmlFor="contact-message" className="mb-1 block text-xs font-medium text-slate-400">
                     Message
                   </label>
                   <textarea
@@ -148,7 +148,7 @@ export function FAQContactSection() {
                     value={formState.message}
                     onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    className="contact-input w-full resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="Votre message..."
                   />
                 </div>
@@ -161,7 +161,7 @@ export function FAQContactSection() {
                 </button>
               </form>
               <div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-5">
-                <span className="text-xs text-slate-500">Ou suivez-nous :</span>
+                <span className="text-xs text-slate-400">Ou suivez-nous :</span>
                 <a
                   href={INSTAGRAM_URL}
                   target="_blank"

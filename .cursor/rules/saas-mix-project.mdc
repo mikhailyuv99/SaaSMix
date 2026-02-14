@@ -28,3 +28,9 @@ Web SaaS for **automatic vocal mixing**: users upload raw vocal stems + instrume
 - **HISE VST3:** Export from HISE (FX chain at root; disable "Use IPP" if build fails). Identical rendering via C++ host in `hise_vst3_host/` (CMake + JUCE, no Git; build once). Backend uses it automatically when exe is found; config in `vst_config.py`. Full reference: `backend/HISE_VST3_REFERENCE.md`.
 
 When adding features, follow existing patterns in `backend/main.py` and `frontend/app/` and keep API contracts consistent between frontend and backend.
+
+## Backend URLs (VPS — ne jamais mélanger prod / staging)
+
+- **Prod:** `C:\app\backend`, port **8000**, service `SaasMixBackend`, API `https://api.siberiamix.com` ou `http://localhost:8000`.
+- **Staging:** `C:\app\backend-staging`, port **8001**, service `SaasMixBackendStaging`, API `https://api-staging.siberiamix.com` ou `http://localhost:8001`. Frontend staging: https://stagingsiberiamix.netlify.app.
+- Donner les commandes (PowerShell, URLs) en précisant **staging (8001)** ou **prod (8000)**. Référence détaillée: `BACKEND_URLS_REFERENCE.md`.

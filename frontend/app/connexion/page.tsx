@@ -51,11 +51,11 @@ export default function ConnexionPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="card p-6 w-full max-w-sm">
         <h1 className="text-xl font-medium text-white mb-1 text-center">Connexion</h1>
-        <p className="text-tagline text-slate-500 text-center text-[10px] mb-6">Accéder à votre compte</p>
+        <p className="text-tagline text-slate-400 text-center text-[10px] mb-6">Accéder à votre compte</p>
         {inscrit && <p className="text-center text-green-400 text-sm mb-4">Compte créé. Connectez-vous.</p>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-tagline text-slate-500 text-[10px] mb-1">E-mail</label>
+            <label htmlFor="email" className="block text-tagline text-slate-400 text-[10px] mb-1">E-mail</label>
             <input
               id="email"
               type="email"
@@ -63,12 +63,12 @@ export default function ConnexionPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
               placeholder="vous@exemple.com"
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-tagline text-slate-500 text-[10px] mb-1">Mot de passe</label>
+            <label htmlFor="password" className="block text-tagline text-slate-400 text-[10px] mb-1">Mot de passe</label>
             <input
               id="password"
               type="password"
@@ -76,7 +76,7 @@ export default function ConnexionPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
               placeholder="••••••••"
             />
           </div>
@@ -85,12 +85,12 @@ export default function ConnexionPage() {
             {loading ? "Connexion…" : "Se connecter"}
           </button>
         </form>
-        <p className="text-tagline text-slate-500 text-center text-[10px] mt-4">
+        <p className="text-tagline text-slate-400 text-center text-[10px] mt-4">
           Pas de compte ?{" "}
           <Link href="/inscription" className="text-slate-400 hover:text-white underline">Inscription</Link>
         </p>
       </div>
-      <Link href="/" className="text-tagline text-slate-500 text-[10px] mt-6 hover:text-white">← Retour à l'accueil</Link>
+      <Link href="/" className="text-tagline text-slate-400 text-[10px] mt-6 hover:text-white">← Retour à l'accueil</Link>
     </div>
   );
 }

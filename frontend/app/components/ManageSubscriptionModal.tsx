@@ -181,9 +181,9 @@ export function ManageSubscriptionModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div className="card p-6 max-w-md w-full relative" onClick={(e) => e.stopPropagation()}>
-        <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-500 hover:text-white text-lg leading-none">&times;</button>
+        <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
         <h2 className="text-xl font-medium text-white mb-1">Gérer mon abonnement</h2>
-        <p className="text-tagline text-slate-500 text-[10px] mb-6">Modifier votre carte ou annuler l'abonnement.</p>
+        <p className="text-tagline text-slate-400 text-[10px] mb-6">Modifier votre carte ou annuler l'abonnement.</p>
 
         {loading ? (
           <p className="text-slate-400 text-sm">Chargement…</p>
@@ -202,7 +202,7 @@ export function ManageSubscriptionModal({
           </>
         ) : subscription ? (
           <div className="space-y-4">
-            <p className="text-slate-300 text-sm">
+            <p className="text-slate-400 text-sm">
               Plan : <strong>Pro {subscription.interval === "year" ? "annuel" : "mensuel"}</strong>
             </p>
             <p className="text-slate-400 text-sm">
@@ -219,7 +219,7 @@ export function ManageSubscriptionModal({
               <button
                 type="button"
                 onClick={() => setShowUpdateCard(true)}
-                className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-slate-200 hover:bg-white/10 transition-colors"
+                className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-slate-400 hover:bg-white/10 transition-colors"
               >
                 Mettre à jour ma carte
               </button>
@@ -237,12 +237,12 @@ export function ManageSubscriptionModal({
             {showCancelConfirm && (
               <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-[#0f0f0f]/95 border border-white/10 p-4">
                 <div className="text-center max-w-sm">
-                  <p className="text-slate-200 text-sm mb-4">Annuler l&apos;abonnement ? Vous garderez l&apos;accès Pro jusqu&apos;à la fin de la période en cours.</p>
+                  <p className="text-slate-400 text-sm mb-4">Annuler l&apos;abonnement ? Vous garderez l&apos;accès Pro jusqu&apos;à la fin de la période en cours.</p>
                   <div className="flex gap-3 justify-center">
                     <button
                       type="button"
                       onClick={() => setShowCancelConfirm(false)}
-                      className="px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-slate-200 text-sm hover:bg-white/10"
+                      className="px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-slate-400 text-sm hover:bg-white/10"
                     >
                       Non
                     </button>
