@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Background = image pré-rendue avec dither (Floyd-Steinberg) pour zéro banding
- * pour tous les utilisateurs, quel que soit l’écran (8-bit).
- * Pour régénérer l’image : npm run export-background (depuis frontend/)
- */
 export function PageBackground() {
   return (
     <div
@@ -15,6 +10,9 @@ export function PageBackground() {
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
+        filter: "blur(6px)",
+        transform: "scale(1.08)",
+        transformOrigin: "center center",
       }}
     />
   );
