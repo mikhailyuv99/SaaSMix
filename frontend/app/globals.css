@@ -159,6 +159,14 @@
   background-clip: text;
 }
 
+/* Lisibilité du texte hero sur fond clair/sans overlay */
+.hero-heading-shadow {
+  filter: drop-shadow(0 0 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
+}
+.hero-text-shadow {
+  text-shadow: 0 0 16px rgba(0, 0, 0, 0.75), 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
 .btn-cta-primary {
   @apply relative overflow-hidden rounded-xl px-8 py-4 text-base font-semibold text-black transition-all duration-300;
   background: #fff;

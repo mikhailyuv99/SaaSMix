@@ -12,7 +12,7 @@ export function Header() {
       <div className="mx-auto flex h-14 max-w-6xl flex-wrap items-center justify-between gap-3 px-4 sm:h-16 sm:flex-nowrap sm:gap-6 sm:px-6">
         <Link
           href="/"
-          className="font-heading text-lg font-semibold tracking-tight text-white sm:text-xl shrink-0"
+          className="hero-text-shadow font-heading text-lg font-semibold tracking-tight text-white sm:text-xl shrink-0"
         >
           SIBERIA MIX
         </Link>
@@ -20,17 +20,17 @@ export function Header() {
         <div className="flex items-center gap-4 sm:gap-8 flex-wrap sm:flex-nowrap">
           {isHome && (
             <>
-              <a href="#tarifs" className="text-sm text-white/90 transition-colors hover:text-white">
+              <a href="#tarifs" className="hero-text-shadow text-sm text-white/90 transition-colors hover:text-white">
                 Tarifs
               </a>
-              <a href="#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">
+              <a href="#faq-contact" className="hero-text-shadow text-sm text-white/90 transition-colors hover:text-white">
                 FAQ & Contact
               </a>
             </>
           )}
           <Link
             href={isHome ? "/mix" : "/"}
-            className="rounded-lg border border-white/30 bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:border-white/40 shrink-0"
+            className="hero-text-shadow rounded-lg border border-white/30 bg-transparent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/10 hover:border-white/40 shrink-0"
           >
             {isHome ? "Charger un fichier" : "Accueil"}
           </Link>
