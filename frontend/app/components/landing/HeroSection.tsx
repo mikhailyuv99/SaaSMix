@@ -156,10 +156,17 @@ export function HeroSection() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            className={`hero-dropzone font-sans uppercase flex min-h-[260px] w-full flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[300px] ${
+            className={`hero-dropzone font-sans uppercase flex min-h-[260px] w-full flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[300px] ${
               isDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
             }`}
           >
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white sm:h-16 sm:w-16" aria-hidden>
+              <svg className="h-7 w-7 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1={12} y1={3} x2={12} y2={15} />
+              </svg>
+            </span>
             <span className="font-heading text-base font-medium text-white sm:text-lg">
               {isDragging ? "Déposez le fichier" : "Glissez-déposez vos pistes ici"}
             </span>
