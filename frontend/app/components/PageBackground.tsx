@@ -2,7 +2,7 @@
 
 export function PageBackground() {
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black" aria-hidden>
+    <div className="bg-fade-in fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black" aria-hidden>
       <div
         className="absolute inset-0"
         style={{
