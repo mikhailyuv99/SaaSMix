@@ -3498,8 +3498,8 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex flex-col items-center gap-6 px-4 py-4 max-lg:px-3 max-lg:py-3 max-md:gap-4">
-          <div className="group flex flex-col items-center gap-1.5">
+        <div className="flex flex-row flex-wrap items-center justify-between gap-4 px-4 py-4 max-lg:px-3 max-lg:py-3 w-full">
+          <div className="group flex flex-col items-center gap-1.5 shrink-0">
             <button
               type="button"
               onClick={addTrack}
@@ -3514,7 +3514,7 @@ export default function Home() {
             <p className="font-heading text-xs uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors max-md:text-[10px]">Ajouter une piste</p>
           </div>
 
-          <div className="flex flex-row flex-wrap items-center justify-between w-full max-md:gap-6 gap-x-8">
+          <div className="flex flex-row items-center gap-3 flex-1 min-w-0 justify-end flex-wrap">
             {tracks.length > 0 ? (
               !isPlaying ? (
                 <button
@@ -3537,12 +3537,12 @@ export default function Home() {
 
             <div
               ref={bpmBoxRef}
-              className="flex flex-row items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-3 py-2 select-none overflow-visible shrink-0 min-w-[8rem]"
+              className="h-10 max-md:h-9 rounded-lg px-4 flex flex-row items-center justify-center gap-2 border border-white/10 bg-white/5 select-none overflow-visible shrink-0 min-w-[7.5rem] text-tagline text-xs max-md:text-[10px]"
               title="Molette (desktop) ou toucher la valeur (mobile) pour saisir le BPM (1–300)"
             >
-              <span className="text-tagline text-xs max-md:text-[10px] uppercase tracking-wider text-slate-400">BPM</span>
-              <div className="relative inline-flex items-center justify-center min-w-[2.25rem] h-5 max-md:h-4 cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
-                <span className="text-tagline text-xs max-md:text-[10px] tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] pointer-events-none">
+              <span className="uppercase tracking-wider text-slate-400">BPM</span>
+              <div className="relative inline-flex items-center justify-center min-w-[2rem] h-full cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
+                <span className="tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] pointer-events-none">
                   {bpmInput}
                 </span>
                 <input
@@ -3606,7 +3606,7 @@ export default function Home() {
                       runMaster();
                     }}
                     disabled={isMastering}
-                    className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
+                    className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap min-w-[7.5rem] ${
                       isMastering
                         ? "border border-white/30 bg-slate-800 text-white"
                         : "border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
