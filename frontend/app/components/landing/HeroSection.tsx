@@ -103,7 +103,7 @@ export function HeroSection() {
             className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-up"
             style={{ animationDelay: "0.1s", animationFillMode: "both" }}
           >
-            <span className="gradient-text">Le site n°1</span>
+            <span className="text-white">Le site n°1</span>
             <br />
             <span className="text-white">de mix vocal en ligne</span>
           </h1>
