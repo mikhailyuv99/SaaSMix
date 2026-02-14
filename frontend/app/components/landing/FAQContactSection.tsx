@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ObserveSection } from "../ObserveSection";
 
 const INSTAGRAM_URL = "https://instagram.com/siberiamix";
+const FONT = "'Plus Jakarta Sans', sans-serif";
 const CONTACT_EMAIL = "99siberia@gmail.com";
 
 const faqs = [
@@ -78,6 +79,7 @@ export function FAQContactSection() {
               >
                 <button
                   type="button"
+                  style={{ fontFamily: FONT }}
                   className="faq-question flex w-full items-center justify-between px-5 py-4 text-left font-medium text-white transition-colors hover:bg-white/[0.03] sm:px-6"
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   aria-expanded={openIndex === i}
@@ -99,7 +101,7 @@ export function FAQContactSection() {
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <div className="font-sans border-t border-white/10 px-5 py-3 text-sm leading-relaxed text-slate-400 sm:px-6">
+                    <div className="font-sans border-t border-white/10 px-5 py-3 text-sm leading-relaxed text-slate-400 sm:px-6" style={{ fontFamily: FONT }}>
                       {faq.a}
                     </div>
                   </div>
@@ -124,6 +126,7 @@ export function FAQContactSection() {
                     type="text"
                     value={formState.name}
                     onChange={(e) => setFormState((s) => ({ ...s, name: e.target.value }))}
+                    style={{ fontFamily: FONT }}
                     className="contact-input w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="Votre nom"
                   />
@@ -138,6 +141,7 @@ export function FAQContactSection() {
                     value={formState.email}
                     onChange={(e) => setFormState((s) => ({ ...s, email: e.target.value }))}
                     required
+                    style={{ fontFamily: FONT }}
                     className="contact-input w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="vous@exemple.com"
                   />
@@ -151,12 +155,14 @@ export function FAQContactSection() {
                     rows={4}
                     value={formState.message}
                     onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
+                    style={{ fontFamily: FONT }}
                     className="contact-input w-full resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-500 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="Votre message..."
                   />
                 </div>
                 <button
                   type="submit"
+                  style={{ fontFamily: FONT }}
                   className="contact-submit btn-cta-primary w-full py-3 text-sm font-semibold font-sans"
                 >
                   Envoyer (ouvre votre messagerie)
