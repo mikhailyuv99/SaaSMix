@@ -134,8 +134,8 @@ export function CustomSelect({
 
   /* Catégorie : pr-9 pour que le texte + ellipsis n’empiètent pas sur la flèche. Autres box : pas de pr-9 = centrage sur toute la largeur, le masque de la flèche cache le débordement. */
   const baseButtonClass =
-    "w-full rounded-lg border border-white/10 bg-white/5 py-1.5 min-h-[2.25rem] flex items-center relative focus:outline-none focus:ring-1 focus:ring-white/20 overflow-hidden";
-  const categoryButtonClass = "h-10 text-tagline";
+    "w-full rounded-lg border border-white/10 bg-white/5 py-1 min-h-[2rem] flex items-center relative focus:outline-none focus:ring-1 focus:ring-white/20 overflow-hidden";
+  const categoryButtonClass = "h-9 text-tagline";
   const defaultButtonClass = "text-tagline";
   const buttonClass = isCategory
     ? `${baseButtonClass} ${categoryButtonClass}`
@@ -143,7 +143,7 @@ export function CustomSelect({
 
   /* Dropdown : options centrées */
   const dropdownClass =
-    "z-[9999] w-max max-w-[min(100vw,24rem)] rounded-xl border border-white/[0.06] bg-[#0d0d0d] py-2 max-h-[min(20rem,70vh)] overflow-auto shadow-xl text-center";
+    "z-[9999] w-max max-w-[min(100vw,24rem)] rounded-xl border border-white/[0.06] bg-[#0d0d0d] py-1.5 max-h-[min(20rem,70vh)] overflow-auto shadow-xl text-center";
 
   const dropdownContent = open && dropdownRect && typeof document !== "undefined" && (
     <ul
@@ -165,7 +165,7 @@ export function CustomSelect({
             key={String(opt.value)}
             role="option"
             aria-selected={opt.value === value}
-            className={`cursor-pointer px-4 py-2.5 text-tagline text-slate-400 whitespace-nowrap transition-colors text-center ${
+            className={`cursor-pointer px-3 py-2 text-tagline text-slate-400 whitespace-nowrap transition-colors text-center ${
               isHighlighted
                 ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]"
                 : ""
@@ -203,9 +203,9 @@ export function CustomSelect({
         <span className={isCategory ? "block w-full text-center truncate px-1 pr-9" : "block w-full text-center truncate px-1"}>
           {currentOption?.label ?? value}
         </span>
-        <span className="absolute right-0 top-0 bottom-0 w-10 rounded-r-lg bg-white/5 flex items-center justify-center pointer-events-none" aria-hidden>
+        <span className="absolute right-0 top-0 bottom-0 w-9 rounded-r-lg bg-white/5 flex items-center justify-center pointer-events-none" aria-hidden>
           <svg
-            className={`w-5 h-5 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+            className={`w-4 h-4 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

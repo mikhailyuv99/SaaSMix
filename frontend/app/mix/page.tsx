@@ -2617,7 +2617,7 @@ export default function Home() {
 
       <div className="mx-auto max-w-4xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
-          <nav className="max-lg:hidden flex justify-center items-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:gap-1.5 max-md:mb-3 max-md:text-xs">
+          <nav className="max-lg:hidden flex justify-center items-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:gap-1.5 max-md:mb-3 max-md:text-xs">
             {user ? (
               <>
                 <button
@@ -2714,7 +2714,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setNavMenuOpen((o) => !o)}
-              className="text-tagline text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:text-xs p-2 -m-2 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"
+              className="text-tagline text-slate-400 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] p-2 -m-2 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"
               aria-label="Menu"
               aria-expanded={navMenuOpen}
             >
@@ -2729,13 +2729,13 @@ export default function Home() {
                   aria-hidden
                   onClick={() => setNavMenuOpen(false)}
                 />
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[200px] py-2 rounded-lg bg-[#0f0f0f] border border-white/10 shadow-xl text-tagline text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:text-xs text-center">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[200px] py-2 rounded-lg bg-[#0f0f0f] border border-white/10 shadow-xl text-tagline text-slate-400 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] text-center">
                   {user ? (
                     <>
                       <button
                         type="button"
                         onClick={() => { setNavMenuOpen(false); setShowProjectsModal(true); fetchProjectsList(); }}
-                        className="block w-full text-center px-5 py-3 hover:text-white hover:bg-white/5 transition-colors"
+                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors"
                       >
                         MES PROJETS
                       </button>
@@ -2743,7 +2743,7 @@ export default function Home() {
                         type="button"
                         disabled={isSavingProject}
                         onClick={() => { setNavMenuOpen(false); createNewProject(); }}
-                        className="block w-full text-center px-5 py-3 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                       >
                         CRÉER UN PROJET
                       </button>
@@ -2751,7 +2751,7 @@ export default function Home() {
                         type="button"
                         disabled={isSavingProject}
                         onClick={() => { setNavMenuOpen(false); saveProject(); }}
-                        className="block w-full text-center px-5 py-3 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                       >
                         {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                       </button>
@@ -2767,7 +2767,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={() => { setNavMenuOpen(false); setSubscriptionModalOpen(true); }}
-                          className="block w-full text-center px-5 py-3 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
+                          className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
                         >
                           PASSER EN PRO
                         </button>
@@ -2776,7 +2776,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={() => { setNavMenuOpen(false); setManageSubscriptionModalOpen(true); }}
-                          className="block w-full text-center px-5 py-3 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
+                          className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
                         >
                           GÉRER MON ABONNEMENT
                         </button>
@@ -2789,17 +2789,17 @@ export default function Home() {
                           localStorage.removeItem("saas_mix_user");
                           setUser(null);
                         }}
-                        className="block w-full text-center px-5 py-3 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 mt-1 pt-2"
+                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 mt-1 pt-2"
                       >
                         DÉCONNEXION
                       </button>
                     </>
                   ) : (
                     <>
-                      <button type="button" onClick={() => { setNavMenuOpen(false); setAuthMode("login"); setShowLoginModal(true); }} className="block w-full text-center px-5 py-3 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
+                      <button type="button" onClick={() => { setNavMenuOpen(false); setAuthMode("login"); setShowLoginModal(true); }} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
                         CONNEXION
                       </button>
-                      <button type="button" onClick={() => { setNavMenuOpen(false); setAuthMode("register"); setShowLoginModal(true); }} className="block w-full text-center px-5 py-3 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
+                      <button type="button" onClick={() => { setNavMenuOpen(false); setAuthMode("register"); setShowLoginModal(true); }} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
                         INSCRIPTION
                       </button>
                     </>
@@ -2816,7 +2816,7 @@ export default function Home() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" aria-modal="true" role="dialog">
             <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/40">
               <div className="flex items-center justify-between p-4 border-b border-white/10">
-                <h2 className="text-xl font-medium text-white">Mes projets</h2>
+                <h2 className="text-lg font-medium text-white">Mes projets</h2>
                 <button
                   type="button"
                   onClick={() => setShowProjectsModal(false)}
@@ -2878,14 +2878,14 @@ export default function Home() {
 
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3 space-y-4 max-lg:space-y-3 max-md:space-y-2.5`} aria-label="Pistes">
           {tracks.length === 0 && (
-            <p className="text-center text-slate-400 text-base py-6 font-heading">Ajoutez votre première piste ci‑dessous.</p>
+            <p className="text-center text-slate-400 text-sm py-6 font-heading">Ajoutez votre première piste ci‑dessous.</p>
           )}
           {tracks.map((track) => (
-            <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6 relative max-lg:p-5 transition-colors hover:border-white/15">
+            <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
               <button
                 type="button"
                 onClick={() => removeTrack(track.id)}
-                className="absolute top-5 right-5 p-2.5 rounded text-slate-400 hover:bg-white/5 hover:text-slate-400 transition-colors z-10 max-lg:top-1 max-lg:right-2.5 max-lg:p-2"
+                className="absolute top-4 right-4 p-2 rounded text-slate-400 hover:bg-white/5 hover:text-slate-400 transition-colors z-10 max-lg:top-0.5 max-lg:right-2 max-lg:p-1.5"
                 title="Supprimer la piste"
               >
                 ✕
@@ -2893,26 +2893,26 @@ export default function Home() {
 
               {/* Affichage PC : 3 colonnes (Choisir, Catégorie, Gain) pour instrumental, 6 colonnes pour vocal */}
               <div
-                className="grid w-full pr-12 gap-x-5 gap-y-2 max-lg:hidden"
+                className="grid w-full pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
                 style={{
                   gridTemplateColumns: track.category === "instrumental" ? "1fr 1.2fr 1fr" : "1fr 1fr 1fr 1fr 1.2fr 1fr",
                 }}
               >
                 {track.category === "instrumental" ? (
                   <>
-                    <div className="flex items-center justify-center min-h-[36px] min-w-0">
+                    <div className="flex items-center justify-center min-h-[32px] min-w-0">
                       <span className="text-tagline text-center whitespace-nowrap block min-w-0">Fichier WAV</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[36px]">
+                    <div className="flex items-center justify-center min-h-[32px]">
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[36px]">
+                    <div className="flex items-center justify-center min-h-[32px]">
                       <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain {track.gain}%</span>
                     </div>
                     <div className="flex items-center min-w-0">
                       <label
                         htmlFor={`file-${track.id}`}
-                        className="group w-full min-w-0 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-5"
+                        className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
                         onClick={() => setFileChooserActiveTrackId(track.id)}
                       >
                         <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
@@ -2954,7 +2954,7 @@ export default function Home() {
                       />
                     </div>
                     <div
-                      className="flex items-center h-10"
+                      className="flex items-center h-9"
                       onMouseEnter={() => setGainSliderHoveredTrackId(track.id)}
                       onMouseLeave={() => setGainSliderHoveredTrackId(null)}
                     >
@@ -2972,36 +2972,36 @@ export default function Home() {
                             gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
                           })
                         }
-                        className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400"
+                        className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400"
                       />
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center justify-center min-h-[36px] min-w-0">
+                    <div className="flex items-center justify-center min-h-[32px] min-w-0">
                       <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : ""}`}>
                         Fichier WAV
                       </span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[36px]">
+                    <div className="flex items-center justify-center min-h-[32px]">
                       <span className={track.isMixing ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>MIXER</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[36px]">
+                    <div className="flex items-center justify-center min-h-[32px]">
                       <span className={track.paramsOpen ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>RÉGLAGES</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[36px]">
+                    <div className="flex items-center justify-center min-h-[32px]">
                       <span className="text-tagline text-center whitespace-nowrap">AVANT / APRÈS</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[36px]">
+                    <div className="flex items-center justify-center min-h-[32px]">
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[36px]">
+                    <div className="flex items-center justify-center min-h-[32px]">
                       <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain {track.gain}%</span>
                     </div>
                     <div className="flex items-center min-w-0">
                       <label
                         htmlFor={`file-${track.id}`}
-                        className="group w-full min-w-0 h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-5"
+                        className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
                         onClick={() => setFileChooserActiveTrackId(track.id)}
                       >
                         <span className={!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}>CHOISIR</span>
@@ -3031,7 +3031,7 @@ export default function Home() {
                           runMix(track.id);
                         }}
                         disabled={track.isMixing}
-                        className={`w-full h-10 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
+                        className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
                           track.isMixing
                             ? "border-white/30 bg-slate-800 text-white"
                             : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
@@ -3046,7 +3046,7 @@ export default function Home() {
                         )}
                       </button>
                       {noFileMessageTrackId === track.id && (
-                        <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2.5 py-1.5 rounded text-tagline text-slate-400 text-center text-sm leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                        <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                           Veuillez choisir un fichier
                         </p>
                       )}
@@ -3059,7 +3059,7 @@ export default function Home() {
                             paramsOpen: !track.paramsOpen,
                           })
                         }
-                        className="group w-full h-10 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
+                        className="group w-full h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
                       >
                         <span className="text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
                           {track.paramsOpen ? "Masquer" : "Réglages"}
@@ -3077,7 +3077,7 @@ export default function Home() {
                           )
                         }
                         disabled={!track.mixedAudioUrl}
-                        className="w-full h-10 flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 disabled:cursor-default text-tagline disabled:opacity-80 px-4"
+                        className="w-full h-9 flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 disabled:hover:bg-white/5 disabled:cursor-default text-tagline disabled:opacity-80 px-4"
                       >
                         <span
                           className={
@@ -3124,7 +3124,7 @@ export default function Home() {
                       />
                     </div>
                     <div
-                      className="flex items-center h-10"
+                      className="flex items-center h-9"
                       onMouseEnter={() => setGainSliderHoveredTrackId(track.id)}
                       onMouseLeave={() => setGainSliderHoveredTrackId(null)}
                     >
@@ -3142,7 +3142,7 @@ export default function Home() {
                             gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
                           })
                         }
-                        className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400"
+                        className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400"
                       />
                     </div>
                   </>
@@ -3205,7 +3205,7 @@ export default function Home() {
                               gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)),
                             })
                           }
-                          className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
+                          className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
                         />
                       </div>
                     </>
@@ -3301,7 +3301,7 @@ export default function Home() {
                             applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
                           }}
                           onChange={(e) => updateTrack(track.id, { gain: Math.max(0, Math.min(200, Number(e.target.value) || 0)) })}
-                          className="w-full h-2 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
+                          className="w-full h-1.5 rounded appearance-none bg-white/10 accent-slate-400 max-md:h-1.5"
                         />
                       </div>
                     </>
@@ -3328,7 +3328,7 @@ export default function Home() {
                         e.stopPropagation();
                         clearTrackFile(track.id);
                       }}
-                      className="absolute top-1/2 -translate-y-1/2 right-0.5 w-6 h-6 rounded p-1.5 text-white hover:bg-white/5 flex items-center justify-center text-base leading-none transition-colors"
+                      className="absolute top-1/2 -translate-y-1/2 right-0.5 w-5 h-5 rounded p-1 text-white hover:bg-white/5 flex items-center justify-center text-base leading-none transition-colors"
                       title="Supprimer le fichier de la piste"
                       aria-label="Supprimer le fichier de la piste"
                     >
@@ -3415,29 +3415,29 @@ export default function Home() {
                 <div className="mt-4 pt-4 border-t border-white/[0.06] lg:hidden flex flex-col gap-2">
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]">Basses</span>
-                        <CustomSelect value={track.mixParams.tone_low} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-10 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                        <CustomSelect value={track.mixParams.tone_low} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]">Mids</span>
-                        <CustomSelect value={track.mixParams.tone_mid} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-10 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                        <CustomSelect value={track.mixParams.tone_mid} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]">Aigus</span>
-                        <CustomSelect value={track.mixParams.tone_high} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-10 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                        <CustomSelect value={track.mixParams.tone_high} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.deesser} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           De-esser
                         </label>
-                        <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-10 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
+                        <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.reverb} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Reverb
                         </label>
-                        <CustomSelect value={track.mixParams.reverb_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-10 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
+                        <CustomSelect value={track.mixParams.reverb_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
@@ -3445,8 +3445,8 @@ export default function Home() {
                           Delay
                         </label>
                         <div className="grid grid-cols-2 gap-1 min-w-0">
-                          <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full min-w-0 h-10 text-sm max-md:text-xs" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
-                          <CustomSelect value={track.mixParams.delay_intensity} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_intensity: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-10 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
+                          <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
+                          <CustomSelect value={track.mixParams.delay_intensity} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_intensity: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                         </div>
                       </div>
                       <div className="flex items-center justify-between min-h-[2.25rem] px-0 text-tagline text-sm max-md:text-xs">
@@ -3477,25 +3477,25 @@ export default function Home() {
         </section>
 
         {showPlayNoFileMessage && (
-          <div className="fixed left-1/2 top-24 -translate-x-1/2 z-[100] px-5 py-3 rounded-lg bg-[#0a0a0a]/98 border border-white/20 shadow-xl shadow-black/50 text-tagline text-slate-400 text-sm text-center whitespace-nowrap">
+          <div className="fixed left-1/2 top-24 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-lg bg-[#0a0a0a]/98 border border-white/20 shadow-xl shadow-black/50 text-tagline text-slate-400 text-sm text-center whitespace-nowrap">
             Veuillez d&apos;abord sélectionner un fichier pour chaque piste
           </div>
         )}
 
-        <div className="flex flex-col items-center gap-7 px-4 py-5 max-lg:px-3 max-lg:py-4 max-md:gap-5">
-          <div className="group flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-6 px-4 py-4 max-lg:px-3 max-lg:py-3 max-md:gap-4">
+          <div className="group flex flex-col items-center gap-1.5">
             <button
               type="button"
               onClick={addTrack}
-              className="w-14 h-14 max-md:w-12 max-md:h-12 flex items-center justify-center rounded-full border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0 focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608]"
+              className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0 focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608]"
               aria-label="Ajouter une piste"
             >
-              <svg className="w-6 h-6 shrink-0 max-lg:w-5 max-lg:h-5 max-md:w-4 max-md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg className="w-5 h-5 shrink-0 max-lg:w-4 max-lg:h-4 max-md:w-3.5 max-md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
             </button>
-            <p className="font-heading text-xs uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors max-md:text-xs">Ajouter une piste</p>
+            <p className="font-heading text-xs uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors max-md:text-[10px]">Ajouter une piste</p>
           </div>
 
           <div className="flex flex-row flex-wrap items-center justify-center gap-10 w-full max-md:gap-8">
@@ -3504,29 +3504,29 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => { setActivePlayer("mix"); playAll(); }}
-                  className="w-14 h-14 max-md:w-12 max-md:h-12 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0"
+                  className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0"
                   aria-label={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
                   title={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
                 >
-                  <svg className="w-6 h-6 max-md:w-5 max-md:h-5 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                  <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                 </button>
               ) : (
-                <button type="button" onClick={() => { setActivePlayer("mix"); stopAll(); }} className="w-14 h-14 max-md:w-12 max-md:h-12 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause" title="Pause">
-                  <svg className="w-6 h-6 max-md:w-5 max-md:h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                <button type="button" onClick={() => { setActivePlayer("mix"); stopAll(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause" title="Pause">
+                  <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
               )
             ) : (
-              <div className="w-14 h-14 max-md:w-12 max-md:h-12 shrink-0" />
+              <div className="w-12 h-12 max-md:w-11 max-md:h-11 shrink-0" />
             )}
 
             <div
               ref={bpmBoxRef}
-              className="flex flex-row items-center justify-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-4 py-2.5 select-none overflow-visible shrink-0"
+              className="flex flex-row items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-3 py-2 select-none overflow-visible shrink-0"
               title="Molette (desktop) ou toucher la valeur (mobile) pour saisir le BPM (1–300)"
             >
-              <span className="text-tagline text-sm max-md:text-xs uppercase tracking-wider text-slate-400">BPM</span>
-              <div className="relative inline-flex items-center justify-center min-w-[2.5rem] h-6 max-md:h-5 cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
-                <span className="text-tagline text-sm max-md:text-xs tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] pointer-events-none">
+              <span className="text-tagline text-xs max-md:text-[10px] uppercase tracking-wider text-slate-400">BPM</span>
+              <div className="relative inline-flex items-center justify-center min-w-[2.25rem] h-5 max-md:h-4 cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
+                <span className="text-tagline text-xs max-md:text-[10px] tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] pointer-events-none">
                   {bpmInput}
                 </span>
                 <input
@@ -3546,7 +3546,7 @@ export default function Home() {
                       setBpmInput(String(clamped));
                     }
                   }}
-                  className="absolute inset-0 w-full opacity-0 text-center bg-transparent border-none text-tagline text-sm max-md:text-xs tabular-nums text-white focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
+                  className="absolute inset-0 w-full opacity-0 text-center bg-transparent border-none text-tagline text-xs max-md:text-[10px] tabular-nums text-white focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
                   aria-label="BPM"
                 />
               </div>
@@ -3562,7 +3562,7 @@ export default function Home() {
                       downloadMix();
                     }}
                     disabled={isRenderingMix}
-                    className={`h-11 max-md:h-10 rounded-lg px-5 flex items-center justify-center text-center text-tagline text-sm max-md:text-xs disabled:cursor-not-allowed whitespace-nowrap ${
+                    className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
                       isRenderingMix
                         ? "border border-white/30 bg-slate-800 text-white"
                         : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors disabled:opacity-50"
@@ -3577,7 +3577,7 @@ export default function Home() {
                     )}
                   </button>
                   {showLoginMixMessage && !user && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2.5 py-1.5 rounded text-tagline text-slate-400 text-center text-sm leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Connectez-vous pour télécharger le mix.
                     </p>
                   )}
@@ -3590,7 +3590,7 @@ export default function Home() {
                       runMaster();
                     }}
                     disabled={isMastering}
-                    className={`h-11 max-md:h-10 rounded-lg px-5 flex items-center justify-center text-center text-tagline text-sm max-md:text-xs disabled:cursor-not-allowed whitespace-nowrap ${
+                    className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
                       isMastering
                         ? "border border-white/30 bg-slate-800 text-white"
                         : "border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
@@ -3603,12 +3603,12 @@ export default function Home() {
                     ) : "MASTERISER"}
                   </button>
                   {showLoginMasterMessage && !user && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2.5 py-1.5 rounded text-tagline text-slate-400 text-center text-sm leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Connectez-vous pour masteriser.
                     </p>
                   )}
                   {user && showMasterMessage && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2.5 py-1.5 rounded text-tagline text-slate-400 text-center text-sm leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Veuillez d&apos;abord effectuer un mix
                     </p>
                   )}
@@ -3630,20 +3630,20 @@ export default function Home() {
                     type="button"
                     onClick={() => { setActivePlayer("master"); startMasterPlayback(); }}
                     disabled={!masterWaveforms}
-                    className="btn-primary-accent disabled:opacity-50 w-12 h-12 flex items-center justify-center rounded-lg"
+                    className="btn-primary-accent disabled:opacity-50 w-11 h-11 flex items-center justify-center rounded-lg"
                     aria-label={masterResumeFrom > 0 ? "Reprendre" : "Play"}
                   >
-                    <svg className="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                    <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                   </button>
                 ) : (
-                  <button type="button" onClick={() => { setActivePlayer("master"); stopMasterPlayback(); }} className="btn-primary w-12 h-12 flex items-center justify-center rounded-lg" aria-label="Pause">
-                    <svg className="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  <button type="button" onClick={() => { setActivePlayer("master"); stopMasterPlayback(); }} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg" aria-label="Pause">
+                    <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={toggleMasterPlaybackMode}
-                  className="h-11 flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline px-5"
+                  className="h-9 flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline px-4"
                 >
                   <span
                     className={
@@ -3709,7 +3709,7 @@ export default function Home() {
                       setIsDownloadingMaster(false);
                     }
                   }}
-                  className={`inline-flex items-center justify-center text-center mt-2 rounded-lg px-5 py-3 text-tagline disabled:cursor-not-allowed ${
+                  className={`inline-flex items-center justify-center text-center mt-2 rounded-lg px-4 py-2.5 text-tagline disabled:cursor-not-allowed ${
                     isDownloadingMaster
                       ? "border border-white/30 bg-slate-800 text-white"
                       : "btn-primary group"
@@ -3735,7 +3735,7 @@ export default function Home() {
                     TÉLÉCHARGER LE MASTER
                   </span>
                   {showLoginMasterDownloadMessage && !user && (
-                    <span className="absolute left-1/2 top-full -translate-x-1/2 mt-1 px-2.5 py-1.5 rounded text-tagline text-slate-400 text-center text-sm leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg z-10">
+                    <span className="absolute left-1/2 top-full -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg z-10">
                       Connectez-vous pour télécharger le master.
                     </span>
                   )}
