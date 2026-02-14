@@ -63,11 +63,18 @@ export function PageBackground() {
                 <feMergeNode in="blur" />
               </feMerge>
             </filter>
+            {/* Bruit très léger par-dessus tout le fond pour casser le banding */}
+            <filter id="deband" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="3" result="t" />
+              <feColorMatrix in="t" type="matrix" values="0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.04" result="noise" />
+              <feBlend in="SourceGraphic" in2="noise" mode="normal" />
+            </filter>
           </defs>
 
-          <rect width="100%" height="100%" fill="#000" />
+          <g filter="url(#deband)">
+            <rect width="100%" height="100%" fill="#000" />
 
-          <g filter="url(#blur-deep)" shapeRendering="geometricPrecision">
+            <g filter="url(#blur-deep)" shapeRendering="geometricPrecision">
             <path
               d="M -80 120 C 200 80 400 200 550 180 C 750 150 950 220 1100 200 C 1250 180 1350 240 1400 220 L 1400 280 C 1280 320 1050 280 900 300 C 700 330 400 280 180 320 C 0 350 -80 280 -80 220 Z"
               fill="url(#curve-dark-left)"
@@ -93,6 +100,7 @@ export function PageBackground() {
               fill="url(#curve-soft)"
               opacity="0.35"
             />
+            </g>
           </g>
         </svg>
       </div>
