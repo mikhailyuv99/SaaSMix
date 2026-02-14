@@ -16,7 +16,7 @@ const outPath = join(frontendDir, "public", "background.png");
 
 const W = 2400;
 const H = 1600;
-const DITHER_STEP = 2; // quantize to 256/2 = 128 levels per channel → subtle dither
+const DITHER_STEP = 4; // 64 levels → dither assez fort pour supprimer les bandes
 
 function clamp(v) {
   return Math.max(0, Math.min(255, Math.round(v)));
