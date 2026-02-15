@@ -140,10 +140,17 @@ function DemoCard({
     apres: { peaks: number[]; duration: number } | null;
   }>({ avant: null, apres: null });
   const [loadError, setLoadError] = useState(false);
-  const audioAvantRef = useRef<HTMLAudioElement | null>(null);
-  const audioApresRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number>(0);
   const lastTickRef = useRef<number>(0);
+  const decodedBuffersRef = useRef<{ avant: AudioBuffer | null; apres: AudioBuffer | null }>({ avant: null, apres: null });
+  const playbackRef = useRef<{
+    ctx: AudioContext;
+    avantGain: GainNode;
+    apresGain: GainNode;
+    startTime: number;
+    startOffset: number;
+    duration: number;
+  } | null>(null);
 
   const urls = useMemo(() => getDemoAudioUrls(demo.id), [demo.id]);
   const currentWaveform = mode === "avant" ? waveforms.avant : waveforms.apres;
@@ -153,7 +160,16 @@ function DemoCard({
     [waveforms.avant?.duration, waveforms.apres?.duration]
   );
 
-  // Decode both files only when card is in view (avoids OOM: 6 WAVs decoded at once)
+  const stopPlayback = useCallback(() => {
+    const p = playbackRef.current;
+    if (!p) return;
+    try {
+      p.ctx.close();
+    } catch (_) {}
+    playbackRef.current = null;
+  }, []);
+
+  // Decode both files only when card is in view (avoids OOM: 6 WAVs decoded at once). Store buffers for Web Audio playback (comme section mix).
   const cardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = cardRef.current;
@@ -169,13 +185,15 @@ function DemoCard({
         Promise.all([
           fetch(urls.avant)
             .then((r) => (r.ok ? r.arrayBuffer() : null))
-            .then((ab) => (ab ? ctx.decodeAudioData(ab) : null)),
+            .then((ab) => (ab ? ctx.decodeAudioData(ab.slice(0)) : null)),
           fetch(urls.apres)
             .then((r) => (r.ok ? r.arrayBuffer() : null))
-            .then((ab) => (ab ? ctx.decodeAudioData(ab) : null)),
+            .then((ab) => (ab ? ctx.decodeAudioData(ab.slice(0)) : null)),
         ])
           .then(([bufAvant, bufApres]) => {
             if (cancelled) return;
+            if (bufAvant) decodedBuffersRef.current.avant = bufAvant;
+            if (bufApres) decodedBuffersRef.current.apres = bufApres;
             setWaveforms({
               avant: bufAvant ? { peaks: computeWaveformPeaks(bufAvant, WAVEFORM_POINTS), duration: bufAvant.duration } : null,
               apres: bufApres ? { peaks: computeWaveformPeaks(bufApres, WAVEFORM_POINTS), duration: bufApres.duration } : null,
@@ -195,61 +213,83 @@ function DemoCard({
     return () => {
       cancelled = true;
       obs.disconnect();
+      stopPlayback();
     };
-  }, [urls.avant, urls.apres]);
-
-  // Mute/unmute when switching Avant/Après + resync both to same currentTime (évite décalage si fichiers légèrement désalignés)
-  useEffect(() => {
-    const a = audioAvantRef.current;
-    const b = audioApresRef.current;
-    if (!a || !b) return;
-    const t = a.currentTime;
-    a.currentTime = t;
-    b.currentTime = t;
-    a.muted = mode !== "avant";
-    b.muted = mode !== "apres";
-  }, [mode]);
+  }, [urls.avant, urls.apres, stopPlayback]);
 
   const handleEnded = useCallback(() => {
-    if (audioAvantRef.current) audioAvantRef.current.pause();
-    if (audioApresRef.current) audioApresRef.current.pause();
+    stopPlayback();
     setIsPlaying(false);
     setCurrentTime(0);
-  }, []);
+  }, [stopPlayback]);
+
+  const startPlaybackAtOffset = useCallback(
+    (offset: number) => {
+      const buffers = decodedBuffersRef.current;
+      if (!buffers.avant || !buffers.apres) return;
+      const duration = Math.min(buffers.avant.duration, buffers.apres.duration);
+      const safeOffset = Math.max(0, Math.min(offset, duration - 0.01));
+      try {
+        const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        ctx.resume?.();
+        const avantGain = ctx.createGain();
+        const apresGain = ctx.createGain();
+        avantGain.gain.value = mode === "avant" ? 1 : 0;
+        apresGain.gain.value = mode === "apres" ? 1 : 0;
+        avantGain.connect(ctx.destination);
+        apresGain.connect(ctx.destination);
+
+        let ended = false;
+        const onEnd = () => {
+          if (ended) return;
+          ended = true;
+          handleEnded();
+        };
+
+        const avantSrc = ctx.createBufferSource();
+        avantSrc.buffer = buffers.avant;
+        avantSrc.connect(avantGain);
+        avantSrc.onended = onEnd;
+        avantSrc.start(0, safeOffset);
+
+        const apresSrc = ctx.createBufferSource();
+        apresSrc.buffer = buffers.apres;
+        apresSrc.connect(apresGain);
+        apresSrc.onended = onEnd;
+        apresSrc.start(0, safeOffset);
+
+        const startTime = ctx.currentTime;
+        playbackRef.current = { ctx, avantGain, apresGain, startTime, startOffset: safeOffset, duration };
+        setIsPlaying(true);
+      } catch (_) {
+        setIsPlaying(false);
+      }
+    },
+    [mode, handleEnded]
+  );
 
   const handlePlay = useCallback(() => {
-    const a = audioAvantRef.current;
-    const b = audioApresRef.current;
-    if (!a || !b) return;
     if (isPlaying) {
-      a.pause();
-      b.pause();
+      stopPlayback();
       setIsPlaying(false);
-    } else {
-      const t = currentTime;
-      a.currentTime = t;
-      b.currentTime = t;
-      a.muted = mode !== "avant";
-      b.muted = mode !== "apres";
-      Promise.all([a.play(), b.play()]).catch(() => setIsPlaying(false));
-      setIsPlaying(true);
+      return;
     }
-  }, [isPlaying, mode, currentTime]);
+    startPlaybackAtOffset(currentTime);
+  }, [isPlaying, currentTime, startPlaybackAtOffset, stopPlayback]);
 
-  // Playhead: RAF loop when playing, read from avant (both in sync)
+  // Playhead: RAF loop when playing (comme section mix)
   useEffect(() => {
     if (!isPlaying) return;
     const tick = (now: number) => {
-      const el = audioAvantRef.current;
-      if (el) {
-        const t = el.currentTime;
+      const p = playbackRef.current;
+      if (p) {
+        const t = p.startOffset + (p.ctx.currentTime - p.startTime);
         if (now - lastTickRef.current >= 80) {
           lastTickRef.current = now;
           setCurrentTime(t);
         }
-        if (el.ended) {
-          setIsPlaying(false);
-          setCurrentTime(0);
+        if (t >= p.duration - 0.05) {
+          handleEnded();
           return;
         }
       }
@@ -257,35 +297,36 @@ function DemoCard({
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [isPlaying]);
+  }, [isPlaying, handleEnded]);
 
   const hasAudio = (waveforms.avant != null && waveforms.apres != null) && !loadError;
   const canPlayCurrent = hasAudio;
 
   const handleSeek = useCallback(
     (time: number) => {
-      const a = audioAvantRef.current;
-      const b = audioApresRef.current;
-      if (a) a.currentTime = time;
-      if (b) b.currentTime = time;
       setCurrentTime(time);
+      const wasPlaying = !!playbackRef.current;
+      if (playbackRef.current) stopPlayback();
+      if (wasPlaying) startPlaybackAtOffset(time);
     },
-    []
+    [stopPlayback, startPlaybackAtOffset]
   );
 
-  // Mute/unmute immédiat dans le clic (PC + mobile) : les 2 pistes jouent en même temps, on ne fait que basculer le mute.
+  // Switch Avant/Après via gains (comme section mix) — instant sur PC et mobile.
   const setModeAvant = useCallback(() => {
-    const a = audioAvantRef.current;
-    const b = audioApresRef.current;
-    if (a) a.muted = false;
-    if (b) b.muted = true;
+    const p = playbackRef.current;
+    if (p) {
+      p.avantGain.gain.value = 1;
+      p.apresGain.gain.value = 0;
+    }
     setMode("avant");
   }, []);
   const setModeApres = useCallback(() => {
-    const a = audioAvantRef.current;
-    const b = audioApresRef.current;
-    if (a) a.muted = true;
-    if (b) b.muted = false;
+    const p = playbackRef.current;
+    if (p) {
+      p.avantGain.gain.value = 0;
+      p.apresGain.gain.value = 1;
+    }
     setMode("apres");
   }, []);
 
@@ -355,26 +396,6 @@ function DemoCard({
           </button>
         </div>
       </div>
-
-      {/* Two audio elements, play both in sync, mute one according to mode */}
-      {hasAudio && (
-        <>
-          <audio
-            ref={audioAvantRef}
-            src={urls.avant}
-            onEnded={handleEnded}
-            preload="auto"
-            className="hidden"
-          />
-          <audio
-            ref={audioApresRef}
-            src={urls.apres}
-            onEnded={handleEnded}
-            preload="auto"
-            className="hidden"
-          />
-        </>
-      )}
 
     </div>
   );
