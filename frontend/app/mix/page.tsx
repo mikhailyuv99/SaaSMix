@@ -1498,14 +1498,87 @@ export default function Home() {
     }
   }, [getAuthHeaders]);
 
-  const openCreateProjectNamePrompt = useCallback(() => {
+  const doCreateNewProjectWithCurrentTracks = useCallback(async (name: string) => {
+    const payload = tracks.map((t) => ({
+      id: t.id,
+      category: t.category,
+      gain: t.gain,
+      mixParams: t.mixParams,
+      mixedAudioUrl: t.mixedAudioUrl,
+      rawFileName: t.file?.name ?? t.rawFileName ?? null,
+    }));
+    const form = new FormData();
+    form.append("name", name.trim());
+    form.append("data", JSON.stringify(payload));
+    tracks.forEach((t) => {
+      if (t.file) form.append("files", t.file);
+    });
+    setIsSavingProject(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/projects`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: form,
+      });
+      if (res.status === 401) {
+        logout();
+        setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Erreur création");
+      setCurrentProject({ id: data.id, name: data.name });
+      setHasUnsavedChanges(false);
+      if (typeof window !== "undefined") {
+        (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = false;
+      }
+      setAppModal({ type: "alert", message: "Projet créé.", onClose: () => {} });
+      fetchProjectsList();
+    } catch (e) {
+      setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la création.", onClose: () => {} });
+    } finally {
+      setIsSavingProject(false);
+    }
+  }, [tracks, getAuthHeaders, setHasUnsavedChanges, fetchProjectsList]);
+
+  const openCreateProjectNamePrompt = useCallback((useCurrentTracks: boolean) => {
+    const handleConfirm = (value: string) => {
+      const name = value?.trim();
+      if (!name) return;
+      const existing = projectsList.find((p) => p.name === name);
+      if (existing) {
+        setAppModal({
+          type: "confirm_two",
+          message: `Un projet "${name}" existe déjà. Remplacer ou choisir un autre nom ?`,
+          primaryLabel: "Remplacer",
+          secondaryLabel: "Choisir un autre nom",
+          onPrimary: () => {
+            setAppModal(null);
+            setCurrentProject({ id: existing.id, name: existing.name });
+            doSaveProject(null);
+            fetchProjectsList();
+          },
+          onSecondary: () => {
+            setAppModal(null);
+            openCreateProjectNamePrompt(useCurrentTracks);
+          },
+        });
+        return;
+      }
+      setAppModal(null);
+      if (useCurrentTracks) {
+        doCreateNewProjectWithCurrentTracks(name);
+      } else {
+        doCreateNewProject(name);
+      }
+    };
     setAppModal({
       type: "prompt",
       title: "Nom du projet ?",
-      onConfirm: (value) => { if (value?.trim()) doCreateNewProject(value); },
+      onConfirm: handleConfirm,
       onCancel: () => {},
     });
-  }, [doCreateNewProject]);
+  }, [projectsList, doCreateNewProject, doCreateNewProjectWithCurrentTracks, doSaveProject, fetchProjectsList]);
 
   const createNewProject = useCallback(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
@@ -1518,7 +1591,7 @@ export default function Home() {
         secondaryLabel: "Partir de zéro (perte de la progression)",
         onPrimary: () => {
           setAppModal(null);
-          openCreateProjectNamePrompt();
+          openCreateProjectNamePrompt(true);
         },
         onSecondary: () => {
           setAppModal(null);
@@ -1531,11 +1604,11 @@ export default function Home() {
               sessionStorage.removeItem(TRACKS_STORAGE_KEY);
             } catch (_) {}
           }
-          openCreateProjectNamePrompt();
+          openCreateProjectNamePrompt(false);
         },
       });
     } else {
-      openCreateProjectNamePrompt();
+      openCreateProjectNamePrompt(false);
     }
   }, [tracks.length, openCreateProjectNamePrompt, setHasUnsavedChanges]);
 
@@ -1589,14 +1662,44 @@ export default function Home() {
     if (isUpdate) {
       doSaveProject(null);
     } else {
+      const saveConfirmHandler = (value: string) => {
+        const name = value?.trim();
+        if (!name) return;
+        const existing = projectsList.find((p) => p.name === name);
+        if (existing) {
+          setAppModal({
+            type: "confirm_two",
+            message: `Un projet "${name}" existe déjà. Remplacer ou choisir un autre nom ?`,
+            primaryLabel: "Remplacer",
+            secondaryLabel: "Choisir un autre nom",
+            onPrimary: () => {
+              setAppModal(null);
+              setCurrentProject({ id: existing.id, name: existing.name });
+              doSaveProject(null);
+              fetchProjectsList();
+            },
+            onSecondary: () => {
+              setAppModal(null);
+              setAppModal({
+                type: "prompt",
+                title: "Nom du projet ?",
+                onConfirm: saveConfirmHandler,
+                onCancel: () => {},
+              });
+            },
+          });
+          return;
+        }
+        doSaveProject(name);
+      };
       setAppModal({
         type: "prompt",
         title: "Nom du projet ?",
-        onConfirm: (value) => { if (value?.trim()) doSaveProject(value); },
+        onConfirm: saveConfirmHandler,
         onCancel: () => {},
       });
     }
-  }, [currentProject, doSaveProject]);
+  }, [currentProject, doSaveProject, projectsList, fetchProjectsList]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -3005,7 +3108,6 @@ export default function Home() {
                           setLeaveIntent("load_project");
                           setLeaveConfirmAction(() => {
                             loadProject(p.id);
-                            setShowProjectsModal(false);
                           });
                           setShowLeaveModal(true);
                         } else {
