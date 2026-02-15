@@ -74,8 +74,8 @@ export function FAQContactSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-8 max-w-5xl sm:mt-10 grid gap-10 lg:grid-cols-[1fr,380px] lg:items-start">
-          <ul className="space-y-0 observe-stagger-1 max-w-3xl">
+        <div className="mx-auto mt-8 max-w-5xl sm:mt-10 grid gap-8 sm:gap-10 lg:grid-cols-[1fr,380px] lg:items-start">
+          <ul className="space-y-0 observe-stagger-1 min-w-0">
             {faqs.map((faq, i) => (
               <li
                 key={i}
@@ -85,6 +85,7 @@ export function FAQContactSection() {
               >
                 <button
                   type="button"
+                  style={{ fontFamily: FONT }}
                   className="faq-question flex w-full items-start justify-between gap-4 py-5 sm:py-6 text-left transition-colors"
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   aria-expanded={openIndex === i}
@@ -96,7 +97,7 @@ export function FAQContactSection() {
                       }`}
                       aria-hidden
                     />
-                    <span className="font-heading font-medium text-white text-[15px] sm:text-base leading-snug">
+                    <span className="font-sans font-medium text-white text-[15px] sm:text-base leading-snug">
                       {faq.q}
                     </span>
                   </span>
