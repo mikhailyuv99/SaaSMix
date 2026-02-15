@@ -7,16 +7,22 @@ const TOKEN_KEY = "saas_mix_token";
 
 export type AuthUser = { id: string; email: string } | null;
 
+export type AuthModalMode = "login" | "register";
+
 type AuthContextValue = {
   user: AuthUser;
   setUser: (u: AuthUser) => void;
   logout: () => void;
+  /** When on /mix, the mix page sets this so the header can open the auth modal instead of navigating. */
+  openAuthModal: ((mode?: AuthModalMode) => void) | null;
+  setOpenAuthModal: (fn: ((mode?: AuthModalMode) => void) | null) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<AuthUser>(null);
+  const [openAuthModalState, setOpenAuthModalState] = useState<((mode?: AuthModalMode) => void) | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -44,8 +50,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.dispatchEvent(new CustomEvent("saas_mix_auth_change"));
   }, []);
 
+  const setOpenAuthModal = useCallback((fn: ((mode?: AuthModalMode) => void) | null) => {
+    setOpenAuthModalState(() => fn);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, setUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, logout, openAuthModal: openAuthModalState, setOpenAuthModal }}>
       {children}
     </AuthContext.Provider>
   );

@@ -416,22 +416,12 @@ export default function Home() {
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const [showLoginMixMessage, setShowLoginMixMessage] = useState(false);
-  const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
-  const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
   const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
-  const { user, setUser, logout } = useAuth();
+  const { user, setUser, logout, openAuthModal } = useAuth();
   const { hasUnsavedChanges, setHasUnsavedChanges } = useLeaveWarning();
   const { setIsPro, setOpenManageSubscription } = useSubscription();
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [registerSuccess, setRegisterSuccess] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [projectsList, setProjectsList] = useState<{ id: string; name: string; created_at: string | null }[]>([]);
   const [showProjectsModal, setShowProjectsModal] = useState(false);
@@ -3863,7 +3853,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!user) { setShowLoginMixMessage(true); setTimeout(() => setShowLoginMixMessage(false), 4000); return; }
+                      if (!user) { openAuthModal?.("login"); return; }
                       downloadMix();
                     }}
                     disabled={isRenderingMix}
@@ -3881,17 +3871,12 @@ export default function Home() {
                       "TÉLÉCHARGER LE MIX"
                     )}
                   </button>
-                  {showLoginMixMessage && !user && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
-                      Connectez-vous pour télécharger le mix.
-                    </p>
-                  )}
                 </div>
                 <div className="relative shrink-0 flex items-center justify-center">
                   <button
                     type="button"
                     onClick={() => {
-                      if (!user) { setShowLoginMasterMessage(true); setTimeout(() => setShowLoginMasterMessage(false), 4000); return; }
+                      if (!user) { openAuthModal?.("login"); return; }
                       runMaster();
                     }}
                     disabled={isMastering}
@@ -3907,11 +3892,6 @@ export default function Home() {
                       </span>
                     ) : "MASTERISER"}
                   </button>
-                  {showLoginMasterMessage && !user && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
-                      Connectez-vous pour masteriser.
-                    </p>
-                  )}
                   {user && showMasterMessage && (
                     <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
                       Veuillez d&apos;abord effectuer un mix
@@ -4031,17 +4011,12 @@ export default function Home() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => { setShowLoginMasterDownloadMessage(true); setTimeout(() => setShowLoginMasterDownloadMessage(false), 4000); }}
+                  onClick={() => { if (!user) { openAuthModal?.("login"); return; } }}
                   className="btn-primary group inline-flex items-center justify-center text-center mt-2 relative"
                 >
-                  <span className="text-tagline text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
-                    TÉLÉCHARGER LE MASTER
-                  </span>
-                  {showLoginMasterDownloadMessage && !user && (
-                    <span className="absolute left-1/2 top-full -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg z-10">
-                      Connectez-vous pour télécharger le master.
+<span className="text-tagline text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
+                      TÉLÉCHARGER LE MASTER
                     </span>
-                  )}
                 </button>
               )}
             </div>
@@ -4070,134 +4045,6 @@ export default function Home() {
         getAuthHeaders={getAuthHeaders}
         onSubscriptionUpdated={() => { fetchBilling(); }}
       />
-      {/* ─── Auth Modal (login + register — stays on same page, preserves all audio state) ─── */}
-      {showLoginModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-md p-4" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }}>
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
-
-            {authMode === "login" ? (
-              <>
-                <h2 className="text-xl font-medium text-white mb-1 text-center">Connexion</h2>
-                <p className="text-tagline text-slate-400 text-center text-xs mb-6">Accéder à votre compte</p>
-                {registerSuccess && <p className="text-center text-green-400 text-sm mb-4">Compte créé. Connectez-vous.</p>}
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    setLoginError("");
-                    setLoginLoading(true);
-                    try {
-                      const res = await fetch(`${API_BASE}/auth/login`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
-                      });
-                      const data = await res.json().catch(() => ({}));
-                      if (!res.ok) {
-                        setLoginError(data.detail || "E-mail ou mot de passe incorrect.");
-                        setLoginLoading(false);
-                        return;
-                      }
-                      if (data.access_token && data.user) {
-                        localStorage.setItem("saas_mix_token", data.access_token);
-                        localStorage.setItem("saas_mix_user", JSON.stringify(data.user));
-                        setUser(data.user);
-                        fetchBilling();
-                        setShowLoginModal(false);
-                        setLoginEmail("");
-                        setLoginPassword("");
-                        setLoginError("");
-                        setRegisterSuccess(false);
-                      }
-                    } catch {
-                      setLoginError("Impossible de joindre le serveur.");
-                    } finally {
-                      setLoginLoading(false);
-                    }
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label htmlFor="login-email" className="block text-tagline text-slate-400 text-xs mb-1">E-mail</label>
-                    <input id="login-email" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required autoComplete="email"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
-                      placeholder="vous@exemple.com" />
-                  </div>
-                  <div>
-                    <label htmlFor="login-password" className="block text-tagline text-slate-400 text-xs mb-1">Mot de passe</label>
-                    <input id="login-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required autoComplete="current-password"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
-                      placeholder="••••••••" />
-                  </div>
-                  {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
-                  <button type="submit" disabled={loginLoading} className="btn-primary w-full py-2.5">
-                    {loginLoading ? "Connexion…" : "Se connecter"}
-                  </button>
-                </form>
-                <p className="text-tagline text-slate-400 text-center text-xs mt-4">
-                  Pas de compte ?{" "}
-                  <button type="button" onClick={() => { setAuthMode("register"); setLoginError(""); }} className="text-slate-400 hover:text-white underline cursor-pointer">Inscription</button>
-                </p>
-              </>
-            ) : (
-              <>
-                <h2 className="text-xl font-medium text-white mb-1 text-center">Inscription</h2>
-                <p className="text-tagline text-slate-400 text-center text-xs mb-6">Créer un compte</p>
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    setLoginError("");
-                    setLoginLoading(true);
-                    try {
-                      const res = await fetch(`${API_BASE}/auth/register`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
-                      });
-                      const data = await res.json().catch(() => ({}));
-                      if (!res.ok) {
-                        setLoginError(data.detail || "Erreur lors de l'inscription.");
-                        setLoginLoading(false);
-                        return;
-                      }
-                      // Registration succeeded — switch to login with success message
-                      setRegisterSuccess(true);
-                      setAuthMode("login");
-                      setLoginError("");
-                    } catch {
-                      setLoginError("Impossible de joindre le serveur.");
-                    } finally {
-                      setLoginLoading(false);
-                    }
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label htmlFor="register-email" className="block text-tagline text-slate-400 text-xs mb-1">E-mail</label>
-                    <input id="register-email" type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required autoComplete="email"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
-                      placeholder="vous@exemple.com" />
-                  </div>
-                  <div>
-                    <label htmlFor="register-password" className="block text-tagline text-slate-400 text-xs mb-1">Mot de passe (8 caractères min.)</label>
-                    <input id="register-password" type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required minLength={8} autoComplete="new-password"
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
-                      placeholder="••••••••" />
-                  </div>
-                  {loginError && <p className="text-red-400 text-sm">{loginError}</p>}
-                  <button type="submit" disabled={loginLoading} className="btn-primary w-full py-2.5">
-                    {loginLoading ? "Création…" : "Créer mon compte"}
-                  </button>
-                </form>
-                <p className="text-tagline text-slate-400 text-center text-xs mt-4">
-                  Déjà un compte ?{" "}
-                  <button type="button" onClick={() => { setAuthMode("login"); setLoginError(""); }} className="text-slate-400 hover:text-white underline cursor-pointer">Connexion</button>
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-    </main>
+      </main>
   );
 }

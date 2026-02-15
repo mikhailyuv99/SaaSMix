@@ -11,7 +11,7 @@ import { ChoosePlanModal } from "./ChoosePlanModal";
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, openAuthModal } = useAuth();
   const { hasUnsavedChanges, setShowLeaveModal, setLeaveIntent, showLeaveModal, leaveIntent } = useLeaveWarning();
   const { isPro, openManageSubscription } = useSubscription();
   const isHome = pathname === "/";
@@ -119,12 +119,12 @@ export function Header() {
               </>
             ) : (
               <>
-                <Link href="/connexion" className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase">
+                <button type="button" onClick={() => openAuthModal?.("login")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0">
                   CONNEXION
-                </Link>
-                <Link href="/inscription" className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase">
+                </button>
+                <button type="button" onClick={() => openAuthModal?.("register")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0">
                   INSCRIPTION
-                </Link>
+                </button>
               </>
             )}
           </div>
