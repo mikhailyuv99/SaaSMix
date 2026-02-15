@@ -77,7 +77,7 @@ function DemoWaveform({
 type DemoId = "hublot" | "motema" | "hiver";
 
 const DEMOS: { id: DemoId; title: string; desc: string }[] = [
-  { id: "hublot", title: "Ikha x 2face HUBLOT", desc: "Avant / Après mix." },
+  { id: "hublot", title: "IKHA x 2face - HUBLOT", desc: "Avant / Après mix." },
   { id: "motema", title: "Sellig - MOTEMA", desc: "Avant / Après mix." },
   { id: "hiver", title: "Ikha - HIVER", desc: "Avant / Après mix." },
 ];
@@ -273,12 +273,6 @@ function DemoCard({
         />
       )}
 
-      <Link
-        href="/mix"
-        className="mt-4 inline-block text-sm font-medium text-white underline decoration-white/40 underline-offset-2 transition-colors hover:decoration-white"
-      >
-        Essayer une démo
-      </Link>
     </div>
   );
 }
