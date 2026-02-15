@@ -789,6 +789,126 @@ export default function Home() {
     };
   }, []);
 
+  // Quand l'utilisateur se déconnecte (sans refresh) : remettre la page mix à l'état par défaut (pistes vides, pas de projet).
+  const previousUserRef = useRef<typeof user>(undefined);
+  useEffect(() => {
+    if (user) {
+      previousUserRef.current = user;
+      return;
+    }
+    if (previousUserRef.current == null) return; // initial load, user was already null
+    previousUserRef.current = null;
+
+    // Arrêter toute lecture (comme au démontage, sans fermer l'AudioContext)
+    const trackNodes = Array.from(trackPlaybackRef.current.entries());
+    trackPlaybackRef.current.clear();
+    for (const [, nodes] of trackNodes) {
+      try {
+        if (nodes.type === "instrumental") {
+          if ("bufferNode" in nodes && nodes.bufferNode) {
+            try {
+              nodes.bufferNode.onended = null;
+              nodes.bufferNode.stop();
+              nodes.bufferNode.disconnect();
+            } catch (_) {}
+          } else if ("media" in nodes) {
+            nodes.media.element.onended = null;
+            nodes.media.element.pause();
+            if (nodes.media.source) nodes.media.source.disconnect();
+          }
+        } else {
+          if (nodes.rawMedia) {
+            nodes.rawMedia.element.onended = null;
+            nodes.rawMedia.element.pause();
+            if (nodes.rawMedia.source) nodes.rawMedia.source.disconnect();
+          }
+          if (nodes.rawBufferNode) {
+            try {
+              nodes.rawBufferNode.onended = null;
+              nodes.rawBufferNode.stop();
+              nodes.rawBufferNode.disconnect();
+            } catch (_) {}
+          }
+          if (nodes.rawUnlockGain) nodes.rawUnlockGain.disconnect();
+          if (nodes.mixedMedia) {
+            nodes.mixedMedia.element.onended = null;
+            nodes.mixedMedia.element.pause();
+            if (nodes.mixedMedia.source) nodes.mixedMedia.source.disconnect();
+          }
+          if (nodes.mixedBufferNode) {
+            try {
+              nodes.mixedBufferNode.onended = null;
+              nodes.mixedBufferNode.stop();
+              nodes.mixedBufferNode.disconnect();
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
+    const masterNodes = masterPlaybackRef.current;
+    if (masterNodes) {
+      try {
+        masterNodes.mixSource.onended = null;
+        masterNodes.masterSource.onended = null;
+        masterNodes.mixSource.disconnect();
+        masterNodes.masterSource.disconnect();
+        masterNodes.mixSource.stop();
+        masterNodes.masterSource.stop();
+      } catch (_) {}
+      masterPlaybackRef.current = null;
+    }
+    if (outputElRef.current) {
+      try {
+        outputElRef.current.pause();
+        outputElRef.current.srcObject = null;
+      } catch (_) {}
+    }
+
+    if (mixSimulationIntervalRef.current) {
+      clearInterval(mixSimulationIntervalRef.current);
+      mixSimulationIntervalRef.current = null;
+    }
+    if (mixSmoothIntervalRef.current) {
+      clearInterval(mixSmoothIntervalRef.current);
+      mixSmoothIntervalRef.current = null;
+    }
+    if (mixFinishIntervalRef.current) {
+      clearInterval(mixFinishIntervalRef.current);
+      mixFinishIntervalRef.current = null;
+    }
+    tracks.forEach((t) => {
+      if (t.rawAudioUrl) URL.revokeObjectURL(t.rawAudioUrl);
+      if (t.mixedAudioUrl) URL.revokeObjectURL(t.mixedAudioUrl);
+    });
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem(TRACKS_STORAGE_KEY);
+        (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = false;
+      } catch (_) {}
+    }
+    setHasUnsavedChanges(false);
+    setTracks(getDefaultTracks());
+    setCurrentProject(null);
+    setCategoryModal(null);
+    setAppModal(null);
+    setMixProgress({});
+    setMasterResult(null);
+    setIsRenderingMix(false);
+    setIsMastering(false);
+    setProjectsList([]);
+    setIsPlaying(false);
+    setShowProjectsModal(false);
+    setPlaybackPosition(0);
+    setPausedAtSeconds(0);
+    setHasPausedPosition(false);
+    setMasterWaveforms(null);
+    setMasterPlaybackCurrentTime(0);
+    setIsMasterResultPlaying(false);
+    setMasterResumeFrom(0);
+    masterMixBufferRef.current = null;
+    masterMasterBufferRef.current = null;
+  }, [user, setHasUnsavedChanges]);
+
   // Generate a proper silent WAV blob URL with REAL (quiet) audio data.
   // The old base64 SILENT_WAV had zero data bytes — iOS Safari ignored it entirely.
   const silentWavUrl = useMemo(() => {

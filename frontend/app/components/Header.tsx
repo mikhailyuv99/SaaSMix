@@ -29,7 +29,6 @@ export function Header() {
   const handleLeaveConfirm = () => {
     if (leaveIntent === "disconnect") {
       logout();
-      router.refresh();
     } else {
       router.push("/");
     }
@@ -58,7 +57,6 @@ export function Header() {
       setShowLeaveModal(true);
     } else {
       logout();
-      router.refresh();
     }
   };
 
