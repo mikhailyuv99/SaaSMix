@@ -2735,8 +2735,8 @@ export default function Home() {
 
       {categoryModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
-          <div className="rounded-2xl border border-white/15 bg-slate-900/50 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
-            <div className="p-4 border-b border-white/10">
+          <div className="rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden" style={{ backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
+            <div className="pb-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
                 Quelle catégorie pour cette piste ?
               </p>
@@ -2744,25 +2744,28 @@ export default function Home() {
                 {categoryModal.file.name}
               </p>
             </div>
-            <div className="p-4 flex flex-col gap-2">
+            <div className="pt-4 flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("lead_vocal")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/[0.04] text-tagline text-slate-300 text-sm font-medium hover:bg-white/[0.06] transition-all duration-200"
+                className="group w-full py-3 rounded-xl border border-white/10 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
+                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Lead vocal</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("adlibs_backs")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/[0.04] text-tagline text-slate-300 text-sm font-medium hover:bg-white/[0.06] transition-all duration-200"
+                className="group w-full py-3 rounded-xl border border-white/10 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
+                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Adlibs / Backs</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("instrumental")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/[0.04] text-tagline text-slate-300 text-sm font-medium hover:bg-white/[0.06] transition-all duration-200"
+                className="group w-full py-3 rounded-xl border border-white/10 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
+                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Instrumentale</span>
               </button>
