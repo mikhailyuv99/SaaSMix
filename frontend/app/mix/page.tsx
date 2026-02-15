@@ -2734,7 +2734,7 @@ export default function Home() {
       )}
 
       {categoryModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
+        <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
           <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden">
             <div className="pb-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
@@ -3052,7 +3052,8 @@ export default function Home() {
                   const files = Array.from(fileList).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
                   if (files.length === 0) return;
                   e.target.value = "";
-                  setCategoryModal({ file: files[0], nextFiles: files.slice(1) });
+                  const first = files[0];
+                  setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
                 }}
               />
               <button
@@ -3064,7 +3065,8 @@ export default function Home() {
                   setMixDropzoneDragging(false);
                   const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
                   if (files.length === 0) return;
-                  setCategoryModal({ file: files[0], nextFiles: files.slice(1) });
+                  const first = files[0];
+                  setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
@@ -3709,7 +3711,8 @@ export default function Home() {
                   const files = Array.from(fileList).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
                   if (files.length === 0) return;
                   e.target.value = "";
-                  setCategoryModal({ file: files[0], nextFiles: files.slice(1) });
+                  const first = files[0];
+                  setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
                 }}
               />
               <button
@@ -3721,7 +3724,8 @@ export default function Home() {
                   setAddTrackDropzoneDragging(false);
                   const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
                   if (files.length === 0) return;
-                  setCategoryModal({ file: files[0], nextFiles: files.slice(1) });
+                  const first = files[0];
+                  setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(false); }}
