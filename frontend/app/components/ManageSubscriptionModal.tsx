@@ -278,21 +278,21 @@ export function ManageSubscriptionModal({
             </button>
             <h2 className="text-xl font-medium text-white mb-1">Changer de plan</h2>
             <p className="text-slate-400 text-[10px] mb-3">Choisissez une formule. Le prorata est appliqué automatiquement.</p>
-            {usage && (usage.mix_limit != null || usage.master_limit != null || usage.projects_limit != null) && (
+            {usage && (
               <div className="mb-4 rounded-lg border border-white/10 bg-white/[0.02] p-3">
                 <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">Votre utilisation</p>
                 <div className="space-y-1.5 text-[13px] text-slate-400">
                   <div className="flex justify-between">
                     <span>Téléchargements mix ce mois</span>
-                    <span className="text-white/90">{usage.mix_used}{usage.mix_limit != null ? ` / ${usage.mix_limit}` : " (illimité)"}</span>
+                    <span className="text-white/90">{usage.mix_used}{usage.mix_limit != null ? ` / ${usage.mix_limit}` : " / ∞"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Téléchargements master ce mois</span>
-                    <span className="text-white/90">{usage.master_used}{usage.master_limit != null ? ` / ${usage.master_limit}` : " (illimité)"}</span>
+                    <span className="text-white/90">{usage.master_used}{usage.master_limit != null ? ` / ${usage.master_limit}` : " / ∞"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Projets sauvegardés</span>
-                    <span className="text-white/90">{usage.projects_used}{usage.projects_limit != null ? ` / ${usage.projects_limit}` : " (illimité)"}</span>
+                    <span className="text-white/90">{usage.projects_used}{usage.projects_limit != null ? ` / ${usage.projects_limit}` : " / ∞"}</span>
                   </div>
                 </div>
               </div>
@@ -399,7 +399,7 @@ export function ManageSubscriptionModal({
         ) : (
           <>
             <h2 className="text-xl font-medium text-white mb-1">Gérer mon abonnement</h2>
-            <p className="text-tagline text-slate-400 text-[10px] mb-6">Modifier votre carte, changer de plan ou annuler l&apos;abonnement.</p>
+            <p className="text-tagline text-slate-400 text-[10px] mb-6">Modifier votre carte, consulter votre utilisation, changer de plan ou annuler l&apos;abonnement.</p>
 
         {loading ? (
           <p className="text-slate-400 text-sm">Chargement…</p>
@@ -418,21 +418,21 @@ export function ManageSubscriptionModal({
           </>
         ) : subscription ? (
           <div className="space-y-4">
-            {usage && (usage.mix_limit != null || usage.master_limit != null || usage.projects_limit != null) && (
+            {usage && (
               <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
                 <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">Votre utilisation</p>
                 <div className="space-y-1.5 text-[13px] text-slate-400">
                   <div className="flex justify-between">
                     <span>Téléchargements mix ce mois</span>
-                    <span className="text-white/90">{usage.mix_used}{usage.mix_limit != null ? ` / ${usage.mix_limit}` : " (illimité)"}</span>
+                    <span className="text-white/90">{usage.mix_used}{usage.mix_limit != null ? ` / ${usage.mix_limit}` : " / ∞"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Téléchargements master ce mois</span>
-                    <span className="text-white/90">{usage.master_used}{usage.master_limit != null ? ` / ${usage.master_limit}` : " (illimité)"}</span>
+                    <span className="text-white/90">{usage.master_used}{usage.master_limit != null ? ` / ${usage.master_limit}` : " / ∞"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Projets sauvegardés</span>
-                    <span className="text-white/90">{usage.projects_used}{usage.projects_limit != null ? ` / ${usage.projects_limit}` : " (illimité)"}</span>
+                    <span className="text-white/90">{usage.projects_used}{usage.projects_limit != null ? ` / ${usage.projects_limit}` : " / ∞"}</span>
                   </div>
                 </div>
               </div>
