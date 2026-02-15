@@ -392,7 +392,6 @@ export default function Home() {
   const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
   const [fileChooserActiveTrackId, setFileChooserActiveTrackId] = useState<string | null>(null);
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
-  const [showMasterMessage, setShowMasterMessage] = useState(false);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
   const [projectBpm, setProjectBpm] = useState(120);
   const [bpmInput, setBpmInput] = useState("120");
@@ -419,7 +418,7 @@ export default function Home() {
   const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
   const { user, setUser, logout, openAuthModal } = useAuth();
   const { hasUnsavedChanges, setHasUnsavedChanges, showLeaveModal, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction } = useLeaveWarning();
-  const { setIsPro, setOpenManageSubscription } = useSubscription();
+  const { isPro, setIsPro, setOpenManageSubscription } = useSubscription();
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
@@ -2737,12 +2736,6 @@ export default function Home() {
   }, [buildTrackSpecsAndFiles]);
 
   const runMaster = useCallback(async () => {
-    const hasAnyMixed = tracks.some((t) => t.mixedAudioUrl);
-    if (!hasAnyMixed) {
-      setShowMasterMessage(true);
-      setTimeout(() => setShowMasterMessage(false), 3000);
-      return;
-    }
     const { specs, files } = buildTrackSpecsAndFiles();
     if (specs.length === 0) return;
     setIsMastering(true);
@@ -3365,7 +3358,7 @@ export default function Home() {
                 {track.category === "instrumental" ? (
                   <>
                     <div className="flex items-center justify-center min-h-[32px] min-w-0">
-                      <span className="text-tagline text-center whitespace-nowrap block min-w-0">Fichier WAV</span>
+                      <span className="text-tagline text-center whitespace-nowrap block min-w-0">{track.file ? "REMPLACER" : "FICHIER WAV"}</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
@@ -3378,7 +3371,7 @@ export default function Home() {
                         htmlFor={`file-${track.id}`}
                         className="group w-full min-w-0 h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center px-4"
                         onClick={() => setFileChooserActiveTrackId(track.id)}
-                        aria-label="Choisir un fichier WAV"
+                        aria-label={track.file ? "Changer le fichier" : "Choisir un fichier WAV"}
                       >
                         <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors"}`} aria-hidden>
                           <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -3447,7 +3440,7 @@ export default function Home() {
                   <>
                     <div className="flex items-center justify-center min-h-[32px] min-w-0">
                       <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : ""}`}>
-                        Fichier WAV
+                        {track.file ? "REMPLACER" : "FICHIER WAV"}
                       </span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
@@ -3625,7 +3618,7 @@ export default function Home() {
                   {track.category === "instrumental" ? (
                     <>
                       <div>
-                        <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">Fichier WAV</span>
+                        <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">{track.file ? "REMPLACER" : "FICHIER WAV"}</span>
                         <label
                           htmlFor={`file-mob-${track.id}`}
                           className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-sm max-md:text-xs"
@@ -4006,14 +3999,8 @@ export default function Home() {
           )}
         </section>
 
-        {showPlayNoFileMessage && (
-          <div className="fixed left-1/2 top-24 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-lg bg-[#0a0a0a]/98 border border-white/20 shadow-xl shadow-black/50 text-tagline text-slate-400 text-sm text-center whitespace-nowrap">
-            Veuillez d&apos;abord sélectionner un fichier pour chaque piste
-          </div>
-        )}
-
         <div className={`grid gap-3 px-4 py-4 max-lg:px-3 max-lg:py-3 w-full max-w-6xl mx-auto ${tracks.length > 0 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1"}`}>
-            <div className="flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center gap-1">
             {tracks.length > 0 ? (
               !isPlaying ? (
                 <button
@@ -4032,6 +4019,11 @@ export default function Home() {
               )
             ) : (
               <div className="w-12 h-12 max-md:w-11 max-md:h-11 shrink-0" />
+            )}
+            {showPlayNoFileMessage && (
+              <p className="text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap px-2 py-1 rounded bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                Veuillez d&apos;abord sélectionner un fichier pour chaque piste
+              </p>
             )}
             </div>
 
@@ -4079,6 +4071,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       if (!user) { openAuthModal?.("login"); return; }
+                      if (!isPro) { setSubscriptionModalOpen(true); return; }
                       downloadMix();
                     }}
                     disabled={isRenderingMix}
@@ -4102,6 +4095,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       if (!user) { openAuthModal?.("login"); return; }
+                      if (!isPro) { setSubscriptionModalOpen(true); return; }
                       runMaster();
                     }}
                     disabled={isMastering}
@@ -4117,11 +4111,6 @@ export default function Home() {
                       </span>
                     ) : "MASTERISER"}
                   </button>
-                  {user && showMasterMessage && (
-                    <p className="absolute left-1/2 top-full z-[60] -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
-                      Veuillez d&apos;abord effectuer un mix
-                    </p>
-                  )}
                 </div>
               </>
             )}
