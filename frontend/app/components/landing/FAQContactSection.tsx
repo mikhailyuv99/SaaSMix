@@ -174,7 +174,7 @@ export function FAQContactSection() {
                     value={formState.message}
                     onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full min-h-[100px] flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 resize-y"
+                    className="contact-input w-full min-h-[100px] flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none"
                     placeholder="Votre message..."
                   />
                 </div>
