@@ -22,7 +22,7 @@ export function Header() {
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const [checkoutLabel, setCheckoutLabel] = useState<string | null>(null);
 
-  const getAuthHeaders = () => {
+  const getAuthHeaders = (): Record<string, string> => {
     if (typeof window === "undefined") return {};
     const t = localStorage.getItem("saas_mix_token");
     return t ? { Authorization: `Bearer ${t}` } : {};
