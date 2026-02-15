@@ -85,7 +85,6 @@ export function FAQContactSection() {
               >
                 <button
                   type="button"
-                  style={{ fontFamily: FONT }}
                   className="faq-question flex w-full items-start justify-between gap-4 py-5 sm:py-6 text-left transition-colors"
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   aria-expanded={openIndex === i}
@@ -97,7 +96,7 @@ export function FAQContactSection() {
                       }`}
                       aria-hidden
                     />
-                    <span className="font-sans font-medium text-white text-[15px] sm:text-base leading-snug">
+                    <span className="font-heading font-medium text-white text-[15px] sm:text-base leading-snug">
                       {faq.q}
                     </span>
                   </span>
