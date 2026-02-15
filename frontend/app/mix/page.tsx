@@ -151,10 +151,10 @@ function getFileFromIDB(trackId: string): Promise<{ blob: Blob; fileName: string
 
 const HERO_UPLOAD_COUNT_KEY = "hero_upload_count";
 
-function getHeroUploadFiles(): Promise<{ blob: Blob; fileName: string }[]> {
-  if (typeof window === "undefined") return Promise.resolve([]);
+function getHeroUploadFiles(): Promise<{ files: { blob: Blob; fileName: string }[]; count: number }> {
+  if (typeof window === "undefined") return Promise.resolve({ files: [], count: 0 });
   return openFilesDB().then((db) => {
-    return new Promise<{ blob: Blob; fileName: string }[]>((resolve) => {
+    return new Promise<{ files: { blob: Blob; fileName: string }[]; count: number }>((resolve) => {
       const tx = db.transaction(FILES_STORE_NAME, "readonly");
       const store = tx.objectStore(FILES_STORE_NAME);
       const countReq = store.get(HERO_UPLOAD_COUNT_KEY);
@@ -162,27 +162,34 @@ function getHeroUploadFiles(): Promise<{ blob: Blob; fileName: string }[]> {
         const count = (countReq.result as { count?: number } | undefined)?.count ?? 0;
         if (count <= 0) {
           db.close();
-          resolve([]);
+          resolve({ files: [], count: 0 });
           return;
         }
-        const results: { blob: Blob; fileName: string }[] = [];
+        const results: ({ blob: Blob; fileName: string } | null)[] = new Array(count);
         let done = 0;
+        const maybeResolve = () => {
+          done++;
+          if (done === count) {
+            db.close();
+            resolve({
+              files: results.filter((r): r is { blob: Blob; fileName: string } => r != null),
+              count,
+            });
+          }
+        };
         for (let i = 0; i < count; i++) {
           const req = store.get(`${HERO_UPLOAD_ID}_${i}`);
           req.onsuccess = () => {
             const row = req.result as { blob: Blob; fileName: string } | undefined;
-            if (row) results.push({ blob: row.blob, fileName: row.fileName });
-            done++;
-            if (done === count) {
-              db.close();
-              resolve(results);
-            }
+            if (row?.blob != null) results[i] = { blob: row.blob, fileName: row.fileName ?? "" };
+            maybeResolve();
           };
+          req.onerror = () => maybeResolve();
         }
       };
-      countReq.onerror = () => { db.close(); resolve([]); };
+      countReq.onerror = () => { db.close(); resolve({ files: [], count: 0 }); };
     });
-  }).catch(() => []);
+  }).catch(() => ({ files: [], count: 0 }));
 }
 
 function clearHeroUploadFromIDB(count: number): void {
@@ -520,35 +527,40 @@ export default function Home() {
   const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
   const bpmBoxRef = useRef<HTMLDivElement | null>(null);
 
-  // Préchargement depuis le hero (dropzone accueil) : un ou plusieurs fichiers en IDB
+  // Préchargement depuis le hero (dropzone accueil) : un ou plusieurs fichiers en IDB.
+  // Court délai pour laisser la transaction IDB de la page précédente se committer après la navigation.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("from") !== "hero") return;
     const ignoredParam = params.get("ignored");
     const ignoredCount = ignoredParam ? parseInt(ignoredParam, 10) : 0;
-    getHeroUploadFiles().then((files) => {
-      window.history.replaceState(null, "", window.location.pathname);
-      if (!files.length) return;
-      clearHeroUploadFromIDB(files.length);
-      const first = files[0];
-      if (!first.fileName.toLowerCase().endsWith(".wav")) {
-        setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
-        return;
-      }
-      const file = new File([first.blob], first.fileName, { type: first.blob.type || "audio/wav" });
-      const next = files.slice(1);
-      setCategoryModal({ file, fromHero: true, nextHeroFiles: next });
-      if (ignoredCount > 0) {
-        setAppModal({
-          type: "alert",
-          message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.",
-          onClose: () => {},
-        });
-      }
-    }).catch(() => {
-      window.history.replaceState(null, "", window.location.pathname);
-    });
+    const run = () => {
+      getHeroUploadFiles().then(({ files, count }) => {
+        window.history.replaceState(null, "", window.location.pathname);
+        if (!files.length) return;
+        if (count > 0) clearHeroUploadFromIDB(count);
+        const first = files[0];
+        if (!first.fileName.toLowerCase().endsWith(".wav")) {
+          setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+          return;
+        }
+        const file = new File([first.blob], first.fileName, { type: first.blob.type || "audio/wav" });
+        const next = files.slice(1);
+        setCategoryModal({ file, fromHero: true, nextHeroFiles: next });
+        if (ignoredCount > 0) {
+          setAppModal({
+            type: "alert",
+            message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.",
+            onClose: () => {},
+          });
+        }
+      }).catch(() => {
+        window.history.replaceState(null, "", window.location.pathname);
+      });
+    };
+    const t = setTimeout(run, 80);
+    return () => clearTimeout(t);
   }, []);
 
   // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage.

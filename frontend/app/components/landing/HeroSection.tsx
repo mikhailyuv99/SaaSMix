@@ -61,6 +61,8 @@ export function HeroSection() {
         await saveHeroUploadFiles(wavFiles);
         const ignoredCount = files.length - wavFiles.length;
         const query = ignoredCount > 0 ? `?from=hero&ignored=${ignoredCount}` : "?from=hero";
+        // Court délai pour laisser la transaction IDB se committer avant la navigation.
+        await new Promise((r) => setTimeout(r, 50));
         window.location.href = `/mix${query}`;
       } catch {
         window.location.href = "/mix";
