@@ -26,29 +26,56 @@ function DemoWaveform({
   peaks,
   duration,
   currentTime,
+  onSeek,
   className = "",
 }: {
   peaks: number[];
   duration: number;
   currentTime: number;
+  onSeek?: (time: number) => void;
   className?: string;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const maxPeak = useMemo(() => Math.max(...peaks, 0.01), [peaks]);
   const playheadPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (duration <= 0 || !onSeek) return;
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const fraction = Math.max(0, Math.min(1, x / rect.width));
+      onSeek(fraction * duration);
+    },
+    [duration, onSeek]
+  );
+
   if (!peaks.length || duration <= 0) {
-    return (
-      <div
-        className={`h-12 w-full rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-slate-500 text-xs ${className}`}
-      >
-        Démo à venir
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className={`relative h-12 w-full rounded-lg bg-white/[0.04] border border-white/[0.06] overflow-hidden ${className}`}>
-      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+    <div
+      ref={containerRef}
+      role={onSeek ? "button" : undefined}
+      tabIndex={onSeek ? 0 : undefined}
+      onClick={onSeek ? handleClick : undefined}
+      onKeyDown={
+        onSeek
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSeek(0.5 * duration);
+              }
+            }
+          : undefined
+      }
+      className={`relative h-12 w-full min-w-0 rounded-lg bg-white/[0.04] border border-white/[0.06] overflow-hidden cursor-pointer ${className}`}
+      title={onSeek ? "Cliquer pour aller à ce moment" : undefined}
+    >
+      <svg className="absolute inset-0 w-full h-full min-w-0 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
         {peaks.map((p, i) => {
           const x = (i / (peaks.length - 1 || 1)) * 100;
           const halfH = (p / maxPeak) * 50;
@@ -99,17 +126,24 @@ function DemoCard({
   const [mode, setMode] = useState<"avant" | "apres">("avant");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [waveforms, setWaveforms] = useState<{
     avant: { peaks: number[]; duration: number } | null;
     apres: { peaks: number[]; duration: number } | null;
   }>({ avant: null, apres: null });
   const [loadError, setLoadError] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioAvantRef = useRef<HTMLAudioElement | null>(null);
+  const audioApresRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number>(0);
+  const lastTickRef = useRef<number>(0);
 
   const urls = useMemo(() => getDemoAudioUrls(demo.id), [demo.id]);
   const currentWaveform = mode === "avant" ? waveforms.avant : waveforms.apres;
   const currentDuration = currentWaveform?.duration ?? 0;
+  const maxDuration = useMemo(
+    () => Math.max(waveforms.avant?.duration ?? 0, waveforms.apres?.duration ?? 0),
+    [waveforms.avant?.duration, waveforms.apres?.duration]
+  );
 
   // Decode both files only when card is in view (avoids OOM: 6 WAVs decoded at once)
   const cardRef = useRef<HTMLDivElement>(null);
@@ -117,6 +151,7 @@ function DemoCard({
     const el = cardRef.current;
     if (!el) return;
     let cancelled = false;
+    setIsLoading(true);
     const obs = new IntersectionObserver(
       (entries) => {
         if (cancelled || !entries[0]?.isIntersecting) return;
@@ -142,6 +177,7 @@ function DemoCard({
             if (!cancelled) setLoadError(true);
           })
           .finally(() => {
+            if (!cancelled) setIsLoading(false);
             ctx.close();
           });
       },
@@ -154,57 +190,76 @@ function DemoCard({
     };
   }, [urls.avant, urls.apres]);
 
-  // Single audio element: switch src when mode changes
-  const currentSrc = mode === "avant" ? urls.avant : urls.apres;
-
-  // Reset playhead and stop when switching mode
+  // Mute/unmute only when switching Avant/Après (both elements play in sync)
   useEffect(() => {
-    setCurrentTime(0);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    setIsPlaying(false);
+    const a = audioAvantRef.current;
+    const b = audioApresRef.current;
+    if (a) a.muted = mode !== "avant";
+    if (b) b.muted = mode !== "apres";
   }, [mode]);
 
-  const handleTimeUpdate = useCallback(() => {
-    const el = audioRef.current;
-    if (el) setCurrentTime(el.currentTime);
-  }, []);
   const handleEnded = useCallback(() => {
+    if (audioAvantRef.current) audioAvantRef.current.pause();
+    if (audioApresRef.current) audioApresRef.current.pause();
     setIsPlaying(false);
     setCurrentTime(0);
   }, []);
+
   const handlePlay = useCallback(() => {
-    const el = audioRef.current;
-    if (!el) return;
+    const a = audioAvantRef.current;
+    const b = audioApresRef.current;
+    if (!a || !b) return;
     if (isPlaying) {
-      el.pause();
+      a.pause();
+      b.pause();
       setIsPlaying(false);
     } else {
-      el.play().catch(() => setIsPlaying(false));
+      const t = currentTime;
+      a.currentTime = t;
+      b.currentTime = t;
+      a.muted = mode !== "avant";
+      b.muted = mode !== "apres";
+      Promise.all([a.play(), b.play()]).catch(() => setIsPlaying(false));
       setIsPlaying(true);
     }
-  }, [isPlaying]);
-  const handleCanPlay = useCallback(() => {
-    const el = audioRef.current;
-    if (el && isPlaying) el.play().catch(() => {});
-  }, [isPlaying]);
+  }, [isPlaying, mode, currentTime]);
 
-  // Sync currentTime from audio element (playhead)
+  // Playhead: RAF loop when playing, read from avant (both in sync)
   useEffect(() => {
     if (!isPlaying) return;
-    const tick = () => {
-      const el = audioRef.current;
-      if (el) setCurrentTime(el.currentTime);
+    const tick = (now: number) => {
+      const el = audioAvantRef.current;
+      if (el) {
+        const t = el.currentTime;
+        if (now - lastTickRef.current >= 80) {
+          lastTickRef.current = now;
+          setCurrentTime(t);
+        }
+        if (el.ended) {
+          setIsPlaying(false);
+          setCurrentTime(0);
+          return;
+        }
+      }
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
   }, [isPlaying]);
 
-  const hasAudio = (waveforms.avant != null || waveforms.apres != null) && !loadError;
-  const canPlayCurrent = currentWaveform != null;
+  const hasAudio = (waveforms.avant != null && waveforms.apres != null) && !loadError;
+  const canPlayCurrent = hasAudio;
+
+  const handleSeek = useCallback(
+    (time: number) => {
+      const a = audioAvantRef.current;
+      const b = audioApresRef.current;
+      if (a) a.currentTime = time;
+      if (b) b.currentTime = time;
+      setCurrentTime(time);
+    },
+    []
+  );
 
   return (
     <div
@@ -214,13 +269,26 @@ function DemoCard({
       <p className="font-heading font-semibold text-white">{demo.title}</p>
       <p className="mt-0.5 text-sm text-slate-400">{demo.desc}</p>
 
-      {/* Waveform (one, for current mode) */}
-      <div className="mt-4 w-full">
-        <DemoWaveform
-          peaks={currentWaveform?.peaks ?? []}
-          duration={currentDuration}
-          currentTime={currentTime}
-        />
+      {/* Waveform (current mode) or loading spinner */}
+      <div className="mt-4 w-full min-w-0 rounded-lg border border-white/[0.06] h-12 overflow-hidden">
+        {isLoading ? (
+          <div className="h-full w-full flex items-center justify-center bg-white/[0.04]">
+            <svg className="animate-spin h-6 w-6 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          </div>
+        ) : (
+          <div className="w-full min-w-0 h-full">
+            <DemoWaveform
+              peaks={currentWaveform?.peaks ?? []}
+              duration={maxDuration > 0 ? maxDuration : currentDuration}
+              currentTime={currentTime}
+              onSeek={handleSeek}
+              className="h-full"
+            />
+          </div>
+        )}
       </div>
 
       {/* Play + Avant / Après */}
@@ -260,17 +328,24 @@ function DemoCard({
         </div>
       </div>
 
-      {/* Hidden audio for playback */}
+      {/* Two audio elements, play both in sync, mute one according to mode */}
       {hasAudio && (
-        <audio
-          ref={audioRef}
-          src={currentSrc}
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={handleEnded}
-          onCanPlayThrough={handleCanPlay}
-          preload="auto"
-          className="hidden"
-        />
+        <>
+          <audio
+            ref={audioAvantRef}
+            src={urls.avant}
+            onEnded={handleEnded}
+            preload="auto"
+            className="hidden"
+          />
+          <audio
+            ref={audioApresRef}
+            src={urls.apres}
+            onEnded={handleEnded}
+            preload="auto"
+            className="hidden"
+          />
+        </>
       )}
 
     </div>
