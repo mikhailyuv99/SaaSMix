@@ -531,6 +531,10 @@ export default function Home() {
       if (!files.length) return;
       clearHeroUploadFromIDB(files.length);
       const first = files[0];
+      if (!first.fileName.toLowerCase().endsWith(".wav")) {
+        setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+        return;
+      }
       const file = new File([first.blob], first.fileName, { type: first.blob.type || "audio/wav" });
       const next = files.slice(1);
       setCategoryModal({ file, fromHero: true, nextHeroFiles: next });
@@ -1399,6 +1403,10 @@ export default function Home() {
         createTrackFromFile(file, category);
         if (nextHeroFiles?.length) {
           const next = nextHeroFiles[0];
+          if (!next.fileName.toLowerCase().endsWith(".wav")) {
+            setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+            return;
+          }
           const nextFile = new File([next.blob], next.fileName, { type: next.blob.type || "audio/wav" });
           setCategoryModal({ file: nextFile, fromHero: true, nextHeroFiles: nextHeroFiles.slice(1) });
         }
