@@ -7,7 +7,7 @@ const PLANS_MENSUEL = [
     name: "Starter",
     subtitle: "Pour découvrir",
     price: "9,99 €",
-    features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 projets sauvegardés",
+    features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projet",
     cta: "Bientôt",
     featured: false,
   },
@@ -15,7 +15,7 @@ const PLANS_MENSUEL = [
     name: "Creator",
     subtitle: "Pour les artistes réguliers",
     price: "19,99 €",
-    features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 projets sauvegardés",
+    features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projet",
     cta: "Bientôt",
     featured: true,
   },
@@ -23,7 +23,7 @@ const PLANS_MENSUEL = [
     name: "Pro",
     subtitle: "Mix + master à volonté",
     price: "29,99 €",
-    features: "Téléchargements mix illimités\nTéléchargements master illimités\nProjets illimités",
+    features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
     cta: "Bientôt",
     featured: false,
   },
@@ -33,7 +33,7 @@ const PLAN_ANNUEL = {
   name: "Pro annuel",
   subtitle: "Économisez 25 %",
   price: "269 €",
-  features: "Téléchargements mix illimités\nTéléchargements master illimités\nProjets illimités",
+  features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
   cta: "Bientôt",
   featured: true,
 };
@@ -55,7 +55,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
 
         {/* Toggle Mensuel / Annuel */}
         <div className="flex justify-center mb-6">
-          <div className="inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+          <div className="relative inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
             <button
               type="button"
               onClick={() => setBillingPeriod("mensuel")}
@@ -68,11 +68,14 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
             <button
               type="button"
               onClick={() => setBillingPeriod("annuel")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 billingPeriod === "annuel" ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"
               }`}
             >
               Annuel
+              <span className="absolute -top-2 right-0 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-black shadow-[0_0_12px_2px_rgba(255,255,255,0.8)]">
+                -25%
+              </span>
             </button>
           </div>
         </div>
@@ -96,7 +99,14 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{plan.subtitle}</p>
                 <p className="mt-5 font-heading text-2xl font-bold text-white">{plan.price}</p>
-                <p className="mt-1 text-sm text-slate-400 whitespace-pre-line">{plan.features}</p>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-400">
+                  {plan.features.split("\n").map((line, i) => (
+                    <li key={i} className="flex items-start gap-2.5">
+                      <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50" aria-hidden />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
                 <div className="mt-6">
                   <span
                     className={`inline-block w-full rounded-xl border px-4 py-2.5 text-center text-sm ${
@@ -112,15 +122,24 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         ) : (
           <div className="flex justify-center">
             <div className="w-full max-w-sm rounded-2xl border border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10 p-6 sm:p-8">
-              {PLAN_ANNUEL.featured && (
-                <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
-                  Avantageux
-                </span>
-              )}
-              <h3 className="mt-3 font-heading text-xl font-semibold text-white">{PLAN_ANNUEL.name}</h3>
-              <p className="text-sm text-slate-400">{PLAN_ANNUEL.subtitle}</p>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-heading text-xl font-semibold text-white">{PLAN_ANNUEL.name}</h3>
+                {PLAN_ANNUEL.featured && (
+                  <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
+                    Plus avantageux
+                  </span>
+                )}
+              </div>
+              <p className="mt-3 text-sm text-slate-400">{PLAN_ANNUEL.subtitle}</p>
               <p className="mt-5 font-heading text-2xl font-bold text-white">{PLAN_ANNUEL.price}</p>
-              <p className="mt-1 text-sm text-slate-400 whitespace-pre-line">{PLAN_ANNUEL.features}</p>
+              <ul className="mt-3 space-y-2.5 text-sm text-slate-400">
+                {PLAN_ANNUEL.features.split("\n").map((line, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50" aria-hidden />
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
               <div className="mt-6">
                 <span className="inline-block w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-slate-400">
                   {PLAN_ANNUEL.cta}
@@ -129,10 +148,6 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
             </div>
           </div>
         )}
-
-        <p className="mt-4 text-center text-xs text-slate-400">
-          Le mix est gratuit pour tous. Abonnements et Stripe à venir.
-        </p>
       </div>
     </div>
   );
