@@ -423,6 +423,7 @@ export default function Home() {
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [projectsList, setProjectsList] = useState<{ id: string; name: string; created_at: string | null }[]>([]);
   const [showProjectsModal, setShowProjectsModal] = useState(false);
   const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
@@ -1460,7 +1461,7 @@ export default function Home() {
     const form = new FormData();
     form.append("name", name.trim());
     form.append("data", JSON.stringify(payload));
-    setIsSavingProject(true);
+    setIsCreatingProject(true);
     try {
       const res = await fetch(`${API_BASE}/api/projects`, {
         method: "POST",
@@ -1494,18 +1495,20 @@ export default function Home() {
     } catch (e) {
       setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la création.", onClose: () => {} });
     } finally {
-      setIsSavingProject(false);
+      setIsCreatingProject(false);
     }
   }, [getAuthHeaders]);
 
-  const fetchProjectsList = useCallback(async () => {
+  const fetchProjectsList = useCallback(async (): Promise<{ id: string; name: string; created_at: string | null }[]> => {
     const res = await fetch(`${API_BASE}/api/projects`, { headers: getAuthHeaders() });
     if (res.status === 401) {
       logout();
-      return;
+      return [];
     }
     const data = await res.json().catch(() => ({}));
-    setProjectsList(data.projects || []);
+    const projects = data.projects || [];
+    setProjectsList(projects);
+    return projects;
   }, [getAuthHeaders]);
 
   const doSaveProject = useCallback(async (name: string | null) => {
@@ -1552,6 +1555,7 @@ export default function Home() {
   }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges]);
 
   const doCreateNewProjectWithCurrentTracks = useCallback(async (name: string) => {
+    setIsCreatingProject(true);
     const payload = tracks.map((t) => ({
       id: t.id,
       category: t.category,
@@ -1590,15 +1594,16 @@ export default function Home() {
     } catch (e) {
       setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la création.", onClose: () => {} });
     } finally {
-      setIsSavingProject(false);
+      setIsCreatingProject(false);
     }
   }, [tracks, getAuthHeaders, setHasUnsavedChanges, fetchProjectsList]);
 
   const openCreateProjectNamePrompt = useCallback((useCurrentTracks: boolean) => {
-    const handleConfirm = (value: string) => {
+    const handleConfirm = async (value: string) => {
       const name = value?.trim();
       if (!name) return;
-      const existing = projectsList.find((p) => p.name === name);
+      const list = await fetchProjectsList();
+      const existing = list.find((p) => p.name === name);
       if (existing) {
         setAppModal({
           type: "confirm_two",
@@ -1631,7 +1636,7 @@ export default function Home() {
       onConfirm: handleConfirm,
       onCancel: () => {},
     });
-  }, [projectsList, doCreateNewProject, doCreateNewProjectWithCurrentTracks, doSaveProject, fetchProjectsList]);
+  }, [doCreateNewProject, doCreateNewProjectWithCurrentTracks, doSaveProject, fetchProjectsList]);
 
   const createNewProject = useCallback(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
@@ -1672,10 +1677,11 @@ export default function Home() {
     if (isUpdate) {
       doSaveProject(null);
     } else {
-      const saveConfirmHandler = (value: string) => {
+      const saveConfirmHandler = async (value: string) => {
         const name = value?.trim();
         if (!name) return;
-        const existing = projectsList.find((p) => p.name === name);
+        const list = await fetchProjectsList();
+        const existing = list.find((p) => p.name === name);
         if (existing) {
           setAppModal({
             type: "confirm_two",
@@ -1700,6 +1706,7 @@ export default function Home() {
           });
           return;
         }
+        setAppModal(null);
         doSaveProject(name);
       };
       setAppModal({
@@ -1758,6 +1765,7 @@ export default function Home() {
         title: "Nouveau nom du projet",
         defaultValue: currentName,
         onConfirm: (value) => {
+          setAppModal(null);
           if (value?.trim()) renameProject(projectId, value.trim());
         },
         onCancel: () => {},
@@ -2934,7 +2942,6 @@ export default function Home() {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         appModal.onConfirm(promptInputValue);
-                        setAppModal(null);
                       }
                       if (e.key === "Escape") {
                         appModal.onCancel();
@@ -2956,7 +2963,7 @@ export default function Home() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { appModal.onConfirm(promptInputValue); setAppModal(null); }}
+                    onClick={() => appModal.onConfirm(promptInputValue)}
                     className="flex-1 py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm border-l border-white/10"
                   >
                     OK
@@ -3156,12 +3163,12 @@ export default function Home() {
                   <span className="text-slate-400 shrink-0">|</span>
                   <button
                     type="button"
-                    disabled={user ? isSavingProject : false}
+                    disabled={user ? (isSavingProject || isCreatingProject) : false}
                     onClick={() => { if (!user) { openAuthModal?.("login"); return; } createNewProject(); }}
                   className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   title="Créer un nouveau projet et l’enregistrer dans Mes projets"
                 >
-                  CRÉER UN PROJET
+                  {user && isCreatingProject ? <span className="animate-dots">CRÉATION</span> : "CRÉER UN PROJET"}
                 </button>
                 <span className="text-slate-400 shrink-0">|</span>
                 <div className="relative flex flex-col items-center">
@@ -3213,11 +3220,11 @@ export default function Home() {
                     </button>
                     <button
                       type="button"
-                      disabled={user ? isSavingProject : false}
+                      disabled={user ? (isSavingProject || isCreatingProject) : false}
                       onClick={() => { if (!user) { openAuthModal?.("login"); setNavMenuOpen(false); return; } setNavMenuOpen(false); createNewProject(); }}
                       className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      CRÉER UN PROJET
+                      {user && isCreatingProject ? <span className="animate-dots">CRÉATION</span> : "CRÉER UN PROJET"}
                     </button>
                     <button
                       type="button"
