@@ -180,7 +180,7 @@ export function ManageSubscriptionModal({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4" onClick={onClose}>
-      <div className="rounded-2xl border border-white/15 bg-slate-900/70 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-md w-full relative" onClick={(e) => e.stopPropagation()}>
+      <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-md w-full relative" onClick={(e) => e.stopPropagation()}>
         <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
         <h2 className="text-xl font-medium text-white mb-1">Gérer mon abonnement</h2>
         <p className="text-tagline text-slate-400 text-[10px] mb-6">Modifier votre carte ou annuler l'abonnement.</p>

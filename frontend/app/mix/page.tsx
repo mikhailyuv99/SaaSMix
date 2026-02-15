@@ -2646,7 +2646,7 @@ export default function Home() {
     <main className="relative z-10 min-h-screen font-heading">
       {appModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/15 bg-slate-900/70 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
+          <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
             {appModal.type === "prompt" && (
               <>
                 <div className="p-4 border-b border-white/10">
@@ -2735,7 +2735,7 @@ export default function Home() {
 
       {categoryModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
-          <div className="rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden" style={{ backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
+          <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden">
             <div className="pb-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
                 Quelle catégorie pour cette piste ?
@@ -2748,24 +2748,21 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("lead_vocal")}
-                className="group w-full py-3 rounded-xl border border-white/10 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
-                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Lead vocal</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("adlibs_backs")}
-                className="group w-full py-3 rounded-xl border border-white/10 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
-                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Adlibs / Backs</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("instrumental")}
-                className="group w-full py-3 rounded-xl border border-white/10 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
-                style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Instrumentale</span>
               </button>
@@ -2976,7 +2973,7 @@ export default function Home() {
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         {showProjectsModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog">
-            <div className="rounded-2xl border border-white/15 bg-slate-900/70 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20">
+            <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20">
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <h2 className="text-lg font-medium text-white">Mes projets</h2>
                 <button
@@ -4031,7 +4028,7 @@ export default function Home() {
       {/* ─── Auth Modal (login + register — stays on same page, preserves all audio state) ─── */}
       {showLoginModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }}>
-          <div className="rounded-2xl border border-white/15 bg-slate-900/70 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
+          <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
 
             {authMode === "login" ? (
