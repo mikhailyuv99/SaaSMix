@@ -85,7 +85,8 @@ export function FAQContactSection() {
               >
                 <button
                   type="button"
-                  className="faq-question flex w-full items-start justify-between gap-4 py-5 sm:py-6 text-left transition-colors font-normal"
+                  style={{ fontFamily: FONT }}
+                  className="faq-question flex w-full items-start justify-between gap-4 py-5 sm:py-6 text-left transition-colors"
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   aria-expanded={openIndex === i}
                 >
@@ -96,7 +97,7 @@ export function FAQContactSection() {
                       }`}
                       aria-hidden
                     />
-                    <span className="faq-font faq-question-text font-normal text-[15px] sm:text-base leading-snug text-white">
+                    <span className="font-sans font-medium text-white text-[15px] sm:text-base leading-snug">
                       {faq.q}
                     </span>
                   </span>
@@ -116,7 +117,10 @@ export function FAQContactSection() {
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <div className="faq-font pl-8 sm:pl-9 pr-0 pb-5 sm:pb-6 pt-0 text-sm sm:text-[15px] leading-relaxed text-slate-400">
+                    <div
+                      className="font-sans pl-8 sm:pl-9 pr-0 pb-5 sm:pb-6 pt-0 text-sm sm:text-[15px] leading-relaxed text-slate-400"
+                      style={{ fontFamily: FONT }}
+                    >
                       {faq.a}
                     </div>
                   </div>

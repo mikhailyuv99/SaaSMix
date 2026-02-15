@@ -398,17 +398,9 @@ input, textarea, select, button {
 .contact-input::-webkit-input-placeholder {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
 }
-/* FAQ : une seule police pour questions et reponses (Plus Jakarta) */
-.faq-font,
 .faq-question,
 .faq-question * {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
-}
-/* Questions FAQ : meme graisse que les reponses, blanc (override style bouton) */
-.faq-question,
-.faq-question .faq-question-text {
-  font-weight: 400 !important;
-  color: #fff !important;
 }
 /* FAQ + Contact : tout en majuscules comme le reste du site */
 .landing-card,
