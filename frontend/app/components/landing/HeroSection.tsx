@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 const FILES_DB_NAME = "saas_mix_files";
 const FILES_STORE_NAME = "files";
 const HERO_UPLOAD_ID = "hero_upload";
+const HERO_UPLOAD_COUNT_KEY = "hero_upload_count";
 
 function openFilesDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -20,21 +21,18 @@ function openFilesDB(): Promise<IDBDatabase> {
   });
 }
 
-function saveFileToIDB(id: string, file: File): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
+function saveHeroUploadFiles(files: File[]): Promise<void> {
+  if (typeof window === "undefined" || files.length === 0) return Promise.resolve();
   return openFilesDB().then((db) => {
     return new Promise<void>((resolve, reject) => {
       const tx = db.transaction(FILES_STORE_NAME, "readwrite");
       const store = tx.objectStore(FILES_STORE_NAME);
-      store.put({ id, blob: file, fileName: file.name });
-      tx.oncomplete = () => {
-        db.close();
-        resolve();
-      };
-      tx.onerror = () => {
-        db.close();
-        reject(tx.error);
-      };
+      store.put({ id: HERO_UPLOAD_COUNT_KEY, count: files.length });
+      files.forEach((file, i) => {
+        store.put({ id: `${HERO_UPLOAD_ID}_${i}`, blob: file, fileName: file.name });
+      });
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
     });
   });
 }
@@ -44,15 +42,16 @@ export function HeroSection() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const handleFile = useCallback(
-    async (file: File | null) => {
-      if (!file) return;
-      const isAudio =
-        file.type.startsWith("audio/") ||
-        /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(file.name);
-      if (!isAudio) return;
+  const isAudioFile = (file: File) =>
+    file.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(file.name);
+
+  const handleFiles = useCallback(
+    async (fileList: FileList | null) => {
+      if (!fileList?.length) return;
+      const files = Array.from(fileList).filter(isAudioFile);
+      if (files.length === 0) return;
       try {
-        await saveFileToIDB(HERO_UPLOAD_ID, file);
+        await saveHeroUploadFiles(files);
         router.push("/mix?from=hero");
       } catch {
         router.push("/mix");
@@ -66,10 +65,9 @@ export function HeroSection() {
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      handleFile(file || null);
+      handleFiles(e.dataTransfer.files);
     },
-    [handleFile]
+    [handleFiles]
   );
 
   const onDragOver = useCallback((e: React.DragEvent) => {
@@ -86,11 +84,10 @@ export function HeroSection() {
 
   const onFileInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      handleFile(file || null);
+      handleFiles(e.target.files);
       e.target.value = "";
     },
-    [handleFile]
+    [handleFiles]
   );
 
   const onClickCard = () => inputRef.current?.click();
@@ -146,6 +143,7 @@ export function HeroSection() {
             ref={inputRef}
             type="file"
             accept="audio/*,.wav,.mp3,.ogg,.m4a,.flac,.aac"
+            multiple
             onChange={onFileInputChange}
             className="hidden"
             aria-hidden

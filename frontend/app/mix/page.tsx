@@ -145,6 +145,53 @@ function getFileFromIDB(trackId: string): Promise<{ blob: Blob; fileName: string
   }).catch(() => null);
 }
 
+const HERO_UPLOAD_COUNT_KEY = "hero_upload_count";
+
+function getHeroUploadFiles(): Promise<{ blob: Blob; fileName: string }[]> {
+  if (typeof window === "undefined") return Promise.resolve([]);
+  return openFilesDB().then((db) => {
+    return new Promise<{ blob: Blob; fileName: string }[]>((resolve) => {
+      const tx = db.transaction(FILES_STORE_NAME, "readonly");
+      const store = tx.objectStore(FILES_STORE_NAME);
+      const countReq = store.get(HERO_UPLOAD_COUNT_KEY);
+      countReq.onsuccess = () => {
+        const count = (countReq.result as { count?: number } | undefined)?.count ?? 0;
+        if (count <= 0) {
+          db.close();
+          resolve([]);
+          return;
+        }
+        const results: { blob: Blob; fileName: string }[] = [];
+        let done = 0;
+        for (let i = 0; i < count; i++) {
+          const req = store.get(`${HERO_UPLOAD_ID}_${i}`);
+          req.onsuccess = () => {
+            const row = req.result as { blob: Blob; fileName: string } | undefined;
+            if (row) results.push({ blob: row.blob, fileName: row.fileName });
+            done++;
+            if (done === count) {
+              db.close();
+              resolve(results);
+            }
+          };
+        }
+      };
+      countReq.onerror = () => { db.close(); resolve([]); };
+    });
+  }).catch(() => []);
+}
+
+function clearHeroUploadFromIDB(count: number): void {
+  if (typeof window === "undefined" || count <= 0) return;
+  openFilesDB().then((db) => {
+    const tx = db.transaction(FILES_STORE_NAME, "readwrite");
+    const store = tx.objectStore(FILES_STORE_NAME);
+    store.delete(HERO_UPLOAD_COUNT_KEY);
+    for (let i = 0; i < count; i++) store.delete(`${HERO_UPLOAD_ID}_${i}`);
+    db.close();
+  }).catch(() => {});
+}
+
 function deleteFileFromIDB(trackId: string): void {
   if (typeof window === "undefined") return;
   openFilesDB().then((db) => {
@@ -424,7 +471,12 @@ export default function Home() {
     | null;
   const [appModal, setAppModal] = useState<AppModal>(null);
   const [promptInputValue, setPromptInputValue] = useState("");
-  const [categoryModal, setCategoryModal] = useState<{ trackId: string; file: File; fromHero?: boolean } | null>(null);
+  const [categoryModal, setCategoryModal] = useState<{
+    trackId?: string;
+    file: File;
+    fromHero?: boolean;
+    nextHeroFiles?: { blob: Blob; fileName: string }[];
+  } | null>(null);
 
   useEffect(() => {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
@@ -467,59 +519,19 @@ export default function Home() {
   const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
   const bpmBoxRef = useRef<HTMLDivElement | null>(null);
 
-  // Préchargement depuis le hero (dropzone accueil) : fichier stocké en IDB sous "hero_upload"
+  // Préchargement depuis le hero (dropzone accueil) : un ou plusieurs fichiers en IDB
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("from") !== "hero") return;
-    getFileFromIDB(HERO_UPLOAD_ID).then((data) => {
-      if (!data) {
-        window.history.replaceState(null, "", window.location.pathname);
-        return;
-      }
-      const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
-      const newId = generateId();
-      saveFileToIDB(newId, file);
-      openFilesDB().then((db) => {
-        const tx = db.transaction(FILES_STORE_NAME, "readwrite");
-        tx.objectStore(FILES_STORE_NAME).delete(HERO_UPLOAD_ID);
-        db.close();
-      }).catch(() => {});
-      const rawAudioUrl = URL.createObjectURL(file);
-      const track: Track = {
-        id: newId,
-        file,
-        category: "lead_vocal",
-        gain: 100,
-        rawAudioUrl,
-        mixedAudioUrl: null,
-        isMixing: false,
-        playMode: "raw",
-        mixParams: { ...DEFAULT_MIX_PARAMS },
-        paramsOpen: false,
-        rawFileName: file.name,
-      };
-      setTracks([track]);
-      setCategoryModal({ trackId: newId, file, fromHero: true });
+    getHeroUploadFiles().then((files) => {
       window.history.replaceState(null, "", window.location.pathname);
-      (async () => {
-        try {
-          const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-          const res = await fetch(rawAudioUrl);
-          const ab = await res.arrayBuffer();
-          const decoded = await ctx.decodeAudioData(ab.slice(0));
-          ctx.close();
-          const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
-          const entry = buffersRef.current.get(newId) ?? { raw: null, mixed: null };
-          entry.raw = decoded;
-          buffersRef.current.set(newId, entry);
-          setTracks((prev) =>
-            prev.map((t) =>
-              t.id === newId ? { ...t, waveformPeaks: peaks, waveformDuration: decoded.duration } : t
-            )
-          );
-        } catch (_) {}
-      })();
+      if (!files.length) return;
+      clearHeroUploadFromIDB(files.length);
+      const first = files[0];
+      const file = new File([first.blob], first.fileName, { type: first.blob.type || "audio/wav" });
+      const next = files.slice(1);
+      setCategoryModal({ file, fromHero: true, nextHeroFiles: next });
     }).catch(() => {
       window.history.replaceState(null, "", window.location.pathname);
     });
@@ -1212,24 +1224,61 @@ export default function Home() {
   const applyCategoryChoice = useCallback(
     (category: Category) => {
       if (!categoryModal) return;
-      const { trackId, file, fromHero } = categoryModal;
+      const { trackId, file, fromHero, nextHeroFiles } = categoryModal;
       setCategoryModal(null);
       if (fromHero) {
-        setTracks((prev) =>
-          prev.map((t) =>
-            t.id === trackId
-              ? { ...t, category, mixParams: { ...t.mixParams, phone_fx: category === "adlibs_backs" } }
-              : t
-          )
-        );
+        const newId = generateId();
+        saveFileToIDB(newId, file);
+        const rawAudioUrl = file.type.startsWith("audio/") ? URL.createObjectURL(file) : null;
+        const track: Track = {
+          id: newId,
+          file,
+          category,
+          gain: 100,
+          rawAudioUrl,
+          mixedAudioUrl: null,
+          isMixing: false,
+          playMode: "raw",
+          mixParams: { ...DEFAULT_MIX_PARAMS, phone_fx: category === "adlibs_backs" },
+          paramsOpen: false,
+          rawFileName: file.name,
+        };
+        setTracks((prev) => [...prev, track]);
+        if (rawAudioUrl) {
+          (async () => {
+            try {
+              const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+              const res = await fetch(rawAudioUrl);
+              const ab = await res.arrayBuffer();
+              const decoded = await ctx.decodeAudioData(ab.slice(0));
+              ctx.close();
+              const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
+              const entry = buffersRef.current.get(newId) ?? { raw: null, mixed: null };
+              entry.raw = decoded;
+              buffersRef.current.set(newId, entry);
+              setTracks((prev) =>
+                prev.map((t) =>
+                  t.id === newId ? { ...t, waveformPeaks: peaks, waveformDuration: decoded.duration } : t
+                )
+              );
+            } catch (_) {}
+          })();
+        }
+        if (nextHeroFiles?.length) {
+          const next = nextHeroFiles[0];
+          const nextFile = new File([next.blob], next.fileName, { type: next.blob.type || "audio/wav" });
+          setCategoryModal({ file: nextFile, fromHero: true, nextHeroFiles: nextHeroFiles.slice(1) });
+        }
         return;
       }
-      applyFileWithCategory(trackId, file, category);
-      if (typeof document !== "undefined") {
-        const input = document.getElementById(`file-${trackId}`) as HTMLInputElement | null;
-        if (input) input.value = "";
-        const inputMob = document.getElementById(`file-mob-${trackId}`) as HTMLInputElement | null;
-        if (inputMob) inputMob.value = "";
+      if (trackId) {
+        applyFileWithCategory(trackId, file, category);
+        if (typeof document !== "undefined") {
+          const input = document.getElementById(`file-${trackId}`) as HTMLInputElement | null;
+          if (input) input.value = "";
+          const inputMob = document.getElementById(`file-mob-${trackId}`) as HTMLInputElement | null;
+          if (inputMob) inputMob.value = "";
+        }
       }
     },
     [categoryModal, applyFileWithCategory]
@@ -2603,8 +2652,8 @@ export default function Home() {
   return (
     <main className="relative z-10 min-h-screen font-heading">
       {appModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md shadow-xl shadow-black/40 max-w-sm w-full overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog">
+          <div className="rounded-2xl border border-white/15 bg-slate-800/95 backdrop-blur-xl shadow-xl shadow-black/30 max-w-sm w-full overflow-hidden">
             {appModal.type === "prompt" && (
               <>
                 <div className="p-4 border-b border-white/10">
@@ -2692,11 +2741,14 @@ export default function Home() {
       )}
 
       {categoryModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
-          <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md shadow-xl shadow-black/40 max-w-sm w-full overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
+          <div className="rounded-2xl border border-white/15 bg-slate-800/95 backdrop-blur-xl shadow-xl shadow-black/30 max-w-sm w-full overflow-hidden">
             <div className="p-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
                 Quelle catégorie pour cette piste ?
+              </p>
+              <p className="mt-1.5 text-center text-white text-xs font-medium truncate px-2" title={categoryModal.file.name}>
+                {categoryModal.file.name}
               </p>
             </div>
             <div className="p-4 flex flex-col gap-2">
@@ -2927,8 +2979,8 @@ export default function Home() {
 
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         {showProjectsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" aria-modal="true" role="dialog">
-            <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/40">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog">
+            <div className="rounded-2xl border border-white/15 bg-slate-800/95 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/30">
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <h2 className="text-lg font-medium text-white">Mes projets</h2>
                 <button
@@ -3900,8 +3952,8 @@ export default function Home() {
       />
       {/* ─── Auth Modal (login + register — stays on same page, preserves all audio state) ─── */}
       {showLoginModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }}>
-          <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md shadow-xl shadow-black/40 p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }}>
+          <div className="rounded-2xl border border-white/15 bg-slate-800/95 backdrop-blur-xl shadow-xl shadow-black/30 p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
 
             {authMode === "login" ? (
