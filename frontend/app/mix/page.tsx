@@ -442,7 +442,7 @@ export default function Home() {
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
-    | { type: "confirm_two"; message: string; primaryLabel: string; secondaryLabel: string; onPrimary: () => void; onSecondary: () => void }
+    | { type: "confirm_two"; message: string; primaryLabel: string; secondaryLabel: string; onPrimary: () => void; onSecondary: () => void; onCancel?: () => void }
     | { type: "alert"; message: string; onClose: () => void }
     | null;
   const [appModal, setAppModal] = useState<AppModal>(null);
@@ -1634,6 +1634,7 @@ export default function Home() {
             setAppModal(null);
             openCreateProjectNamePrompt(useCurrentTracks);
           },
+          onCancel: () => setAppModal(null),
         });
         return;
       }
@@ -2968,7 +2969,17 @@ export default function Home() {
     <main className="relative z-10 min-h-screen font-heading">
       {appModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
+          <div className="relative rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setAppModal(null)}
+              className="absolute top-3 right-3 p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors z-10"
+              aria-label="Fermer"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             {appModal.type === "prompt" && (
               <>
                 <div className="p-4 border-b border-white/10">
@@ -3026,7 +3037,7 @@ export default function Home() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { appModal.onConfirm(); setAppModal(null); }}
+                    onClick={() => appModal.onConfirm()}
                     className="flex-1 py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm border-l border-white/10"
                   >
                     Oui
@@ -3050,9 +3061,16 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => appModal.onSecondary()}
-                    className="py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm"
+                    className="py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm border-b border-white/10"
                   >
                     {appModal.secondaryLabel}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { appModal.onCancel?.(); setAppModal(null); }}
+                    className="py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm"
+                  >
+                    Annuler
                   </button>
                 </div>
               </>
