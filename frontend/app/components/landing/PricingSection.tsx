@@ -98,7 +98,7 @@ export function PricingSection() {
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"
                 } ${
                   plan.featured
-                    ? "scale-[1.02] border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10 hover:border-white/30 hover:shadow-2xl hover:shadow-black/30"
+                    ? "scale-[1.02] border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_28px_rgba(255,255,255,0.12)] ring-1 ring-white/10 hover:border-white/30 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.35),0_0_32px_rgba(255,255,255,0.16)]"
                     : "landing-card border-white/10"
                 }`}
               >
@@ -134,7 +134,7 @@ export function PricingSection() {
           ) : (
             <>
               <div className="observe-stagger-4" aria-hidden />
-              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 sm:scale-[1.02]">
+              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_28px_rgba(255,255,255,0.12)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 sm:scale-[1.02]">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-heading text-xl font-semibold text-white">{planAnnuel.name}</h3>
                   {planAnnuel.featured && (

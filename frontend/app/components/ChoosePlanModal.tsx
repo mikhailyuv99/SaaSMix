@@ -86,7 +86,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               <div
                 key={plan.name}
                 className={`rounded-2xl border p-6 transition-all sm:p-8 ${
-                  plan.featured ? "border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10" : "border-white/10 bg-white/[0.03]"
+                  plan.featured ? "border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_28px_rgba(255,255,255,0.12)] ring-1 ring-white/10" : "border-white/10 bg-white/[0.03]"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -122,7 +122,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         ) : (
           <div className="grid gap-6 sm:grid-cols-3">
             <div aria-hidden />
-            <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10 p-6 sm:p-8 min-h-0">
+            <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_28px_rgba(255,255,255,0.12)] ring-1 ring-white/10 p-6 sm:p-8 min-h-0">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-heading text-xl font-semibold text-white">{PLAN_ANNUEL.name}</h3>
                 {PLAN_ANNUEL.featured && (
