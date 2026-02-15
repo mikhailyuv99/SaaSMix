@@ -61,7 +61,9 @@ export function HeroSection() {
       }
       try {
         await saveHeroUploadFiles(wavFiles);
-        router.push("/mix?from=hero");
+        const ignoredCount = files.length - wavFiles.length;
+        const query = ignoredCount > 0 ? `?from=hero&ignored=${ignoredCount}` : "?from=hero";
+        router.push(`/mix${query}`);
       } catch {
         router.push("/mix");
       }

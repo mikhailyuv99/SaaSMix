@@ -526,6 +526,8 @@ export default function Home() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("from") !== "hero") return;
+    const ignoredParam = params.get("ignored");
+    const ignoredCount = ignoredParam ? parseInt(ignoredParam, 10) : 0;
     getHeroUploadFiles().then((files) => {
       window.history.replaceState(null, "", window.location.pathname);
       if (!files.length) return;
@@ -538,6 +540,13 @@ export default function Home() {
       const file = new File([first.blob], first.fileName, { type: first.blob.type || "audio/wav" });
       const next = files.slice(1);
       setCategoryModal({ file, fromHero: true, nextHeroFiles: next });
+      if (ignoredCount > 0) {
+        setAppModal({
+          type: "alert",
+          message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.",
+          onClose: () => {},
+        });
+      }
     }).catch(() => {
       window.history.replaceState(null, "", window.location.pathname);
     });
