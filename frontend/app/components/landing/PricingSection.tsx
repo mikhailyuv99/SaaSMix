@@ -90,11 +90,21 @@ export function PricingSection() {
 
         <div className="w-full max-w-5xl mx-auto mt-5 box-border">
           <div className="mt-5 grid gap-6 sm:grid-cols-3 max-lg:gap-3 max-lg:grid-cols-3 max-md:mt-4 max-md:gap-2 items-stretch">
-          {billingPeriod === "mensuel" ? (
-            plansMensuel.map((plan, i) => (
+          {(billingPeriod === "mensuel"
+            ? plansMensuel.map((plan, i) => ({ plan, invisible: false, index: i }))
+            : [
+                { plan: plansMensuel[0], invisible: true, index: 0 },
+                { plan: planAnnuel, invisible: false, index: 1 },
+                { plan: plansMensuel[2], invisible: true, index: 2 },
+              ]
+          ).map(({ plan, invisible, index: i }) => {
+            const badgeLabel = plan.name === "Pro annuel" ? "−25%" : (plan.featured ? "Populaire" : null);
+            return (
               <div
-                key={plan.name}
+                key={plan.name + (invisible ? "-ghost" : "")}
                 className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px] ${
+                  invisible ? "invisible" : ""
+                } ${
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"
                 } ${
                   plan.featured
@@ -104,9 +114,9 @@ export function PricingSection() {
               >
                 <div className="flex items-center justify-between gap-2 min-h-[2rem]">
                   <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{plan.name}</h3>
-                  {plan.featured && (
+                  {badgeLabel && (
                     <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-lg:text-[9px] max-lg:px-1.5 max-md:text-[8px] max-md:px-1">
-                      Populaire
+                      {badgeLabel}
                     </span>
                   )}
                 </div>
@@ -123,7 +133,7 @@ export function PricingSection() {
                 <div className="mt-4 pt-4 shrink-0">
                   <button
                     type="button"
-                    onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
+                    onClick={() => !invisible && window.dispatchEvent(new CustomEvent("openPlanModal"))}
                     className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px] ${
                       plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
@@ -132,42 +142,8 @@ export function PricingSection() {
                   </button>
                 </div>
               </div>
-            ))
-          ) : (
-            <>
-              <div className="observe-stagger-4" aria-hidden />
-              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 hover:border-white/30 p-6 sm:p-8 observe-stagger-5 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px] transition-all duration-300">
-                <div className="flex items-center justify-between gap-2 min-h-[2rem]">
-                  <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{planAnnuel.name}</h3>
-                  {planAnnuel.featured && (
-                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-lg:text-[9px] max-lg:px-1.5 max-md:text-[8px] max-md:px-1">
-                      −25%
-                    </span>
-                  )}
-                </div>
-                <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px]">{planAnnuel.subtitle}</p>
-                <p className="mt-4 min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base">{planAnnuel.price}</p>
-                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
-                  {planAnnuel.features.split("\n").map((line, i) => (
-                    <li key={i} className="flex items-start gap-2.5 max-lg:gap-1.5">
-                      <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50 max-lg:size-1" aria-hidden />
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 pt-4 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
-                    className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10 uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px]"
-                  >
-                    {planAnnuel.cta}
-                  </button>
-                </div>
-              </div>
-              <div className="observe-stagger-6" aria-hidden />
-            </>
-          )}
+            );
+          })}
           </div>
         </div>
       </ObserveSection>
