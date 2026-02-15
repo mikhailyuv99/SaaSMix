@@ -122,6 +122,7 @@ export function PricingSection() {
                 <div className="mt-6 mt-auto">
                   <button
                     type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
                     className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase ${
                       plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
@@ -155,6 +156,7 @@ export function PricingSection() {
                 <div className="mt-6 mt-auto">
                   <button
                     type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
                     className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10 uppercase"
                   >
                     {planAnnuel.cta}

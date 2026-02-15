@@ -15,8 +15,48 @@ from dependencies import get_current_user_row
 router = APIRouter(prefix="/api/billing", tags=["billing"])
 
 STRIPE_SECRET = os.environ.get("STRIPE_SECRET_KEY", "").strip()
-# Price ID annuel (pas d'essai gratuit)
-STRIPE_PRICE_ANNUAL = os.environ.get("STRIPE_PRICE_ANNUAL", "").strip()
+# Price IDs Stripe par formule (créer les produits/prix dans le dashboard Stripe)
+STRIPE_PRICE_STARTER = os.environ.get("STRIPE_PRICE_STARTER", "").strip()
+STRIPE_PRICE_ARTISTE = os.environ.get("STRIPE_PRICE_ARTISTE", "").strip()
+STRIPE_PRICE_PRO = os.environ.get("STRIPE_PRICE_PRO", "").strip()
+STRIPE_PRICE_PRO_ANNUAL = os.environ.get("STRIPE_PRICE_PRO_ANNUAL", "").strip()
+# Rétrocompat: ancien nom d'env
+STRIPE_PRICE_ANNUAL = os.environ.get("STRIPE_PRICE_ANNUAL", "").strip() or STRIPE_PRICE_PRO_ANNUAL
+
+
+@router.get("/plans")
+def get_plans():
+    """
+    Liste des formules avec price_id Stripe (public, pour affichage et checkout).
+    Seuls les plans avec price_id configuré sont retournés.
+    """
+    plans_monthly = []
+    if STRIPE_PRICE_STARTER:
+        plans_monthly.append({"id": "starter", "name": "Starter", "priceDisplay": "9,99 €", "interval": "month", "priceId": STRIPE_PRICE_STARTER})
+    if STRIPE_PRICE_ARTISTE:
+        plans_monthly.append({"id": "artiste", "name": "Artiste", "priceDisplay": "19,99 €", "interval": "month", "priceId": STRIPE_PRICE_ARTISTE})
+    if STRIPE_PRICE_PRO:
+        plans_monthly.append({"id": "pro", "name": "Pro", "priceDisplay": "29,99 €", "interval": "month", "priceId": STRIPE_PRICE_PRO})
+    plan_annual = None
+    if STRIPE_PRICE_PRO_ANNUAL or STRIPE_PRICE_ANNUAL:
+        pid = STRIPE_PRICE_PRO_ANNUAL or STRIPE_PRICE_ANNUAL
+        plan_annual = {"id": "pro_annual", "name": "Pro annuel", "priceDisplay": "269 €", "interval": "year", "priceId": pid}
+    return {"plansMonthly": plans_monthly, "planAnnual": plan_annual}
+
+# Map price_id -> plan (user.plan)
+# Tout price_id inconnu (ex: ancien abo Pro avant Starter/Artiste/Pro) → "pro" = accès illimité.
+def _plan_from_price_id(price_id: str) -> str:
+    if not price_id:
+        return "pro"
+    pid = (price_id or "").strip()
+    if pid == STRIPE_PRICE_STARTER:
+        return "starter"
+    if pid == STRIPE_PRICE_ARTISTE:
+        return "artiste"
+    if pid == STRIPE_PRICE_PRO or pid == STRIPE_PRICE_PRO_ANNUAL or pid == STRIPE_PRICE_ANNUAL:
+        return "pro"
+    # Legacy / ancien Pro / price_id non configuré → pro (illimité)
+    return "pro"
 
 
 class CreateSubscriptionBody(BaseModel):
@@ -37,17 +77,26 @@ def billing_me(
     Retourne le plan. Si la BDD dit free mais Stripe a un abo actif (DB réinit, webhook raté),
     on restaure plan + ids depuis Stripe pour que l'abonnement soit toujours reconnu.
     """
-    plan = user.plan or "free"
+    plan = (user.plan or "free").lower()
     if plan == "free" and STRIPE_SECRET:
         stripe.api_key = STRIPE_SECRET
         try:
             if user.stripe_subscription_id:
                 sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
                 if sub and sub.get("status") in ("active", "trialing"):
-                    user.plan = "pro"
+                    # Restaurer le plan depuis le price_id de l'abonnement
+                    try:
+                        items = sub.get("items") or {}
+                        data = (items.get("data") or []) if hasattr(items, "get") else []
+                        if data:
+                            price = (data[0].get("price") or {}) if hasattr(data[0], "get") else {}
+                            price_id = price.get("id") if hasattr(price, "get") else None
+                            user.plan = _plan_from_price_id(price_id or "")
+                    except (AttributeError, KeyError, TypeError, IndexError):
+                        user.plan = "pro"
                     db.commit()
                     db.refresh(user)
-                    plan = "pro"
+                    plan = (user.plan or "pro").lower()
             if plan == "free" and user.stripe_customer_id:
                 for status_filter in ("active", "trialing"):
                     subs = stripe.Subscription.list(
@@ -56,10 +105,20 @@ def billing_me(
                     if subs.get("data"):
                         sub = subs["data"][0]
                         user.stripe_subscription_id = sub.get("id")
-                        user.plan = "pro"
+                        try:
+                            items = sub.get("items") or {}
+                            data = (items.get("data") or []) if hasattr(items, "get") else []
+                            if data:
+                                price = (data[0].get("price") or {}) if hasattr(data[0], "get") else {}
+                                price_id = price.get("id") if hasattr(price, "get") else None
+                                user.plan = _plan_from_price_id(price_id or "")
+                            else:
+                                user.plan = "pro"
+                        except (AttributeError, KeyError, TypeError, IndexError):
+                            user.plan = "pro"
                         db.commit()
                         db.refresh(user)
-                        plan = "pro"
+                        plan = (user.plan or "pro").lower()
                         break
             if plan == "free" and user.email:
                 email = (user.email or "").strip().lower()
@@ -75,16 +134,27 @@ def billing_me(
                                 sub = subs["data"][0]
                                 user.stripe_customer_id = cid
                                 user.stripe_subscription_id = sub.get("id")
-                                user.plan = "pro"
+                                try:
+                                    items = sub.get("items") or {}
+                                    data = (items.get("data") or []) if hasattr(items, "get") else []
+                                    if data:
+                                        price = (data[0].get("price") or {}) if hasattr(data[0], "get") else {}
+                                        price_id = price.get("id") if hasattr(price, "get") else None
+                                        user.plan = _plan_from_price_id(price_id or "")
+                                    else:
+                                        user.plan = "pro"
+                                except (AttributeError, KeyError, TypeError, IndexError):
+                                    user.plan = "pro"
                                 db.commit()
                                 db.refresh(user)
-                                plan = "pro"
+                                plan = (user.plan or "pro").lower()
                                 break
-                        if plan == "pro":
+                        if plan != "free":
                             break
         except stripe.StripeError:
             pass
-    return {"plan": plan, "isPro": plan == "pro"}
+    is_pro = plan in ("starter", "artiste", "pro")
+    return {"plan": plan, "isPro": is_pro}
 
 
 def _subscription_interval(sub) -> str:
@@ -250,7 +320,7 @@ def create_subscription(
 
         user.stripe_subscription_id = subscription.id
         if subscription.status in ("active", "trialing"):
-            user.plan = "pro"
+            user.plan = _plan_from_price_id(body.price_id)
         db.commit()
         db.refresh(user)
 

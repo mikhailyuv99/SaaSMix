@@ -38,16 +38,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setUser = useCallback((u: AuthUser) => {
     setUserState(u);
-    window.dispatchEvent(new CustomEvent("saas_mix_auth_change"));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("saas_mix_auth_change"));
+    }
   }, []);
 
   const logout = useCallback(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      window.dispatchEvent(new CustomEvent("saas_mix_auth_change"));
     }
     setUserState(null);
-    window.dispatchEvent(new CustomEvent("saas_mix_auth_change"));
   }, []);
 
   const setOpenAuthModal = useCallback((fn: ((mode?: AuthModalMode) => void) | null) => {

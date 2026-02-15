@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
-const PRICE_ID_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || "";
-const PRICE_ID_ANNUAL = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || "";
 
 const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
 
@@ -23,20 +21,42 @@ const CARD_OPTIONS = {
   },
 };
 
+type PlanOption = { id: string; name: string; priceDisplay: string; interval: string; priceId: string };
+
 function SubscriptionForm({
   onSuccess,
   onClose,
   getAuthHeaders,
+  initialPriceId,
+  initialLabel,
 }: {
   onSuccess: () => void;
   onClose: () => void;
   getAuthHeaders: () => Record<string, string>;
+  initialPriceId?: string | null;
+  initialLabel?: string | null;
 }) {
   const stripe = useStripe();
   const elements = useElements();
-  const [selectedPriceId, setSelectedPriceId] = useState<string | null>(null);
+  const [selectedPriceId, setSelectedPriceId] = useState<string | null>(initialPriceId ?? null);
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(initialLabel ?? null);
+  const [plansData, setPlansData] = useState<{ plansMonthly: PlanOption[]; planAnnual: PlanOption | null } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialPriceId) {
+      setSelectedPriceId(initialPriceId);
+      setSelectedLabel(initialLabel ?? null);
+    }
+  }, [initialPriceId, initialLabel]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/billing/plans`)
+      .then((r) => r.json())
+      .then((d) => setPlansData({ plansMonthly: d.plansMonthly ?? [], planAnnual: d.planAnnual ?? null }))
+      .catch(() => setPlansData(null));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,31 +113,39 @@ function SubscriptionForm({
     }
   };
 
+  const allPlans = [
+    ...(plansData?.plansMonthly ?? []),
+    ...(plansData?.planAnnual ? [plansData.planAnnual] : []),
+  ];
+  const displayLabel = selectedLabel || allPlans.find((p) => p.priceId === selectedPriceId)?.name || selectedPriceId ? "Abonnement" : null;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {!selectedPriceId ? (
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            type="button"
-            onClick={() => setSelectedPriceId(PRICE_ID_MONTHLY)}
-            className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-400 hover:bg-white/10 hover:border-white/30 transition-colors"
-          >
-            <span className="font-medium">19,99 €</span>
-            <span className="text-tagline text-slate-400 block text-[10px]">/ mois</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedPriceId(PRICE_ID_ANNUAL)}
-            className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-400 hover:bg-white/10 hover:border-white/30 transition-colors"
-          >
-            <span className="font-medium">199,99 €</span>
-            <span className="text-tagline text-slate-400 block text-[10px]">/ an (~2 mois offerts)</span>
-          </button>
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+          {allPlans.length === 0 && !plansData ? (
+            <p className="text-slate-400 text-sm">Chargement des formules…</p>
+          ) : (
+            allPlans.map((plan) => (
+              <button
+                key={plan.priceId}
+                type="button"
+                onClick={() => {
+                  setSelectedPriceId(plan.priceId);
+                  setSelectedLabel(plan.name);
+                }}
+                className="flex-1 min-w-[140px] rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-slate-400 hover:bg-white/10 hover:border-white/30 transition-colors text-left"
+              >
+                <span className="font-medium text-white">{plan.name}</span>
+                <span className="text-tagline text-slate-400 block text-[10px]">{plan.priceDisplay}{plan.interval === "year" ? " / an" : " / mois"}</span>
+              </button>
+            ))
+          )}
         </div>
       ) : (
         <>
           <p className="text-tagline text-slate-400 text-[10px]">
-            {selectedPriceId === PRICE_ID_ANNUAL ? "Abonnement annuel (199,99 €/an)" : "Abonnement mensuel (19,99 €/mois)"}
+            {displayLabel ? `${displayLabel} – Paiement sécurisé` : "Paiement sécurisé"}
           </p>
           <div className="rounded-lg border border-white/10 bg-white/5 p-3">
             <CardElement options={CARD_OPTIONS} />
@@ -126,7 +154,7 @@ function SubscriptionForm({
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setSelectedPriceId(null)}
+              onClick={() => { setSelectedPriceId(null); setSelectedLabel(null); }}
               className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors"
             >
               Retour
@@ -150,18 +178,22 @@ export function SubscriptionModal({
   onClose,
   onSuccess,
   getAuthHeaders,
+  initialPriceId,
+  initialLabel,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   getAuthHeaders: () => Record<string, string>;
+  initialPriceId?: string | null;
+  initialLabel?: string | null;
 }) {
   if (!isOpen) return null;
-  if (!PUBLISHABLE_KEY || !PRICE_ID_MONTHLY || !PRICE_ID_ANNUAL) {
+  if (!PUBLISHABLE_KEY) {
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4" onClick={onClose}>
         <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-sm w-full relative" onClick={(e) => e.stopPropagation()}>
-          <p className="text-slate-400 text-sm">Stripe non configuré (clés manquantes).</p>
+          <p className="text-slate-400 text-sm">Stripe non configuré (clé publique manquante).</p>
           <button type="button" onClick={onClose} className="mt-4 text-white text-sm underline">Fermer</button>
         </div>
       </div>
@@ -171,11 +203,17 @@ export function SubscriptionModal({
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4" onClick={onClose}>
       <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-md w-full relative" onClick={(e) => e.stopPropagation()}>
         <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
-        <h2 className="text-xl font-medium text-white mb-1">Passer en Pro</h2>
-        <p className="text-tagline text-slate-400 text-[10px] mb-6">Débloquez les téléchargements mix + master. Abonnement lié à votre compte.</p>
+        <h2 className="text-xl font-medium text-white mb-1">{initialPriceId ? "Finaliser l'abonnement" : "Choisir une formule"}</h2>
+        <p className="text-tagline text-slate-400 text-[10px] mb-6">Abonnement lié à votre compte. Paiement sécurisé Stripe.</p>
         {stripePromise && (
           <Elements stripe={stripePromise}>
-            <SubscriptionForm onSuccess={onSuccess} onClose={onClose} getAuthHeaders={getAuthHeaders} />
+            <SubscriptionForm
+              onSuccess={onSuccess}
+              onClose={onClose}
+              getAuthHeaders={getAuthHeaders}
+              initialPriceId={initialPriceId}
+              initialLabel={initialLabel}
+            />
           </Elements>
         )}
       </div>

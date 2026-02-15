@@ -1,45 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 const PLANS_MENSUEL = [
-  {
-    name: "Starter",
-    subtitle: "Pour découvrir",
-    price: "9,99 €",
-    features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projets",
-    cta: "Choisir ce plan",
-    featured: false,
-  },
-  {
-    name: "Artiste",
-    subtitle: "Pour les artistes réguliers",
-    price: "19,99 €",
-    features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets",
-    cta: "Choisir ce plan",
-    featured: true,
-  },
-  {
-    name: "Pro",
-    subtitle: "Mix + master à volonté",
-    price: "29,99 €",
-    features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
-    cta: "Choisir ce plan",
-    featured: false,
-  },
+  { id: "starter" as const, name: "Starter", subtitle: "Pour découvrir", price: "9,99 €", features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projets", cta: "Choisir ce plan", featured: false },
+  { id: "artiste" as const, name: "Artiste", subtitle: "Pour les artistes réguliers", price: "19,99 €", features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets", cta: "Choisir ce plan", featured: true },
+  { id: "pro" as const, name: "Pro", subtitle: "Mix + master à volonté", price: "29,99 €", features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités", cta: "Choisir ce plan", featured: false },
 ];
 
-const PLAN_ANNUEL = {
-  name: "Pro annuel",
-  subtitle: "Économisez 25 %",
-  price: "269 €",
-  features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
-  cta: "Choisir ce plan",
-  featured: true,
-};
+const PLAN_ANNUEL = { id: "pro_annual" as const, name: "Pro annuel", subtitle: "Économisez 25 %", price: "269 €", features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités", cta: "Choisir ce plan", featured: true };
 
-export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+type PlansData = { plansMonthly: { id: string; name: string; priceDisplay: string; interval: string; priceId: string }[]; planAnnual: { id: string; name: string; priceDisplay: string; interval: string; priceId: string } | null };
+
+export function ChoosePlanModal({
+  isOpen,
+  onClose,
+  onSelectPlan,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectPlan: (priceId: string, planName: string) => void;
+}) {
   const [billingPeriod, setBillingPeriod] = useState<"mensuel" | "annuel">("mensuel");
+  const [plansData, setPlansData] = useState<PlansData | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch(`${API_BASE}/api/billing/plans`)
+      .then((r) => r.json())
+      .then((data) => setPlansData(data))
+      .catch(() => setPlansData(null));
+  }, [isOpen]);
+
+  const getPriceId = (planId: string, isAnnual: boolean): string | null => {
+    if (!plansData) return null;
+    if (isAnnual) return plansData.planAnnual?.priceId ?? null;
+    return plansData.plansMonthly.find((p) => p.id === planId)?.priceId ?? null;
+  };
 
   if (!isOpen) return null;
   return (
@@ -110,9 +109,16 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                 <div className="mt-6 mt-auto">
                   <button
                     type="button"
+                    onClick={() => {
+                      const priceId = getPriceId(plan.id, false);
+                      if (priceId) {
+                        onSelectPlan(priceId, plan.name);
+                      }
+                    }}
+                    disabled={!getPriceId(plan.id, false)}
                     className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors ${
                       plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10 uppercase" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white uppercase"
-                    }`}
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {plan.cta}
                   </button>
@@ -144,7 +150,12 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               <div className="mt-6 mt-auto">
                 <button
                   type="button"
-                  className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10 uppercase"
+                  onClick={() => {
+                    const priceId = getPriceId(PLAN_ANNUEL.id, true);
+                    if (priceId) onSelectPlan(priceId, PLAN_ANNUEL.name);
+                  }}
+                  disabled={!getPriceId(PLAN_ANNUEL.id, true)}
+                  className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10 uppercase disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {PLAN_ANNUEL.cta}
                 </button>

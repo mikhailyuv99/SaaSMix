@@ -5,18 +5,34 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChoosePlanModal } from "./ChoosePlanModal";
+import { SubscriptionModal } from "./SubscriptionModal";
 
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, openAuthModal } = useAuth();
   const { hasUnsavedChanges, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction, showLeaveModal, leaveIntent, leaveConfirmAction } = useLeaveWarning();
-  const { isPro, openManageSubscription } = useSubscription();
+  const { isPro, openManageSubscription, setIsPro } = useSubscription();
   const isHome = pathname === "/";
   const isMix = pathname === "/mix";
   const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+  const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
+  const [checkoutLabel, setCheckoutLabel] = useState<string | null>(null);
+
+  const getAuthHeaders = () => {
+    if (typeof window === "undefined") return {};
+    const t = localStorage.getItem("saas_mix_token");
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  };
+
+  useEffect(() => {
+    const open = () => setPlanModalOpen(true);
+    window.addEventListener("openPlanModal", open);
+    return () => window.removeEventListener("openPlanModal", open);
+  }, []);
 
   const handleAccueilClick = (e: React.MouseEvent) => {
     if (isMix && hasUnsavedChanges) {
@@ -174,7 +190,40 @@ export function Header() {
         </div>
       )}
 
-      <ChoosePlanModal isOpen={planModalOpen} onClose={() => setPlanModalOpen(false)} />
+      <ChoosePlanModal
+        isOpen={planModalOpen}
+        onClose={() => setPlanModalOpen(false)}
+        onSelectPlan={(priceId, planName) => {
+          setPlanModalOpen(false);
+          setCheckoutPriceId(priceId);
+          setCheckoutLabel(planName);
+          setSubscriptionModalOpen(true);
+        }}
+      />
+      <SubscriptionModal
+        isOpen={subscriptionModalOpen}
+        onClose={() => {
+          setSubscriptionModalOpen(false);
+          setCheckoutPriceId(null);
+          setCheckoutLabel(null);
+        }}
+        onSuccess={async () => {
+          setSubscriptionModalOpen(false);
+          setCheckoutPriceId(null);
+          setCheckoutLabel(null);
+          try {
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+            const res = await fetch(`${API_BASE}/api/billing/me`, { headers: getAuthHeaders() });
+            const data = await res.json().catch(() => ({}));
+            if (data.isPro !== undefined) setIsPro(data.isPro);
+          } catch {
+            setIsPro(true);
+          }
+        }}
+        getAuthHeaders={getAuthHeaders}
+        initialPriceId={checkoutPriceId}
+        initialLabel={checkoutLabel}
+      />
     </>
   );
 }
