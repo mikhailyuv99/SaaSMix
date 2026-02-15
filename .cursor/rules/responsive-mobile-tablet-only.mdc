@@ -1,0 +1,25 @@
+---
+description: Responsive work — mobile and tablet only, no desktop changes
+alwaysApply: true
+---
+
+# Responsive : mobile et tablette uniquement
+
+## Règle stricte
+
+- **Ne jamais modifier le rendu ou le comportement sur desktop** (viewport large).
+- Tous les changements responsive doivent **uniquement** améliorer l’affichage et l’usage sur **mobile** et **tablette**.
+- Si tu dois changer du style ou du layout, le faire **uniquement** via des classes/media queries qui s’appliquent en dessous du breakpoint desktop (ex. `max-lg:`, `md:`, `sm:` dans Tailwind), sans toucher aux styles par défaut qui définissent le desktop.
+
+## En pratique (Tailwind)
+
+- Utiliser les breakpoints **max-*** et **sm/md/lg** pour cibler mobile et tablette :
+  - **Mobile** : styles par défaut ou `sm:` / `max-sm:`
+  - **Tablette** : `md:` / `max-md:`, `lg:` / `max-lg:`
+  - **Desktop** : ne pas ajouter de classes qui modifient le desktop ; les classes sans préfixe restent le “desktop first” ou le comportement de référence.
+- Ne pas supprimer ni remplacer des classes qui ne s’appliquent qu’au desktop sans que ce soit explicitement demandé.
+- Exemple : ajouter `max-lg:flex-col` pour passer en colonne sur tablette/mobile, sans toucher à `flex-row` sur desktop.
+
+## Exception
+
+- Modifier le desktop **uniquement** si l’utilisateur le demande **explicitement** (ex. “change aussi le desktop” ou “sur desktop fais …”).

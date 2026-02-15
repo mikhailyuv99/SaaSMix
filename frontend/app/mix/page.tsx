@@ -3002,10 +3002,10 @@ export default function Home() {
   );
 
   return (
-    <main className="relative z-10 min-h-screen font-heading">
+    <main className="relative z-10 min-h-screen font-heading overflow-x-hidden">
       {appModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog">
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl">
             {appModal.type === "prompt" && (
               <>
                 <div className="p-4 border-b border-white/10">
@@ -3122,8 +3122,8 @@ export default function Home() {
       )}
 
       {categoryModal && (
-        <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden">
+        <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl">
             <div className="pb-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
                 Quelle catégorie pour cette piste ?
@@ -3160,10 +3160,10 @@ export default function Home() {
       )}
 
       {showProjectsModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20">
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <h2 className="text-lg font-medium text-white">Mes projets</h2>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog">
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20 max-lg:max-w-[calc(100vw-1.5rem)] max-lg:max-h-[85vh] max-lg:rounded-xl">
+            <div className="flex items-center justify-between p-4 border-b border-white/10 max-lg:p-3">
+              <h2 className="text-lg font-medium text-white max-lg:text-base">Mes projets</h2>
               <button
                 type="button"
                 onClick={() => setShowProjectsModal(false)}
@@ -3173,7 +3173,7 @@ export default function Home() {
                 ✕
               </button>
             </div>
-            <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
+            <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2 max-lg:p-3 max-lg:max-h-[55vh]">
               {projectsList.length === 0 && !loadingProjectId && (
                 <p className="text-slate-400 text-sm">Aucun projet sauvegardé.</p>
               )}

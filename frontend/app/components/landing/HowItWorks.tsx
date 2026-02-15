@@ -93,21 +93,21 @@ export function HowItWorks() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 px-4 py-6 sm:py-8">
+    <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
+        <div className="mx-auto max-w-3xl text-center max-lg:max-w-none">
+          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1 max-md:text-xs">
             Process
           </p>
-          <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2">
+          <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2 max-lg:text-2xl max-md:text-xl">
             Comment ça marche
           </h2>
-          <p className="mt-3 text-slate-400 observe-stagger-3">
+          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs">
             De la piste brute au morceau fini en quatre étapes — sans plugin, tout dans le navigateur.
           </p>
         </div>
 
-        <div className="relative mx-auto mt-8 max-w-4xl sm:mt-10">
+        <div className="relative mx-auto mt-8 max-w-4xl sm:mt-10 max-lg:mt-6 max-md:mt-5">
           {/* Ligne verticale : fond + progression blanche lumineuse */}
           <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-white/20" />
           <div
@@ -125,16 +125,16 @@ export function HowItWorks() {
             return (
               <div
                 key={step.num}
-                className={`relative flex items-center gap-0 ${i < steps.length - 1 ? "mb-6 sm:mb-8" : ""}`}
+                className={`relative flex items-center gap-0 max-lg:flex-col max-lg:items-stretch max-lg:gap-4 ${i < steps.length - 1 ? "mb-6 sm:mb-8 max-lg:mb-5 max-md:mb-4" : ""}`}
               >
                 {/* Partie gauche */}
-                <div className={`flex-1 ${isLeft ? "pr-4 sm:pr-6" : "sm:pr-6"}`}>
+                <div className={`flex-1 max-lg:w-full ${isLeft ? "pr-4 sm:pr-6 max-lg:pr-0" : "sm:pr-6 max-lg:pr-0"}`}>
                   {isLeft && (
-                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6">
-                      <div className="flex items-start gap-4">
+                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
+                      <div className="flex items-start gap-4 max-md:gap-3">
                         <StepIcon icon={step.icon} />
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-heading text-lg font-semibold text-white sm:text-xl">{step.title}</h3>
+                          <h3 className="font-heading text-lg font-semibold text-white sm:text-xl max-lg:text-base max-md:text-sm">{step.title}</h3>
                           <button
                             type="button"
                             onClick={() => setExpanded(expanded === step.num ? null : step.num)}
@@ -154,7 +154,7 @@ export function HowItWorks() {
 
                 {/* Centre : cercle sur la ligne (couleur play button + glow au scroll) */}
                 <div
-                  className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 font-heading text-sm font-bold shadow-lg transition-all duration-500 sm:h-12 sm:w-12 ${
+                  className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 font-heading text-sm font-bold shadow-lg transition-all duration-500 sm:h-12 sm:w-12 max-lg:self-center max-lg:order-first max-lg:-order-1 ${
                     isGlowing
                       ? "border-white/80 bg-white/15 text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]"
                       : "border-white/25 text-white/90"
@@ -173,13 +173,13 @@ export function HowItWorks() {
                 </div>
 
                 {/* Partie droite */}
-                <div className={`flex-1 ${!isLeft ? "pl-4 sm:pl-6" : "sm:pl-6"}`}>
+                <div className={`flex-1 max-lg:w-full ${!isLeft ? "pl-4 sm:pl-6 max-lg:pl-0" : "sm:pl-6 max-lg:pl-0"}`}>
                   {!isLeft && (
-                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6">
-                      <div className="flex items-start gap-4">
+                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
+                      <div className="flex items-start gap-4 max-md:gap-3">
                         <StepIcon icon={step.icon} />
                         <div className="min-w-0 flex-1">
-                          <h3 className="font-heading text-lg font-semibold text-white sm:text-xl">{step.title}</h3>
+                          <h3 className="font-heading text-lg font-semibold text-white sm:text-xl max-lg:text-base max-md:text-sm">{step.title}</h3>
                           <button
                             type="button"
                             onClick={() => setExpanded(expanded === step.num ? null : step.num)}
@@ -201,13 +201,13 @@ export function HowItWorks() {
           })}
         </div>
 
-        <div className="mx-auto mt-8 max-w-2xl space-y-5 sm:mt-10 observe-stagger-4">
+        <div className="mx-auto mt-8 max-w-2xl space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4">
           <div className="text-center">
-            <Link href="/mix" className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto">
+            <Link href="/mix" className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs">
               Essayer ces 4 étapes avec vos pistes
             </Link>
           </div>
-          <div className="flex flex-nowrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8 whitespace-nowrap flex-wrap">
+          <div className="flex flex-nowrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8 whitespace-nowrap flex-wrap max-lg:gap-3 max-md:gap-2 max-md:text-[10px]">
             <span className="inline-flex items-center gap-2">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-[10px] text-slate-400">▶</span>
               Aperçu pleine longueur

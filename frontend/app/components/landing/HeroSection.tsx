@@ -104,11 +104,11 @@ export function HeroSection() {
   const onClickCard = () => inputRef.current?.click();
 
   return (
-    <section className="relative min-h-0 overflow-hidden px-4 pt-6 pb-10 sm:pt-8 sm:pb-12">
-      <div className="mx-auto grid max-w-6xl items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12">
-        <div className="max-w-xl">
+    <section className="relative min-h-0 overflow-hidden px-4 pt-6 pb-10 sm:pt-8 sm:pb-12 max-lg:px-3 max-md:pt-5 max-md:pb-8">
+      <div className="mx-auto grid max-w-6xl items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12 max-lg:gap-6 max-md:gap-5">
+        <div className="max-w-xl max-lg:max-w-none">
           <h1
-            className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-hero-tagline"
+            className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-hero-tagline max-lg:text-3xl max-md:text-2xl"
             style={{ animationFillMode: "both" }}
           >
             <span className="text-white inline-block animate-hero-line-1">Le site n°1</span>
@@ -118,19 +118,19 @@ export function HeroSection() {
             <span className="text-white inline-block animate-hero-line-3 whitespace-nowrap">en ligne</span>
           </h1>
           <p
-            className="mt-4 text-lg text-slate-400 sm:text-xl animate-fade-up"
+            className="mt-4 text-lg text-slate-400 sm:text-xl animate-fade-up max-lg:text-base max-md:mt-3 max-md:text-sm"
             style={{ animationDelay: "0.25s", animationFillMode: "both" }}
           >
             Transformez vos pistes brutes en un morceau fini en quelques minutes.
           </p>
           <p
-            className="mt-3 text-sm text-slate-400 sm:text-base animate-fade-up"
+            className="mt-3 text-sm text-slate-400 sm:text-base animate-fade-up max-lg:text-sm max-md:text-xs"
             style={{ animationDelay: "0.3s", animationFillMode: "both" }}
           >
             Zéro ingé son, zéro plugin — tout se fait en ligne.
           </p>
           <ul
-            className="mt-4 space-y-2 animate-fade-up"
+            className="mt-4 space-y-2 animate-fade-up max-lg:mt-3 max-lg:space-y-1.5 max-md:mt-2"
             style={{ animationDelay: "0.4s", animationFillMode: "both" }}
           >
             {[
@@ -167,11 +167,11 @@ export function HeroSection() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            className={`hero-dropzone font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-6 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
+            className={`hero-dropzone font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-6 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] max-lg:min-h-[180px] max-lg:gap-2 max-lg:px-3 max-lg:py-5 max-md:min-h-[160px] max-md:py-4 ${
               isDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
             }`}
           >
-            <span className="font-heading text-base font-medium text-white sm:text-lg">
+            <span className="font-heading text-base font-medium text-white sm:text-lg max-lg:text-sm max-md:text-xs">
               {isDragging ? "Déposez le fichier" : "Glissez vos pistes ici"}
             </span>
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white" aria-hidden>

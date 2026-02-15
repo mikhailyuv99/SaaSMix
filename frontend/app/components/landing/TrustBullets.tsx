@@ -21,20 +21,20 @@ const items = [
 
 export function TrustBullets() {
   return (
-    <section className="px-4 pt-8 pb-4 sm:pt-10 sm:pb-5">
+    <section className="px-4 pt-8 pb-4 sm:pt-10 sm:pb-5 max-lg:px-3 max-md:pt-6 max-md:pb-3">
       <ObserveSection>
-        <div className="mx-auto flex max-w-4xl flex-col gap-8 sm:flex-row sm:justify-between sm:gap-10">
+        <div className="mx-auto flex max-w-4xl flex-col gap-8 sm:flex-row sm:justify-between sm:gap-10 max-lg:gap-5 max-md:gap-4">
           {items.map((item, i) => (
             <div
               key={item.label}
-              className={`flex items-start gap-4 text-center sm:text-left group ${i === 0 ? "observe-stagger-1" : i === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
+              className={`flex items-start gap-4 text-center sm:text-left group max-lg:gap-3 ${i === 0 ? "observe-stagger-1" : i === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-slate-400 transition-colors duration-300 group-hover:border-white/25 group-hover:bg-white/10 sm:mx-auto sm:mb-1 sm:flex [&>svg]:block">
-                {"iconNode" in item && item.iconNode ? item.iconNode : <span className="text-base">{item.icon}</span>}
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-slate-400 transition-colors duration-300 group-hover:border-white/25 group-hover:bg-white/10 sm:mx-auto sm:mb-1 sm:flex [&>svg]:block max-lg:h-9 max-lg:w-9 [&>svg]:max-lg:w-4 [&>svg]:max-lg:h-4">
+                {"iconNode" in item && item.iconNode ? item.iconNode : <span className="text-base max-lg:text-sm">{item.icon}</span>}
               </span>
-              <div className="flex-1">
-                <p className="font-heading font-semibold text-white whitespace-nowrap">{item.label}</p>
-                <p className="mt-0.5 text-sm text-slate-400">{item.desc}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-heading font-semibold text-white whitespace-nowrap max-lg:whitespace-normal max-lg:text-sm max-md:text-xs">{item.label}</p>
+                <p className="mt-0.5 text-sm text-slate-400 max-lg:text-xs">{item.desc}</p>
               </div>
             </div>
           ))}

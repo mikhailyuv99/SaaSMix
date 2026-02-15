@@ -54,13 +54,13 @@ export function AuthModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-md p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-md p-4 max-lg:p-3"
       onClick={close}
       aria-modal="true"
       role="dialog"
     >
       <div
-        className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative"
+        className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button

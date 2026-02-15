@@ -18,23 +18,23 @@ const YOUTUBE_VIDEO_ID = getYouTubeVideoId(process.env.NEXT_PUBLIC_YOUTUBE_EXPLA
 
 export function VideoSection() {
   return (
-    <section className="px-4 py-6 sm:py-8">
+    <section className="px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-4xl max-lg:max-w-none">
           <div className="text-center observe-stagger-1">
-            <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400">
+            <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 max-md:text-xs">
               Tutoriel
             </p>
-            <h2 className="mt-2 font-heading text-2xl font-bold text-white sm:text-3xl">
+            <h2 className="mt-2 font-heading text-2xl font-bold text-white sm:text-3xl max-lg:text-xl max-md:text-lg">
               Comment utiliser l'outil
             </h2>
-            <p className="mt-2 text-slate-400 text-sm sm:text-base">
+            <p className="mt-2 text-slate-400 text-sm sm:text-base max-md:text-xs">
               Une vidéo pour tout comprendre en quelques minutes.
             </p>
           </div>
 
-          <div className="mt-5 observe-stagger-2 sm:mt-6">
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-xl shadow-black/30 aspect-video">
+          <div className="mt-5 observe-stagger-2 sm:mt-6 max-lg:mt-4">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-xl shadow-black/30 aspect-video max-lg:rounded-xl">
               {YOUTUBE_VIDEO_ID ? (
                 <iframe
                   src={`https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?rel=0`}

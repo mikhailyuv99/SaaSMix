@@ -94,10 +94,10 @@ export function Header() {
   return (
     <>
       <header className="relative z-50 w-full bg-transparent">
-        <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6">
+        <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6 max-lg:flex-wrap max-lg:py-3 max-lg:min-h-14 max-lg:gap-y-3">
           <Link
             href="/"
-            className="font-heading flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90"
+            className="font-heading flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90 max-lg:order-1"
           >
             <span>SIBERIA</span>
             <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -106,13 +106,13 @@ export function Header() {
             <span>MIX</span>
           </Link>
 
-          <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 sm:gap-6 flex-nowrap">
+          <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 sm:gap-6 flex-nowrap max-lg:relative max-lg:left-0 max-lg:top-0 max-lg:translate-x-0 max-lg:translate-y-0 max-lg:order-3 max-lg:w-full max-lg:justify-center max-lg:gap-3 max-lg:text-xs">
             {isHome && (
               <>
-                <a href="#tarifs" className="text-sm text-white/90 transition-colors hover:text-white">
+                <a href="#tarifs" className="text-sm text-white/90 transition-colors hover:text-white max-lg:text-xs">
                   Tarifs
                 </a>
-                <a href="#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">
+                <a href="#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white max-lg:text-xs">
                   FAQ & Contact
                 </a>
               </>
@@ -121,45 +121,45 @@ export function Header() {
               <Link
                 href="/"
                 onClick={handleAccueilClick}
-                className="text-sm text-white/90 transition-colors hover:text-white"
+                className="text-sm text-white/90 transition-colors hover:text-white max-lg:text-xs"
               >
                 Accueil
               </Link>
             )}
             {!isHome && (
-              <a href="/#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">
+              <a href="/#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white max-lg:text-xs">
                 FAQ & Contact
               </a>
             )}
             <button
               type="button"
               onClick={handlePlanClick}
-              className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase"
+              className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase max-lg:text-xs"
             >
               {user && isPro ? "GÉRER MON ABONNEMENT" : "CHOISIR UN PLAN"}
             </button>
           </nav>
 
-          <div className="flex items-center gap-4 sm:gap-6 flex-nowrap shrink-0">
+          <div className="flex items-center gap-4 sm:gap-6 flex-nowrap shrink-0 max-lg:order-2 max-lg:gap-2 max-lg:text-xs">
             {user ? (
               <>
-                <span className="text-sm text-white/90 truncate max-w-[140px] sm:max-w-[200px] uppercase" title={user.email}>
+                <span className="text-sm text-white/90 truncate max-w-[140px] sm:max-w-[200px] uppercase max-lg:max-w-[90px]" title={user.email}>
                   {user.email}
                 </span>
                 <button
                   type="button"
                   onClick={handleLogoutClick}
-                  className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase"
+                  className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase max-lg:text-xs"
                 >
                   DÉCONNEXION
                 </button>
               </>
             ) : (
               <>
-                <button type="button" onClick={() => openAuthModal?.("login")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0">
+                <button type="button" onClick={() => openAuthModal?.("login")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0 max-lg:text-xs">
                   CONNEXION
                 </button>
-                <button type="button" onClick={() => openAuthModal?.("register")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0">
+                <button type="button" onClick={() => openAuthModal?.("register")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0 max-lg:text-xs">
                   INSCRIPTION
                 </button>
               </>
@@ -169,8 +169,8 @@ export function Header() {
       </header>
 
       {showLeaveModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog">
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm max-lg:p-4 max-lg:max-w-[calc(100vw-1.5rem)]">
             <p className="text-tagline text-slate-300 text-center text-sm mb-6">
               {isLeaveForDisconnect
                 ? "Vous avez des modifications non sauvegardées. Se déconnecter quand même ?"

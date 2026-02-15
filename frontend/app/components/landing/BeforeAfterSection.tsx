@@ -276,10 +276,10 @@ function DemoCard({
   return (
     <div
       ref={cardRef}
-      className={`landing-card group p-5 sm:p-6 flex flex-col min-w-0 ${index === 0 ? "observe-stagger-1" : index === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
+      className={`landing-card group p-5 sm:p-6 flex flex-col min-w-0 max-lg:p-4 max-md:p-3 ${index === 0 ? "observe-stagger-1" : index === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
     >
-      <p className="font-heading font-semibold text-white">{demo.title}</p>
-      <p className="mt-0.5 text-sm text-slate-400">{demo.desc}</p>
+      <p className="font-heading font-semibold text-white max-md:text-sm">{demo.title}</p>
+      <p className="mt-0.5 text-sm text-slate-400 max-md:text-xs">{demo.desc}</p>
 
       {/* Waveform (current mode) or loading spinner - prend toute la largeur dispo */}
       <div className="mt-4 w-full min-w-0 rounded-lg border border-white/[0.06] h-12 overflow-hidden relative">
@@ -366,28 +366,28 @@ function DemoCard({
 
 export function BeforeAfterSection() {
   return (
-    <section className="px-4 py-6 sm:py-8">
+    <section className="px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
+        <div className="mx-auto max-w-3xl text-center max-lg:max-w-none">
+          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1 max-md:text-xs">
             Avant / Après
           </p>
-          <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2">
+          <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2 max-lg:text-2xl max-md:text-xl">
             Écoutez le résultat
           </h2>
-          <p className="mt-3 text-slate-400 observe-stagger-3">
+          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs">
             Exemples mixés avec Siberia Mix.
           </p>
         </div>
-        <div className="mx-auto mt-5 grid max-w-5xl gap-6 sm:grid-cols-3">
+        <div className="mx-auto mt-5 grid max-w-5xl gap-6 sm:grid-cols-3 max-lg:mt-4 max-lg:gap-4 max-md:mt-3 max-md:gap-3">
           {DEMOS.map((demo, i) => (
             <DemoCard key={demo.id} demo={demo} index={i} />
           ))}
         </div>
-        <div className="mx-auto mt-5 max-w-2xl text-center observe-stagger-4">
+        <div className="mx-auto mt-5 max-w-2xl text-center observe-stagger-4 max-lg:mt-4 max-md:mt-3">
           <Link
             href="/mix"
-            className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto"
+            className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs"
           >
             Mixer votre propre morceau
           </Link>

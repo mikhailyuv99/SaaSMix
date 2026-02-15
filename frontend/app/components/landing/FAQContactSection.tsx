@@ -60,21 +60,21 @@ export function FAQContactSection() {
   };
 
   return (
-    <section id="faq-contact" className="scroll-mt-20 px-4 py-6 sm:py-8 font-sans">
+    <section id="faq-contact" className="scroll-mt-20 px-4 py-6 sm:py-8 font-sans max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1">
+        <div className="mx-auto max-w-3xl text-center max-lg:max-w-none">
+          <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1 max-md:text-xs">
             Support
           </p>
-          <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2">
+          <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2 max-lg:text-2xl max-md:text-xl">
             FAQ & Contact
           </h2>
-          <p className="mt-3 text-slate-400 observe-stagger-3">
+          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs">
             Questions fréquentes et formulaire de contact.
           </p>
         </div>
 
-        <div className="mx-auto mt-8 max-w-5xl sm:mt-10 flex flex-col lg:flex-row lg:items-stretch gap-8 sm:gap-10">
+        <div className="mx-auto mt-8 max-w-5xl sm:mt-10 flex flex-col lg:flex-row lg:items-stretch gap-8 sm:gap-10 max-lg:mt-6 max-lg:gap-6 max-md:mt-5 max-md:gap-5">
           <ul className="space-y-0 observe-stagger-1 min-w-0 flex-1 lg:max-w-[480px]">
             {faqs.map((faq, i) => (
               <li
@@ -86,7 +86,7 @@ export function FAQContactSection() {
                 <button
                   type="button"
                   style={{ fontFamily: FONT }}
-                  className="faq-question flex w-full items-start justify-between gap-4 py-5 sm:py-6 text-left transition-colors"
+                  className="faq-question flex w-full items-start justify-between gap-4 py-5 sm:py-6 text-left transition-colors max-lg:py-4 max-md:py-3 max-md:gap-2"
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   aria-expanded={openIndex === i}
                 >
@@ -97,7 +97,7 @@ export function FAQContactSection() {
                       }`}
                       aria-hidden
                     />
-                    <span className="font-heading font-semibold text-white text-sm sm:text-base uppercase">
+                    <span className="font-heading font-semibold text-white text-sm sm:text-base uppercase max-md:text-xs">
                       {faq.q}
                     </span>
                   </span>
@@ -118,7 +118,7 @@ export function FAQContactSection() {
                 >
                   <div className="overflow-hidden">
                     <div
-                      className="font-sans pl-8 sm:pl-9 pr-0 pb-5 sm:pb-6 pt-0 text-sm sm:text-[15px] leading-relaxed text-slate-400"
+                      className="font-sans pl-8 sm:pl-9 pr-0 pb-5 sm:pb-6 pt-0 text-sm sm:text-[15px] leading-relaxed text-slate-400 max-lg:pl-7 max-lg:pb-4 max-md:pl-6 max-md:pb-3 max-md:text-xs"
                       style={{ fontFamily: FONT }}
                     >
                       {faq.a}
@@ -130,9 +130,9 @@ export function FAQContactSection() {
           </ul>
 
           <div className="observe-stagger-2 flex flex-col w-full min-h-0 lg:w-[380px] lg:shrink-0 lg:min-h-0">
-            <div className="font-sans pt-5 px-6 pb-6 sm:pt-6 sm:px-7 sm:pb-7 rounded-xl border border-white/[0.06] bg-white/[0.02] flex flex-col flex-1 min-h-0 lg:min-h-full">
-              <h3 className="font-heading font-semibold text-white">Nous contacter</h3>
-              <p className="mt-1 text-sm text-slate-400">
+            <div className="font-sans pt-5 px-6 pb-6 sm:pt-6 sm:px-7 sm:pb-7 rounded-xl border border-white/[0.06] bg-white/[0.02] flex flex-col flex-1 min-h-0 lg:min-h-full max-lg:pt-5 max-lg:px-5 max-lg:pb-5 max-md:pt-4 max-md:px-4 max-md:pb-4">
+              <h3 className="font-heading font-semibold text-white max-md:text-sm">Nous contacter</h3>
+              <p className="mt-1 text-sm text-slate-400 max-md:text-xs">
                 Un message ou une question ? Envoyez-nous un mail.
               </p>
               <form onSubmit={handleSubmit} className="mt-5 flex flex-col flex-1 min-h-0 gap-4">
