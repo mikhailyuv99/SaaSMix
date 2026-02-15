@@ -7,7 +7,7 @@ const PLANS_MENSUEL = [
     name: "Starter",
     subtitle: "Pour découvrir",
     price: "9,99 €",
-    features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projet",
+    features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projets",
     cta: "Bientôt",
     featured: false,
   },
@@ -15,7 +15,7 @@ const PLANS_MENSUEL = [
     name: "Creator",
     subtitle: "Pour les artistes réguliers",
     price: "19,99 €",
-    features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projet",
+    features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets",
     cta: "Bientôt",
     featured: true,
   },
@@ -55,7 +55,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
 
         {/* Toggle Mensuel / Annuel */}
         <div className="flex justify-center mb-6">
-          <div className="relative inline-flex rounded-xl border border-white/10 bg-white/5 p-1">
+          <div className="inline-flex items-center rounded-xl border border-white/10 bg-white/5 p-1">
             <button
               type="button"
               onClick={() => setBillingPeriod("mensuel")}
@@ -68,13 +68,13 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
             <button
               type="button"
               onClick={() => setBillingPeriod("annuel")}
-              className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 billingPeriod === "annuel" ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"
               }`}
             >
               Annuel
-              <span className="absolute -top-2 right-0 rounded bg-white/90 px-1.5 py-0.5 text-[10px] font-bold text-black shadow-[0_0_12px_2px_rgba(255,255,255,0.8)]">
-                -25%
+              <span className="rounded-full bg-white/25 px-2 py-0.5 text-xs font-bold text-white ring-1 ring-white/30">
+                −25%
               </span>
             </button>
           </div>
@@ -120,8 +120,9 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
             ))}
           </div>
         ) : (
-          <div className="flex justify-center">
-            <div className="w-full max-w-sm rounded-2xl border border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10 p-6 sm:p-8">
+          <div className="grid gap-6 sm:grid-cols-3">
+            <div aria-hidden />
+            <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10 p-6 sm:p-8 min-h-0">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-heading text-xl font-semibold text-white">{PLAN_ANNUEL.name}</h3>
                 {PLAN_ANNUEL.featured && (
@@ -146,6 +147,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                 </span>
               </div>
             </div>
+            <div aria-hidden />
           </div>
         )}
       </div>
