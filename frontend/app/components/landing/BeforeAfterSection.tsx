@@ -127,9 +127,11 @@ function getDemoAudioUrls(id: DemoId): { avant: string; apres: string } {
 function DemoCard({
   demo,
   index,
+  registerAsSpaceTarget,
 }: {
   demo: (typeof DEMOS)[number];
   index: number;
+  registerAsSpaceTarget?: (playPause: () => void, getIsPlaying: () => boolean) => void;
 }) {
   const [mode, setMode] = useState<"avant" | "apres">("avant");
   const [isPlaying, setIsPlaying] = useState(false);
@@ -151,6 +153,7 @@ function DemoCard({
     startOffset: number;
     duration: number;
   } | null>(null);
+  const playPauseRef = useRef<() => void>(() => {});
 
   const urls = useMemo(() => getDemoAudioUrls(demo.id), [demo.id]);
   const currentWaveform = mode === "avant" ? waveforms.avant : waveforms.apres;
@@ -269,13 +272,18 @@ function DemoCard({
   );
 
   const handlePlay = useCallback(() => {
+    registerAsSpaceTarget?.(() => playPauseRef.current?.(), () => isPlaying);
     if (isPlaying) {
       stopPlayback();
       setIsPlaying(false);
       return;
     }
     startPlaybackAtOffset(currentTime);
-  }, [isPlaying, currentTime, startPlaybackAtOffset, stopPlayback]);
+  }, [isPlaying, currentTime, startPlaybackAtOffset, stopPlayback, registerAsSpaceTarget]);
+
+  useEffect(() => {
+    playPauseRef.current = handlePlay;
+  }, [handlePlay]);
 
   // Playhead: RAF loop when playing (comme section mix)
   useEffect(() => {
@@ -304,12 +312,13 @@ function DemoCard({
 
   const handleSeek = useCallback(
     (time: number) => {
+      registerAsSpaceTarget?.(() => playPauseRef.current?.(), () => isPlaying);
       setCurrentTime(time);
       const wasPlaying = !!playbackRef.current;
       if (playbackRef.current) stopPlayback();
       if (wasPlaying) startPlaybackAtOffset(time);
     },
-    [stopPlayback, startPlaybackAtOffset]
+    [stopPlayback, startPlaybackAtOffset, registerAsSpaceTarget]
   );
 
   // Switch Avant/Après via gains (comme section mix) — instant sur PC et mobile.
@@ -401,7 +410,11 @@ function DemoCard({
   );
 }
 
-export function BeforeAfterSection() {
+export function BeforeAfterSection({
+  registerDemoPlayback,
+}: {
+  registerDemoPlayback?: (playPause: () => void, getIsPlaying: () => boolean) => void;
+} = {}) {
   return (
     <section className="w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
@@ -418,7 +431,7 @@ export function BeforeAfterSection() {
         </div>
         <div className="w-full max-w-5xl mx-auto mt-5 grid gap-6 sm:grid-cols-3 max-lg:mt-4 max-lg:gap-4 max-md:mt-3 max-md:gap-3 box-border">
           {DEMOS.map((demo, i) => (
-            <DemoCard key={demo.id} demo={demo} index={i} />
+            <DemoCard key={demo.id} demo={demo} index={i} registerAsSpaceTarget={registerDemoPlayback} />
           ))}
         </div>
         <div className="w-full max-w-2xl mx-auto mt-5 text-center observe-stagger-4 max-lg:mt-4 max-md:mt-3 box-border">

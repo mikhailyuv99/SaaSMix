@@ -393,7 +393,8 @@ export default function Home() {
   } | null>(null);
   const [masterPlaybackCurrentTime, setMasterPlaybackCurrentTime] = useState(0);
   const [isMasterResultPlaying, setIsMasterResultPlaying] = useState(false);
-  const [activePlayer, setActivePlayer] = useState<"mix" | "master">("mix");
+  const [activePlayer, setActivePlayer] = useState<"mix" | "master" | "demo">("mix");
+  const demoPlaybackRef = useRef<{ playPause: () => void; getIsPlaying: () => boolean } | null>(null);
   const [masterResumeFrom, setMasterResumeFrom] = useState(0);
   const [gainSliderHoveredTrackId, setGainSliderHoveredTrackId] = useState<string | null>(null);
   const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
@@ -2256,6 +2257,8 @@ export default function Home() {
 
   const seekTo = useCallback(
     (offset: number) => {
+      demoPlaybackRef.current = null;
+      setActivePlayer("mix");
       const ctx = contextRef.current;
       const playable = tracksRef.current.filter((t) => t.rawAudioUrl);
       if (playable.length === 0) return;
@@ -2839,6 +2842,7 @@ export default function Home() {
       stopAll();
       setMasterResult({ mixUrl, masterUrl });
       setMasterPlaybackMode("master");
+      demoPlaybackRef.current = null;
       setActivePlayer("master");
     } catch (e) {
       console.error(e);
@@ -2962,6 +2966,10 @@ export default function Home() {
       e.preventDefault();
       e.stopPropagation();
       (document.activeElement as HTMLElement)?.blur();
+      if (activePlayer === "demo" && demoPlaybackRef.current) {
+        demoPlaybackRef.current.playPause();
+        return;
+      }
       if (activePlayer === "master" && masterResult) {
         if (isMasterResultPlaying) stopMasterPlayback();
         else startMasterPlayback();
@@ -2988,6 +2996,8 @@ export default function Home() {
 
   const seekMaster = useCallback(
     (time: number) => {
+      demoPlaybackRef.current = null;
+      setActivePlayer("master");
       const safe = Math.max(0, time);
       setMasterResumeFrom(safe);
       setMasterPlaybackCurrentTime(safe);
@@ -4040,7 +4050,7 @@ export default function Home() {
               !isPlaying ? (
                 <button
                   type="button"
-                  onClick={() => { setActivePlayer("mix"); playAll(); }}
+                  onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); playAll(); }}
                   className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0"
                   aria-label={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
                   title={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
@@ -4048,7 +4058,7 @@ export default function Home() {
                   <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                 </button>
               ) : (
-                <button type="button" onClick={() => { setActivePlayer("mix"); stopAll(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause" title="Pause">
+                <button type="button" onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); stopAll(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause" title="Pause">
                   <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                 </button>
               )
@@ -4163,7 +4173,7 @@ export default function Home() {
                 {!isMasterResultPlaying ? (
                   <button
                     type="button"
-                    onClick={() => { setActivePlayer("master"); startMasterPlayback(); }}
+                    onClick={() => { demoPlaybackRef.current = null; setActivePlayer("master"); startMasterPlayback(); }}
                     disabled={!masterWaveforms}
                     className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label={masterResumeFrom > 0 ? "Reprendre" : "Play"}
@@ -4171,7 +4181,7 @@ export default function Home() {
                     <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                   </button>
                 ) : (
-                  <button type="button" onClick={() => { setActivePlayer("master"); stopMasterPlayback(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause">
+                  <button type="button" onClick={() => { demoPlaybackRef.current = null; setActivePlayer("master"); stopMasterPlayback(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause">
                     <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                   </button>
                 )}
@@ -4279,7 +4289,12 @@ export default function Home() {
       <TrustBullets />
       <HowItWorks />
       <VideoSection />
-      <BeforeAfterSection />
+      <BeforeAfterSection
+        registerDemoPlayback={(playPause, getIsPlaying) => {
+          demoPlaybackRef.current = { playPause, getIsPlaying };
+          setActivePlayer("demo");
+        }}
+      />
       <FeaturesSection />
       <PricingSection />
       <FAQContactSection />
