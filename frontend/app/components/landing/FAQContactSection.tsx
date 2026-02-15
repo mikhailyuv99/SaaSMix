@@ -74,8 +74,8 @@ export function FAQContactSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-8 max-w-5xl sm:mt-10 grid gap-8 sm:gap-10 lg:grid-cols-[1fr,380px] lg:items-start">
-          <ul className="space-y-0 observe-stagger-1 min-w-0">
+        <div className="mx-auto mt-8 max-w-5xl sm:mt-10 flex flex-col lg:flex-row lg:items-start gap-8 sm:gap-10">
+          <ul className="space-y-0 observe-stagger-1 min-w-0 flex-1 lg:max-w-[480px]">
             {faqs.map((faq, i) => (
               <li
                 key={i}
@@ -129,8 +129,8 @@ export function FAQContactSection() {
             ))}
           </ul>
 
-          <div className="observe-stagger-2 flex flex-col w-full min-h-0">
-            <div className="font-sans p-6 sm:p-7 rounded-xl border border-white/[0.06] bg-white/[0.02] flex flex-col flex-1 min-h-0">
+          <div className="observe-stagger-2 flex flex-col w-full min-h-0 lg:w-[380px] lg:shrink-0">
+            <div className="font-sans pt-5 px-6 pb-6 sm:pt-6 sm:px-7 sm:pb-7 rounded-xl border border-white/[0.06] bg-white/[0.02] flex flex-col flex-1 min-h-0">
               <h3 className="font-heading font-semibold text-white">Nous contacter</h3>
               <p className="mt-1 text-sm text-slate-400">
                 Un message ou une question ? Envoyez-nous un mail.
