@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 const FILES_DB_NAME = "saas_mix_files";
 const FILES_STORE_NAME = "files";
@@ -40,7 +39,6 @@ function saveHeroUploadFiles(files: File[]): Promise<void> {
 const WAV_ONLY_MESSAGE = "Seuls les fichiers .wav sont acceptés.";
 
 export function HeroSection() {
-  const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,12 +61,12 @@ export function HeroSection() {
         await saveHeroUploadFiles(wavFiles);
         const ignoredCount = files.length - wavFiles.length;
         const query = ignoredCount > 0 ? `?from=hero&ignored=${ignoredCount}` : "?from=hero";
-        router.push(`/mix${query}`);
+        window.location.href = `/mix${query}`;
       } catch {
-        router.push("/mix");
+        window.location.href = "/mix";
       }
     },
-    [router]
+    []
   );
 
   const onDrop = useCallback(

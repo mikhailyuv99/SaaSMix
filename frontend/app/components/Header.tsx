@@ -172,7 +172,22 @@ export function Header() {
                 </>
               )}
               {!isHome && (
-                <Link href="/" onClick={(e) => { e.preventDefault(); handleAccueilClick(e); closeBurger(); }} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Accueil</Link>
+                <Link
+                  href="/"
+                  onClick={(e) => {
+                    if (isMix && hasUnsavedChanges) {
+                      e.preventDefault();
+                      setLeaveIntent("navigate");
+                      setShowLeaveModal(true);
+                      closeBurger();
+                    } else {
+                      closeBurger();
+                    }
+                  }}
+                  className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase"
+                >
+                  Accueil
+                </Link>
               )}
               {!isHome && <a href="/#faq-contact" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">FAQ & Contact</a>}
               <button type="button" onClick={() => { handlePlanClick(); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">

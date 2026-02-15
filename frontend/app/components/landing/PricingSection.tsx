@@ -94,15 +94,15 @@ export function PricingSection() {
             plansMensuel.map((plan, i) => (
               <div
                 key={plan.name}
-                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-0 max-lg:p-3 max-lg:rounded-xl max-md:p-2 ${
+                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px] ${
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"
                 } ${
                   plan.featured
-                    ? "scale-[1.02] border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 hover:border-white/30 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.35),0_0_48px_rgba(255,255,255,0.28)]"
+                    ? "border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 hover:border-white/30"
                     : "landing-card border-white/10"
                 }`}
               >
-                <div className="flex items-start justify-between gap-2 max-md:flex-wrap">
+                <div className="flex items-center justify-between gap-2 min-h-[2rem]">
                   <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{plan.name}</h3>
                   {plan.featured && (
                     <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-lg:text-[9px] max-lg:px-1.5 max-md:text-[8px] max-md:px-1">
@@ -110,9 +110,9 @@ export function PricingSection() {
                     </span>
                   )}
                 </div>
-                <p className="mt-3 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px]">{plan.subtitle}</p>
-                <p className="mt-5 font-heading text-2xl font-bold text-white max-lg:mt-2 max-lg:text-lg max-md:text-base">{plan.price}</p>
-                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
+                <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px] min-h-[1.5rem]">{plan.subtitle}</p>
+                <p className="mt-4 min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base">{plan.price}</p>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
                   {plan.features.split("\n").map((line, j) => (
                     <li key={j} className="flex items-start gap-2.5 max-lg:gap-1.5">
                       <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50 max-lg:size-1" aria-hidden />
@@ -120,7 +120,7 @@ export function PricingSection() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6 mt-auto max-lg:mt-3">
+                <div className="mt-4 pt-4 shrink-0">
                   <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
@@ -136,25 +136,26 @@ export function PricingSection() {
           ) : (
             <>
               <div className="observe-stagger-4" aria-hidden />
-              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 sm:scale-[1.02] flex flex-col min-h-[380px] max-lg:min-h-0 max-lg:p-3 max-lg:rounded-xl max-md:p-2">
-                <div className="flex items-start justify-between gap-2 max-md:flex-wrap">
+              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px]">
+                <div className="flex items-center justify-between gap-2 min-h-[2rem]">
                   <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{planAnnuel.name}</h3>
                   {planAnnuel.featured && (
                     <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-lg:text-[9px] max-lg:px-1.5 max-md:text-[8px] max-md:px-1">
-                      Économisez 25%
+                      −25%
                     </span>
                   )}
                 </div>
-                <p className="mt-5 font-heading text-2xl font-bold text-white max-lg:mt-2 max-lg:text-lg max-md:text-base">{planAnnuel.price}</p>
-                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
+                <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px] min-h-[1.5rem]">{planAnnuel.subtitle}</p>
+                <p className="mt-4 min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base">{planAnnuel.price}</p>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
                   {planAnnuel.features.split("\n").map((line, i) => (
-                    <li key={i} className="flex items-start gap-2.5">
-                      <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50" aria-hidden />
+                    <li key={i} className="flex items-start gap-2.5 max-lg:gap-1.5">
+                      <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50 max-lg:size-1" aria-hidden />
                       <span>{line}</span>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6 mt-auto max-lg:mt-3">
+                <div className="mt-4 pt-4 shrink-0">
                   <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
