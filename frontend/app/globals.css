@@ -80,12 +80,22 @@
 }
 
 @keyframes hero-tagline-glow {
-  0%, 100% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.15), 0 0 40px rgba(255, 255, 255, 0.08); }
-  50% { text-shadow: 0 0 28px rgba(255, 255, 255, 0.25), 0 0 56px rgba(255, 255, 255, 0.12); }
+  0%, 100% {
+    text-shadow: 0 0 24px rgba(255, 255, 255, 0.4), 0 0 48px rgba(255, 255, 255, 0.2);
+    opacity: 1;
+  }
+  50% {
+    text-shadow: 0 0 36px rgba(255, 255, 255, 0.7), 0 0 72px rgba(255, 255, 255, 0.35);
+    opacity: 0.95;
+  }
 }
 
 .animate-hero-tagline {
-  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards, hero-tagline-glow 3s ease-in-out 0.8s infinite;
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
+}
+
+.animate-hero-tagline-loop {
+  animation: hero-tagline-glow 2.5s ease-in-out 0.9s infinite;
 }
 
 @keyframes bg-fade-in {

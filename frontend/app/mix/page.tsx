@@ -425,7 +425,7 @@ export default function Home() {
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [projectsList, setProjectsList] = useState<{ id: string; name: string; created_at: string | null }[]>([]);
   const [showProjectsModal, setShowProjectsModal] = useState(false);
-  const [isLoadingProject, setIsLoadingProject] = useState(false);
+  const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
@@ -1634,7 +1634,7 @@ export default function Home() {
 
   const loadProject = useCallback(
     async (projectId: string) => {
-      setIsLoadingProject(true);
+      setLoadingProjectId(projectId);
       try {
         const res = await fetch(`${API_BASE}/api/projects/${projectId}`, { headers: getAuthHeaders() });
         if (res.status === 401) {
@@ -1710,7 +1710,7 @@ export default function Home() {
       } catch (e) {
         setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors du chargement.", onClose: () => {} });
       } finally {
-        setIsLoadingProject(false);
+        setLoadingProjectId(null);
       }
     },
     [getAuthHeaders]
@@ -2785,7 +2785,7 @@ export default function Home() {
   return (
     <main className="relative z-10 min-h-screen font-heading">
       {appModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
           <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
             {appModal.type === "prompt" && (
               <>
@@ -2926,7 +2926,7 @@ export default function Home() {
               </button>
             </div>
             <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
-              {projectsList.length === 0 && !isLoadingProject && (
+              {projectsList.length === 0 && !loadingProjectId && (
                 <p className="text-slate-400 text-sm">Aucun projet sauvegardé.</p>
               )}
               {projectsList.map((p) => (
@@ -2945,15 +2945,15 @@ export default function Home() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      disabled={isLoadingProject}
+                      disabled={loadingProjectId !== null}
                       onClick={() => loadProject(p.id)}
                       className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
                     >
-                      {isLoadingProject ? <span className="animate-dots">Chargement</span> : "Charger"}
+                      {loadingProjectId === p.id ? <span className="animate-dots">Chargement</span> : "Charger"}
                     </button>
                     <button
                       type="button"
-                      disabled={isLoadingProject}
+                      disabled={loadingProjectId !== null}
                       onClick={() => openRenameProjectPrompt(p.id, p.name)}
                       className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 text-sm disabled:opacity-50 transition-colors"
                     >
@@ -2961,7 +2961,7 @@ export default function Home() {
                     </button>
                     <button
                       type="button"
-                      disabled={isLoadingProject}
+                      disabled={loadingProjectId !== null}
                       onClick={() => deleteProject(p.id)}
                       className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 text-sm disabled:opacity-50 transition-colors"
                     >
