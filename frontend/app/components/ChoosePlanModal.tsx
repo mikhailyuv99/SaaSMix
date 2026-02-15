@@ -8,7 +8,7 @@ const PLANS_MENSUEL = [
     subtitle: "Pour découvrir",
     price: "9,99 €",
     features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projets",
-    cta: "Bientôt",
+    cta: "Choisir ce plan",
     featured: false,
   },
   {
@@ -16,7 +16,7 @@ const PLANS_MENSUEL = [
     subtitle: "Pour les artistes réguliers",
     price: "19,99 €",
     features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets",
-    cta: "Bientôt",
+    cta: "Choisir ce plan",
     featured: true,
   },
   {
@@ -24,7 +24,7 @@ const PLANS_MENSUEL = [
     subtitle: "Mix + master à volonté",
     price: "29,99 €",
     features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
-    cta: "Bientôt",
+    cta: "Choisir ce plan",
     featured: false,
   },
 ];
@@ -34,7 +34,7 @@ const PLAN_ANNUEL = {
   subtitle: "Économisez 25 %",
   price: "269 €",
   features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
-  cta: "Bientôt",
+  cta: "Choisir ce plan",
   featured: true,
 };
 
@@ -85,8 +85,8 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
             {PLANS_MENSUEL.map((plan) => (
               <div
                 key={plan.name}
-                className={`rounded-2xl border p-6 transition-all sm:p-8 flex flex-col ${
-                  plan.featured ? "border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_24px_rgba(255,255,255,0.28),0_0_56px_rgba(255,255,255,0.2)] ring-1 ring-white/10" : "border-white/10 bg-white/[0.03]"
+                className={`rounded-2xl border p-6 transition-all sm:p-8 flex flex-col min-h-[380px] ${
+                  plan.featured ? "border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10" : "border-white/10 bg-white/[0.03]"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -108,13 +108,14 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                   ))}
                 </ul>
                 <div className="mt-6 mt-auto">
-                  <span
-                    className={`inline-block w-full rounded-xl border px-4 py-2.5 text-center text-sm ${
-                      plan.featured ? "border-white/20 bg-white/5 text-slate-400" : "border-white/15 bg-white/5 text-slate-400"
+                  <button
+                    type="button"
+                    className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors ${
+                      plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {plan.cta}
-                  </span>
+                  </button>
                 </div>
               </div>
             ))}
@@ -122,16 +123,18 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         ) : (
           <div className="grid gap-6 sm:grid-cols-3">
             <div aria-hidden />
-            <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_24px_rgba(255,255,255,0.28),0_0_56px_rgba(255,255,255,0.2)] ring-1 ring-white/10 p-6 sm:p-8 flex flex-col min-h-0">
+            <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 p-6 sm:p-8 flex flex-col min-h-[380px]">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-heading text-xl font-semibold text-white">{PLAN_ANNUEL.name}</h3>
                 {PLAN_ANNUEL.featured && (
-                  <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
-                    Plus avantageux
-                  </span>
+                  <div className="shrink-0 flex flex-col items-end gap-0.5">
+                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
+                      Plus avantageux
+                    </span>
+                    <span className="text-[11px] font-medium text-slate-400">Économisez 25%</span>
+                  </div>
                 )}
               </div>
-              <p className="mt-3 text-sm text-slate-400">{PLAN_ANNUEL.subtitle}</p>
               <p className="mt-5 font-heading text-2xl font-bold text-white">{PLAN_ANNUEL.price}</p>
               <ul className="mt-3 space-y-2.5 text-sm text-slate-400">
                 {PLAN_ANNUEL.features.split("\n").map((line, i) => (
@@ -142,9 +145,12 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                 ))}
               </ul>
               <div className="mt-6 mt-auto">
-                <span className="inline-block w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-slate-400">
+                <button
+                  type="button"
+                  className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10"
+                >
                   {PLAN_ANNUEL.cta}
-                </span>
+                </button>
               </div>
             </div>
             <div aria-hidden />

@@ -10,7 +10,7 @@ const plansMensuel = [
     subtitle: "Pour découvrir",
     price: "9,99 €",
     features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projets",
-    cta: "Bientôt",
+    cta: "Choisir ce plan",
     featured: false,
   },
   {
@@ -18,7 +18,7 @@ const plansMensuel = [
     subtitle: "Pour les artistes réguliers",
     price: "19,99 €",
     features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets",
-    cta: "Bientôt",
+    cta: "Choisir ce plan",
     featured: true,
   },
   {
@@ -26,7 +26,7 @@ const plansMensuel = [
     subtitle: "Mix + master à volonté",
     price: "29,99 €",
     features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
-    cta: "Bientôt",
+    cta: "Choisir ce plan",
     featured: false,
   },
 ];
@@ -36,7 +36,7 @@ const planAnnuel = {
   subtitle: "Économisez 25 %",
   price: "269 €",
   features: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
-  cta: "Bientôt",
+  cta: "Choisir ce plan",
   featured: true,
 };
 
@@ -94,11 +94,11 @@ export function PricingSection() {
             plansMensuel.map((plan, i) => (
               <div
                 key={plan.name}
-                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col ${
+                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] ${
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"
                 } ${
                   plan.featured
-                    ? "scale-[1.02] border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_24px_rgba(255,255,255,0.28),0_0_56px_rgba(255,255,255,0.2)] ring-1 ring-white/10 hover:border-white/30 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.35),0_0_32px_rgba(255,255,255,0.35),0_0_64px_rgba(255,255,255,0.22)]"
+                    ? "scale-[1.02] border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 hover:border-white/30 hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.35),0_0_48px_rgba(255,255,255,0.28)]"
                     : "landing-card border-white/10"
                 }`}
               >
@@ -121,29 +121,32 @@ export function PricingSection() {
                   ))}
                 </ul>
                 <div className="mt-6 mt-auto">
-                  <span
-                    className={`inline-block w-full rounded-xl border px-4 py-2.5 text-center text-sm ${
-                      plan.featured ? "border-white/20 bg-white/5 text-slate-400" : "border-white/15 bg-white/5 text-slate-400"
+                  <button
+                    type="button"
+                    className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors ${
+                      plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {plan.cta}
-                  </span>
+                  </button>
                 </div>
               </div>
             ))
           ) : (
             <>
               <div className="observe-stagger-4" aria-hidden />
-              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_24px_rgba(255,255,255,0.28),0_0_56px_rgba(255,255,255,0.2)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 sm:scale-[1.02] flex flex-col">
+              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 sm:scale-[1.02] flex flex-col min-h-[380px]">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-heading text-xl font-semibold text-white">{planAnnuel.name}</h3>
                   {planAnnuel.featured && (
-                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
-                      Plus avantageux
-                    </span>
+                    <div className="shrink-0 flex flex-col items-end gap-0.5">
+                      <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
+                        Plus avantageux
+                      </span>
+                      <span className="text-[11px] font-medium text-slate-400">Économisez 25%</span>
+                    </div>
                   )}
                 </div>
-                <p className="mt-3 text-sm text-slate-400">{planAnnuel.subtitle}</p>
                 <p className="mt-5 font-heading text-2xl font-bold text-white">{planAnnuel.price}</p>
                 <ul className="mt-3 space-y-2.5 text-sm text-slate-400">
                   {planAnnuel.features.split("\n").map((line, i) => (
@@ -154,9 +157,12 @@ export function PricingSection() {
                   ))}
                 </ul>
                 <div className="mt-6 mt-auto">
-                  <span className="inline-block w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-slate-400">
+                  <button
+                    type="button"
+                    className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10"
+                  >
                     {planAnnuel.cta}
-                  </span>
+                  </button>
                 </div>
               </div>
               <div className="observe-stagger-6" aria-hidden />
