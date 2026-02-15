@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
+import { useSubscription } from "../context/SubscriptionContext";
 import { useState } from "react";
 import { ChoosePlanModal } from "./ChoosePlanModal";
 
@@ -11,26 +12,57 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { hasUnsavedTracks, setShowLeaveModal, showLeaveModal } = useLeaveWarning();
+  const { hasUnsavedChanges, setShowLeaveModal, setLeaveIntent, showLeaveModal, leaveIntent } = useLeaveWarning();
+  const { isPro, openManageSubscription } = useSubscription();
   const isHome = pathname === "/";
   const isMix = pathname === "/mix";
   const [planModalOpen, setPlanModalOpen] = useState(false);
 
   const handleAccueilClick = (e: React.MouseEvent) => {
-    if (isMix && hasUnsavedTracks) {
+    if (isMix && hasUnsavedChanges) {
       e.preventDefault();
+      setLeaveIntent("navigate");
       setShowLeaveModal(true);
     }
   };
 
   const handleLeaveConfirm = () => {
+    if (leaveIntent === "disconnect") {
+      logout();
+      router.refresh();
+    } else {
+      router.push("/");
+    }
     setShowLeaveModal(false);
-    router.push("/");
+    setLeaveIntent(null);
   };
 
   const handleLeaveCancel = () => {
     setShowLeaveModal(false);
+    setLeaveIntent(null);
   };
+
+  const handlePlanClick = () => {
+    if (user && isPro && openManageSubscription) {
+      openManageSubscription();
+    } else if (user && isPro && !openManageSubscription) {
+      router.push("/mix?open=manage");
+    } else {
+      setPlanModalOpen(true);
+    }
+  };
+
+  const handleLogoutClick = () => {
+    if (hasUnsavedChanges) {
+      setLeaveIntent("disconnect");
+      setShowLeaveModal(true);
+    } else {
+      logout();
+      router.refresh();
+    }
+  };
+
+  const isLeaveForDisconnect = leaveIntent === "disconnect";
 
   return (
     <>
@@ -69,10 +101,10 @@ export function Header() {
             )}
             <button
               type="button"
-              onClick={() => setPlanModalOpen(true)}
+              onClick={handlePlanClick}
               className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase"
             >
-              CHOISIR UN PLAN
+              {user && isPro ? "GÉRER MON ABONNEMENT" : "CHOISIR UN PLAN"}
             </button>
             {user ? (
               <>
@@ -81,10 +113,7 @@ export function Header() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => {
-                    logout();
-                    router.refresh();
-                  }}
+                  onClick={handleLogoutClick}
                   className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase"
                 >
                   DÉCONNEXION
@@ -108,7 +137,9 @@ export function Header() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
           <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm">
             <p className="text-tagline text-slate-300 text-center text-sm mb-6">
-              Quitter cette page sans sauvegarder ? Vous perdrez toute progression en cours. Continuer ?
+              {isLeaveForDisconnect
+                ? "Vous avez des modifications non sauvegardées. Se déconnecter quand même ?"
+                : "Quitter cette page sans sauvegarder ? Vous perdrez toute progression en cours. Continuer ?"}
             </p>
             <div className="flex gap-3">
               <button
@@ -123,7 +154,7 @@ export function Header() {
                 onClick={handleLeaveConfirm}
                 className="flex-1 py-2.5 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors text-sm"
               >
-                Continuer
+                {isLeaveForDisconnect ? "Se déconnecter" : "Continuer"}
               </button>
             </div>
           </div>

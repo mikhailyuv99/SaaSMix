@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { AuthProvider, LeaveWarningProvider } from "../context";
+import { AuthProvider, LeaveWarningProvider, SubscriptionProvider } from "../context";
 
 export function LandingTheme({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -9,9 +9,11 @@ export function LandingTheme({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <LeaveWarningProvider>
-        <div className={isLanding ? "landing-text-shadow" : ""}>
-          {children}
-        </div>
+        <SubscriptionProvider>
+          <div className={isLanding ? "landing-text-shadow" : ""}>
+            {children}
+          </div>
+        </SubscriptionProvider>
       </LeaveWarningProvider>
     </AuthProvider>
   );

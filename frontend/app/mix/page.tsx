@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { CustomSelect } from "../components/CustomSelect";
 import { SubscriptionModal } from "../components/SubscriptionModal";
 import { ManageSubscriptionModal } from "../components/ManageSubscriptionModal";
@@ -16,6 +17,7 @@ import {
 } from "../components/landing";
 import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
+import { useSubscription } from "../context/SubscriptionContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -419,8 +421,8 @@ export default function Home() {
   const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
   const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
   const { user, setUser, logout } = useAuth();
-  const { setHasUnsavedTracks } = useLeaveWarning();
-  const [isPro, setIsPro] = useState(false);
+  const { hasUnsavedChanges, setHasUnsavedChanges } = useLeaveWarning();
+  const { setIsPro, setOpenManageSubscription } = useSubscription();
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -467,9 +469,21 @@ export default function Home() {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
   }, [appModal]);
 
+  // Sync hasUnsavedChanges to window for beforeunload
   useEffect(() => {
-    setHasUnsavedTracks(tracks.length > 0);
-  }, [tracks.length, setHasUnsavedTracks]);
+    (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if ((window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
@@ -901,6 +915,7 @@ export default function Home() {
     // The Macintosh + maxTouchPoints > 1 check detects iPad (iPadOS reports desktop UA).
   }
   const addTrack = useCallback(() => {
+    setHasUnsavedChanges(true);
     setTracks((prev) => {
       const isSecondTrack = prev.length === 1;
       return [
@@ -918,9 +933,10 @@ export default function Home() {
         },
       ];
     });
-  }, []);
+  }, [setHasUnsavedChanges]);
 
   const removeTrack = useCallback((id: string) => {
+    setHasUnsavedChanges(true);
     deleteFileFromIDB(id);
     const nodes = trackPlaybackRef.current.get(id);
     if (nodes) {
@@ -969,7 +985,7 @@ export default function Home() {
       if (t?.rawAudioUrl) URL.revokeObjectURL(t.rawAudioUrl);
       return prev.filter((x) => x.id !== id);
     });
-  }, []);
+  }, [setHasUnsavedChanges]);
 
   const clearTrackFile = useCallback((id: string) => {
     deleteFileFromIDB(id);
@@ -1075,6 +1091,7 @@ export default function Home() {
 
   const updateTrack = useCallback(
     (id: string, updates: Partial<Omit<Track, "id">>) => {
+      setHasUnsavedChanges(true);
       setTracks((prev) =>
         prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
       );
@@ -1082,7 +1099,7 @@ export default function Home() {
         applyGainToNodes(id, updates.gain);
       }
     },
-    [applyGainToNodes]
+    [applyGainToNodes, setHasUnsavedChanges]
   );
 
   // Synchroniser le gain (slider) et le volume Avant/Après avec les nodes en cours de lecture
@@ -1248,6 +1265,7 @@ export default function Home() {
   const applyCategoryChoice = useCallback(
     (category: Category) => {
       if (!categoryModal) return;
+      setHasUnsavedChanges(true);
       const { trackId, file, fromHero, nextHeroFiles, nextFiles } = categoryModal;
       setCategoryModal(null);
       if (fromHero) {
@@ -1276,7 +1294,7 @@ export default function Home() {
         }
       }
     },
-    [categoryModal, applyFileWithCategory, createTrackFromFile]
+    [categoryModal, applyFileWithCategory, createTrackFromFile, setHasUnsavedChanges]
   );
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
@@ -1296,12 +1314,27 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       setIsPro(Boolean(data.isPro));
     } catch (_) {}
-  }, [getAuthHeaders]);
+  }, [getAuthHeaders, setIsPro]);
 
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
     if (token) fetchBilling();
   }, [user?.id, fetchBilling]);
+
+  useEffect(() => {
+    setOpenManageSubscription(() => setManageSubscriptionModalOpen(true));
+    return () => setOpenManageSubscription(null);
+  }, [setOpenManageSubscription]);
+
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("open") === "manage") {
+      setManageSubscriptionModalOpen(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("open");
+      window.history.replaceState({}, "", url.pathname + (url.search || ""));
+    }
+  }, [searchParams]);
 
   const doCreateNewProject = useCallback(async (name: string) => {
     const defaultTracks = getDefaultTracks();
@@ -1399,13 +1432,14 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || "Erreur sauvegarde");
       if (!isUpdate) setCurrentProject({ id: data.id, name: data.name });
+      setHasUnsavedChanges(false);
       setAppModal({ type: "alert", message: isUpdate ? "Projet mis à jour." : "Projet sauvegardé avec les fichiers.", onClose: () => {} });
     } catch (e) {
       setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la sauvegarde.", onClose: () => {} });
     } finally {
       setIsSavingProject(false);
     }
-  }, [tracks, getAuthHeaders, currentProject]);
+  }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges]);
 
   const saveProject = useCallback(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
