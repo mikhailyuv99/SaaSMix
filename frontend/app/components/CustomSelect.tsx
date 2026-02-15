@@ -141,9 +141,9 @@ export function CustomSelect({
     ? `${baseButtonClass} ${categoryButtonClass}`
     : `${baseButtonClass} ${defaultButtonClass}`;
 
-  /* Dropdown : style cohérent au site (transparent, bordures) */
+  /* Dropdown : même style transparent / verre dépoli que modal Connexion */
   const dropdownClass =
-    "z-[9999] w-max max-w-[min(100vw,24rem)] rounded-xl border border-white/15 bg-slate-900/90 backdrop-blur-xl py-1.5 max-h-[min(20rem,70vh)] overflow-auto shadow-xl shadow-black/30 text-center";
+    "z-[9999] w-max max-w-[min(100vw,24rem)] rounded-xl border border-white/15 bg-slate-900/50 backdrop-blur-xl py-1.5 max-h-[min(20rem,70vh)] overflow-auto shadow-xl shadow-black/20 text-center";
 
   const dropdownContent = open && dropdownRect && typeof document !== "undefined" && (
     <ul

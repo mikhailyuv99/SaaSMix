@@ -2735,7 +2735,7 @@ export default function Home() {
 
       {categoryModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
-          <div className="rounded-2xl border border-white/15 bg-slate-900/70 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
+          <div className="rounded-2xl border border-white/15 bg-slate-900/50 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
             <div className="p-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
                 Quelle catégorie pour cette piste ?
@@ -2748,21 +2748,21 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("lead_vocal")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-slate-300 text-sm font-medium hover:bg-white/5 transition-all duration-200"
+                className="group w-full py-3 rounded-xl border border-white/10 bg-white/[0.04] text-tagline text-slate-300 text-sm font-medium hover:bg-white/[0.06] transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Lead vocal</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("adlibs_backs")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-slate-300 text-sm font-medium hover:bg-white/5 transition-all duration-200"
+                className="group w-full py-3 rounded-xl border border-white/10 bg-white/[0.04] text-tagline text-slate-300 text-sm font-medium hover:bg-white/[0.06] transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Adlibs / Backs</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("instrumental")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-slate-300 text-sm font-medium hover:bg-white/5 transition-all duration-200"
+                className="group w-full py-3 rounded-xl border border-white/10 bg-white/[0.04] text-tagline text-slate-300 text-sm font-medium hover:bg-white/[0.06] transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Instrumentale</span>
               </button>
@@ -3732,6 +3732,13 @@ export default function Home() {
               >
                 <span className="font-heading text-sm uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors">
                   {addTrackDropzoneDragging ? "Déposez les fichiers" : "Glissez vos pistes ici"}
+                </span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white" aria-hidden>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1={12} y1={3} x2={12} y2={15} />
+                  </svg>
                 </span>
                 <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">ou cliquez pour choisir un ou plusieurs fichiers</span>
               </button>
