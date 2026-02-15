@@ -121,7 +121,7 @@ export function PricingSection() {
                   )}
                 </div>
                 <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px]">{plan.subtitle}</p>
-                <p className={`min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base mt-4 ${i === 0 ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
+                <p className={`min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base mt-4 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
                 <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
                   {plan.features.split("\n").map((line, j) => (
                     <li key={j} className="flex items-start gap-2.5 max-lg:gap-1.5">
