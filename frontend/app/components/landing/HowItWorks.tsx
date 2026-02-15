@@ -207,10 +207,24 @@ export function HowItWorks() {
               Essayer ces 4 étapes avec vos pistes
             </Link>
           </div>
-          <div className="flex flex-nowrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8 whitespace-nowrap">
-            <span>Aperçu pleine longueur</span>
-            <span>Pas de carte bancaire</span>
-            <span>Vous gardez vos droits</span>
+          <div className="flex flex-nowrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8 whitespace-nowrap flex-wrap">
+            <span className="inline-flex items-center gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-[10px] text-slate-400">▶</span>
+              Aperçu pleine longueur
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-400">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <rect x={1} y={4} width={22} height={16} rx={2} ry={2} />
+                  <line x1={1} y1={10} x2={23} y2={10} />
+                </svg>
+              </span>
+              Pas de carte bancaire
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-400">✓</span>
+              Vous gardez vos droits
+            </span>
           </div>
         </div>
       </ObserveSection>

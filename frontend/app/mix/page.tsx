@@ -439,6 +439,7 @@ export default function Home() {
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
+    | { type: "confirm_two"; message: string; primaryLabel: string; secondaryLabel: string; onPrimary: () => void; onSecondary: () => void }
     | { type: "alert"; message: string; onClose: () => void }
     | null;
   const [appModal, setAppModal] = useState<AppModal>(null);
@@ -1497,9 +1498,7 @@ export default function Home() {
     }
   }, [getAuthHeaders]);
 
-  const createNewProject = useCallback(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
-    if (!token) return;
+  const openCreateProjectNamePrompt = useCallback(() => {
     setAppModal({
       type: "prompt",
       title: "Nom du projet ?",
@@ -1507,6 +1506,38 @@ export default function Home() {
       onCancel: () => {},
     });
   }, [doCreateNewProject]);
+
+  const createNewProject = useCallback(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+    if (!token) return;
+    if (tracks.length >= 1) {
+      setAppModal({
+        type: "confirm_two",
+        message: "Créer un nouveau projet : garder les pistes actuelles ou partir de zéro ?",
+        primaryLabel: "Garder les pistes actuelles",
+        secondaryLabel: "Partir de zéro (perte de la progression)",
+        onPrimary: () => {
+          setAppModal(null);
+          openCreateProjectNamePrompt();
+        },
+        onSecondary: () => {
+          setAppModal(null);
+          setTracks(getDefaultTracks());
+          setCurrentProject(null);
+          setHasUnsavedChanges(false);
+          if (typeof window !== "undefined") {
+            try {
+              (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = false;
+              sessionStorage.removeItem(TRACKS_STORAGE_KEY);
+            } catch (_) {}
+          }
+          openCreateProjectNamePrompt();
+        },
+      });
+    } else {
+      openCreateProjectNamePrompt();
+    }
+  }, [tracks.length, openCreateProjectNamePrompt, setHasUnsavedChanges]);
 
   const doSaveProject = useCallback(async (name: string | null) => {
     const isUpdate = currentProject != null;
@@ -2853,6 +2884,29 @@ export default function Home() {
                 </div>
               </>
             )}
+            {appModal.type === "confirm_two" && (
+              <>
+                <div className="p-4">
+                  <p className="text-tagline text-slate-400 text-center text-sm tracking-wide">{appModal.message}</p>
+                </div>
+                <div className="flex flex-col border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => { appModal.onPrimary(); setAppModal(null); }}
+                    className="py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm border-b border-white/10"
+                  >
+                    {appModal.primaryLabel}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { appModal.onSecondary(); setAppModal(null); }}
+                    className="py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm"
+                  >
+                    {appModal.secondaryLabel}
+                  </button>
+                </div>
+              </>
+            )}
             {appModal.type === "alert" && (
               <>
                 <div className="p-4">
@@ -2949,7 +3003,7 @@ export default function Home() {
                       onClick={() => {
                         if (tracks.length > 0 || hasUnsavedChanges) {
                           setLeaveIntent("load_project");
-                          setLeaveConfirmAction(() => () => {
+                          setLeaveConfirmAction(() => {
                             loadProject(p.id);
                             setShowProjectsModal(false);
                           });
