@@ -273,6 +273,26 @@ function DemoCard({
     []
   );
 
+  // Sur mobile : mute/unmute immédiat dans le clic pour éviter le lag du cycle React (setState → useEffect).
+  const setModeAvant = useCallback(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches) {
+      const a = audioAvantRef.current;
+      const b = audioApresRef.current;
+      if (a) a.muted = false;
+      if (b) b.muted = true;
+    }
+    setMode("avant");
+  }, []);
+  const setModeApres = useCallback(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches) {
+      const a = audioAvantRef.current;
+      const b = audioApresRef.current;
+      if (a) a.muted = true;
+      if (b) b.muted = false;
+    }
+    setMode("apres");
+  }, []);
+
   return (
     <div
       ref={cardRef}
@@ -321,7 +341,7 @@ function DemoCard({
         <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-0.5">
           <button
             type="button"
-            onClick={() => setMode("avant")}
+            onClick={setModeAvant}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
               mode === "avant" ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"
             }`}
@@ -330,7 +350,7 @@ function DemoCard({
           </button>
           <button
             type="button"
-            onClick={() => setMode("apres")}
+            onClick={setModeApres}
             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
               mode === "apres" ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"
             }`}
