@@ -33,8 +33,8 @@ export function TrustBullets() {
                 {"iconNode" in item && item.iconNode ? item.iconNode : <span className="text-base max-lg:text-sm">{item.icon}</span>}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="font-heading font-semibold text-white whitespace-nowrap max-lg:whitespace-normal max-lg:text-sm max-md:text-xs">{item.label}</p>
-                <p className="mt-0.5 text-sm text-slate-400 max-lg:text-xs">{item.desc}</p>
+                <p className="font-heading font-semibold text-white whitespace-nowrap max-lg:text-xs max-md:text-[10px]">{item.label}</p>
+                <p className="mt-0.5 text-sm text-slate-400 max-lg:text-[10px] max-md:text-[9px]">{item.desc}</p>
               </div>
             </div>
           ))}

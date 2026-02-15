@@ -41,7 +41,6 @@ const planAnnuel = {
 
 export function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"mensuel" | "annuel">("mensuel");
-  const [accordionOpen, setAccordionOpen] = useState<number>(1);
 
   return (
     <section id="tarifs" className="scroll-mt-20 w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
@@ -90,13 +89,12 @@ export function PricingSection() {
         </div>
 
         <div className="w-full max-w-5xl mx-auto mt-5 box-border">
-          {/* Desktop: grid */}
-          <div className={`gap-6 sm:grid-cols-3 max-lg:gap-4 max-md:mt-4 max-md:gap-3 ${billingPeriod === "mensuel" ? "mt-5 grid max-lg:hidden" : "mt-5 grid"}`}>
+          <div className="mt-5 grid gap-6 sm:grid-cols-3 max-lg:gap-3 max-lg:grid-cols-3 max-md:mt-4 max-md:gap-2">
           {billingPeriod === "mensuel" ? (
             plansMensuel.map((plan, i) => (
               <div
                 key={plan.name}
-                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-0 max-lg:p-5 max-md:p-4 ${
+                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-0 max-lg:p-3 max-lg:rounded-xl max-md:p-2 ${
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"
                 } ${
                   plan.featured
@@ -105,28 +103,28 @@ export function PricingSection() {
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 max-md:flex-wrap">
-                  <h3 className="font-heading text-xl font-semibold text-white max-lg:text-lg max-md:text-base">{plan.name}</h3>
+                  <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{plan.name}</h3>
                   {plan.featured && (
-                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-md:text-[10px] max-md:px-2">
+                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-lg:text-[9px] max-lg:px-1.5 max-md:text-[8px] max-md:px-1">
                       Populaire
                     </span>
                   )}
                 </div>
-                <p className="mt-3 text-sm text-slate-400 max-md:text-xs">{plan.subtitle}</p>
-                <p className="mt-5 font-heading text-2xl font-bold text-white max-lg:mt-4 max-lg:text-xl max-md:text-lg">{plan.price}</p>
-                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 max-lg:space-y-2 max-md:text-xs">
+                <p className="mt-3 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px]">{plan.subtitle}</p>
+                <p className="mt-5 font-heading text-2xl font-bold text-white max-lg:mt-2 max-lg:text-lg max-md:text-base">{plan.price}</p>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
                   {plan.features.split("\n").map((line, j) => (
-                    <li key={j} className="flex items-start gap-2.5">
-                      <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50" aria-hidden />
+                    <li key={j} className="flex items-start gap-2.5 max-lg:gap-1.5">
+                      <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50 max-lg:size-1" aria-hidden />
                       <span>{line}</span>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6 mt-auto">
+                <div className="mt-6 mt-auto max-lg:mt-3">
                   <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
-                    className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase ${
+                    className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px] ${
                       plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                     }`}
                   >
@@ -138,17 +136,17 @@ export function PricingSection() {
           ) : (
             <>
               <div className="observe-stagger-4" aria-hidden />
-              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 sm:scale-[1.02] flex flex-col min-h-[380px] max-lg:min-h-0 max-lg:p-5 max-md:p-4">
+              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 sm:scale-[1.02] flex flex-col min-h-[380px] max-lg:min-h-0 max-lg:p-3 max-lg:rounded-xl max-md:p-2">
                 <div className="flex items-start justify-between gap-2 max-md:flex-wrap">
-                  <h3 className="font-heading text-xl font-semibold text-white max-lg:text-lg max-md:text-base">{planAnnuel.name}</h3>
+                  <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{planAnnuel.name}</h3>
                   {planAnnuel.featured && (
-                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-md:text-[10px] max-md:px-2">
+                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-lg:text-[9px] max-lg:px-1.5 max-md:text-[8px] max-md:px-1">
                       Économisez 25%
                     </span>
                   )}
                 </div>
-                <p className="mt-5 font-heading text-2xl font-bold text-white max-lg:mt-4 max-lg:text-xl max-md:text-lg">{planAnnuel.price}</p>
-                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 max-lg:space-y-2 max-md:text-xs">
+                <p className="mt-5 font-heading text-2xl font-bold text-white max-lg:mt-2 max-lg:text-lg max-md:text-base">{planAnnuel.price}</p>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
                   {planAnnuel.features.split("\n").map((line, i) => (
                     <li key={i} className="flex items-start gap-2.5">
                       <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50" aria-hidden />
@@ -156,11 +154,11 @@ export function PricingSection() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6 mt-auto">
+                <div className="mt-6 mt-auto max-lg:mt-3">
                   <button
                     type="button"
                     onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
-                    className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10 uppercase"
+                    className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10 uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px]"
                   >
                     {planAnnuel.cta}
                   </button>
@@ -170,56 +168,6 @@ export function PricingSection() {
             </>
           )}
           </div>
-
-          {/* Mobile/tablet: accordion (mensuel only), Artiste ouvert par défaut */}
-          {billingPeriod === "mensuel" && (
-            <div className="lg:hidden flex flex-row gap-2 mt-5 w-full max-w-5xl mx-auto">
-              {plansMensuel.map((plan, i) => (
-                <div
-                  key={plan.name}
-                  className={`flex-1 min-w-0 flex flex-col rounded-xl border transition-all duration-200 overflow-hidden ${
-                    accordionOpen === i
-                      ? "border-white/25 bg-white/[0.06] ring-1 ring-white/10"
-                      : "landing-card border-white/10"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setAccordionOpen(i)}
-                    className="w-full py-4 px-3 text-center border-b border-white/10 hover:bg-white/5 transition-colors"
-                  >
-                    <h3 className="font-heading font-semibold text-white text-sm truncate">{plan.name}</h3>
-                    <p className="mt-0.5 font-heading text-lg font-bold text-white">{plan.price}</p>
-                    {plan.featured && (
-                      <span className="mt-1 inline-block rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">Populaire</span>
-                    )}
-                  </button>
-                  {accordionOpen === i && (
-                    <div className="p-3 flex flex-col flex-1 min-h-0">
-                      <p className="text-xs text-slate-400">{plan.subtitle}</p>
-                      <ul className="mt-2 space-y-1.5 text-xs text-slate-400">
-                        {plan.features.split("\n").map((line, j) => (
-                          <li key={j} className="flex items-start gap-2">
-                            <span className="mt-0.5 shrink-0 size-1 rounded-full bg-white/50" aria-hidden />
-                            <span>{line}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        type="button"
-                        onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
-                        className={`mt-4 w-full rounded-lg border px-3 py-2 text-center text-xs transition-colors uppercase ${
-                          plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
-                        }`}
-                      >
-                        {plan.cta}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </ObserveSection>
     </section>

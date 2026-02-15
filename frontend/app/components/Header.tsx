@@ -161,9 +161,9 @@ export function Header() {
           </button>
         </div>
 
-        {/* Burger panel (mobile/tablet) */}
+        {/* Burger panel (mobile/tablet) - même style que le site : flou, pas noir plein */}
         {burgerOpen && (
-          <div className="lg:hidden fixed inset-0 z-40 top-14 sm:top-16 bg-black/95 backdrop-blur-xl border-t border-white/10 overflow-y-auto">
+          <div className="lg:hidden fixed inset-0 z-40 top-14 sm:top-16 bg-black/40 backdrop-blur-xl border-t border-white/10 overflow-y-auto">
             <nav className="flex flex-col p-4 gap-1 max-w-6xl mx-auto">
               {isHome && (
                 <>
