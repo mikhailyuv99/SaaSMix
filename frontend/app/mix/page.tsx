@@ -361,30 +361,7 @@ const Waveform = memo(function Waveform({
 });
 
 function getDefaultTracks(): Track[] {
-  return [
-    {
-      id: generateId(),
-      file: null,
-      category: "lead_vocal",
-      gain: 100,
-      rawAudioUrl: null,
-      mixedAudioUrl: null,
-      isMixing: false,
-      playMode: "mixed",
-      mixParams: { ...DEFAULT_MIX_PARAMS },
-    },
-    {
-      id: generateId(),
-      file: null,
-      category: "instrumental",
-      gain: 100,
-      rawAudioUrl: null,
-      mixedAudioUrl: null,
-      isMixing: false,
-      playMode: "mixed",
-      mixParams: { ...DEFAULT_MIX_PARAMS },
-    },
-  ];
+  return [];
 }
 
 const DEFAULT_TRACKS: Track[] = getDefaultTracks();
@@ -476,7 +453,10 @@ export default function Home() {
     file: File;
     fromHero?: boolean;
     nextHeroFiles?: { blob: Blob; fileName: string }[];
+    nextFiles?: File[];
   } | null>(null);
+  const mixDropzoneInputRef = useRef<HTMLInputElement>(null);
+  const [mixDropzoneDragging, setMixDropzoneDragging] = useState(false);
 
   useEffect(() => {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
@@ -1221,53 +1201,64 @@ export default function Home() {
     []
   );
 
+  const createTrackFromFile = useCallback((file: File, category: Category) => {
+    const newId = generateId();
+    saveFileToIDB(newId, file);
+    const rawAudioUrl = file.type.startsWith("audio/") ? URL.createObjectURL(file) : null;
+    const track: Track = {
+      id: newId,
+      file,
+      category,
+      gain: 100,
+      rawAudioUrl,
+      mixedAudioUrl: null,
+      isMixing: false,
+      playMode: "raw",
+      mixParams: { ...DEFAULT_MIX_PARAMS, phone_fx: category === "adlibs_backs" },
+      paramsOpen: false,
+      rawFileName: file.name,
+    };
+    setTracks((prev) => [...prev, track]);
+    if (rawAudioUrl) {
+      (async () => {
+        try {
+          const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+          const res = await fetch(rawAudioUrl);
+          const ab = await res.arrayBuffer();
+          const decoded = await ctx.decodeAudioData(ab.slice(0));
+          ctx.close();
+          const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
+          const entry = buffersRef.current.get(newId) ?? { raw: null, mixed: null };
+          entry.raw = decoded;
+          buffersRef.current.set(newId, entry);
+          setTracks((prev) =>
+            prev.map((t) =>
+              t.id === newId ? { ...t, waveformPeaks: peaks, waveformDuration: decoded.duration } : t
+            )
+          );
+        } catch (_) {}
+      })();
+    }
+  }, []);
+
   const applyCategoryChoice = useCallback(
     (category: Category) => {
       if (!categoryModal) return;
-      const { trackId, file, fromHero, nextHeroFiles } = categoryModal;
+      const { trackId, file, fromHero, nextHeroFiles, nextFiles } = categoryModal;
       setCategoryModal(null);
       if (fromHero) {
-        const newId = generateId();
-        saveFileToIDB(newId, file);
-        const rawAudioUrl = file.type.startsWith("audio/") ? URL.createObjectURL(file) : null;
-        const track: Track = {
-          id: newId,
-          file,
-          category,
-          gain: 100,
-          rawAudioUrl,
-          mixedAudioUrl: null,
-          isMixing: false,
-          playMode: "raw",
-          mixParams: { ...DEFAULT_MIX_PARAMS, phone_fx: category === "adlibs_backs" },
-          paramsOpen: false,
-          rawFileName: file.name,
-        };
-        setTracks((prev) => [...prev, track]);
-        if (rawAudioUrl) {
-          (async () => {
-            try {
-              const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-              const res = await fetch(rawAudioUrl);
-              const ab = await res.arrayBuffer();
-              const decoded = await ctx.decodeAudioData(ab.slice(0));
-              ctx.close();
-              const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
-              const entry = buffersRef.current.get(newId) ?? { raw: null, mixed: null };
-              entry.raw = decoded;
-              buffersRef.current.set(newId, entry);
-              setTracks((prev) =>
-                prev.map((t) =>
-                  t.id === newId ? { ...t, waveformPeaks: peaks, waveformDuration: decoded.duration } : t
-                )
-              );
-            } catch (_) {}
-          })();
-        }
+        createTrackFromFile(file, category);
         if (nextHeroFiles?.length) {
           const next = nextHeroFiles[0];
           const nextFile = new File([next.blob], next.fileName, { type: next.blob.type || "audio/wav" });
           setCategoryModal({ file: nextFile, fromHero: true, nextHeroFiles: nextHeroFiles.slice(1) });
+        }
+        return;
+      }
+      if (nextFiles !== undefined) {
+        createTrackFromFile(file, category);
+        if (nextFiles.length) {
+          setCategoryModal({ file: nextFiles[0], nextFiles: nextFiles.slice(1) });
         }
         return;
       }
@@ -1281,7 +1272,7 @@ export default function Home() {
         }
       }
     },
-    [categoryModal, applyFileWithCategory]
+    [categoryModal, applyFileWithCategory, createTrackFromFile]
   );
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
@@ -2755,21 +2746,21 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("lead_vocal")}
-                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 transition-colors"
+                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 hover:shadow-[0_0_14px_rgba(255,255,255,0.4)] transition-all duration-200"
               >
                 Lead vocal
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("adlibs_backs")}
-                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 transition-colors"
+                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 hover:shadow-[0_0_14px_rgba(255,255,255,0.4)] transition-all duration-200"
               >
                 Adlibs / Backs
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("instrumental")}
-                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 transition-colors"
+                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 hover:shadow-[0_0_14px_rgba(255,255,255,0.4)] transition-all duration-200"
               >
                 Instrumentale
               </button>
@@ -3045,7 +3036,53 @@ export default function Home() {
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.length === 0 && (
-            <p className="text-center text-slate-400 text-sm py-6 font-heading">Ajoutez votre première piste ci-dessous.</p>
+            <>
+              <input
+                ref={mixDropzoneInputRef}
+                type="file"
+                accept="audio/*,.wav,.mp3,.ogg,.m4a,.flac,.aac"
+                multiple
+                className="sr-only"
+                aria-hidden
+                onChange={(e) => {
+                  const fileList = e.target.files;
+                  if (!fileList?.length) return;
+                  const files = Array.from(fileList).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
+                  if (files.length === 0) return;
+                  e.target.value = "";
+                  setCategoryModal({ file: files[0], nextFiles: files.slice(1) });
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => mixDropzoneInputRef.current?.click()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMixDropzoneDragging(false);
+                  const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
+                  if (files.length === 0) return;
+                  setCategoryModal({ file: files[0], nextFiles: files.slice(1) });
+                }}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
+                className={`font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
+                  mixDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
+                }`}
+              >
+                <span className="font-heading text-base font-medium text-white sm:text-lg">
+                  {mixDropzoneDragging ? "Déposez les fichiers" : "Glissez vos pistes ici"}
+                </span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white" aria-hidden>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1={12} y1={3} x2={12} y2={15} />
+                  </svg>
+                </span>
+                <span className="text-sm text-slate-400">ou cliquez pour choisir un ou plusieurs fichiers</span>
+              </button>
+            </>
           )}
           {tracks.map((track) => (
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
