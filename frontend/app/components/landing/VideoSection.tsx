@@ -18,9 +18,9 @@ const YOUTUBE_VIDEO_ID = getYouTubeVideoId(process.env.NEXT_PUBLIC_YOUTUBE_EXPLA
 
 export function VideoSection() {
   return (
-    <section className="px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
+    <section className="w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-4xl max-lg:max-w-none">
+        <div className="w-full max-w-4xl mx-auto box-border">
           <div className="text-center observe-stagger-1">
             <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 max-md:text-xs">
               Tutoriel

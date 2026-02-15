@@ -93,9 +93,9 @@ export function HowItWorks() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
+    <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-3xl text-center max-lg:max-w-none">
+        <div className="w-full max-w-3xl mx-auto text-center box-border">
           <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1 max-md:text-xs">
             Process
           </p>
@@ -107,7 +107,7 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="relative mx-auto mt-8 max-w-4xl sm:mt-10 max-lg:mt-6 max-md:mt-5">
+        <div className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
           {/* Ligne verticale : fond + progression blanche lumineuse */}
           <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-white/20" />
           <div
@@ -201,29 +201,29 @@ export function HowItWorks() {
           })}
         </div>
 
-        <div className="mx-auto mt-8 max-w-2xl space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4">
+        <div className="w-full max-w-2xl mx-auto mt-8 space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4 box-border overflow-x-hidden">
           <div className="text-center">
             <Link href="/mix" className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs">
               Essayer ces 4 étapes avec vos pistes
             </Link>
           </div>
-          <div className="flex flex-nowrap items-center justify-center gap-6 text-xs text-slate-400 sm:gap-8 whitespace-nowrap flex-wrap max-lg:gap-3 max-md:gap-2 max-md:text-[10px]">
-            <span className="inline-flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 sm:gap-8 max-lg:gap-3 max-md:gap-2 max-md:text-[10px] max-w-full">
+            <span className="inline-flex items-center gap-2 shrink-0">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-[10px] text-slate-400">▶</span>
-              Aperçu pleine longueur
+              <span className="whitespace-nowrap max-md:whitespace-normal">Aperçu pleine longueur</span>
             </span>
-            <span className="inline-flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 shrink-0">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-400">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <rect x={1} y={4} width={22} height={16} rx={2} ry={2} />
                   <line x1={1} y1={10} x2={23} y2={10} />
                 </svg>
               </span>
-              Pas de carte bancaire
+              <span className="whitespace-nowrap max-md:whitespace-normal">Pas de carte bancaire</span>
             </span>
-            <span className="inline-flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 shrink-0">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-400">✓</span>
-              Vous gardez vos droits
+              <span className="whitespace-nowrap max-md:whitespace-normal">Vous gardez vos droits</span>
             </span>
           </div>
         </div>

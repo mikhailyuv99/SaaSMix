@@ -1417,14 +1417,14 @@ export default function Home() {
             return;
           }
           const nextFile = new File([next.blob], next.fileName, { type: next.blob.type || "audio/wav" });
-          setCategoryModal({ file: nextFile, fromHero: true, nextHeroFiles: nextHeroFiles.slice(1) });
+          setTimeout(() => setCategoryModal({ file: nextFile, fromHero: true, nextHeroFiles: nextHeroFiles.slice(1) }), 0);
         }
         return;
       }
       if (nextFiles !== undefined) {
         createTrackFromFile(file, category);
         if (nextFiles.length) {
-          setCategoryModal({ file: nextFiles[0], nextFiles: nextFiles.slice(1) });
+          setTimeout(() => setCategoryModal({ file: nextFiles[0], nextFiles: nextFiles.slice(1) }), 0);
         }
         return;
       }

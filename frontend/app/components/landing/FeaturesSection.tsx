@@ -29,9 +29,9 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section className="px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
+    <section className="w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-3xl text-center max-lg:max-w-none">
+        <div className="w-full max-w-3xl mx-auto text-center box-border">
           <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1 max-md:text-xs">
             Fonctionnalités
           </p>
@@ -42,7 +42,7 @@ export function FeaturesSection() {
             Un workflow simple pour des résultats pro.
           </p>
         </div>
-        <div className="mx-auto mt-8 max-w-3xl sm:mt-10 max-lg:mt-6 max-md:mt-5">
+        <div className="w-full max-w-3xl mx-auto mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
           <ul className="space-y-0">
             {features.map((f, i) => (
               <li

@@ -23,6 +23,9 @@
     background-color: #000000;
     color: #e2e8f0;
     background-attachment: fixed;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

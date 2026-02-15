@@ -104,8 +104,8 @@ export function HeroSection() {
   const onClickCard = () => inputRef.current?.click();
 
   return (
-    <section className="relative min-h-0 overflow-hidden px-4 pt-6 pb-10 sm:pt-8 sm:pb-12 max-lg:px-3 max-md:pt-5 max-md:pb-8">
-      <div className="mx-auto grid max-w-6xl items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12 max-lg:gap-6 max-md:gap-5">
+    <section className="relative min-h-0 w-full max-w-full overflow-x-hidden px-4 pt-6 pb-10 sm:pt-8 sm:pb-12 max-lg:px-3 max-md:pt-5 max-md:pb-8">
+      <div className="w-full max-w-6xl mx-auto grid items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12 max-lg:gap-6 max-md:gap-5 box-border">
         <div className="max-w-xl max-lg:max-w-none">
           <h1
             className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-hero-tagline max-lg:text-3xl max-md:text-2xl"

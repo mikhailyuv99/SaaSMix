@@ -91,13 +91,17 @@ export function Header() {
   const isLeaveForDisconnect = leaveIntent === "disconnect";
   const isLeaveForLoadProject = leaveIntent === "load_project";
 
+  const [burgerOpen, setBurgerOpen] = useState(false);
+
+  const closeBurger = () => setBurgerOpen(false);
+
   return (
     <>
       <header className="relative z-50 w-full bg-transparent">
-        <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6 max-lg:flex-wrap max-lg:py-3 max-lg:min-h-14 max-lg:gap-y-3">
+        <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6 max-lg:flex-nowrap max-lg:py-3 max-lg:min-h-14">
           <Link
             href="/"
-            className="font-heading flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90 max-lg:order-1"
+            className="font-heading flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90"
           >
             <span>SIBERIA</span>
             <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -106,66 +110,89 @@ export function Header() {
             <span>MIX</span>
           </Link>
 
-          <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 sm:gap-6 flex-nowrap max-lg:relative max-lg:left-0 max-lg:top-0 max-lg:translate-x-0 max-lg:translate-y-0 max-lg:order-3 max-lg:w-full max-lg:justify-center max-lg:gap-3 max-lg:text-xs">
+          {/* Desktop: nav + auth */}
+          <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 sm:gap-6 flex-nowrap max-lg:hidden">
             {isHome && (
               <>
-                <a href="#tarifs" className="text-sm text-white/90 transition-colors hover:text-white max-lg:text-xs">
-                  Tarifs
-                </a>
-                <a href="#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white max-lg:text-xs">
-                  FAQ & Contact
-                </a>
+                <a href="#tarifs" className="text-sm text-white/90 transition-colors hover:text-white">Tarifs</a>
+                <a href="#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>
               </>
             )}
             {!isHome && (
-              <Link
-                href="/"
-                onClick={handleAccueilClick}
-                className="text-sm text-white/90 transition-colors hover:text-white max-lg:text-xs"
-              >
-                Accueil
-              </Link>
+              <Link href="/" onClick={handleAccueilClick} className="text-sm text-white/90 transition-colors hover:text-white">Accueil</Link>
             )}
-            {!isHome && (
-              <a href="/#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white max-lg:text-xs">
-                FAQ & Contact
-              </a>
-            )}
-            <button
-              type="button"
-              onClick={handlePlanClick}
-              className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase max-lg:text-xs"
-            >
+            {!isHome && <a href="/#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>}
+            <button type="button" onClick={handlePlanClick} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase">
               {user && isPro ? "GÉRER MON ABONNEMENT" : "CHOISIR UN PLAN"}
             </button>
           </nav>
 
-          <div className="flex items-center gap-4 sm:gap-6 flex-nowrap shrink-0 max-lg:order-2 max-lg:gap-2 max-lg:text-xs">
+          <div className="flex items-center gap-4 sm:gap-6 flex-nowrap shrink-0 max-lg:hidden">
             {user ? (
               <>
-                <span className="text-sm text-white/90 truncate max-w-[140px] sm:max-w-[200px] uppercase max-lg:max-w-[90px]" title={user.email}>
-                  {user.email}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleLogoutClick}
-                  className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase max-lg:text-xs"
-                >
-                  DÉCONNEXION
-                </button>
+                <span className="text-sm text-white/90 truncate max-w-[140px] sm:max-w-[200px] uppercase" title={user.email}>{user.email}</span>
+                <button type="button" onClick={handleLogoutClick} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase">DÉCONNEXION</button>
               </>
             ) : (
               <>
-                <button type="button" onClick={() => openAuthModal?.("login")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0 max-lg:text-xs">
-                  CONNEXION
-                </button>
-                <button type="button" onClick={() => openAuthModal?.("register")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0 max-lg:text-xs">
-                  INSCRIPTION
-                </button>
+                <button type="button" onClick={() => openAuthModal?.("login")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0">CONNEXION</button>
+                <button type="button" onClick={() => openAuthModal?.("register")} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase bg-transparent border-none cursor-pointer font-inherit p-0">INSCRIPTION</button>
               </>
             )}
           </div>
+
+          {/* Mobile/tablet: burger button */}
+          <button
+            type="button"
+            onClick={() => setBurgerOpen((o) => !o)}
+            className="lg:hidden p-2 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label={burgerOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={burgerOpen}
+          >
+            {burgerOpen ? (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
         </div>
+
+        {/* Burger panel (mobile/tablet) */}
+        {burgerOpen && (
+          <div className="lg:hidden fixed inset-0 z-40 top-14 sm:top-16 bg-black/95 backdrop-blur-xl border-t border-white/10 overflow-y-auto">
+            <nav className="flex flex-col p-4 gap-1 max-w-6xl mx-auto">
+              {isHome && (
+                <>
+                  <a href="#tarifs" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Tarifs</a>
+                  <a href="#faq-contact" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">FAQ & Contact</a>
+                </>
+              )}
+              {!isHome && (
+                <Link href="/" onClick={(e) => { e.preventDefault(); handleAccueilClick(e); closeBurger(); }} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Accueil</Link>
+              )}
+              {!isHome && <a href="/#faq-contact" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">FAQ & Contact</a>}
+              <button type="button" onClick={() => { handlePlanClick(); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">
+                {user && isPro ? "Gérer mon abonnement" : "Choisir un plan"}
+              </button>
+              <div className="border-t border-white/10 my-2" />
+              {user ? (
+                <>
+                  <p className="py-2 px-4 text-slate-400 text-xs truncate" title={user.email}>{user.email}</p>
+                  <button type="button" onClick={() => { handleLogoutClick(); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Déconnexion</button>
+                </>
+              ) : (
+                <>
+                  <button type="button" onClick={() => { openAuthModal?.("login"); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Connexion</button>
+                  <button type="button" onClick={() => { openAuthModal?.("register"); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Inscription</button>
+                </>
+              )}
+            </nav>
+          </div>
+        )}
       </header>
 
       {showLeaveModal && (

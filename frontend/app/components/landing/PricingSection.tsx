@@ -41,11 +41,12 @@ const planAnnuel = {
 
 export function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"mensuel" | "annuel">("mensuel");
+  const [accordionOpen, setAccordionOpen] = useState<number>(1);
 
   return (
-    <section id="tarifs" className="scroll-mt-20 px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
+    <section id="tarifs" className="scroll-mt-20 w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-3xl text-center max-lg:max-w-none">
+        <div className="w-full max-w-3xl mx-auto text-center box-border">
           <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1 max-md:text-xs">
             Tarification
           </p>
@@ -58,7 +59,7 @@ export function PricingSection() {
         </div>
 
         {/* Toggle Mensuel / Annuel */}
-        <div className="mx-auto mt-6 flex justify-center observe-stagger-4 max-lg:mt-5 max-md:mt-4">
+        <div className="w-full max-w-5xl mx-auto mt-6 flex justify-center observe-stagger-4 max-lg:mt-5 max-md:mt-4 box-border">
           <div className="inline-flex items-center rounded-xl border border-white/10 bg-white/5 p-1 max-lg:flex-wrap max-lg:justify-center max-md:p-0.5">
             <button
               type="button"
@@ -88,7 +89,9 @@ export function PricingSection() {
           </div>
         </div>
 
-        <div className="mx-auto mt-5 grid max-w-5xl gap-6 sm:grid-cols-3 max-lg:gap-4 max-md:mt-4 max-md:gap-3">
+        <div className="w-full max-w-5xl mx-auto mt-5 box-border">
+          {/* Desktop: grid */}
+          <div className={`gap-6 sm:grid-cols-3 max-lg:gap-4 max-md:mt-4 max-md:gap-3 ${billingPeriod === "mensuel" ? "mt-5 grid max-lg:hidden" : "mt-5 grid"}`}>
           {billingPeriod === "mensuel" ? (
             plansMensuel.map((plan, i) => (
               <div
@@ -112,8 +115,8 @@ export function PricingSection() {
                 <p className="mt-3 text-sm text-slate-400 max-md:text-xs">{plan.subtitle}</p>
                 <p className="mt-5 font-heading text-2xl font-bold text-white max-lg:mt-4 max-lg:text-xl max-md:text-lg">{plan.price}</p>
                 <ul className="mt-3 space-y-2.5 text-sm text-slate-400 max-lg:space-y-2 max-md:text-xs">
-                  {plan.features.split("\n").map((line, i) => (
-                    <li key={i} className="flex items-start gap-2.5">
+                  {plan.features.split("\n").map((line, j) => (
+                    <li key={j} className="flex items-start gap-2.5">
                       <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50" aria-hidden />
                       <span>{line}</span>
                     </li>
@@ -165,6 +168,57 @@ export function PricingSection() {
               </div>
               <div className="observe-stagger-6" aria-hidden />
             </>
+          )}
+          </div>
+
+          {/* Mobile/tablet: accordion (mensuel only), Artiste ouvert par défaut */}
+          {billingPeriod === "mensuel" && (
+            <div className="lg:hidden flex flex-row gap-2 mt-5 w-full max-w-5xl mx-auto">
+              {plansMensuel.map((plan, i) => (
+                <div
+                  key={plan.name}
+                  className={`flex-1 min-w-0 flex flex-col rounded-xl border transition-all duration-200 overflow-hidden ${
+                    accordionOpen === i
+                      ? "border-white/25 bg-white/[0.06] ring-1 ring-white/10"
+                      : "landing-card border-white/10"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setAccordionOpen(i)}
+                    className="w-full py-4 px-3 text-center border-b border-white/10 hover:bg-white/5 transition-colors"
+                  >
+                    <h3 className="font-heading font-semibold text-white text-sm truncate">{plan.name}</h3>
+                    <p className="mt-0.5 font-heading text-lg font-bold text-white">{plan.price}</p>
+                    {plan.featured && (
+                      <span className="mt-1 inline-block rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">Populaire</span>
+                    )}
+                  </button>
+                  {accordionOpen === i && (
+                    <div className="p-3 flex flex-col flex-1 min-h-0">
+                      <p className="text-xs text-slate-400">{plan.subtitle}</p>
+                      <ul className="mt-2 space-y-1.5 text-xs text-slate-400">
+                        {plan.features.split("\n").map((line, j) => (
+                          <li key={j} className="flex items-start gap-2">
+                            <span className="mt-0.5 shrink-0 size-1 rounded-full bg-white/50" aria-hidden />
+                            <span>{line}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <button
+                        type="button"
+                        onClick={() => window.dispatchEvent(new CustomEvent("openPlanModal"))}
+                        className={`mt-4 w-full rounded-lg border px-3 py-2 text-center text-xs transition-colors uppercase ${
+                          plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {plan.cta}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </ObserveSection>

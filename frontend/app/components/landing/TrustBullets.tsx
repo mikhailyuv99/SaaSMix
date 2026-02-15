@@ -21,9 +21,9 @@ const items = [
 
 export function TrustBullets() {
   return (
-    <section className="px-4 pt-8 pb-4 sm:pt-10 sm:pb-5 max-lg:px-3 max-md:pt-6 max-md:pb-3">
+    <section className="w-full max-w-full overflow-x-hidden px-4 pt-8 pb-4 sm:pt-10 sm:pb-5 max-lg:px-3 max-md:pt-6 max-md:pb-3">
       <ObserveSection>
-        <div className="mx-auto flex max-w-4xl flex-col gap-8 sm:flex-row sm:justify-between sm:gap-10 max-lg:gap-5 max-md:gap-4">
+        <div className="w-full max-w-4xl mx-auto flex flex-col gap-8 sm:flex-row sm:justify-between sm:gap-10 max-lg:gap-5 max-md:gap-4 box-border">
           {items.map((item, i) => (
             <div
               key={item.label}

@@ -366,9 +366,9 @@ function DemoCard({
 
 export function BeforeAfterSection() {
   return (
-    <section className="px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
+    <section className="w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
-        <div className="mx-auto max-w-3xl text-center max-lg:max-w-none">
+        <div className="w-full max-w-3xl mx-auto text-center box-border">
           <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1 max-md:text-xs">
             Avant / Après
           </p>
@@ -379,12 +379,12 @@ export function BeforeAfterSection() {
             Exemples mixés avec Siberia Mix.
           </p>
         </div>
-        <div className="mx-auto mt-5 grid max-w-5xl gap-6 sm:grid-cols-3 max-lg:mt-4 max-lg:gap-4 max-md:mt-3 max-md:gap-3">
+        <div className="w-full max-w-5xl mx-auto mt-5 grid gap-6 sm:grid-cols-3 max-lg:mt-4 max-lg:gap-4 max-md:mt-3 max-md:gap-3 box-border">
           {DEMOS.map((demo, i) => (
             <DemoCard key={demo.id} demo={demo} index={i} />
           ))}
         </div>
-        <div className="mx-auto mt-5 max-w-2xl text-center observe-stagger-4 max-lg:mt-4 max-md:mt-3">
+        <div className="w-full max-w-2xl mx-auto mt-5 text-center observe-stagger-4 max-lg:mt-4 max-md:mt-3 box-border">
           <Link
             href="/mix"
             className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs"
