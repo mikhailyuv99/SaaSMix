@@ -424,7 +424,6 @@ export default function Home() {
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [savingIntent, setSavingIntent] = useState<"save" | "create">("save");
   const isCreatingInProgressRef = useRef(false);
   const [projectsList, setProjectsList] = useState<{ id: string; name: string; created_at: string | null }[]>([]);
   const [showProjectsModal, setShowProjectsModal] = useState(false);
@@ -1517,10 +1516,9 @@ export default function Home() {
     return projects;
   }, [getAuthHeaders]);
 
-  const doSaveProject = useCallback(async (name: string | null, overrideProject?: { id: string; name: string }, intent: "save" | "create" = "save") => {
+  const doSaveProject = useCallback(async (name: string | null, overrideProject?: { id: string; name: string }) => {
     if (isSavingInProgressRef.current || isCreatingInProgressRef.current) return;
     isSavingInProgressRef.current = true;
-    setSavingIntent(intent);
     const projectToSave = overrideProject ?? currentProject;
     const isUpdate = projectToSave != null;
     const payload = tracks.map((t) => ({
@@ -1566,7 +1564,6 @@ export default function Home() {
       setAppModal({ type: "alert", message: safeMsg, onClose: () => {} });
     } finally {
       setIsSavingProject(false);
-      setSavingIntent("save");
       isSavingInProgressRef.current = false;
     }
   }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges, fetchProjectsList]);
@@ -1631,7 +1628,7 @@ export default function Home() {
           secondaryLabel: "Choisir un autre nom",
           onPrimary: () => {
             setAppModal(null);
-            doSaveProject(null, { id: existing.id, name: existing.name }, "create");
+            doSaveProject(null, { id: existing.id, name: existing.name });
           },
           onSecondary: () => {
             setAppModal(null);
@@ -1669,23 +1666,35 @@ export default function Home() {
           openCreateProjectNamePrompt(true);
         },
         onSecondary: () => {
-          setAppModal(null);
-          setTracks(getDefaultTracks());
-          setCurrentProject(null);
-          setHasUnsavedChanges(false);
-          if (typeof window !== "undefined") {
-            try {
-              (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = false;
-              sessionStorage.removeItem(TRACKS_STORAGE_KEY);
-            } catch (_) {}
+          const doResetAndOpenPrompt = () => {
+            setAppModal(null);
+            setTracks(getDefaultTracks());
+            setCurrentProject(null);
+            setHasUnsavedChanges(false);
+            if (typeof window !== "undefined") {
+              try {
+                (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = false;
+                sessionStorage.removeItem(TRACKS_STORAGE_KEY);
+              } catch (_) {}
+            }
+            openCreateProjectNamePrompt(false);
+          };
+          if (hasUnsavedChanges) {
+            setAppModal({
+              type: "confirm",
+              message: "Vous allez perdre votre progression non sauvegardée. Continuer ?",
+              onConfirm: doResetAndOpenPrompt,
+              onCancel: () => setAppModal(null),
+            });
+          } else {
+            doResetAndOpenPrompt();
           }
-          openCreateProjectNamePrompt(false);
         },
       });
     } else {
       openCreateProjectNamePrompt(false);
     }
-  }, [tracks.length, openCreateProjectNamePrompt, setHasUnsavedChanges]);
+  }, [tracks.length, openCreateProjectNamePrompt, setHasUnsavedChanges, hasUnsavedChanges]);
 
   const saveProject = useCallback(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
@@ -1707,7 +1716,7 @@ export default function Home() {
             secondaryLabel: "Choisir un autre nom",
             onPrimary: () => {
               setAppModal(null);
-              doSaveProject(null, { id: existing.id, name: existing.name }, "save");
+              doSaveProject(null, { id: existing.id, name: existing.name });
             },
             onSecondary: () => {
               setAppModal(null);
@@ -3209,7 +3218,7 @@ export default function Home() {
                     onClick={() => { if (!user) { openAuthModal?.("login"); return; } saveProject(); }}
                     className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
-                    {(user && (isSavingProject || isCreatingProject)) ? (isCreatingProject || savingIntent === "create" ? <span className="animate-dots">CRÉATION</span> : <span className="animate-dots">SAUVEGARDE</span>) : "SAUVEGARDER"}
+                    {user && isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                   </button>
                 </div>
             </div>
@@ -3258,7 +3267,7 @@ export default function Home() {
                       onClick={() => { if (!user) { openAuthModal?.("login"); setNavMenuOpen(false); return; } setNavMenuOpen(false); saveProject(); }}
                       className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      {(user && (isSavingProject || isCreatingProject)) ? (isCreatingProject || savingIntent === "create" ? <span className="animate-dots">CRÉATION</span> : <span className="animate-dots">SAUVEGARDE</span>) : "SAUVEGARDER"}
+                      {user && isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                     </button>
                   </>
                 </div>
