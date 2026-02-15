@@ -74,23 +74,35 @@ export function FAQContactSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-5 grid max-w-5xl gap-8 lg:grid-cols-[1fr,400px] lg:items-stretch">
-          <div className="space-y-3 observe-stagger-1">
+        <div className="mx-auto mt-8 max-w-5xl sm:mt-10 grid gap-10 lg:grid-cols-[1fr,380px] lg:items-start">
+          <ul className="space-y-0 observe-stagger-1 max-w-3xl">
             {faqs.map((faq, i) => (
-              <div
+              <li
                 key={i}
-                className="landing-card overflow-hidden transition-all duration-300"
+                className={`group border-b border-white/[0.06] last:border-b-0 transition-colors hover:border-white/10 ${
+                  openIndex === i ? "border-white/10" : ""
+                }`}
               >
                 <button
                   type="button"
                   style={{ fontFamily: FONT }}
-                  className="faq-question flex w-full items-center justify-between px-5 py-4 text-left font-medium text-white transition-colors hover:bg-white/[0.03] sm:px-6"
+                  className="faq-question flex w-full items-start justify-between gap-4 py-5 sm:py-6 text-left transition-colors"
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   aria-expanded={openIndex === i}
                 >
-                  <span className="font-sans">{faq.q}</span>
+                  <span className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                    <span
+                      className={`mt-2 shrink-0 w-1.5 h-1.5 rounded-full transition-colors ${
+                        openIndex === i ? "bg-white/80" : "bg-white/40 group-hover:bg-white/60"
+                      }`}
+                      aria-hidden
+                    />
+                    <span className="font-sans font-medium text-white text-[15px] sm:text-base leading-snug">
+                      {faq.q}
+                    </span>
+                  </span>
                   <span
-                    className={`shrink-0 text-slate-400 transition-transform duration-200 ${
+                    className={`shrink-0 mt-1.5 text-slate-400 transition-transform duration-200 ${
                       openIndex === i ? "rotate-180" : ""
                     }`}
                   >
@@ -105,17 +117,20 @@ export function FAQContactSection() {
                   }`}
                 >
                   <div className="overflow-hidden">
-                    <div className="font-sans border-t border-white/10 px-5 py-3 text-sm leading-relaxed text-slate-400 sm:px-6" style={{ fontFamily: FONT }}>
+                    <div
+                      className="font-sans pl-8 sm:pl-9 pr-0 pb-5 sm:pb-6 pt-0 text-sm sm:text-[15px] leading-relaxed text-slate-400"
+                      style={{ fontFamily: FONT }}
+                    >
                       {faq.a}
                     </div>
                   </div>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
 
           <div className="observe-stagger-2 flex flex-col w-full min-h-0">
-            <div className="landing-card font-sans p-6 shadow-xl shadow-black/20 flex flex-col flex-1 min-h-0">
+            <div className="font-sans p-6 sm:p-7 rounded-xl border border-white/[0.06] bg-white/[0.02] flex flex-col flex-1 min-h-0">
               <h3 className="font-heading font-semibold text-white">Nous contacter</h3>
               <p className="mt-1 text-sm text-slate-400">
                 Un message ou une question ? Envoyez-nous un mail.
@@ -172,7 +187,7 @@ export function FAQContactSection() {
                   Envoyer
                 </button>
               </form>
-              <div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-5 mt-auto">
+              <div className="mt-5 flex items-center gap-3 border-t border-white/[0.06] pt-5 mt-auto">
                 <span className="text-xs text-slate-400">Ou suivez-nous :</span>
                 <a
                   href={INSTAGRAM_URL}
