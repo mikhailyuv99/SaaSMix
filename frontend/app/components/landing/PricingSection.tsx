@@ -5,16 +5,37 @@ import Link from "next/link";
 import { ObserveSection } from "../ObserveSection";
 
 const plansMensuel = [
-  { name: "Starter", subtitle: "Pour découvrir", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
-  { name: "Creator", subtitle: "Pour les artistes réguliers", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: true },
-  { name: "Pro", subtitle: "Mix + master à volonté", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
+  {
+    name: "Starter",
+    subtitle: "Pour découvrir",
+    price: "9,99 €",
+    features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 projets sauvegardés",
+    cta: "Bientôt",
+    featured: false,
+  },
+  {
+    name: "Creator",
+    subtitle: "Pour les artistes réguliers",
+    price: "19,99 €",
+    features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 projets sauvegardés",
+    cta: "Bientôt",
+    featured: true,
+  },
+  {
+    name: "Pro",
+    subtitle: "Mix + master à volonté",
+    price: "29,99 €",
+    features: "Téléchargements mix illimités\nTéléchargements master illimités\nProjets illimités",
+    cta: "Bientôt",
+    featured: false,
+  },
 ];
 
 const planAnnuel = {
   name: "Pro annuel",
-  subtitle: "Économisez sur l'année",
-  price: "—",
-  tokens: "Prix avantageux, à définir",
+  subtitle: "Économisez 25 %",
+  price: "269 €",
+  features: "Téléchargements mix illimités\nTéléchargements master illimités\nProjets illimités",
   cta: "Bientôt",
   featured: true,
 };
@@ -88,7 +109,7 @@ export function PricingSection() {
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{plan.subtitle}</p>
                 <p className="mt-5 font-heading text-2xl font-bold text-white">{plan.price}</p>
-                <p className="mt-1 text-sm text-slate-400">{plan.tokens}</p>
+                <p className="mt-1 text-sm text-slate-400 whitespace-pre-line">{plan.features}</p>
                 <div className="mt-6">
                   <span
                     className={`inline-block w-full rounded-xl border px-4 py-2.5 text-center text-sm ${
@@ -111,7 +132,7 @@ export function PricingSection() {
                 <h3 className="mt-3 font-heading text-xl font-semibold text-white">{planAnnuel.name}</h3>
                 <p className="text-sm text-slate-400">{planAnnuel.subtitle}</p>
                 <p className="mt-5 font-heading text-2xl font-bold text-white">{planAnnuel.price}</p>
-                <p className="mt-1 text-sm text-slate-400">{planAnnuel.tokens}</p>
+                <p className="mt-1 text-sm text-slate-400 whitespace-pre-line">{planAnnuel.features}</p>
                 <div className="mt-6">
                   <span className="inline-block w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-slate-400">
                     {planAnnuel.cta}
@@ -122,7 +143,7 @@ export function PricingSection() {
           )}
         </div>
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-slate-400 observe-stagger-4">
-          Les tarifs et volumes de tokens seront fixés prochainement. En attendant, vous pouvez{" "}
+          Le mix est gratuit pour tous. En attendant l&apos;ouverture des abonnements, vous pouvez{" "}
           <Link
             href="/mix"
             className="font-medium text-white underline decoration-white/40 underline-offset-2 transition-colors hover:decoration-white"

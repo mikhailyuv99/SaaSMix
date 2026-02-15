@@ -3,16 +3,37 @@
 import { useState } from "react";
 
 const PLANS_MENSUEL = [
-  { name: "Starter", subtitle: "Pour découvrir", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
-  { name: "Creator", subtitle: "Pour les artistes réguliers", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: true },
-  { name: "Pro", subtitle: "Mix + master à volonté", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
+  {
+    name: "Starter",
+    subtitle: "Pour découvrir",
+    price: "9,99 €",
+    features: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 projets sauvegardés",
+    cta: "Bientôt",
+    featured: false,
+  },
+  {
+    name: "Creator",
+    subtitle: "Pour les artistes réguliers",
+    price: "19,99 €",
+    features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 projets sauvegardés",
+    cta: "Bientôt",
+    featured: true,
+  },
+  {
+    name: "Pro",
+    subtitle: "Mix + master à volonté",
+    price: "29,99 €",
+    features: "Téléchargements mix illimités\nTéléchargements master illimités\nProjets illimités",
+    cta: "Bientôt",
+    featured: false,
+  },
 ];
 
 const PLAN_ANNUEL = {
   name: "Pro annuel",
-  subtitle: "Économisez sur l'année",
-  price: "—",
-  tokens: "Prix avantageux, à définir",
+  subtitle: "Économisez 25 %",
+  price: "269 €",
+  features: "Téléchargements mix illimités\nTéléchargements master illimités\nProjets illimités",
   cta: "Bientôt",
   featured: true,
 };
@@ -75,7 +96,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{plan.subtitle}</p>
                 <p className="mt-5 font-heading text-2xl font-bold text-white">{plan.price}</p>
-                <p className="mt-1 text-sm text-slate-400">{plan.tokens}</p>
+                <p className="mt-1 text-sm text-slate-400 whitespace-pre-line">{plan.features}</p>
                 <div className="mt-6">
                   <span
                     className={`inline-block w-full rounded-xl border px-4 py-2.5 text-center text-sm ${
@@ -99,7 +120,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               <h3 className="mt-3 font-heading text-xl font-semibold text-white">{PLAN_ANNUEL.name}</h3>
               <p className="text-sm text-slate-400">{PLAN_ANNUEL.subtitle}</p>
               <p className="mt-5 font-heading text-2xl font-bold text-white">{PLAN_ANNUEL.price}</p>
-              <p className="mt-1 text-sm text-slate-400">{PLAN_ANNUEL.tokens}</p>
+              <p className="mt-1 text-sm text-slate-400 whitespace-pre-line">{PLAN_ANNUEL.features}</p>
               <div className="mt-6">
                 <span className="inline-block w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-slate-400">
                   {PLAN_ANNUEL.cta}
@@ -110,7 +131,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         )}
 
         <p className="mt-4 text-center text-xs text-slate-400">
-          Les tarifs et volumes de tokens seront fixés prochainement. Lien Stripe à venir.
+          Le mix est gratuit pour tous. Abonnements et Stripe à venir.
         </p>
       </div>
     </div>
