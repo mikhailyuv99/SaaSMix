@@ -135,7 +135,7 @@ export function FAQContactSection() {
               <p className="mt-1 text-sm text-slate-400">
                 Un message ou une question ? Envoyez-nous un mail.
               </p>
-              <form onSubmit={handleSubmit} className="mt-5 space-y-4 flex flex-col flex-1 min-h-0">
+              <form onSubmit={handleSubmit} className="mt-5 flex flex-col flex-1 min-h-0 gap-4">
                 <div>
                   <label htmlFor="contact-name" className="mb-1 block text-xs font-medium text-slate-400">
                     Nom
@@ -165,29 +165,28 @@ export function FAQContactSection() {
                     placeholder="vous@exemple.com"
                   />
                 </div>
-                <div>
+                <div className="flex flex-col flex-1 min-h-0">
                   <label htmlFor="contact-message" className="mb-1 block text-xs font-medium text-slate-400">
                     Message
                   </label>
                   <textarea
                     id="contact-message"
-                    rows={4}
                     value={formState.message}
                     onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    className="contact-input w-full min-h-[100px] flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 resize-y"
                     placeholder="Votre message..."
                   />
                 </div>
                 <button
                   type="submit"
                   style={{ fontFamily: FONT }}
-                  className="contact-submit btn-cta-primary w-full py-3 text-sm font-semibold font-sans"
+                  className="contact-submit btn-cta-primary w-full py-3 text-sm font-semibold font-sans shrink-0"
                 >
                   Envoyer
                 </button>
               </form>
-              <div className="mt-5 flex items-center gap-3 border-t border-white/[0.06] pt-5 mt-auto">
+              <div className="mt-5 flex items-center gap-3 border-t border-white/[0.06] pt-5 shrink-0">
                 <span className="text-xs text-slate-400">Ou suivez-nous :</span>
                 <a
                   href={INSTAGRAM_URL}
