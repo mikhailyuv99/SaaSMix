@@ -424,6 +424,8 @@ export default function Home() {
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [savingIntent, setSavingIntent] = useState<"save" | "create">("save");
+  const isCreatingInProgressRef = useRef(false);
   const [projectsList, setProjectsList] = useState<{ id: string; name: string; created_at: string | null }[]>([]);
   const [showProjectsModal, setShowProjectsModal] = useState(false);
   const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
@@ -1450,6 +1452,8 @@ export default function Home() {
   }, [searchParams]);
 
   const doCreateNewProject = useCallback(async (name: string) => {
+    if (isCreatingInProgressRef.current) return;
+    isCreatingInProgressRef.current = true;
     const defaultTracks = getDefaultTracks();
     const payload = defaultTracks.map((t) => ({
       id: t.id,
@@ -1497,6 +1501,7 @@ export default function Home() {
       setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la création.", onClose: () => {} });
     } finally {
       setIsCreatingProject(false);
+      isCreatingInProgressRef.current = false;
     }
   }, [getAuthHeaders]);
 
@@ -1512,9 +1517,10 @@ export default function Home() {
     return projects;
   }, [getAuthHeaders]);
 
-  const doSaveProject = useCallback(async (name: string | null, overrideProject?: { id: string; name: string }) => {
-    if (isSavingInProgressRef.current) return;
+  const doSaveProject = useCallback(async (name: string | null, overrideProject?: { id: string; name: string }, intent: "save" | "create" = "save") => {
+    if (isSavingInProgressRef.current || isCreatingInProgressRef.current) return;
     isSavingInProgressRef.current = true;
+    setSavingIntent(intent);
     const projectToSave = overrideProject ?? currentProject;
     const isUpdate = projectToSave != null;
     const payload = tracks.map((t) => ({
@@ -1560,11 +1566,14 @@ export default function Home() {
       setAppModal({ type: "alert", message: safeMsg, onClose: () => {} });
     } finally {
       setIsSavingProject(false);
+      setSavingIntent("save");
       isSavingInProgressRef.current = false;
     }
   }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges, fetchProjectsList]);
 
   const doCreateNewProjectWithCurrentTracks = useCallback(async (name: string) => {
+    if (isCreatingInProgressRef.current) return;
+    isCreatingInProgressRef.current = true;
     setIsCreatingProject(true);
     const payload = tracks.map((t) => ({
       id: t.id,
@@ -1580,7 +1589,6 @@ export default function Home() {
     tracks.forEach((t) => {
       if (t.file) form.append("files", t.file);
     });
-    setIsSavingProject(true);
     try {
       const res = await fetch(`${API_BASE}/api/projects`, {
         method: "POST",
@@ -1594,7 +1602,7 @@ export default function Home() {
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || "Erreur création");
-      setCurrentProject({ id: data.id, name: data.name });
+      setCurrentProject({ id: data.id, name: data.name ?? "Sans nom" });
       setHasUnsavedChanges(false);
       if (typeof window !== "undefined") {
         (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = false;
@@ -1605,6 +1613,7 @@ export default function Home() {
       setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la création.", onClose: () => {} });
     } finally {
       setIsCreatingProject(false);
+      isCreatingInProgressRef.current = false;
     }
   }, [tracks, getAuthHeaders, setHasUnsavedChanges, fetchProjectsList]);
 
@@ -1622,7 +1631,7 @@ export default function Home() {
           secondaryLabel: "Choisir un autre nom",
           onPrimary: () => {
             setAppModal(null);
-            doSaveProject(null, { id: existing.id, name: existing.name });
+            doSaveProject(null, { id: existing.id, name: existing.name }, "create");
           },
           onSecondary: () => {
             setAppModal(null);
@@ -1698,7 +1707,7 @@ export default function Home() {
             secondaryLabel: "Choisir un autre nom",
             onPrimary: () => {
               setAppModal(null);
-              doSaveProject(null, { id: existing.id, name: existing.name });
+              doSaveProject(null, { id: existing.id, name: existing.name }, "save");
             },
             onSecondary: () => {
               setAppModal(null);
@@ -3196,17 +3205,12 @@ export default function Home() {
                 <div className="relative flex flex-col items-center">
                   <button
                     type="button"
-                    disabled={user ? isSavingProject : false}
+                    disabled={user ? (isSavingProject || isCreatingProject) : false}
                     onClick={() => { if (!user) { openAuthModal?.("login"); return; } saveProject(); }}
                     className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
-                    {user && isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
+                    {(user && (isSavingProject || isCreatingProject)) ? (isCreatingProject || savingIntent === "create" ? <span className="animate-dots">CRÉATION</span> : <span className="animate-dots">SAUVEGARDE</span>) : "SAUVEGARDER"}
                   </button>
-                  {user && currentProject && (
-                    <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-400 text-xs whitespace-nowrap" title={currentProject.name}>
-                      {currentProject.name}
-                    </span>
-                  )}
                 </div>
             </div>
           </nav>
@@ -3250,17 +3254,12 @@ export default function Home() {
                     </button>
                     <button
                       type="button"
-                      disabled={user ? isSavingProject : false}
+                      disabled={user ? (isSavingProject || isCreatingProject) : false}
                       onClick={() => { if (!user) { openAuthModal?.("login"); setNavMenuOpen(false); return; } setNavMenuOpen(false); saveProject(); }}
                       className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      {user && isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
+                      {(user && (isSavingProject || isCreatingProject)) ? (isCreatingProject || savingIntent === "create" ? <span className="animate-dots">CRÉATION</span> : <span className="animate-dots">SAUVEGARDE</span>) : "SAUVEGARDER"}
                     </button>
-                    {user && currentProject && (
-                      <p className="px-4 py-1.5 text-xs text-slate-400 truncate max-w-[220px] mx-auto" title={currentProject.name}>
-                        {currentProject.name}
-                      </p>
-                    )}
                   </>
                 </div>
               </>
