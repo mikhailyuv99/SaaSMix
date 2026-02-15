@@ -74,12 +74,12 @@ function DemoWaveform({
   );
 }
 
-type DemoId = "hiphop" | "rnb" | "rap";
+type DemoId = "hublot" | "motema" | "hiver";
 
 const DEMOS: { id: DemoId; title: string; desc: string }[] = [
-  { id: "hiphop", title: "Hip-Hop", desc: "Voix claire sur instrumentale." },
-  { id: "rnb", title: "R&B", desc: "Mix chaleureux et spatial." },
-  { id: "rap", title: "Rap", desc: "Punch et présence vocale." },
+  { id: "hublot", title: "Ikha x 2face HUBLOT", desc: "Avant / Après mix." },
+  { id: "motema", title: "Sellig - MOTEMA", desc: "Avant / Après mix." },
+  { id: "hiver", title: "Ikha - HIVER", desc: "Avant / Après mix." },
 ];
 
 function getDemoAudioUrls(id: DemoId): { avant: string; apres: string } {
