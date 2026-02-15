@@ -38,6 +38,14 @@ function DemoWaveform({
   const containerRef = useRef<HTMLDivElement>(null);
   const maxPeak = useMemo(() => Math.max(...peaks, 0.01), [peaks]);
   const playheadPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  // Étirer le contenu sur toute la largeur si la piste a du silence en fin (ex. Hiver)
+  const contentEnd = useMemo(() => {
+    const threshold = maxPeak * 0.02;
+    let last = peaks.length - 1;
+    while (last > 0 && peaks[last] < threshold) last--;
+    return Math.max(last, 1);
+  }, [peaks, maxPeak]);
+  const scaleX = (i: number) => (contentEnd > 0 ? (i / contentEnd) * 100 : (i / (peaks.length - 1 || 1)) * 100);
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -76,8 +84,8 @@ function DemoWaveform({
       title={onSeek ? "Cliquer pour aller à ce moment" : undefined}
     >
       <svg className="absolute inset-0 w-full h-full min-w-0 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
-        {peaks.map((p, i) => {
-          const x = (i / (peaks.length - 1 || 1)) * 100;
+        {peaks.slice(0, contentEnd + 1).map((p, i) => {
+          const x = Math.min(100, scaleX(i));
           const halfH = (p / maxPeak) * 50;
           return (
             <line
@@ -190,12 +198,16 @@ function DemoCard({
     };
   }, [urls.avant, urls.apres]);
 
-  // Mute/unmute only when switching Avant/Après (both elements play in sync)
+  // Mute/unmute when switching Avant/Après + resync both to same currentTime (évite décalage si fichiers légèrement désalignés)
   useEffect(() => {
     const a = audioAvantRef.current;
     const b = audioApresRef.current;
-    if (a) a.muted = mode !== "avant";
-    if (b) b.muted = mode !== "apres";
+    if (!a || !b) return;
+    const t = a.currentTime;
+    a.currentTime = t;
+    b.currentTime = t;
+    a.muted = mode !== "avant";
+    b.muted = mode !== "apres";
   }, [mode]);
 
   const handleEnded = useCallback(() => {
@@ -264,13 +276,13 @@ function DemoCard({
   return (
     <div
       ref={cardRef}
-      className={`landing-card group p-5 sm:p-6 flex flex-col ${index === 0 ? "observe-stagger-1" : index === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
+      className={`landing-card group p-5 sm:p-6 flex flex-col min-w-0 ${index === 0 ? "observe-stagger-1" : index === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
     >
       <p className="font-heading font-semibold text-white">{demo.title}</p>
       <p className="mt-0.5 text-sm text-slate-400">{demo.desc}</p>
 
-      {/* Waveform (current mode) or loading spinner */}
-      <div className="mt-4 w-full min-w-0 rounded-lg border border-white/[0.06] h-12 overflow-hidden">
+      {/* Waveform (current mode) or loading spinner - prend toute la largeur dispo */}
+      <div className="mt-4 w-full min-w-0 rounded-lg border border-white/[0.06] h-12 overflow-hidden relative">
         {isLoading ? (
           <div className="h-full w-full flex items-center justify-center bg-white/[0.04]">
             <svg className="animate-spin h-6 w-6 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden>
@@ -279,13 +291,13 @@ function DemoCard({
             </svg>
           </div>
         ) : (
-          <div className="w-full min-w-0 h-full">
+          <div className="absolute inset-0 min-w-0">
             <DemoWaveform
               peaks={currentWaveform?.peaks ?? []}
               duration={maxDuration > 0 ? maxDuration : currentDuration}
               currentTime={currentTime}
               onSeek={handleSeek}
-              className="h-full"
+              className="h-full w-full"
             />
           </div>
         )}
