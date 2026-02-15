@@ -418,7 +418,7 @@ export default function Home() {
 
   const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
   const { user, setUser, logout, openAuthModal } = useAuth();
-  const { hasUnsavedChanges, setHasUnsavedChanges } = useLeaveWarning();
+  const { hasUnsavedChanges, setHasUnsavedChanges, showLeaveModal, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction } = useLeaveWarning();
   const { setIsPro, setOpenManageSubscription } = useSubscription();
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
@@ -459,10 +459,10 @@ export default function Home() {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
   }, [appModal]);
 
-  // Sync hasUnsavedChanges to window for beforeunload
+  // Sync hasUnsavedChanges to window for beforeunload (suppress browser prompt when our leave modal is open)
   useEffect(() => {
-    (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = hasUnsavedChanges;
-  }, [hasUnsavedChanges]);
+    (window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved = hasUnsavedChanges && !showLeaveModal;
+  }, [hasUnsavedChanges, showLeaveModal]);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -2946,7 +2946,18 @@ export default function Home() {
                     <button
                       type="button"
                       disabled={loadingProjectId !== null}
-                      onClick={() => loadProject(p.id)}
+                      onClick={() => {
+                        if (tracks.length > 0 || hasUnsavedChanges) {
+                          setLeaveIntent("load_project");
+                          setLeaveConfirmAction(() => () => {
+                            loadProject(p.id);
+                            setShowProjectsModal(false);
+                          });
+                          setShowLeaveModal(true);
+                        } else {
+                          loadProject(p.id);
+                        }
+                      }}
                       className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
                     >
                       {loadingProjectId === p.id ? <span className="animate-dots">Chargement</span> : "Charger"}

@@ -100,9 +100,11 @@ export function HeroSection() {
             className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-hero-tagline"
             style={{ animationFillMode: "both" }}
           >
-            <span className="text-white animate-hero-tagline-loop inline-block">Le site n°1</span>
+            <span className="text-white inline-block">Le site n°1</span>
             <br />
-            <span className="text-white animate-hero-tagline-loop inline-block">de mix vocal en ligne</span>
+            <span className="text-white inline-block">de mix vocal</span>
+            <br />
+            <span className="text-white animate-hero-tagline-punch inline-block whitespace-nowrap">en ligne</span>
           </h1>
           <p
             className="mt-4 text-lg text-slate-400 sm:text-xl animate-fade-up"

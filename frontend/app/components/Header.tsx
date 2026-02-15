@@ -12,7 +12,7 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, openAuthModal } = useAuth();
-  const { hasUnsavedChanges, setShowLeaveModal, setLeaveIntent, showLeaveModal, leaveIntent } = useLeaveWarning();
+  const { hasUnsavedChanges, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction, showLeaveModal, leaveIntent, leaveConfirmAction } = useLeaveWarning();
   const { isPro, openManageSubscription } = useSubscription();
   const isHome = pathname === "/";
   const isMix = pathname === "/mix";
@@ -29,14 +29,18 @@ export function Header() {
   const handleLeaveConfirm = () => {
     if (leaveIntent === "disconnect") {
       logout();
+    } else if (leaveIntent === "load_project") {
+      leaveConfirmAction?.();
     } else {
-      router.push("/");
+      window.location.href = "/";
     }
+    setLeaveConfirmAction(null);
     setShowLeaveModal(false);
     setLeaveIntent(null);
   };
 
   const handleLeaveCancel = () => {
+    setLeaveConfirmAction(null);
     setShowLeaveModal(false);
     setLeaveIntent(null);
   };
@@ -61,6 +65,7 @@ export function Header() {
   };
 
   const isLeaveForDisconnect = leaveIntent === "disconnect";
+  const isLeaveForLoadProject = leaveIntent === "load_project";
 
   return (
     <>
@@ -137,7 +142,9 @@ export function Header() {
             <p className="text-tagline text-slate-300 text-center text-sm mb-6">
               {isLeaveForDisconnect
                 ? "Vous avez des modifications non sauvegardées. Se déconnecter quand même ?"
-                : "Quitter cette page sans sauvegarder ? Vous perdrez toute progression en cours. Continuer ?"}
+                : isLeaveForLoadProject
+                  ? "Charger ce projet remplacera les pistes actuelles. Continuer ?"
+                  : "Quitter cette page sans sauvegarder ? Vous perdrez toute progression en cours. Continuer ?"}
             </p>
             <div className="flex gap-3">
               <button
