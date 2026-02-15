@@ -457,6 +457,8 @@ export default function Home() {
   } | null>(null);
   const mixDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [mixDropzoneDragging, setMixDropzoneDragging] = useState(false);
+  const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
+  const [addTrackDropzoneDragging, setAddTrackDropzoneDragging] = useState(false);
 
   useEffect(() => {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
@@ -3692,20 +3694,49 @@ export default function Home() {
           ))}
           </div>
 
-          <div className="mt-4 max-lg:mt-3 max-md:mt-2.5">
-            <button
-              type="button"
-              onClick={addTrack}
-              className="group w-full max-w-2xl mx-auto rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm py-5 max-lg:py-4 flex items-center justify-center gap-2 transition-colors hover:border-white/15 hover:bg-white/[0.06] focus:outline-none focus:ring-0"
-              aria-label="Ajouter une piste"
-            >
-              <svg className="w-5 h-5 text-slate-400 group-hover:text-white transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span className="font-heading text-sm uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors">Ajouter une piste</span>
-            </button>
-          </div>
+          {tracks.length >= 1 && (
+            <div className="mt-4 max-lg:mt-3 max-md:mt-2.5">
+              <input
+                ref={addTrackDropzoneInputRef}
+                type="file"
+                accept="audio/*,.wav,.mp3,.ogg,.m4a,.flac,.aac"
+                multiple
+                className="sr-only"
+                aria-hidden
+                onChange={(e) => {
+                  const fileList = e.target.files;
+                  if (!fileList?.length) return;
+                  const files = Array.from(fileList).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
+                  if (files.length === 0) return;
+                  e.target.value = "";
+                  setCategoryModal({ file: files[0], nextFiles: files.slice(1) });
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => addTrackDropzoneInputRef.current?.click()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setAddTrackDropzoneDragging(false);
+                  const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
+                  if (files.length === 0) return;
+                  setCategoryModal({ file: files[0], nextFiles: files.slice(1) });
+                }}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(false); }}
+                className={`group w-full max-w-2xl mx-auto rounded-xl border backdrop-blur-sm py-5 max-lg:py-4 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus:outline-none focus:ring-0 ${
+                  addTrackDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "border-white/10 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.06]"
+                }`}
+                aria-label="Glisser-déposer ou choisir des pistes"
+              >
+                <span className="font-heading text-sm uppercase tracking-[0.2em] text-slate-400 group-hover:text-white transition-colors">
+                  {addTrackDropzoneDragging ? "Déposez les fichiers" : "Glissez vos pistes ici"}
+                </span>
+                <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">ou cliquez pour choisir un ou plusieurs fichiers</span>
+              </button>
+            </div>
+          )}
         </section>
 
         {showPlayNoFileMessage && (
