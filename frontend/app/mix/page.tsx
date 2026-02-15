@@ -423,6 +423,8 @@ export default function Home() {
   const { hasUnsavedChanges, setHasUnsavedChanges, showLeaveModal, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction } = useLeaveWarning();
   const { isPro, setIsPro, setOpenManageSubscription } = useSubscription();
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+  const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
+  const [checkoutLabel, setCheckoutLabel] = useState<string | null>(null);
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
@@ -4255,15 +4257,23 @@ export default function Home() {
       {/* ─── Subscription Pro (modal Stripe Elements, sans quitter la page) ─── */}
       <SubscriptionModal
         isOpen={subscriptionModalOpen}
-        onClose={() => setSubscriptionModalOpen(false)}
-        onSuccess={() => { fetchBilling(); }}
+        onClose={() => { setSubscriptionModalOpen(false); setCheckoutPriceId(null); setCheckoutLabel(null); }}
+        onSuccess={() => { fetchBilling(); setCheckoutPriceId(null); setCheckoutLabel(null); }}
         getAuthHeaders={getAuthHeaders}
+        initialPriceId={checkoutPriceId}
+        initialLabel={checkoutLabel}
       />
       <ManageSubscriptionModal
         isOpen={manageSubscriptionModalOpen}
         onClose={() => setManageSubscriptionModalOpen(false)}
         getAuthHeaders={getAuthHeaders}
         onSubscriptionUpdated={() => { fetchBilling(); }}
+        onRequestCheckout={(priceId, planName) => {
+          setManageSubscriptionModalOpen(false);
+          setCheckoutPriceId(priceId);
+          setCheckoutLabel(planName);
+          setSubscriptionModalOpen(true);
+        }}
       />
       </main>
   );

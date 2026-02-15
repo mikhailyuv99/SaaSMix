@@ -215,6 +215,12 @@ export function Header() {
               setIsPro(true);
             }
           }}
+          onRequestCheckout={(priceId, planName) => {
+            setManageSubscriptionOpen(false);
+            setCheckoutPriceId(priceId);
+            setCheckoutLabel(planName);
+            setSubscriptionModalOpen(true);
+          }}
         />
       )}
       <ChoosePlanModal

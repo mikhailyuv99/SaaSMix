@@ -374,6 +374,31 @@ def create_subscription(
             invoice_settings={"default_payment_method": body.payment_method_id},
         )
 
+        # Si l'utilisateur a déjà un abonnement actif (changement de plan depuis "Gérer mon abonnement")
+        if user.stripe_subscription_id:
+            try:
+                sub = stripe.Subscription.retrieve(
+                    user.stripe_subscription_id,
+                    expand=["items.data.price"],
+                )
+                if sub and sub.get("status") in ("active", "trialing"):
+                    items_data = (sub.get("items") or {}).get("data") or []
+                    if items_data:
+                        item_id = items_data[0].get("id") if hasattr(items_data[0], "get") else None
+                        if item_id:
+                            stripe.Subscription.modify(
+                                user.stripe_subscription_id,
+                                items=[{"id": item_id, "price": body.price_id}],
+                                default_payment_method=body.payment_method_id,
+                                proration_behavior="create_prorations",
+                            )
+                            user.plan = _plan_from_price_id(body.price_id)
+                            db.commit()
+                            db.refresh(user)
+                            return {"status": "success", "isPro": (user.plan or "free") != "free"}
+            except stripe.StripeError:
+                pass  # fallback: créer un nouvel abonnement ci-dessous
+
         kwargs = {
             "customer": customer_id,
             "items": [{"price": body.price_id}],

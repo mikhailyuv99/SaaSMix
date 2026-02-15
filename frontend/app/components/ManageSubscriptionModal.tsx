@@ -127,11 +127,13 @@ export function ManageSubscriptionModal({
   onClose,
   getAuthHeaders,
   onSubscriptionUpdated,
+  onRequestCheckout,
 }: {
   isOpen: boolean;
   onClose: () => void;
   getAuthHeaders: () => Record<string, string>;
   onSubscriptionUpdated: () => void;
+  onRequestCheckout?: (priceId: string, planName: string) => void;
 }) {
   type Sub = {
     current_period_end: number | null;
@@ -300,7 +302,14 @@ export function ManageSubscriptionModal({
                         <button
                           type="button"
                           disabled={!!changePlanLoading}
-                          onClick={() => handleChangePlan(priceIdToUse)}
+                          onClick={() => {
+                            if (onRequestCheckout) {
+                              onRequestCheckout(priceIdToUse, proLabel ?? plan.name);
+                              onClose();
+                            } else {
+                              handleChangePlan(priceIdToUse);
+                            }
+                          }}
                           className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 disabled:opacity-50 transition-colors"
                         >
                           {changePlanLoading === priceIdToUse ? "En cours…" : "Passer à ce plan"}
@@ -335,7 +344,7 @@ export function ManageSubscriptionModal({
                         <button
                           type="button"
                           onClick={() => setFeaturesOpen(isFeaturesOpen ? null : rowKey)}
-                          className="flex w-full items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5 text-left transition-colors hover:border-white/20 hover:bg-white/[0.04]"
+                          className="flex w-full items-center gap-2 text-left"
                         >
                           <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">Inclus dans ce plan</span>
                           <svg className={`h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform duration-200 ${isFeaturesOpen ? "rotate-180" : ""}`} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -343,10 +352,10 @@ export function ManageSubscriptionModal({
                           </svg>
                         </button>
                         <div className={`overflow-hidden transition-all duration-200 ease-out ${isFeaturesOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
-                          <ul className="mt-2 space-y-2 rounded-lg border border-white/5 bg-black/20 py-2.5 pl-3 pr-3">
+                          <ul className="mt-2 space-y-2 py-2.5 pl-0 pr-0">
                             {features.split("\n").map((line, i) => (
                               <li key={i} className="flex items-start gap-2.5 text-[13px] text-slate-400">
-                                <span className="mt-1.5 shrink-0 size-1.5 rounded-full bg-emerald-500/60" aria-hidden />
+                                <span className="mt-1.5 shrink-0 size-1.5 rounded-full bg-white/70" aria-hidden />
                                 <span className="leading-snug">{line}</span>
                               </li>
                             ))}
