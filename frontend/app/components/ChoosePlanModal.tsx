@@ -12,7 +12,7 @@ const PLANS_MENSUEL = [
     featured: false,
   },
   {
-    name: "Creator",
+    name: "Artiste",
     subtitle: "Pour les artistes réguliers",
     price: "19,99 €",
     features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets",

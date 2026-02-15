@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { ObserveSection } from "../ObserveSection";
 
 const plansMensuel = [
@@ -14,7 +13,7 @@ const plansMensuel = [
     featured: false,
   },
   {
-    name: "Creator",
+    name: "Artiste",
     subtitle: "Pour les artistes réguliers",
     price: "19,99 €",
     features: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets",
@@ -166,16 +165,6 @@ export function PricingSection() {
             </>
           )}
         </div>
-        <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-slate-400 observe-stagger-4">
-          Le mix est gratuit pour tous. En attendant l&apos;ouverture des abonnements, vous pouvez{" "}
-          <Link
-            href="/mix"
-            className="font-medium text-white underline decoration-white/40 underline-offset-2 transition-colors hover:decoration-white"
-          >
-            tester le mix gratuitement
-          </Link>
-          .
-        </p>
       </ObserveSection>
     </section>
   );

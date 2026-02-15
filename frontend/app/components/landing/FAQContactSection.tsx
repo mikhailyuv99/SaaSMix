@@ -22,7 +22,7 @@ const faqs = [
   },
   {
     q: "Comment fonctionnent les tokens ?",
-    a: "Chaque formule (Starter, Creator, Pro) inclut un nombre de téléchargements mix et master par mois. L'écoute en aperçu est illimitée ; seuls les exports (téléchargement du fichier final) consomment votre quota. Consultez la section Tarifs pour le détail de chaque plan.",
+    a: "Chaque formule (Starter, Artiste, Pro) inclut un nombre de téléchargements mix et master par mois. L'écoute en aperçu est illimitée ; seuls les exports (téléchargement du fichier final) consomment votre quota. Consultez la section Tarifs pour le détail de chaque plan.",
   },
   {
     q: "Combien de temps prend un mix ?",
