@@ -22,7 +22,7 @@ const faqs = [
   },
   {
     q: "Comment fonctionnent les tokens ?",
-    a: "Les tokens servent à payer les exports (mix final). Les tarifs et volumes par formule seront communiqués bientôt. Vous pourrez tester le service en aperçu avant de consommer des tokens.",
+    a: "Chaque formule (Starter, Creator, Pro) inclut un nombre de téléchargements mix et master par mois. L'écoute en aperçu est illimitée ; seuls les exports (téléchargement du fichier final) consomment votre quota. Consultez la section Tarifs pour le détail de chaque plan.",
   },
   {
     q: "Combien de temps prend un mix ?",
@@ -34,7 +34,7 @@ const faqs = [
   },
   {
     q: "Puis-je réutiliser le même projet plus tard ?",
-    a: "Oui. Vos projets et pistes sont enregistrés. Vous pouvez revenir modifier le mix, changer des réglages ou retélécharger le fichier tant que votre session est active.",
+    a: "Oui. Avec un compte, vous pouvez enregistrer vos projets et y revenir plus tard pour modifier le mix, changer les réglages ou retélécharger le fichier. Le nombre de projets sauvegardés dépend de votre formule (voir la section Tarifs).",
   },
   {
     q: "Quelle est la durée maximale d'un morceau ?",
