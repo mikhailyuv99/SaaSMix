@@ -23,7 +23,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog" onClick={onClose}>
-      <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-5xl max-h-[90vh] overflow-y-auto p-6 sm:p-8" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-heading text-lg font-semibold text-white">Choisir un plan</h2>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-white text-xl leading-none p-1" aria-label="Fermer">&times;</button>
@@ -57,27 +57,31 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         </div>
 
         {billingPeriod === "mensuel" ? (
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-3">
             {PLANS_MENSUEL.map((plan) => (
               <div
                 key={plan.name}
-                className={`rounded-2xl border p-5 transition-all ${
-                  plan.featured ? "border-white/25 bg-white/[0.06] ring-1 ring-white/10" : "border-white/10 bg-white/[0.03]"
+                className={`rounded-2xl border p-6 transition-all sm:p-8 ${
+                  plan.featured ? "border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10" : "border-white/10 bg-white/[0.03]"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-heading text-lg font-semibold text-white">{plan.name}</h3>
+                  <h3 className="font-heading text-xl font-semibold text-white">{plan.name}</h3>
                   {plan.featured && (
-                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
                       Populaire
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-slate-400 mt-1">{plan.subtitle}</p>
-                <p className="mt-4 font-heading text-xl font-bold text-white">{plan.price}</p>
-                <p className="mt-0.5 text-xs text-slate-400">{plan.tokens}</p>
-                <div className="mt-4">
-                  <span className="inline-block w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-center text-sm text-slate-400">
+                <p className="mt-3 text-sm text-slate-400">{plan.subtitle}</p>
+                <p className="mt-5 font-heading text-2xl font-bold text-white">{plan.price}</p>
+                <p className="mt-1 text-sm text-slate-400">{plan.tokens}</p>
+                <div className="mt-6">
+                  <span
+                    className={`inline-block w-full rounded-xl border px-4 py-2.5 text-center text-sm ${
+                      plan.featured ? "border-white/20 bg-white/5 text-slate-400" : "border-white/15 bg-white/5 text-slate-400"
+                    }`}
+                  >
                     {plan.cta}
                   </span>
                 </div>
@@ -86,18 +90,18 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="w-full max-w-sm rounded-2xl border border-white/25 bg-white/[0.06] ring-1 ring-white/10 p-5">
+            <div className="w-full max-w-sm rounded-2xl border border-white/25 bg-white/[0.06] shadow-xl shadow-black/20 ring-1 ring-white/10 p-6 sm:p-8">
               {PLAN_ANNUEL.featured && (
-                <span className="inline-block rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 mb-2">
+                <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
                   Avantageux
                 </span>
               )}
-              <h3 className="font-heading text-lg font-semibold text-white">{PLAN_ANNUEL.name}</h3>
-              <p className="text-sm text-slate-400 mt-1">{PLAN_ANNUEL.subtitle}</p>
-              <p className="mt-4 font-heading text-xl font-bold text-white">{PLAN_ANNUEL.price}</p>
-              <p className="mt-0.5 text-xs text-slate-400">{PLAN_ANNUEL.tokens}</p>
-              <div className="mt-4">
-                <span className="inline-block w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-center text-sm text-slate-400">
+              <h3 className="mt-3 font-heading text-xl font-semibold text-white">{PLAN_ANNUEL.name}</h3>
+              <p className="text-sm text-slate-400">{PLAN_ANNUEL.subtitle}</p>
+              <p className="mt-5 font-heading text-2xl font-bold text-white">{PLAN_ANNUEL.price}</p>
+              <p className="mt-1 text-sm text-slate-400">{PLAN_ANNUEL.tokens}</p>
+              <div className="mt-6">
+                <span className="inline-block w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-slate-400">
                   {PLAN_ANNUEL.cta}
                 </span>
               </div>
