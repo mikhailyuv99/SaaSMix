@@ -395,14 +395,17 @@ export default function Home() {
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
   const [projectBpm, setProjectBpm] = useState(120);
   const [bpmInput, setBpmInput] = useState("120");
+  const [bpmInputFocused, setBpmInputFocused] = useState(false);
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
 
-  // BPM box : wheel non-passive pour que la molette modifie le BPM sans scroller la page
+  // BPM box : wheel non-passive quand la souris est dessus pour modifier le BPM sans scroller la page (ré-attaché quand les pistes existent)
   useEffect(() => {
+    if (tracks.length === 0) return;
     const el = bpmBoxRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       const delta = e.deltaY > 0 ? -1 : 1;
       const step = e.shiftKey ? 10 : 1;
       setProjectBpm((b) => {
@@ -413,7 +416,7 @@ export default function Home() {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, []);
+  }, [tracks.length]);
 
   const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
   const { user, setUser, logout, openAuthModal } = useAuth();
@@ -3192,7 +3195,7 @@ export default function Home() {
 
       <div className="mx-auto max-w-6xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
-          <nav className="max-lg:hidden flex flex-col items-center justify-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:gap-1.5 max-md:mb-3 max-md:text-xs">
+          <nav className="max-lg:hidden flex flex-col items-center justify-center gap-2 mb-4 mt-6 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:gap-1.5 max-md:mb-3 max-md:text-xs max-md:mt-4">
             <div className="flex flex-nowrap justify-center items-center gap-2">
                 <button
                   type="button"
@@ -3226,7 +3229,7 @@ export default function Home() {
           </nav>
 
           {/* Menu burger mobile / tablette uniquement */}
-          <div className="lg:hidden flex flex-col items-center mb-4 relative">
+          <div className="lg:hidden flex flex-col items-center mb-4 mt-6 relative max-md:mt-4">
             <button
               type="button"
               onClick={() => setNavMenuOpen((o) => !o)}
@@ -4035,8 +4038,8 @@ export default function Home() {
               title="Molette (desktop) ou toucher la valeur (mobile) pour saisir le BPM (1–300)"
             >
               <span className="uppercase tracking-wider text-slate-400">BPM</span>
-              <div className="relative inline-flex items-center justify-center min-w-[2rem] h-full cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
-                <span className="tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] pointer-events-none">
+              <div className="relative inline-flex items-center justify-center min-w-[2.5rem] h-full cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
+                <span className={`tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] select-none transition-opacity ${bpmInputFocused ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
                   {bpmInput}
                 </span>
                 <input
@@ -4045,7 +4048,9 @@ export default function Home() {
                   max={300}
                   value={bpmInput}
                   onChange={(e) => setBpmInput(e.target.value)}
+                  onFocus={() => setBpmInputFocused(true)}
                   onBlur={() => {
+                    setBpmInputFocused(false);
                     const n = Number(bpmInput);
                     if (!bpmInput || isNaN(n) || n < 1) {
                       setProjectBpm(120);
@@ -4056,8 +4061,9 @@ export default function Home() {
                       setBpmInput(String(clamped));
                     }
                   }}
-                  className="absolute inset-0 w-full opacity-0 text-center bg-transparent border-none text-tagline text-xs max-md:text-[10px] tabular-nums text-white focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
-                  aria-label="BPM"
+                  className="absolute inset-0 w-full min-w-0 text-center bg-white/5 border border-white/10 rounded text-tagline text-xs max-md:text-[10px] tabular-nums text-white focus:outline-none focus:ring-1 focus:ring-white/30 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
+                  style={{ opacity: bpmInputFocused ? 1 : 0 }}
+                  aria-label="BPM (cliquer pour saisir)"
                 />
               </div>
             </div>
@@ -4127,14 +4133,14 @@ export default function Home() {
                     type="button"
                     onClick={() => { setActivePlayer("master"); startMasterPlayback(); }}
                     disabled={!masterWaveforms}
-                    className="btn-primary-accent disabled:opacity-50 w-11 h-11 flex items-center justify-center rounded-lg"
+                    className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label={masterResumeFrom > 0 ? "Reprendre" : "Play"}
                   >
-                    <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
                   </button>
                 ) : (
-                  <button type="button" onClick={() => { setActivePlayer("master"); stopMasterPlayback(); }} className="btn-primary w-11 h-11 flex items-center justify-center rounded-lg" aria-label="Pause">
-                    <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  <button type="button" onClick={() => { setActivePlayer("master"); stopMasterPlayback(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause">
+                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                   </button>
                 )}
                 <button
