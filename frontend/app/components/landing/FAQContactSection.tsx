@@ -97,7 +97,7 @@ export function FAQContactSection() {
                       }`}
                       aria-hidden
                     />
-                    <span className="font-heading font-semibold text-white text-lg uppercase">
+                    <span className="font-heading font-semibold text-white text-sm sm:text-base uppercase">
                       {faq.q}
                     </span>
                   </span>
