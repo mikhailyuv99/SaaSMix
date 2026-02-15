@@ -1316,6 +1316,10 @@ export default function Home() {
   const onFileSelect = useCallback(
     (id: string, file: File | null) => {
       if (file) {
+        if (!file.name.toLowerCase().endsWith(".wav")) {
+          setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés pour les pistes.", onClose: () => {} });
+          return;
+        }
         setCategoryModal({ trackId: id, file, fromHero: false });
         return;
       }
@@ -1342,6 +1346,10 @@ export default function Home() {
   );
 
   const createTrackFromFile = useCallback((file: File, category: Category) => {
+    if (!file.name.toLowerCase().endsWith(".wav")) {
+      setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+      return;
+    }
     const newId = generateId();
     saveFileToIDB(newId, file);
     const rawAudioUrl = file.type.startsWith("audio/") ? URL.createObjectURL(file) : null;
@@ -3309,15 +3317,19 @@ export default function Home() {
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
-                accept="audio/*,.wav,.mp3,.ogg,.m4a,.flac,.aac"
+                accept=".wav,audio/wav"
                 multiple
                 className="sr-only"
                 aria-hidden
                 onChange={(e) => {
                   const fileList = e.target.files;
                   if (!fileList?.length) return;
-                  const files = Array.from(fileList).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
-                  if (files.length === 0) return;
+                  const files = Array.from(fileList).filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  if (files.length === 0) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+                    e.target.value = "";
+                    return;
+                  }
                   e.target.value = "";
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
@@ -3330,8 +3342,11 @@ export default function Home() {
                   e.preventDefault();
                   e.stopPropagation();
                   setMixDropzoneDragging(false);
-                  const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
-                  if (files.length === 0) return;
+                  const files = Array.from(e.dataTransfer.files).filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  if (files.length === 0) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+                    return;
+                  }
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
                 }}
@@ -3968,15 +3983,19 @@ export default function Home() {
               <input
                 ref={addTrackDropzoneInputRef}
                 type="file"
-                accept="audio/*,.wav,.mp3,.ogg,.m4a,.flac,.aac"
+                accept=".wav,audio/wav"
                 multiple
                 className="sr-only"
                 aria-hidden
                 onChange={(e) => {
                   const fileList = e.target.files;
                   if (!fileList?.length) return;
-                  const files = Array.from(fileList).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
-                  if (files.length === 0) return;
+                  const files = Array.from(fileList).filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  if (files.length === 0) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+                    e.target.value = "";
+                    return;
+                  }
                   e.target.value = "";
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
@@ -3989,8 +4008,11 @@ export default function Home() {
                   e.preventDefault();
                   e.stopPropagation();
                   setAddTrackDropzoneDragging(false);
-                  const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(f.name));
-                  if (files.length === 0) return;
+                  const files = Array.from(e.dataTransfer.files).filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  if (files.length === 0) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+                    return;
+                  }
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
                 }}
