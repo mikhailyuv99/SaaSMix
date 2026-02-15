@@ -102,7 +102,7 @@ export function PricingSection() {
                     : "landing-card border-white/10"
                 }`}
               >
-                <div className="min-h-[4rem] flex flex-col justify-end">
+                <div className="min-h-[5.25rem] flex flex-col justify-end">
                   <div className="flex items-center justify-between gap-2 min-h-[2rem]">
                     <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{plan.name}</h3>
                     {plan.featured && (
@@ -138,8 +138,8 @@ export function PricingSection() {
           ) : (
             <>
               <div className="observe-stagger-4" aria-hidden />
-              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px] h-full">
-                <div className="min-h-[4rem] flex flex-col justify-end">
+              <div className="rounded-2xl border border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 p-6 sm:p-8 observe-stagger-5 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px] transition-all duration-300">
+                <div className="min-h-[5.25rem] flex flex-col justify-end">
                   <div className="flex items-center justify-between gap-2 min-h-[2rem]">
                     <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{planAnnuel.name}</h3>
                     {planAnnuel.featured && (
