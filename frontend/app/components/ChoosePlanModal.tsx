@@ -29,15 +29,15 @@ export function ChoosePlanModal({
   useEffect(() => {
     if (!isOpen) return;
     fetch(`${API_BASE}/api/billing/plans`)
-      .then((r) => r.json())
-      .then((data) => setPlansData(data))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setPlansData(data && data.plansMonthly ? data : null))
       .catch(() => setPlansData(null));
   }, [isOpen]);
 
   const getPriceId = (planId: string, isAnnual: boolean): string | null => {
     if (!plansData) return null;
     if (isAnnual) return plansData.planAnnual?.priceId ?? null;
-    return plansData.plansMonthly.find((p) => p.id === planId)?.priceId ?? null;
+    return (plansData.plansMonthly ?? []).find((p) => p.id === planId)?.priceId ?? null;
   };
 
   if (!isOpen) return null;

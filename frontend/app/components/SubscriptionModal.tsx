@@ -53,8 +53,14 @@ function SubscriptionForm({
 
   useEffect(() => {
     fetch(`${API_BASE}/api/billing/plans`)
-      .then((r) => r.json())
-      .then((d) => setPlansData({ plansMonthly: d.plansMonthly ?? [], planAnnual: d.planAnnual ?? null }))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && Array.isArray(d.plansMonthly)) {
+          setPlansData({ plansMonthly: d.plansMonthly, planAnnual: d.planAnnual ?? null });
+        } else {
+          setPlansData(null);
+        }
+      })
       .catch(() => setPlansData(null));
   }, []);
 
