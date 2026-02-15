@@ -42,24 +42,27 @@ export function FeaturesSection() {
             Un workflow simple pour des résultats pro.
           </p>
         </div>
-        <div className="mx-auto mt-5 max-w-4xl sm:mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm">
-          <table className="w-full border-collapse">
-            <tbody>
-              {features.map((f, i) => (
-                <tr
-                  key={f.title}
-                  className={`border-b border-white/10 last:border-b-0 transition-colors hover:bg-white/[0.03] ${i === 0 ? "observe-stagger-1" : i === 1 ? "observe-stagger-2" : i === 2 ? "observe-stagger-3" : i === 3 ? "observe-stagger-4" : i === 4 ? "observe-stagger-4" : "observe-stagger-4"}`}
-                >
-                  <td className="font-heading font-semibold text-white align-top py-4 pl-5 pr-4 sm:pl-6 sm:pr-5 w-[38%] min-w-[8rem] sm:w-[32%]">
-                    {f.title}
-                  </td>
-                  <td className="text-sm leading-relaxed text-slate-400 py-4 pr-5 pl-4 sm:pr-6 sm:pl-5">
-                    {f.desc}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mx-auto mt-8 max-w-3xl sm:mt-10">
+          <ul className="space-y-0">
+            {features.map((f, i) => (
+              <li
+                key={f.title}
+                className={`group flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-8 py-5 sm:py-6 border-b border-white/[0.06] last:border-b-0 transition-colors hover:border-white/10 ${i === 0 ? "observe-stagger-1" : i === 1 ? "observe-stagger-2" : i === 2 ? "observe-stagger-3" : "observe-stagger-4"}`}
+              >
+                <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+                  <span className="mt-1.5 shrink-0 w-1.5 h-1.5 rounded-full bg-white/40 group-hover:bg-white/70 transition-colors" aria-hidden />
+                  <div className="min-w-0">
+                    <h3 className="font-heading font-semibold text-white text-[15px] sm:text-base tracking-tight">
+                      {f.title}
+                    </h3>
+                    <p className="mt-1.5 text-sm sm:text-[15px] leading-relaxed text-slate-400">
+                      {f.desc}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </ObserveSection>
     </section>
