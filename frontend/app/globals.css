@@ -14,7 +14,12 @@
 }
 
 @layer base {
-  html, body {
+  html {
+    margin: 0;
+    overflow-x: hidden;
+    /* Pas de overflow-y sur html pour éviter la double barre de scroll (html + body) */
+  }
+  body {
     margin: 0;
     font-family: 'Plus Jakarta Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -26,6 +31,24 @@
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    /* Scrollbar discrète, assortie au thème sombre */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+  /* WebKit (Chrome, Safari, Edge) : scrollbar fine et sombre — uniquement sur body */
+  body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+  }
+  body::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
   }
 }
 
