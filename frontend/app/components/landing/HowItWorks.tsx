@@ -207,22 +207,22 @@ export function HowItWorks() {
               Essayer ces 4 étapes avec vos pistes
             </Link>
           </div>
-          <div className="flex flex-nowrap items-center justify-center gap-3 text-slate-400 sm:gap-8 max-w-full overflow-x-auto">
-            <span className="inline-flex items-center gap-2 shrink-0 text-xs sm:text-xs max-lg:text-[10px] max-md:text-[9px]">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-400 max-md:h-4 max-md:w-4">▶</span>
+          <div className="flex flex-nowrap items-center justify-center gap-2 text-slate-400 sm:gap-4 max-w-full overflow-x-auto px-2">
+            <span className="inline-flex items-center gap-1.5 shrink-0 text-[10px] sm:text-[10px] max-lg:text-[9px] max-md:text-[8px]">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/15 bg-white/5 text-slate-400 max-md:h-3.5 max-md:w-3.5">▶</span>
               Aperçu pleine longueur
             </span>
-            <span className="inline-flex items-center gap-2 shrink-0 text-xs sm:text-xs max-lg:text-[10px] max-md:text-[9px]">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-400 max-md:h-4 max-md:w-4">
-                <svg className="w-3 h-3 max-md:w-2.5 max-md:h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <span className="inline-flex items-center gap-1.5 shrink-0 text-[10px] sm:text-[10px] max-lg:text-[9px] max-md:text-[8px]">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/15 bg-white/5 text-slate-400 max-md:h-3.5 max-md:w-3.5">
+                <svg className="w-2.5 h-2.5 max-md:w-2 max-md:h-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <rect x={1} y={4} width={22} height={16} rx={2} ry={2} />
                   <line x1={1} y1={10} x2={23} y2={10} />
                 </svg>
               </span>
               Pas de carte bancaire
             </span>
-            <span className="inline-flex items-center gap-2 shrink-0 text-xs sm:text-xs max-lg:text-[10px] max-md:text-[9px]">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-slate-400 max-md:h-4 max-md:w-4">✓</span>
+            <span className="inline-flex items-center gap-1.5 shrink-0 text-[10px] sm:text-[10px] max-lg:text-[9px] max-md:text-[8px]">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/15 bg-white/5 text-slate-400 max-md:h-3.5 max-md:w-3.5">✓</span>
               Vous gardez vos droits
             </span>
           </div>
