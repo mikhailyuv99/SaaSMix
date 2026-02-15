@@ -429,6 +429,7 @@ export default function Home() {
   const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<{ id: string; name: string } | null>(null);
+  const isSavingInProgressRef = useRef(false);
   const [mixProgress, setMixProgress] = useState<Record<string, number>>({});
   const mixSimulationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mixSimulationStartRef = useRef<number>(0);
@@ -1511,8 +1512,11 @@ export default function Home() {
     return projects;
   }, [getAuthHeaders]);
 
-  const doSaveProject = useCallback(async (name: string | null) => {
-    const isUpdate = currentProject != null;
+  const doSaveProject = useCallback(async (name: string | null, overrideProject?: { id: string; name: string }) => {
+    if (isSavingInProgressRef.current) return;
+    isSavingInProgressRef.current = true;
+    const projectToSave = overrideProject ?? currentProject;
+    const isUpdate = projectToSave != null;
     const payload = tracks.map((t) => ({
       id: t.id,
       category: t.category,
@@ -1526,12 +1530,12 @@ export default function Home() {
     tracks.forEach((t) => {
       if (t.file) form.append("files", t.file);
     });
-    if (isUpdate) form.append("name", currentProject!.name);
+    if (isUpdate) form.append("name", projectToSave!.name);
     else if (name?.trim()) form.append("name", name.trim());
 
     setIsSavingProject(true);
     try {
-      const url = isUpdate ? `${API_BASE}/api/projects/${currentProject!.id}` : `${API_BASE}/api/projects`;
+      const url = isUpdate ? `${API_BASE}/api/projects/${projectToSave!.id}` : `${API_BASE}/api/projects`;
       const res = await fetch(url, {
         method: isUpdate ? "PUT" : "POST",
         headers: getAuthHeaders(),
@@ -1543,16 +1547,22 @@ export default function Home() {
         return;
       }
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.detail || "Erreur sauvegarde");
-      if (!isUpdate) setCurrentProject({ id: data.id, name: data.name });
+      const errMsg = typeof data.detail === "string" ? data.detail : "Erreur sauvegarde";
+      if (!res.ok) throw new Error(errMsg);
+      if (!isUpdate) setCurrentProject({ id: data.id, name: data.name ?? "Sans nom" });
+      else if (overrideProject) setCurrentProject({ id: overrideProject.id, name: overrideProject.name });
       setHasUnsavedChanges(false);
       setAppModal({ type: "alert", message: isUpdate ? "Projet mis à jour." : "Projet sauvegardé avec les fichiers.", onClose: () => {} });
+      if (overrideProject) fetchProjectsList();
     } catch (e) {
-      setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la sauvegarde.", onClose: () => {} });
+      const msg = e instanceof Error ? e.message : String(e);
+      const safeMsg = msg === "[object Object]" ? "Erreur lors de la sauvegarde." : msg;
+      setAppModal({ type: "alert", message: safeMsg, onClose: () => {} });
     } finally {
       setIsSavingProject(false);
+      isSavingInProgressRef.current = false;
     }
-  }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges]);
+  }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges, fetchProjectsList]);
 
   const doCreateNewProjectWithCurrentTracks = useCallback(async (name: string) => {
     setIsCreatingProject(true);
@@ -1612,9 +1622,7 @@ export default function Home() {
           secondaryLabel: "Choisir un autre nom",
           onPrimary: () => {
             setAppModal(null);
-            setCurrentProject({ id: existing.id, name: existing.name });
-            doSaveProject(null);
-            fetchProjectsList();
+            doSaveProject(null, { id: existing.id, name: existing.name });
           },
           onSecondary: () => {
             setAppModal(null);
@@ -1690,9 +1698,7 @@ export default function Home() {
             secondaryLabel: "Choisir un autre nom",
             onPrimary: () => {
               setAppModal(null);
-              setCurrentProject({ id: existing.id, name: existing.name });
-              doSaveProject(null);
-              fetchProjectsList();
+              doSaveProject(null, { id: existing.id, name: existing.name });
             },
             onSecondary: () => {
               setAppModal(null);
@@ -1747,12 +1753,15 @@ export default function Home() {
           return;
         }
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.detail || "Erreur renommage");
-        if (currentProject?.id === projectId) setCurrentProject({ id: projectId, name: data.name });
+        const errMsg = typeof data.detail === "string" ? data.detail : "Erreur renommage";
+        if (!res.ok) throw new Error(errMsg);
+        if (currentProject?.id === projectId) setCurrentProject({ id: projectId, name: data.name ?? currentProject.name });
         await fetchProjectsList();
         setAppModal({ type: "alert", message: "Projet renommé.", onClose: () => {} });
       } catch (e) {
-        setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors du renommage.", onClose: () => {} });
+        const msg = e instanceof Error ? e.message : String(e);
+        const safeMsg = msg === "[object Object]" ? "Erreur lors du renommage." : msg;
+        setAppModal({ type: "alert", message: safeMsg, onClose: () => {} });
       }
     },
     [getAuthHeaders, fetchProjectsList, currentProject?.id]
@@ -1760,18 +1769,31 @@ export default function Home() {
 
   const openRenameProjectPrompt = useCallback(
     (projectId: string, currentName: string) => {
+      const handleConfirm = async (value: string) => {
+        const name = value?.trim();
+        if (!name) return;
+        const list = await fetchProjectsList();
+        const existing = list.find((p) => p.name === name && p.id !== projectId);
+        if (existing) {
+          setAppModal({
+            type: "alert",
+            message: `Un projet "${name}" existe déjà. Choisissez un autre nom.`,
+            onClose: () => setAppModal(null),
+          });
+          return;
+        }
+        setAppModal(null);
+        renameProject(projectId, name);
+      };
       setAppModal({
         type: "prompt",
         title: "Nouveau nom du projet",
         defaultValue: currentName,
-        onConfirm: (value) => {
-          setAppModal(null);
-          if (value?.trim()) renameProject(projectId, value.trim());
-        },
-        onCancel: () => {},
+        onConfirm: handleConfirm,
+        onCancel: () => setAppModal(null),
       });
     },
-    [renameProject]
+    [renameProject, fetchProjectsList]
   );
 
   const loadProject = useCallback(
@@ -3249,6 +3271,11 @@ export default function Home() {
 
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
+          {currentProject && (
+            <p className="text-center text-slate-400 text-sm font-heading tracking-wide mb-4 max-lg:mb-3 max-md:mb-2 truncate px-2" title={currentProject.name}>
+              {currentProject.name}
+            </p>
+          )}
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.length === 0 && (
             <>
