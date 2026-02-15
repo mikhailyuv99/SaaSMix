@@ -1498,6 +1498,59 @@ export default function Home() {
     }
   }, [getAuthHeaders]);
 
+  const fetchProjectsList = useCallback(async () => {
+    const res = await fetch(`${API_BASE}/api/projects`, { headers: getAuthHeaders() });
+    if (res.status === 401) {
+      logout();
+      return;
+    }
+    const data = await res.json().catch(() => ({}));
+    setProjectsList(data.projects || []);
+  }, [getAuthHeaders]);
+
+  const doSaveProject = useCallback(async (name: string | null) => {
+    const isUpdate = currentProject != null;
+    const payload = tracks.map((t) => ({
+      id: t.id,
+      category: t.category,
+      gain: t.gain,
+      mixParams: t.mixParams,
+      mixedAudioUrl: t.mixedAudioUrl,
+      rawFileName: t.file?.name ?? t.rawFileName ?? null,
+    }));
+    const form = new FormData();
+    form.append("data", JSON.stringify(payload));
+    tracks.forEach((t) => {
+      if (t.file) form.append("files", t.file);
+    });
+    if (isUpdate) form.append("name", currentProject!.name);
+    else if (name?.trim()) form.append("name", name.trim());
+
+    setIsSavingProject(true);
+    try {
+      const url = isUpdate ? `${API_BASE}/api/projects/${currentProject!.id}` : `${API_BASE}/api/projects`;
+      const res = await fetch(url, {
+        method: isUpdate ? "PUT" : "POST",
+        headers: getAuthHeaders(),
+        body: form,
+      });
+      if (res.status === 401) {
+        logout();
+        setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || "Erreur sauvegarde");
+      if (!isUpdate) setCurrentProject({ id: data.id, name: data.name });
+      setHasUnsavedChanges(false);
+      setAppModal({ type: "alert", message: isUpdate ? "Projet mis à jour." : "Projet sauvegardé avec les fichiers.", onClose: () => {} });
+    } catch (e) {
+      setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la sauvegarde.", onClose: () => {} });
+    } finally {
+      setIsSavingProject(false);
+    }
+  }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges]);
+
   const doCreateNewProjectWithCurrentTracks = useCallback(async (name: string) => {
     const payload = tracks.map((t) => ({
       id: t.id,
@@ -1612,49 +1665,6 @@ export default function Home() {
     }
   }, [tracks.length, openCreateProjectNamePrompt, setHasUnsavedChanges]);
 
-  const doSaveProject = useCallback(async (name: string | null) => {
-    const isUpdate = currentProject != null;
-    const payload = tracks.map((t) => ({
-      id: t.id,
-      category: t.category,
-      gain: t.gain,
-      mixParams: t.mixParams,
-      mixedAudioUrl: t.mixedAudioUrl,
-      rawFileName: t.file?.name ?? t.rawFileName ?? null,
-    }));
-    const form = new FormData();
-    form.append("data", JSON.stringify(payload));
-    tracks.forEach((t) => {
-      if (t.file) form.append("files", t.file);
-    });
-    if (isUpdate) form.append("name", currentProject!.name);
-    else if (name?.trim()) form.append("name", name.trim());
-
-    setIsSavingProject(true);
-    try {
-      const url = isUpdate ? `${API_BASE}/api/projects/${currentProject!.id}` : `${API_BASE}/api/projects`;
-      const res = await fetch(url, {
-        method: isUpdate ? "PUT" : "POST",
-        headers: getAuthHeaders(),
-        body: form,
-      });
-      if (res.status === 401) {
-        logout();
-        setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
-        return;
-      }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.detail || "Erreur sauvegarde");
-      if (!isUpdate) setCurrentProject({ id: data.id, name: data.name });
-      setHasUnsavedChanges(false);
-      setAppModal({ type: "alert", message: isUpdate ? "Projet mis à jour." : "Projet sauvegardé avec les fichiers.", onClose: () => {} });
-    } catch (e) {
-      setAppModal({ type: "alert", message: e instanceof Error ? e.message : "Erreur lors de la sauvegarde.", onClose: () => {} });
-    } finally {
-      setIsSavingProject(false);
-    }
-  }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges]);
-
   const saveProject = useCallback(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
     if (!token) return;
@@ -1712,16 +1722,6 @@ export default function Home() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [saveProject]);
-
-  const fetchProjectsList = useCallback(async () => {
-    const res = await fetch(`${API_BASE}/api/projects`, { headers: getAuthHeaders() });
-    if (res.status === 401) {
-      logout();
-      return;
-    }
-    const data = await res.json().catch(() => ({}));
-    setProjectsList(data.projects || []);
-  }, [getAuthHeaders]);
 
   const renameProject = useCallback(
     async (projectId: string, newName: string) => {
