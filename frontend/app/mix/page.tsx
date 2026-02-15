@@ -424,6 +424,7 @@ export default function Home() {
     | null;
   const [appModal, setAppModal] = useState<AppModal>(null);
   const [promptInputValue, setPromptInputValue] = useState("");
+  const [categoryModal, setCategoryModal] = useState<{ trackId: string; file: File; fromHero?: boolean } | null>(null);
 
   useEffect(() => {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
@@ -489,7 +490,7 @@ export default function Home() {
         id: newId,
         file,
         category: "lead_vocal",
-        gain: 0,
+        gain: 100,
         rawAudioUrl,
         mixedAudioUrl: null,
         isMixing: false,
@@ -499,7 +500,26 @@ export default function Home() {
         rawFileName: file.name,
       };
       setTracks([track]);
+      setCategoryModal({ trackId: newId, file, fromHero: true });
       window.history.replaceState(null, "", window.location.pathname);
+      (async () => {
+        try {
+          const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+          const res = await fetch(rawAudioUrl);
+          const ab = await res.arrayBuffer();
+          const decoded = await ctx.decodeAudioData(ab.slice(0));
+          ctx.close();
+          const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
+          const entry = buffersRef.current.get(newId) ?? { raw: null, mixed: null };
+          entry.raw = decoded;
+          buffersRef.current.set(newId, entry);
+          setTracks((prev) =>
+            prev.map((t) =>
+              t.id === newId ? { ...t, waveformPeaks: peaks, waveformDuration: decoded.duration } : t
+            )
+          );
+        } catch (_) {}
+      })();
     }).catch(() => {
       window.history.replaceState(null, "", window.location.pathname);
     });
@@ -1103,14 +1123,10 @@ export default function Home() {
     });
   }, [tracks, updateTrack]);
 
-  const onFileSelect = useCallback(
-    (id: string, file: File | null) => {
-      if (file) saveFileToIDB(id, file);
-      else deleteFileFromIDB(id);
-      const rawAudioUrl =
-        file && file.type.startsWith("audio/")
-          ? URL.createObjectURL(file)
-          : null;
+  const applyFileWithCategory = useCallback(
+    (id: string, file: File, category: Category) => {
+      saveFileToIDB(id, file);
+      const rawAudioUrl = file.type.startsWith("audio/") ? URL.createObjectURL(file) : null;
       setTracks((prev) => {
         const track = prev.find((t) => t.id === id);
         if (!track) return prev;
@@ -1118,7 +1134,17 @@ export default function Home() {
         buffersRef.current.delete(id);
         return prev.map((t) =>
           t.id === id
-            ? { ...t, file, rawAudioUrl, rawFileName: file?.name ?? null, playMode: "raw", waveformPeaks: undefined, waveformDuration: undefined }
+            ? {
+                ...t,
+                file,
+                category,
+                rawAudioUrl,
+                rawFileName: file.name ?? null,
+                playMode: "raw",
+                waveformPeaks: undefined,
+                waveformDuration: undefined,
+                mixParams: { ...t.mixParams, phone_fx: category === "adlibs_backs" },
+              }
             : t
         );
       });
@@ -1131,16 +1157,11 @@ export default function Home() {
             const buffer = await ctx.decodeAudioData(buf);
             ctx.close();
             const peaks = computeWaveformPeaks(buffer, WAVEFORM_POINTS);
-            updateTrack(id, {
-              waveformPeaks: peaks,
-              waveformDuration: buffer.duration,
-            });
+            updateTrack(id, { waveformPeaks: peaks, waveformDuration: buffer.duration });
           } catch (_) {}
         })();
         (async () => {
           try {
-            // Use existing context if available, otherwise create a temporary one (do NOT store in contextRef
-            // — contexts created outside user gestures are permanently suspended on iOS)
             const existingCtx = contextRef.current;
             const ctx = existingCtx && existingCtx.state !== "closed"
               ? existingCtx
@@ -1158,6 +1179,60 @@ export default function Home() {
       }
     },
     [updateTrack]
+  );
+
+  const onFileSelect = useCallback(
+    (id: string, file: File | null) => {
+      if (file) {
+        setCategoryModal({ trackId: id, file, fromHero: false });
+        return;
+      }
+      deleteFileFromIDB(id);
+      setTracks((prev) => {
+        const track = prev.find((t) => t.id === id);
+        if (!track) return prev;
+        if (track.rawAudioUrl) URL.revokeObjectURL(track.rawAudioUrl);
+        buffersRef.current.delete(id);
+        return prev.map((t) =>
+          t.id === id
+            ? { ...t, file: null, rawAudioUrl: null, rawFileName: null, playMode: "raw", waveformPeaks: undefined, waveformDuration: undefined }
+            : t
+        );
+      });
+      if (typeof document !== "undefined") {
+        const input = document.getElementById(`file-${id}`) as HTMLInputElement | null;
+        if (input) input.value = "";
+        const inputMob = document.getElementById(`file-mob-${id}`) as HTMLInputElement | null;
+        if (inputMob) inputMob.value = "";
+      }
+    },
+    []
+  );
+
+  const applyCategoryChoice = useCallback(
+    (category: Category) => {
+      if (!categoryModal) return;
+      const { trackId, file, fromHero } = categoryModal;
+      setCategoryModal(null);
+      if (fromHero) {
+        setTracks((prev) =>
+          prev.map((t) =>
+            t.id === trackId
+              ? { ...t, category, mixParams: { ...t.mixParams, phone_fx: category === "adlibs_backs" } }
+              : t
+          )
+        );
+        return;
+      }
+      applyFileWithCategory(trackId, file, category);
+      if (typeof document !== "undefined") {
+        const input = document.getElementById(`file-${trackId}`) as HTMLInputElement | null;
+        if (input) input.value = "";
+        const inputMob = document.getElementById(`file-mob-${trackId}`) as HTMLInputElement | null;
+        if (inputMob) inputMob.value = "";
+      }
+    },
+    [categoryModal, applyFileWithCategory]
   );
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
@@ -2612,6 +2687,41 @@ export default function Home() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {categoryModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
+          <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md shadow-xl shadow-black/40 max-w-sm w-full overflow-hidden">
+            <div className="p-4 border-b border-white/10">
+              <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
+                Quelle catégorie pour cette piste ?
+              </p>
+            </div>
+            <div className="p-4 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => applyCategoryChoice("lead_vocal")}
+                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 transition-colors"
+              >
+                Lead vocal
+              </button>
+              <button
+                type="button"
+                onClick={() => applyCategoryChoice("adlibs_backs")}
+                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 transition-colors"
+              >
+                Adlibs / Backs
+              </button>
+              <button
+                type="button"
+                onClick={() => applyCategoryChoice("instrumental")}
+                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 text-tagline text-white text-sm font-medium hover:bg-white/10 transition-colors"
+              >
+                Instrumentale
+              </button>
+            </div>
           </div>
         </div>
       )}
