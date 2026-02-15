@@ -207,25 +207,6 @@ export function HowItWorks() {
               Essayer ces 4 étapes avec vos pistes
             </Link>
           </div>
-          <div className="flex flex-row flex-nowrap items-center justify-center gap-2 text-slate-400 sm:gap-4 max-w-full px-2">
-            <span className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 text-[10px] sm:text-[10px] max-lg:text-[9px] max-md:text-[8px] whitespace-nowrap">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/15 bg-white/5 text-slate-400 max-md:h-3.5 max-md:w-3.5">▶</span>
-              <span className="truncate">Aperçu pleine longueur</span>
-            </span>
-            <span className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 text-[10px] sm:text-[10px] max-lg:text-[9px] max-md:text-[8px] whitespace-nowrap">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/15 bg-white/5 text-slate-400 max-md:h-3.5 max-md:w-3.5">
-                <svg className="w-2.5 h-2.5 max-md:w-2 max-md:h-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <rect x={1} y={4} width={22} height={16} rx={2} ry={2} />
-                  <line x1={1} y1={10} x2={23} y2={10} />
-                </svg>
-              </span>
-              <span className="truncate">Pas de carte bancaire</span>
-            </span>
-            <span className="inline-flex flex-1 min-w-0 items-center justify-center gap-1.5 text-[10px] sm:text-[10px] max-lg:text-[9px] max-md:text-[8px] whitespace-nowrap">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/15 bg-white/5 text-slate-400 max-md:h-3.5 max-md:w-3.5">✓</span>
-              <span className="truncate">Vous gardez vos droits</span>
-            </span>
-          </div>
         </div>
       </ObserveSection>
     </section>
