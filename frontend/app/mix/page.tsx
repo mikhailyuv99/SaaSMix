@@ -569,10 +569,15 @@ export default function Home() {
 
   // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage.
   // rawAudioUrl (blob URL) survit aux navigations client-side (login) et est restauré directement.
-  // Le fichier File sera réhydraté en background par le useEffect per-track ci-dessous.
+  // En cas de rechargement (F5), on ne restaure pas : les blobs sont invalides, on repart sur « glissez vos pistes ici ».
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
+      const nav = performance.getEntriesByType?.("navigation")?.[0] as { type?: string } | undefined;
+      if (nav?.type === "reload") {
+        sessionStorage.removeItem(TRACKS_STORAGE_KEY);
+        return;
+      }
       if (window.location.search.includes("from=hero")) return;
       const restored = tracksFromStorage();
       if (!restored || restored.length === 0) return;
@@ -1285,6 +1290,12 @@ export default function Home() {
 
   const applyFileWithCategory = useCallback(
     (id: string, file: File, category: Category) => {
+      if (!contextRef.current || contextRef.current.state === "closed") {
+        contextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      }
+      if (contextRef.current.state === "suspended") {
+        contextRef.current.resume();
+      }
       saveFileToIDB(id, file);
       const rawAudioUrl = file.type.startsWith("audio/") ? URL.createObjectURL(file) : null;
       setTracks((prev) => {
@@ -1309,28 +1320,27 @@ export default function Home() {
         );
       });
       if (rawAudioUrl) {
+        const doDecodeWaveform = (retry = false) => {
+          (async () => {
+            try {
+              const ctx = contextRef.current;
+              if (!ctx || ctx.state === "closed") return;
+              const ab = await file.arrayBuffer();
+              const buffer = await ctx.decodeAudioData(ab.slice(0));
+              const peaks = computeWaveformPeaks(buffer, WAVEFORM_POINTS);
+              updateTrack(id, { waveformPeaks: peaks, waveformDuration: buffer.duration });
+            } catch (_) {
+              if (!retry) setTimeout(() => doDecodeWaveform(true), 250);
+            }
+          })();
+        };
+        doDecodeWaveform(false);
         (async () => {
           try {
-            const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-            const res = await fetch(rawAudioUrl);
-            const buf = await res.arrayBuffer();
-            const buffer = await ctx.decodeAudioData(buf);
-            ctx.close();
-            const peaks = computeWaveformPeaks(buffer, WAVEFORM_POINTS);
-            updateTrack(id, { waveformPeaks: peaks, waveformDuration: buffer.duration });
-          } catch (_) {}
-        })();
-        (async () => {
-          try {
-            const existingCtx = contextRef.current;
-            const ctx = existingCtx && existingCtx.state !== "closed"
-              ? existingCtx
-              : new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-            const shouldClose = ctx !== existingCtx;
-            const res = await fetch(rawAudioUrl);
-            const buf = await res.arrayBuffer();
-            const decoded = await ctx.decodeAudioData(buf);
-            if (shouldClose) ctx.close();
+            const ctx = contextRef.current;
+            if (!ctx || ctx.state === "closed") return;
+            const ab = await file.arrayBuffer();
+            const decoded = await ctx.decodeAudioData(ab.slice(0));
             const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
             entry.raw = decoded;
             buffersRef.current.set(id, entry);
@@ -1378,6 +1388,12 @@ export default function Home() {
       setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
       return;
     }
+    if (!contextRef.current || contextRef.current.state === "closed") {
+      contextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    if (contextRef.current.state === "suspended") {
+      contextRef.current.resume();
+    }
     const newId = generateId();
     saveFileToIDB(newId, file);
     const rawAudioUrl = file.type.startsWith("audio/") ? URL.createObjectURL(file) : null;
@@ -1396,24 +1412,28 @@ export default function Home() {
     };
     setTracks((prev) => [...prev, track]);
     if (rawAudioUrl) {
-      (async () => {
-        try {
-          const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-          const res = await fetch(rawAudioUrl);
-          const ab = await res.arrayBuffer();
-          const decoded = await ctx.decodeAudioData(ab.slice(0));
-          ctx.close();
-          const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
-          const entry = buffersRef.current.get(newId) ?? { raw: null, mixed: null };
-          entry.raw = decoded;
-          buffersRef.current.set(newId, entry);
-          setTracks((prev) =>
-            prev.map((t) =>
-              t.id === newId ? { ...t, waveformPeaks: peaks, waveformDuration: decoded.duration } : t
-            )
-          );
-        } catch (_) {}
-      })();
+      const doDecode = (retry = false) => {
+        (async () => {
+          try {
+            const ctx = contextRef.current;
+            if (!ctx || ctx.state === "closed") return;
+            const ab = await file.arrayBuffer();
+            const decoded = await ctx.decodeAudioData(ab.slice(0));
+            const peaks = computeWaveformPeaks(decoded, WAVEFORM_POINTS);
+            const entry = buffersRef.current.get(newId) ?? { raw: null, mixed: null };
+            entry.raw = decoded;
+            buffersRef.current.set(newId, entry);
+            setTracks((prev) =>
+              prev.map((t) =>
+                t.id === newId ? { ...t, waveformPeaks: peaks, waveformDuration: decoded.duration } : t
+              )
+            );
+          } catch (_) {
+            if (!retry) setTimeout(() => doDecode(true), 250);
+          }
+        })();
+      };
+      doDecode(false);
     }
   }, []);
 
