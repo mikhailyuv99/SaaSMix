@@ -79,6 +79,15 @@
   50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.06); }
 }
 
+@keyframes hero-tagline-glow {
+  0%, 100% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.15), 0 0 40px rgba(255, 255, 255, 0.08); }
+  50% { text-shadow: 0 0 28px rgba(255, 255, 255, 0.25), 0 0 56px rgba(255, 255, 255, 0.12); }
+}
+
+.animate-hero-tagline {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards, hero-tagline-glow 3s ease-in-out 0.8s infinite;
+}
+
 @keyframes bg-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

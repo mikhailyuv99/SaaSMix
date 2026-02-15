@@ -475,6 +475,18 @@ export default function Home() {
     return () => window.removeEventListener("beforeunload", handler);
   }, []);
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+        if (token) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saveProject]);
+
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
   const masterPlaybackRef = useRef<{
@@ -2899,6 +2911,70 @@ export default function Home() {
         </div>
       )}
 
+      {showProjectsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <h2 className="text-lg font-medium text-white">Mes projets</h2>
+              <button
+                type="button"
+                onClick={() => setShowProjectsModal(false)}
+                className="p-2 rounded text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
+              {projectsList.length === 0 && !isLoadingProject && (
+                <p className="text-slate-400 text-sm">Aucun projet sauvegardé.</p>
+              )}
+              {projectsList.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/6"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-white truncate">{p.name}</p>
+                    {p.created_at && (
+                      <p className="text-slate-400 text-xs mt-0.5">
+                        {new Date(p.created_at).toLocaleDateString("fr-FR", { dateStyle: "short" })}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      disabled={isLoadingProject}
+                      onClick={() => loadProject(p.id)}
+                      className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
+                    >
+                      {isLoadingProject ? <span className="animate-dots">Chargement</span> : "Charger"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isLoadingProject}
+                      onClick={() => openRenameProjectPrompt(p.id, p.name)}
+                      className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 text-sm disabled:opacity-50 transition-colors"
+                    >
+                      Renommer
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isLoadingProject}
+                      onClick={() => deleteProject(p.id)}
+                      className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 text-sm disabled:opacity-50 transition-colors"
+                    >
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-6xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
           <nav className="max-lg:hidden flex flex-col items-center justify-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:gap-1.5 max-md:mb-3 max-md:text-xs">
@@ -3002,70 +3078,6 @@ export default function Home() {
         </header>
 
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
-        {showProjectsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
-            <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20">
-              <div className="flex items-center justify-between p-4 border-b border-white/10">
-                <h2 className="text-lg font-medium text-white">Mes projets</h2>
-                <button
-                  type="button"
-                  onClick={() => setShowProjectsModal(false)}
-                  className="p-2 rounded text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-                  aria-label="Fermer"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="p-4 overflow-y-auto max-h-[60vh] space-y-2">
-                {projectsList.length === 0 && !isLoadingProject && (
-                  <p className="text-slate-400 text-sm">Aucun projet sauvegardé.</p>
-                )}
-                {projectsList.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/6"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-white truncate">{p.name}</p>
-                      {p.created_at && (
-                        <p className="text-slate-400 text-xs mt-0.5">
-                          {new Date(p.created_at).toLocaleDateString("fr-FR", { dateStyle: "short" })}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        disabled={isLoadingProject}
-                        onClick={() => loadProject(p.id)}
-                        className="px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 disabled:opacity-50 transition-colors"
-                      >
-                        {isLoadingProject ? <span className="animate-dots">Chargement</span> : "Charger"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isLoadingProject}
-                        onClick={() => openRenameProjectPrompt(p.id, p.name)}
-                        className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 text-sm disabled:opacity-50 transition-colors"
-                      >
-                        Renommer
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isLoadingProject}
-                        onClick={() => deleteProject(p.id)}
-                        className="px-3 py-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 text-sm disabled:opacity-50 transition-colors"
-                      >
-                        Supprimer
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.length === 0 && (

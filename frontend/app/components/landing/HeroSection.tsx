@@ -97,8 +97,8 @@ export function HeroSection() {
       <div className="mx-auto grid max-w-6xl items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12">
         <div className="max-w-xl">
           <h1
-            className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-fade-up"
-            style={{ animationDelay: "0.1s", animationFillMode: "both" }}
+            className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-hero-tagline"
+            style={{ animationFillMode: "both" }}
           >
             <span className="text-white">Le site n°1</span>
             <br />

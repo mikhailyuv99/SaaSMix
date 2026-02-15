@@ -17,7 +17,7 @@ export function ObserveSection({ children, className = "", rootMargin = "0px 0px
     if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) setInView(true);
+        setInView(entry.isIntersecting);
       },
       { threshold: 0.1, rootMargin }
     );
