@@ -2758,46 +2758,8 @@ export default function Home() {
       <div className="mx-auto max-w-6xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
           <nav className="max-lg:hidden flex flex-col items-center justify-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:gap-1.5 max-md:mb-3 max-md:text-xs">
-            {user ? (
-              <>
-                <div className="flex flex-nowrap justify-center items-center gap-2">
-                  <span className="whitespace-nowrap shrink-0" title={user.email}>{user.email}</span>
-                  <span className="text-slate-400 shrink-0">|</span>
-                  {!isPro && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setSubscriptionModalOpen(true)}
-                        className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                      >
-                        PASSER EN PRO
-                      </button>
-                      <span className="text-slate-400 shrink-0">|</span>
-                    </>
-                  )}
-                  {isPro && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setManageSubscriptionModalOpen(true)}
-                        className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                      >
-                        GÉRER MON ABONNEMENT
-                      </button>
-                      <span className="text-slate-400 shrink-0">|</span>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                    }}
-                    className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                  >
-                    DÉCONNEXION
-                  </button>
-                </div>
-                <div className="flex flex-nowrap justify-center items-center gap-2">
+            {user && (
+              <div className="flex flex-nowrap justify-center items-center gap-2">
                   <button
                     type="button"
                     onClick={() => { setShowProjectsModal(true); fetchProjectsList(); }}
@@ -2825,28 +2787,13 @@ export default function Home() {
                   >
                     {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                   </button>
-                  {user && currentProject && (
+                  {currentProject && (
                     <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-400 text-xs whitespace-nowrap" title={currentProject.name}>
                       {currentProject.name}
                     </span>
                   )}
                 </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0">
-                  CONNEXION
-                </button>
-                <span className="text-slate-400 shrink-0">|</span>
-                <button type="button" onClick={() => { setAuthMode("register"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0">
-                  INSCRIPTION
-                </button>
-                <span className="text-slate-400 shrink-0">|</span>
-                <button type="button" onClick={() => { setAuthMode("login"); setShowLoginModal(true); }} className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0" title="Connectez-vous pour accéder à l’abonnement Pro">
-                  PASSER EN PRO
-                </button>
-              </>
+              </div>
             )}
           </nav>
 
@@ -2871,7 +2818,7 @@ export default function Home() {
                   onClick={() => setNavMenuOpen(false)}
                 />
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[200px] py-2 rounded-lg bg-[#0f0f0f] border border-white/10 shadow-xl text-tagline text-slate-400 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] text-center">
-                  {user ? (
+                  {user && (
                     <>
                       <button
                         type="button"
@@ -2896,51 +2843,11 @@ export default function Home() {
                       >
                         {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                       </button>
-                      {user && currentProject && (
+                      {currentProject && (
                         <p className="px-4 py-1.5 text-xs text-slate-400 truncate max-w-[220px] mx-auto" title={currentProject.name}>
                           {currentProject.name}
                         </p>
                       )}
-                      <p className="px-4 py-2 text-xs text-slate-400 truncate max-w-[220px] mx-auto" title={user.email}>
-                        {user.email}
-                      </p>
-                      {user && !isPro && (
-                        <button
-                          type="button"
-                          onClick={() => { setNavMenuOpen(false); setSubscriptionModalOpen(true); }}
-                          className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
-                        >
-                          PASSER EN PRO
-                        </button>
-                      )}
-                      {user && isPro && (
-                        <button
-                          type="button"
-                          onClick={() => { setNavMenuOpen(false); setManageSubscriptionModalOpen(true); }}
-                          className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10"
-                        >
-                          GÉRER MON ABONNEMENT
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNavMenuOpen(false);
-                          logout();
-                        }}
-                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 mt-1 pt-2"
-                      >
-                        DÉCONNEXION
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button type="button" onClick={() => { setNavMenuOpen(false); setAuthMode("login"); setShowLoginModal(true); }} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
-                        CONNEXION
-                      </button>
-                      <button type="button" onClick={() => { setNavMenuOpen(false); setAuthMode("register"); setShowLoginModal(true); }} className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
-                        INSCRIPTION
-                      </button>
                     </>
                   )}
                 </div>

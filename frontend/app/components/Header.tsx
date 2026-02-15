@@ -70,13 +70,13 @@ export function Header() {
             <button
               type="button"
               onClick={() => setPlanModalOpen(true)}
-              className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0"
+              className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase"
             >
-              {user?.email ? "Choisir un plan" : "Choisir un plan"}
+              CHOISIR UN PLAN
             </button>
             {user ? (
               <>
-                <span className="text-sm text-white/90 truncate max-w-[140px] sm:max-w-[200px]" title={user.email}>
+                <span className="text-sm text-white/90 truncate max-w-[140px] sm:max-w-[200px] uppercase" title={user.email}>
                   {user.email}
                 </span>
                 <button
@@ -85,18 +85,18 @@ export function Header() {
                     logout();
                     router.refresh();
                   }}
-                  className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0"
+                  className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase"
                 >
-                  Déconnexion
+                  DÉCONNEXION
                 </button>
               </>
             ) : (
               <>
-                <Link href="/connexion" className="text-sm text-white/90 transition-colors hover:text-white shrink-0">
-                  Connexion
+                <Link href="/connexion" className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase">
+                  CONNEXION
                 </Link>
-                <Link href="/inscription" className="text-sm text-white/90 transition-colors hover:text-white shrink-0">
-                  Inscription
+                <Link href="/inscription" className="text-sm text-white/90 transition-colors hover:text-white shrink-0 uppercase">
+                  INSCRIPTION
                 </Link>
               </>
             )}
