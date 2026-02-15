@@ -138,8 +138,8 @@ export function HeroSection() {
               "Voix qui s'intègrent à l'instrumentale",
               "Export WAV prêt à sortir",
             ].map((item, i) => (
-              <li key={i} className="flex items-center gap-3 text-slate-400">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs text-white">
+              <li key={i} className="flex items-center gap-3 text-slate-400 max-md:text-xs max-md:gap-2">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs text-white max-md:h-4 max-md:w-4 max-md:text-[10px]">
                   ✓
                 </span>
                 {item}
