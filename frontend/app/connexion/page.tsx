@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "../context";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const TOKEN_KEY = "saas_mix_token";
@@ -11,6 +12,7 @@ const USER_KEY = "saas_mix_user";
 export default function ConnexionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { setUser } = useAuth();
   const inscrit = searchParams.get("inscrit");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,6 +40,7 @@ export default function ConnexionPage() {
           localStorage.setItem(TOKEN_KEY, data.access_token);
           localStorage.setItem(USER_KEY, JSON.stringify(data.user));
         }
+        setUser(data.user);
         router.push("/");
       }
     } catch {

@@ -14,6 +14,8 @@ import {
   PricingSection,
   FAQContactSection,
 } from "../components/landing";
+import { useAuth } from "../context";
+import { useLeaveWarning } from "../context/LeaveWarningContext";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -416,7 +418,8 @@ export default function Home() {
   const [showLoginMasterMessage, setShowLoginMasterMessage] = useState(false);
   const [showLoginMasterDownloadMessage, setShowLoginMasterDownloadMessage] = useState(false);
   const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
-  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
+  const { user, setUser, logout } = useAuth();
+  const { setHasUnsavedTracks } = useLeaveWarning();
   const [isPro, setIsPro] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
@@ -463,6 +466,10 @@ export default function Home() {
   useEffect(() => {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
   }, [appModal]);
+
+  useEffect(() => {
+    setHasUnsavedTracks(tracks.length > 0);
+  }, [tracks.length, setHasUnsavedTracks]);
 
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
@@ -525,11 +532,6 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const raw = localStorage.getItem("saas_mix_user");
-      if (raw) {
-        const u = JSON.parse(raw) as { id: string; email: string };
-        if (u?.id && u?.email) setUser(u);
-      }
       if (window.location.search.includes("from=hero")) return;
       const restored = tracksFromStorage();
       if (!restored || restored.length === 0) return;
@@ -1322,9 +1324,7 @@ export default function Home() {
         body: form,
       });
       if (res.status === 401) {
-        localStorage.removeItem("saas_mix_token");
-        localStorage.removeItem("saas_mix_user");
-        setUser(null);
+        logout();
         setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
@@ -1392,9 +1392,7 @@ export default function Home() {
         body: form,
       });
       if (res.status === 401) {
-        localStorage.removeItem("saas_mix_token");
-        localStorage.removeItem("saas_mix_user");
-        setUser(null);
+        logout();
         setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
@@ -1428,9 +1426,7 @@ export default function Home() {
   const fetchProjectsList = useCallback(async () => {
     const res = await fetch(`${API_BASE}/api/projects`, { headers: getAuthHeaders() });
     if (res.status === 401) {
-      localStorage.removeItem("saas_mix_token");
-      localStorage.removeItem("saas_mix_user");
-      setUser(null);
+      logout();
       return;
     }
     const data = await res.json().catch(() => ({}));
@@ -1449,9 +1445,7 @@ export default function Home() {
           body: form,
         });
         if (res.status === 401) {
-          localStorage.removeItem("saas_mix_token");
-          localStorage.removeItem("saas_mix_user");
-          setUser(null);
+          logout();
           setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
           return;
         }
@@ -1488,9 +1482,7 @@ export default function Home() {
       try {
         const res = await fetch(`${API_BASE}/api/projects/${projectId}`, { headers: getAuthHeaders() });
         if (res.status === 401) {
-          localStorage.removeItem("saas_mix_token");
-          localStorage.removeItem("saas_mix_user");
-          setUser(null);
+          logout();
           setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
           return;
         }
@@ -1590,9 +1582,7 @@ export default function Home() {
           headers: getAuthHeaders(),
         });
         if (res.status === 401) {
-          localStorage.removeItem("saas_mix_token");
-          localStorage.removeItem("saas_mix_user");
-          setUser(null);
+          logout();
           return;
         }
         if (wasCurrentProject) {
@@ -2159,9 +2149,7 @@ export default function Home() {
         });
         const data = await res.json().catch(() => ({}));
         if (res.status === 401) {
-          localStorage.removeItem("saas_mix_token");
-          localStorage.removeItem("saas_mix_user");
-          setUser(null);
+          logout();
           throw new Error("Session expirée. Reconnectez-vous.");
         }
         if (!res.ok) {
@@ -2379,9 +2367,7 @@ export default function Home() {
       const res = await fetch(`${API_BASE}/api/render/mix`, { method: "POST", headers, body: form });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        localStorage.removeItem("saas_mix_token");
-        localStorage.removeItem("saas_mix_user");
-        setUser(null);
+        logout();
         setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
@@ -2432,9 +2418,7 @@ export default function Home() {
       const res = await fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        localStorage.removeItem("saas_mix_token");
-        localStorage.removeItem("saas_mix_user");
-        setUser(null);
+        logout();
         setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
         return;
       }
@@ -2806,9 +2790,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => {
-                      localStorage.removeItem("saas_mix_token");
-                      localStorage.removeItem("saas_mix_user");
-                      setUser(null);
+                      logout();
                     }}
                     className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
@@ -2944,9 +2926,7 @@ export default function Home() {
                         type="button"
                         onClick={() => {
                           setNavMenuOpen(false);
-                          localStorage.removeItem("saas_mix_token");
-                          localStorage.removeItem("saas_mix_user");
-                          setUser(null);
+                          logout();
                         }}
                         className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors border-t border-white/10 mt-1 pt-2"
                       >
