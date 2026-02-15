@@ -3,13 +3,14 @@ Routes billing : abonnement Pro (Stripe), plan utilisateur, liaison au compte.
 """
 
 import os
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 import stripe
 from database import get_db
-from models import User
+from models import User, Project, PLAN_LIMITS, PLAN_PROJECT_LIMIT
 from dependencies import get_current_user_row
 
 router = APIRouter(prefix="/api/billing", tags=["billing"])
@@ -245,6 +246,35 @@ def get_subscription(user: User = Depends(get_current_user_row)):
             "interval": interval,
             "current_plan_id": current_plan_id,
         }
+    }
+
+
+@router.get("/usage")
+def get_usage(user: User = Depends(get_current_user_row), db: Session = Depends(get_db)):
+    """
+    Utilisation actuelle : téléchargements mix/master ce mois, projets sauvegardés, et limites du plan.
+    """
+    plan = (user.plan or "free").lower()
+    current_month = datetime.utcnow().strftime("%Y-%m")
+    if (user.usage_month or "") != current_month:
+        user.usage_month = current_month
+        user.mix_downloads_count = 0
+        user.master_downloads_count = 0
+        db.commit()
+        db.refresh(user)
+    mix_used = user.mix_downloads_count or 0
+    master_used = user.master_downloads_count or 0
+    projects_used = db.query(Project).filter(Project.user_id == user.id).count()
+    limits = PLAN_LIMITS.get(plan, (None, None))
+    project_limit = PLAN_PROJECT_LIMIT.get(plan)
+    return {
+        "plan": plan,
+        "mix_used": mix_used,
+        "master_used": master_used,
+        "projects_used": projects_used,
+        "mix_limit": limits[0],
+        "master_limit": limits[1],
+        "projects_limit": project_limit,
     }
 
 
