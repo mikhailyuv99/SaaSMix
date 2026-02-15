@@ -4,7 +4,7 @@ import { JsonLd } from './components/JsonLd'
 import { Header } from './components/Header'
 import { PageBackground } from './components/PageBackground'
 import { LandingTheme } from './components/LandingTheme'
-import Link from 'next/link'
+import { FooterWithLegalModals } from './components/FooterWithLegalModals'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
 const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, '')}/logo-og.png`
@@ -84,14 +84,7 @@ export default function RootLayout({
             <>
               <Header />
               <div className="relative z-10 flex-1">{children}</div>
-              <footer className="relative z-20 mt-auto py-6 px-4 max-lg:py-5 max-lg:px-3 max-md:py-4 max-md:px-3">
-                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-[11px] sm:text-xs text-slate-400 max-md:gap-2 max-md:text-[10px]">
-                  <span className="font-heading font-medium">© 2026 Siberia Mix</span>
-                  <Link href="/mentions-legales" className="transition-colors hover:text-white">Mentions légales</Link>
-                  <Link href="/politique-confidentialite" className="transition-colors hover:text-white">Politique de confidentialité</Link>
-                  <Link href="/cgu" className="transition-colors hover:text-white">CGU</Link>
-                </div>
-              </footer>
+              <FooterWithLegalModals />
             </>
           </LandingTheme>
         </div>

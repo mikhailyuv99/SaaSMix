@@ -273,23 +273,19 @@ function DemoCard({
     []
   );
 
-  // Sur mobile : mute/unmute immédiat dans le clic pour éviter le lag du cycle React (setState → useEffect).
+  // Mute/unmute immédiat dans le clic (PC + mobile) : les 2 pistes jouent en même temps, on ne fait que basculer le mute.
   const setModeAvant = useCallback(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches) {
-      const a = audioAvantRef.current;
-      const b = audioApresRef.current;
-      if (a) a.muted = false;
-      if (b) b.muted = true;
-    }
+    const a = audioAvantRef.current;
+    const b = audioApresRef.current;
+    if (a) a.muted = false;
+    if (b) b.muted = true;
     setMode("avant");
   }, []);
   const setModeApres = useCallback(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches) {
-      const a = audioAvantRef.current;
-      const b = audioApresRef.current;
-      if (a) a.muted = true;
-      if (b) b.muted = false;
-    }
+    const a = audioAvantRef.current;
+    const b = audioApresRef.current;
+    if (a) a.muted = true;
+    if (b) b.muted = false;
     setMode("apres");
   }, []);
 
