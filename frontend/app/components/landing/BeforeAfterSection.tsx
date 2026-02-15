@@ -369,19 +369,25 @@ function DemoCard({
         )}
       </div>
 
-      {/* Play + Avant / Après */}
+      {/* Play + Avant / Après — sur mobile: même taille/icônes que les pistes mix (max-md:w-11, SVG w-4) */}
       <div className="mt-3 flex items-center gap-3">
         <button
           type="button"
           onClick={handlePlay}
           disabled={!canPlayCurrent}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-colors hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex h-10 w-10 max-md:h-11 max-md:w-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition-colors hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label={isPlaying ? "Pause" : "Lecture"}
         >
           {isPlaying ? (
-            <span className="text-lg leading-none">&#10074;&#10074;</span>
+            <>
+              <span className="text-lg leading-none max-md:hidden">&#10074;&#10074;</span>
+              <svg className="hidden w-4 h-4 shrink-0 max-md:block" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </>
           ) : (
-            <span className="ml-0.5 text-lg leading-none">&#9654;</span>
+            <>
+              <span className="ml-0.5 text-lg leading-none max-md:hidden">&#9654;</span>
+              <svg className="hidden w-4 h-4 shrink-0 max-md:block" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+            </>
           )}
         </button>
         <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-0.5">
