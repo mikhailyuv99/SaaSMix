@@ -1482,6 +1482,11 @@ export default function Home() {
         return;
       }
       const data = await res.json().catch(() => ({}));
+      if (res.status === 402) {
+        const msg = (data.detail as string) || "Vous avez atteint votre limite de projets sauvegardés. Passez au plan supérieur pour en sauvegarder plus.";
+        setAppModal({ type: "alert", message: msg, onClose: () => setSubscriptionModalOpen(true) });
+        return;
+      }
       if (!res.ok) throw new Error(data.detail || "Erreur création");
       setCurrentProject({ id: data.id, name: data.name });
       setTracks(defaultTracks);
@@ -1506,7 +1511,7 @@ export default function Home() {
       setIsCreatingProject(false);
       isCreatingInProgressRef.current = false;
     }
-  }, [getAuthHeaders]);
+  }, [getAuthHeaders, setSubscriptionModalOpen]);
 
   const fetchProjectsList = useCallback(async (): Promise<{ id: string; name: string; created_at: string | null }[]> => {
     const res = await fetch(`${API_BASE}/api/projects`, { headers: getAuthHeaders() });
@@ -1555,6 +1560,11 @@ export default function Home() {
         return;
       }
       const data = await res.json().catch(() => ({}));
+      if (res.status === 402) {
+        const msg = (data.detail as string) || "Vous avez atteint votre limite de projets sauvegardés. Passez au plan supérieur pour en sauvegarder plus.";
+        setAppModal({ type: "alert", message: msg, onClose: () => setSubscriptionModalOpen(true) });
+        return;
+      }
       const errMsg = typeof data.detail === "string" ? data.detail : "Erreur sauvegarde";
       if (!res.ok) throw new Error(errMsg);
       if (!isUpdate) setCurrentProject({ id: data.id, name: data.name ?? "Sans nom" });
@@ -1570,7 +1580,7 @@ export default function Home() {
       setIsSavingProject(false);
       isSavingInProgressRef.current = false;
     }
-  }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges, fetchProjectsList]);
+  }, [tracks, getAuthHeaders, currentProject, setHasUnsavedChanges, fetchProjectsList, setSubscriptionModalOpen]);
 
   const doCreateNewProjectWithCurrentTracks = useCallback(async (name: string) => {
     if (isCreatingInProgressRef.current) return;
@@ -2715,7 +2725,8 @@ export default function Home() {
         return;
       }
       if (res.status === 402) {
-        setSubscriptionModalOpen(true);
+        const msg = (data.detail as string) || "Vous avez atteint votre limite de téléchargements ou votre plan ne le permet pas. Passez au plan supérieur pour en obtenir plus.";
+        setAppModal({ type: "alert", message: msg, onClose: () => setSubscriptionModalOpen(true) });
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
@@ -2760,7 +2771,8 @@ export default function Home() {
         return;
       }
       if (res.status === 402) {
-        setSubscriptionModalOpen(true);
+        const msg = (data.detail as string) || "Vous avez atteint votre limite de téléchargements ou votre plan ne le permet pas. Passez au plan supérieur pour en obtenir plus.";
+        setAppModal({ type: "alert", message: msg, onClose: () => setSubscriptionModalOpen(true) });
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");

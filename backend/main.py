@@ -19,9 +19,11 @@ import sys
 import tempfile
 import threading
 import uuid
+from datetime import datetime
 import numpy as np
 from scipy.signal import resample as scipy_resample
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Depends, Request
+from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from typing import Optional, List
@@ -29,8 +31,8 @@ from presets import list_presets
 from mixing_service import MixingService
 from test_hise_direct import render as hise_render, master_only as hise_master_only, get_vst_status
 from test_hise_direct import read_wav, write_wav
-from database import engine, Base, DATABASE_URL
-from models import Project, User  # noqa: F401 - Project enregistre la table avec Base
+from database import engine, Base, DATABASE_URL, get_db
+from models import Project, User, PLAN_LIMITS  # noqa: F401 - Project enregistre la table avec Base
 from routers.auth import router as auth_router
 from routers.projects import router as projects_router
 from routers.billing import router as billing_router
@@ -78,6 +80,12 @@ def _migrate_users_billing_columns():
                 conn.execute(text("ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR(255)"))
             if "stripe_subscription_id" not in names:
                 conn.execute(text("ALTER TABLE users ADD COLUMN stripe_subscription_id VARCHAR(255)"))
+            if "usage_month" not in names:
+                conn.execute(text("ALTER TABLE users ADD COLUMN usage_month VARCHAR(7)"))
+            if "mix_downloads_count" not in names:
+                conn.execute(text("ALTER TABLE users ADD COLUMN mix_downloads_count INTEGER NOT NULL DEFAULT 0"))
+            if "master_downloads_count" not in names:
+                conn.execute(text("ALTER TABLE users ADD COLUMN master_downloads_count INTEGER NOT NULL DEFAULT 0"))
             conn.commit()
 
 
@@ -572,18 +580,42 @@ async def _build_track_paths_and_gains(track_specs: list, files: List[UploadFile
     return paths_gains, temp_paths
 
 
+def _ensure_usage_month(user: User, db: Session) -> None:
+    """Remet à zéro les compteurs si on est dans un nouveau mois."""
+    now = datetime.utcnow()
+    current_month = now.strftime("%Y-%m")
+    if (user.usage_month or "") != current_month:
+        user.usage_month = current_month
+        user.mix_downloads_count = 0
+        user.master_downloads_count = 0
+        db.commit()
+        db.refresh(user)
+
+
 @app.post("/api/render/mix")
 async def render_mix(
     current_user: User = Depends(get_current_user_row),
+    db: Session = Depends(get_db),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
     """
-    Assemble toutes les pistes (gains + vocaux mixés ou brut) en un seul WAV.
-    Réservé aux abonnés Pro. Retourne 402 si plan gratuit.
+    Assemble toutes les pistes en un seul WAV. Réservé aux abonnés (starter/artiste/pro).
+    Limites mensuelles selon le plan (starter: 10 mix, artiste: 30, pro: illimité). 402 si limite atteinte ou non abonné.
     """
-    if (current_user.plan or "free") != "pro":
-        raise HTTPException(status_code=402, detail="Téléchargement réservé aux abonnés Pro. Passez en Pro pour débloquer.")
+    plan = (current_user.plan or "free").lower()
+    if plan not in ("starter", "artiste", "pro"):
+        raise HTTPException(
+            status_code=402,
+            detail="Téléchargement réservé aux abonnés. Choisissez une formule pour débloquer les téléchargements.",
+        )
+    _ensure_usage_month(current_user, db)
+    limits = PLAN_LIMITS.get(plan, (None, None))
+    if limits[0] is not None and (current_user.mix_downloads_count or 0) >= limits[0]:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Vous avez atteint votre limite de téléchargements mix ce mois-ci ({limits[0]}/{limits[0]}). Passez au plan supérieur pour en obtenir plus.",
+        )
     try:
         specs = json.loads(track_specs)
     except json.JSONDecodeError:
@@ -610,6 +642,8 @@ async def render_mix(
                 pass
         if not ok or not os.path.exists(mix_path):
             raise HTTPException(status_code=500, detail="Assemblage du mix échoué")
+        current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+        db.commit()
         return {
             "status": "success",
             "mixUrl": f"/api/download/render?id={mix_id}&type=mix",
@@ -629,15 +663,32 @@ async def render_mix(
 @app.post("/api/master")
 async def master_render(
     current_user: User = Depends(get_current_user_row),
+    db: Session = Depends(get_db),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
     """
-    Assemble les pistes en mix, applique master.vst3 (--master-only), retourne mixUrl et masterUrl.
-    Réservé aux abonnés Pro. Retourne 402 si plan gratuit.
+    Assemble les pistes en mix + master. Réservé aux abonnés. Limites mensuelles (mix + master) selon le plan. 402 si limite atteinte.
     """
-    if (current_user.plan or "free") != "pro":
-        raise HTTPException(status_code=402, detail="Master réservé aux abonnés Pro. Passez en Pro pour débloquer.")
+    plan = (current_user.plan or "free").lower()
+    if plan not in ("starter", "artiste", "pro"):
+        raise HTTPException(
+            status_code=402,
+            detail="Master réservé aux abonnés. Choisissez une formule pour débloquer.",
+        )
+    _ensure_usage_month(current_user, db)
+    limits = PLAN_LIMITS.get(plan, (None, None))
+    mix_limit, master_limit = limits[0], limits[1]
+    if mix_limit is not None and (current_user.mix_downloads_count or 0) >= mix_limit:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Vous avez atteint votre limite de téléchargements mix ce mois-ci ({mix_limit}/{mix_limit}). Passez au plan supérieur pour en obtenir plus.",
+        )
+    if master_limit is not None and (current_user.master_downloads_count or 0) >= master_limit:
+        raise HTTPException(
+            status_code=402,
+            detail=f"Vous avez atteint votre limite de téléchargements master ce mois-ci ({master_limit}/{master_limit}). Passez au plan supérieur pour en obtenir plus.",
+        )
     try:
         specs = json.loads(track_specs)
     except json.JSONDecodeError:
@@ -664,6 +715,9 @@ async def master_render(
             raise HTTPException(status_code=500, detail="Master (master.vst3) a échoué")
         if not os.path.exists(master_path):
             raise HTTPException(status_code=500, detail="Fichier master non créé")
+        current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+        current_user.master_downloads_count = (current_user.master_downloads_count or 0) + 1
+        db.commit()
         return {
             "status": "success",
             "mixUrl": f"/api/download/render?id={job_id}&type=mix",

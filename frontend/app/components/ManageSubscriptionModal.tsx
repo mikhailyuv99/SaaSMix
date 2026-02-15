@@ -293,18 +293,18 @@ export function ManageSubscriptionModal({
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-white">{isProPlan ? "Pro" : plan.name}</p>
                           {isProPlan && (
-                            <div className="inline-flex items-center rounded-lg border border-white/10 bg-black/20 p-0.5">
+                            <div className="inline-flex items-center rounded border border-white/10 bg-black/20 p-0.5">
                               <button
                                 type="button"
                                 onClick={() => setProInterval("year")}
-                                className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all duration-200 ${proInterval === "year" ? "bg-white/15 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
+                                className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 ${proInterval === "year" ? "bg-white/15 text-white" : "text-slate-500 hover:text-slate-300"}`}
                               >
                                 Annuel
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setProInterval("month")}
-                                className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-all duration-200 ${proInterval === "month" ? "bg-white/15 text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
+                                className={`rounded px-1.5 py-0.5 text-[10px] font-medium transition-all duration-200 ${proInterval === "month" ? "bg-white/15 text-white" : "text-slate-500 hover:text-slate-300"}`}
                               >
                                 Mensuel
                               </button>

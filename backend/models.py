@@ -2,9 +2,20 @@
 Modèles SQLAlchemy pour SaaS Mix.
 """
 
-from sqlalchemy import Column, String, DateTime, Text, ForeignKey
+from sqlalchemy import Column, String, DateTime, Text, ForeignKey, Integer
 from sqlalchemy.sql import func
 from database import Base
+
+
+# Limites par plan : (mix par mois, master par mois). None = illimité.
+PLAN_LIMITS = {
+    "starter": (10, 3),
+    "artiste": (30, 15),
+    "pro": (None, None),
+}
+
+# Limite de projets sauvegardés par plan. None = illimité.
+PLAN_PROJECT_LIMIT = {"starter": 5, "artiste": 15, "pro": None}
 
 
 class User(Base):
@@ -15,10 +26,14 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     # SQLite gère mal timezone=True, on utilise DateTime simple
     created_at = Column(DateTime(), server_default=func.now())
-    # Billing: plan = free | pro (lié au compte, rappelé à chaque connexion)
+    # Billing: plan = free | starter | artiste | pro (lié au compte)
     plan = Column(String(32), nullable=False, default="free")
     stripe_customer_id = Column(String(255), nullable=True, index=True)
     stripe_subscription_id = Column(String(255), nullable=True)
+    # Usage mensuel pour limites téléchargements (remis à zéro chaque mois)
+    usage_month = Column(String(7), nullable=True)  # "YYYY-MM"
+    mix_downloads_count = Column(Integer, nullable=False, default=0)
+    master_downloads_count = Column(Integer, nullable=False, default=0)
 
 
 class Project(Base):

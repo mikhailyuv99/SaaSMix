@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencies import get_current_user
-from models import Project
+from models import Project, User, PLAN_PROJECT_LIMIT
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -42,7 +42,7 @@ async def create_project(
 ):
     """
     Crée un projet : métadonnées en base + fichiers WAV sur disque.
-    Les fichiers sont envoyés dans le même ordre que les pistes (dans data) qui ont un fichier (rawFileName non vide).
+    Limite selon le plan : starter 5 projets, artiste 15, pro illimité. 402 si limite atteinte.
     """
     try:
         tracks_data = json.loads(data)
@@ -52,6 +52,21 @@ async def create_project(
         raise HTTPException(status_code=400, detail="data doit être un tableau de pistes")
 
     user_id = current_user["user_id"]
+    user_row = db.query(User).filter(User.id == user_id).first()
+    plan = (user_row.plan if user_row else "free").lower()
+    if plan not in ("starter", "artiste", "pro"):
+        raise HTTPException(
+            status_code=402,
+            detail="Sauvegarde de projet réservée aux abonnés. Choisissez une formule pour sauvegarder vos projets.",
+        )
+    project_limit = PLAN_PROJECT_LIMIT.get(plan)
+    if project_limit is not None:
+        count = db.query(Project).filter(Project.user_id == user_id).count()
+        if count >= project_limit:
+            raise HTTPException(
+                status_code=402,
+                detail=f"Vous avez atteint votre limite de projets sauvegardés ({project_limit}/{project_limit}). Passez au plan supérieur pour en sauvegarder plus.",
+            )
     project_id = str(uuid.uuid4())
     project_dir = _project_dir(user_id, project_id)
     os.makedirs(project_dir, exist_ok=True)
