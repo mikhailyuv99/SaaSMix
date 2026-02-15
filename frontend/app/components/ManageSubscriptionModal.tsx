@@ -233,7 +233,7 @@ export function ManageSubscriptionModal({
           : currentPlanId === "pro" || currentPlanId === "pro_annual"
             ? "Pro"
             : "Pro";
-  const planSuffix = subscription?.interval === "year" ? " annuel" : " mensuel";
+  const planSuffix = (currentPlanId === "pro" || currentPlanId === "pro_annual") ? (subscription?.interval === "year" ? " annuel" : " mensuel") : "";
 
   const handleChangePlan = async (priceId: string) => {
     setChangePlanError(null);
@@ -337,17 +337,15 @@ export function ManageSubscriptionModal({
                               </button>
                             </div>
                           )}
+                          {isCurrent && (
+                            <span className="text-xs font-medium text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
+                              Plan actuel
+                            </span>
+                          )}
                         </div>
                         <p className="text-slate-400 text-sm">{displayPrice}</p>
-                        {isCurrent && (
-                          <span className="inline-block mt-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
-                            Votre plan actuel
-                          </span>
-                        )}
                       </div>
-                      {isCurrent ? (
-                        <span className="text-sm font-medium text-emerald-400">Plan actuel</span>
-                      ) : (
+                      {!isCurrent && (
                         <button
                           type="button"
                           disabled={!!changePlanLoading}
