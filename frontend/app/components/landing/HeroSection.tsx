@@ -37,10 +37,13 @@ function saveHeroUploadFiles(files: File[]): Promise<void> {
   });
 }
 
+const WAV_ONLY_MESSAGE = "Seuls les fichiers .wav sont acceptés.";
+
 export function HeroSection() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isAudioFile = (file: File) =>
     file.type.startsWith("audio/") || /\.(wav|mp3|ogg|m4a|flac|aac)$/i.test(file.name);
@@ -48,10 +51,16 @@ export function HeroSection() {
   const handleFiles = useCallback(
     async (fileList: FileList | null) => {
       if (!fileList?.length) return;
+      setError(null);
       const files = Array.from(fileList).filter(isAudioFile);
       if (files.length === 0) return;
+      const wavFiles = files.filter((f) => f.name.toLowerCase().endsWith(".wav"));
+      if (wavFiles.length === 0) {
+        setError(WAV_ONLY_MESSAGE);
+        return;
+      }
       try {
-        await saveHeroUploadFiles(files);
+        await saveHeroUploadFiles(wavFiles);
         router.push("/mix?from=hero");
       } catch {
         router.push("/mix");
@@ -173,6 +182,11 @@ export function HeroSection() {
             <span className="text-sm text-slate-400">
               ou cliquez pour choisir un fichier
             </span>
+            {error && (
+              <p className="text-sm text-red-400 mt-1" role="alert">
+                {error}
+              </p>
+            )}
           </button>
         </div>
       </div>
