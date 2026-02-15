@@ -126,26 +126,41 @@ export function ManageSubscriptionModal({
   getAuthHeaders: () => Record<string, string>;
   onSubscriptionUpdated: () => void;
 }) {
-  const [subscription, setSubscription] = useState<{
+  type Sub = {
     current_period_end: number | null;
     cancel_at_period_end: boolean;
     interval: "month" | "year";
-  } | null>(null);
+    current_plan_id?: string;
+  };
+  type PlanOption = { id: string; name: string; priceDisplay: string; interval: string; priceId: string };
+  const [subscription, setSubscription] = useState<Sub | null>(null);
+  const [plansMonthly, setPlansMonthly] = useState<PlanOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpdateCard, setShowUpdateCard] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [changePlanView, setChangePlanView] = useState(false);
+  const [changePlanLoading, setChangePlanLoading] = useState<string | null>(null);
+  const [changePlanError, setChangePlanError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
     setSubscription(null);
+    setPlansMonthly([]);
     setShowUpdateCard(false);
-    fetch(`${API_BASE}/api/billing/subscription`, { headers: getAuthHeaders() })
-      .then((r) => r.json())
-      .then((data) => {
-        setSubscription(data.subscription || null);
+    setChangePlanView(false);
+    setChangePlanError(null);
+    Promise.all([
+      fetch(`${API_BASE}/api/billing/subscription`, { headers: getAuthHeaders() }).then((r) => r.json()),
+      fetch(`${API_BASE}/api/billing/plans`).then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([subData, plansData]) => {
+        setSubscription(subData.subscription || null);
+        if (plansData && Array.isArray(plansData.plansMonthly)) {
+          setPlansMonthly(plansData.plansMonthly);
+        }
       })
       .catch(() => setSubscription(null))
       .finally(() => setLoading(false));
@@ -176,14 +191,104 @@ export function ManageSubscriptionModal({
     }
   };
 
+  const currentPlanId = subscription?.current_plan_id ?? null;
+  const isCurrentPlan = (planId: string) => {
+    if (!currentPlanId) return false;
+    if (currentPlanId === "pro_annual") return planId === "pro";
+    return currentPlanId === planId;
+  };
+  const currentPlanLabel =
+    subscription?.interval === "year"
+      ? "Pro annuel"
+      : currentPlanId === "starter"
+        ? "Starter"
+        : currentPlanId === "artiste"
+          ? "Artiste"
+          : currentPlanId === "pro" || currentPlanId === "pro_annual"
+            ? "Pro"
+            : "Pro";
+  const planSuffix = subscription?.interval === "year" ? " annuel" : " mensuel";
+
+  const handleChangePlan = async (priceId: string) => {
+    setChangePlanError(null);
+    setChangePlanLoading(priceId);
+    try {
+      const res = await fetch(`${API_BASE}/api/billing/change-plan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify({ price_id: priceId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        onSubscriptionUpdated();
+        const subRes = await fetch(`${API_BASE}/api/billing/subscription`, { headers: getAuthHeaders() });
+        const subData = await subRes.json().catch(() => ({}));
+        setSubscription(subData.subscription || null);
+        setChangePlanView(false);
+      } else {
+        setChangePlanError((data.detail as string) || "Erreur lors du changement de plan.");
+      }
+    } catch {
+      setChangePlanError("Erreur réseau.");
+    } finally {
+      setChangePlanLoading(null);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4" onClick={onClose}>
-      <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-md w-full relative" onClick={(e) => e.stopPropagation()}>
+      <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-md w-full relative max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
-        <h2 className="text-xl font-medium text-white mb-1">Gérer mon abonnement</h2>
-        <p className="text-tagline text-slate-400 text-[10px] mb-6">Modifier votre carte ou annuler l'abonnement.</p>
+
+        {changePlanView ? (
+          <>
+            <button type="button" onClick={() => { setChangePlanView(false); setChangePlanError(null); }} className="text-slate-400 hover:text-white text-sm mb-2 flex items-center gap-1">
+              ← Retour
+            </button>
+            <h2 className="text-xl font-medium text-white mb-1">Changer de plan</h2>
+            <p className="text-slate-400 text-[10px] mb-4">Choisissez une formule mensuelle. Le prorata est appliqué automatiquement.</p>
+            {changePlanError && <p className="text-red-400 text-sm mb-3">{changePlanError}</p>}
+            <div className="space-y-3">
+              {plansMonthly.map((plan) => {
+                const isCurrent = isCurrentPlan(plan.id);
+                return (
+                  <div
+                    key={plan.id}
+                    className={`rounded-xl border p-4 ${isCurrent ? "border-emerald-500/50 bg-emerald-500/10" : "border-white/10 bg-white/5"}`}
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <p className="font-medium text-white">{plan.name}</p>
+                        <p className="text-slate-400 text-sm">{plan.priceDisplay} / mois</p>
+                        {isCurrent && (
+                          <span className="inline-block mt-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
+                            Votre plan actuel
+                          </span>
+                        )}
+                      </div>
+                      {!isCurrent && (
+                        <button
+                          type="button"
+                          disabled={!!changePlanLoading}
+                          onClick={() => handleChangePlan(plan.priceId)}
+                          className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 disabled:opacity-50 transition-colors"
+                        >
+                          {changePlanLoading === plan.priceId ? "En cours…" : "Passer à ce plan"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {plansMonthly.length === 0 && !loading && <p className="text-slate-400 text-sm">Aucune formule disponible.</p>}
+          </>
+        ) : (
+          <>
+            <h2 className="text-xl font-medium text-white mb-1">Gérer mon abonnement</h2>
+            <p className="text-tagline text-slate-400 text-[10px] mb-6">Modifier votre carte, changer de plan ou annuler l&apos;abonnement.</p>
 
         {loading ? (
           <p className="text-slate-400 text-sm">Chargement…</p>
@@ -203,7 +308,7 @@ export function ManageSubscriptionModal({
         ) : subscription ? (
           <div className="space-y-4">
             <p className="text-slate-400 text-sm">
-              Plan : <strong>Pro {subscription.interval === "year" ? "annuel" : "mensuel"}</strong>
+              Plan : <strong>{currentPlanLabel}{planSuffix}</strong>
             </p>
             <p className="text-slate-400 text-sm">
               {subscription.cancel_at_period_end ? (
@@ -216,6 +321,15 @@ export function ManageSubscriptionModal({
               <p className="text-red-400 text-sm">{cancelError}</p>
             )}
             <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+              {!subscription.cancel_at_period_end && (
+                <button
+                  type="button"
+                  onClick={() => setChangePlanView(true)}
+                  className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-slate-400 hover:bg-white/10 transition-colors"
+                >
+                  Changer de plan
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setShowUpdateCard(true)}

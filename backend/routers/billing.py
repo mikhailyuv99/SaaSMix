@@ -68,6 +68,10 @@ class UpdatePaymentMethodBody(BaseModel):
     payment_method_id: str
 
 
+class ChangePlanBody(BaseModel):
+    price_id: str
+
+
 @router.get("/me")
 def billing_me(
     user: User = Depends(get_current_user_row),
@@ -218,13 +222,74 @@ def get_subscription(user: User = Depends(get_current_user_row)):
                     pass
     if not current_period_end or current_period_end <= 0:
         current_period_end = None
+
+    # Plan actuel (starter, artiste, pro, pro_annual) pour affichage et changement
+    current_plan_id = "pro"
+    try:
+        items_obj = sub.get("items")
+        data = (items_obj.get("data") or []) if hasattr(items_obj, "get") else []
+        if data:
+            price = (data[0].get("price") or {}) if hasattr(data[0], "get") else {}
+            price_id = price.get("id") if hasattr(price, "get") else None
+            if interval == "year":
+                current_plan_id = "pro_annual"
+            else:
+                current_plan_id = _plan_from_price_id(price_id or "")
+    except (AttributeError, KeyError, TypeError, IndexError):
+        pass
+
     return {
         "subscription": {
             "current_period_end": current_period_end,
             "cancel_at_period_end": bool(sub.get("cancel_at_period_end", False)),
             "interval": interval,
+            "current_plan_id": current_plan_id,
         }
     }
+
+
+@router.post("/change-plan")
+def change_plan(
+    body: ChangePlanBody,
+    user: User = Depends(get_current_user_row),
+    db: Session = Depends(get_db),
+):
+    """
+    Change l'abonnement vers un autre plan (upgrade/downgrade).
+    Stripe prorata automatiquement. Seuls les plans mensuels (starter, artiste, pro) sont acceptés.
+    """
+    if not user.stripe_subscription_id or not STRIPE_SECRET:
+        raise HTTPException(status_code=400, detail="Aucun abonnement actif.")
+    price_id = (body.price_id or "").strip()
+    if not price_id:
+        raise HTTPException(status_code=400, detail="price_id requis.")
+    allowed = [p for p in (STRIPE_PRICE_STARTER, STRIPE_PRICE_ARTISTE, STRIPE_PRICE_PRO) if p]
+    if not allowed or price_id not in allowed:
+        raise HTTPException(status_code=400, detail="Plan non autorisé pour un changement (utilisez un plan mensuel).")
+    stripe.api_key = STRIPE_SECRET
+    try:
+        sub = stripe.Subscription.retrieve(
+            user.stripe_subscription_id,
+            expand=["items.data.price"],
+        )
+        if not sub or sub.get("status") not in ("active", "trialing"):
+            raise HTTPException(status_code=400, detail="Abonnement inactif.")
+        items_data = (sub.get("items") or {}).get("data") or []
+        if not items_data:
+            raise HTTPException(status_code=400, detail="Aucun item d'abonnement.")
+        item_id = items_data[0].get("id") if hasattr(items_data[0], "get") else None
+        if not item_id:
+            raise HTTPException(status_code=400, detail="Item d'abonnement invalide.")
+        stripe.Subscription.modify(
+            user.stripe_subscription_id,
+            items=[{"id": item_id, "price": price_id}],
+            proration_behavior="create_prorations",
+        )
+        user.plan = _plan_from_price_id(price_id)
+        db.commit()
+        return {"status": "ok", "plan": user.plan}
+    except stripe.StripeError as e:
+        raise HTTPException(status_code=400, detail=getattr(e, "user_message", None) or str(e))
 
 
 @router.post("/cancel-subscription")

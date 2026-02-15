@@ -27,12 +27,14 @@ function SubscriptionForm({
   onSuccess,
   onClose,
   getAuthHeaders,
+  onNeedLogin,
   initialPriceId,
   initialLabel,
 }: {
   onSuccess: () => void;
   onClose: () => void;
   getAuthHeaders: () => Record<string, string>;
+  onNeedLogin?: () => void;
   initialPriceId?: string | null;
   initialLabel?: string | null;
 }) {
@@ -93,7 +95,8 @@ function SubscriptionForm({
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        setError("Session expirée. Reconnectez-vous.");
+        setError("Connectez-vous pour vous abonner.");
+        onNeedLogin?.();
         setLoading(false);
         return;
       }
@@ -124,6 +127,23 @@ function SubscriptionForm({
     ...(plansData?.planAnnual ? [plansData.planAnnual] : []),
   ];
   const displayLabel = selectedLabel || allPlans.find((p) => p.priceId === selectedPriceId)?.name || selectedPriceId ? "Abonnement" : null;
+  const hasToken = !!getAuthHeaders().Authorization;
+
+  if (!hasToken) {
+    return (
+      <div className="space-y-4">
+        <p className="text-slate-400 text-sm">Vous devez être connecté pour vous abonner.</p>
+        <div className="flex gap-2">
+          <button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+            Fermer
+          </button>
+          <button type="button" onClick={() => { onNeedLogin?.(); onClose(); }} className="flex-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 text-sm">
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -184,6 +204,7 @@ export function SubscriptionModal({
   onClose,
   onSuccess,
   getAuthHeaders,
+  onNeedLogin,
   initialPriceId,
   initialLabel,
 }: {
@@ -191,6 +212,7 @@ export function SubscriptionModal({
   onClose: () => void;
   onSuccess: () => void;
   getAuthHeaders: () => Record<string, string>;
+  onNeedLogin?: () => void;
   initialPriceId?: string | null;
   initialLabel?: string | null;
 }) {
@@ -217,6 +239,7 @@ export function SubscriptionModal({
               onSuccess={onSuccess}
               onClose={onClose}
               getAuthHeaders={getAuthHeaders}
+              onNeedLogin={onNeedLogin}
               initialPriceId={initialPriceId}
               initialLabel={initialLabel}
             />

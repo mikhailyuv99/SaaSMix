@@ -207,6 +207,12 @@ export function Header() {
           setCheckoutPriceId(null);
           setCheckoutLabel(null);
         }}
+        onNeedLogin={() => {
+          setSubscriptionModalOpen(false);
+          setCheckoutPriceId(null);
+          setCheckoutLabel(null);
+          openAuthModal?.("login");
+        }}
         onSuccess={async () => {
           setSubscriptionModalOpen(false);
           setCheckoutPriceId(null);
