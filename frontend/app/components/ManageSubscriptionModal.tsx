@@ -375,6 +375,8 @@ export function ManageSubscriptionModal({
         ) : (
           <p className="text-slate-400 text-sm">Aucun abonnement actif.</p>
         )}
+          </>
+        )}
       </div>
     </div>
   );
