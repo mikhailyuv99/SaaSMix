@@ -70,10 +70,10 @@ export function Header() {
   return (
     <>
       <header className="relative z-50 w-full bg-transparent">
-        <div className="mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-16 sm:gap-6 sm:px-6">
+        <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6">
           <Link
             href="/"
-            className="font-heading flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90 justify-self-start"
+            className="font-heading flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90"
           >
             <span>SIBERIA</span>
             <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -82,7 +82,7 @@ export function Header() {
             <span>MIX</span>
           </Link>
 
-          <nav className="flex items-center justify-center gap-4 sm:gap-8 flex-wrap sm:flex-nowrap justify-self-center">
+          <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 sm:gap-6 flex-nowrap">
             {isHome && (
               <>
                 <a href="#tarifs" className="text-sm text-white/90 transition-colors hover:text-white">
@@ -102,6 +102,11 @@ export function Header() {
                 Accueil
               </Link>
             )}
+            {!isHome && (
+              <a href="/#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">
+                FAQ & Contact
+              </a>
+            )}
             <button
               type="button"
               onClick={handlePlanClick}
@@ -111,7 +116,7 @@ export function Header() {
             </button>
           </nav>
 
-          <div className="flex items-center justify-end gap-4 sm:gap-6 flex-wrap sm:flex-nowrap justify-self-end">
+          <div className="flex items-center gap-4 sm:gap-6 flex-nowrap shrink-0">
             {user ? (
               <>
                 <span className="text-sm text-white/90 truncate max-w-[140px] sm:max-w-[200px] uppercase" title={user.email}>
