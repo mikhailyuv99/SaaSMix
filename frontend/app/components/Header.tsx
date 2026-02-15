@@ -50,10 +50,13 @@ export function Header() {
 
   const handleLeaveConfirm = () => {
     if (leaveIntent === "disconnect") {
+      if (typeof window !== "undefined") sessionStorage.removeItem("saas_mix_tracks");
       logout();
     } else if (leaveIntent === "load_project") {
       leaveConfirmAction?.();
     } else {
+      // Naviguer vers accueil sans sauvegarder : effacer les pistes pour que /mix reparte à zéro
+      if (typeof window !== "undefined") sessionStorage.removeItem("saas_mix_tracks");
       window.location.href = "/";
     }
     setLeaveConfirmAction(null);

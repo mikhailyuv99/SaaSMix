@@ -405,12 +405,13 @@ export default function Home() {
   const [bpmInputFocused, setBpmInputFocused] = useState(false);
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
 
-  // BPM box : wheel non-passive quand la souris est dessus pour modifier le BPM sans scroller la page (ré-attaché quand les pistes existent)
+  // BPM box : wheel ne bloque le scroll que si l'utilisateur a focalisé le BPM (évite blocage en scrollant vers la FAQ)
   useEffect(() => {
     if (tracks.length === 0) return;
     const el = bpmBoxRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      if (!bpmInputFocusedRef.current) return; // laisser scroller la page si le BPM n'est pas focalisé
       e.preventDefault();
       e.stopPropagation();
       const delta = e.deltaY > 0 ? -1 : 1;
@@ -526,6 +527,8 @@ export default function Home() {
   const playAllRef = useRef<(override?: { playable?: Track[]; startOffset?: number }) => void>(() => {});
   const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
   const bpmBoxRef = useRef<HTMLDivElement | null>(null);
+  const bpmInputFocusedRef = useRef(false);
+  bpmInputFocusedRef.current = bpmInputFocused;
 
   // Préchargement depuis le hero (dropzone accueil) : un ou plusieurs fichiers en IDB.
   // Court délai pour laisser la transaction IDB de la page précédente se committer après la navigation.
