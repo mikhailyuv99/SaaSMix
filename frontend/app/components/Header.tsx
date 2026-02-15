@@ -102,16 +102,28 @@ export function Header() {
     <>
       <header className="relative z-50 w-full bg-transparent">
         <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6 max-lg:flex-nowrap max-lg:py-3 max-lg:min-h-14">
-          <Link
-            href="/"
-            className="font-heading flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90"
-          >
-            <span>SIBERIA</span>
-            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M12 2 L22 12 L12 22 L2 12 Z" />
-            </svg>
-            <span>MIX</span>
-          </Link>
+          <>
+            <Link
+              href="/"
+              className="font-heading max-lg:hidden flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90"
+            >
+              <span>SIBERIA</span>
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12 2 L22 12 L12 22 L2 12 Z" />
+              </svg>
+              <span>MIX</span>
+            </Link>
+            <span
+              className="font-heading lg:hidden flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 cursor-default"
+              aria-hidden
+            >
+              <span>SIBERIA</span>
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12 2 L22 12 L12 22 L2 12 Z" />
+              </svg>
+              <span>MIX</span>
+            </span>
+          </>
 
           {/* Desktop: nav + auth */}
           <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-4 sm:gap-6 flex-nowrap max-lg:hidden">
