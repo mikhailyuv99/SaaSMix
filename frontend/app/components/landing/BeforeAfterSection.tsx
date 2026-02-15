@@ -317,9 +317,8 @@ function DemoCard({
       const wasPlaying = !!playbackRef.current;
       if (playbackRef.current) stopPlayback();
       if (wasPlaying) startPlaybackAtOffset(time);
-      else if (canPlayCurrent) startPlaybackAtOffset(time);
     },
-    [stopPlayback, startPlaybackAtOffset, registerAsSpaceTarget, canPlayCurrent]
+    [stopPlayback, startPlaybackAtOffset, registerAsSpaceTarget]
   );
 
   // Switch Avant/Après via gains (comme section mix) — instant sur PC et mobile.
