@@ -2645,8 +2645,8 @@ export default function Home() {
   return (
     <main className="relative z-10 min-h-screen font-heading">
       {appModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden">
             {appModal.type === "prompt" && (
               <>
                 <div className="p-4 border-b border-white/10">
@@ -2734,8 +2734,8 @@ export default function Home() {
       )}
 
       {categoryModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
-          <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden">
             <div className="pb-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
                 Quelle catégorie pour cette piste ?
@@ -2972,8 +2972,8 @@ export default function Home() {
 
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         {showProjectsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md" aria-modal="true" role="dialog">
-            <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md" aria-modal="true" role="dialog">
+            <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20">
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <h2 className="text-lg font-medium text-white">Mes projets</h2>
                 <button
@@ -4027,8 +4027,8 @@ export default function Home() {
       />
       {/* ─── Auth Modal (login + register — stays on same page, preserves all audio state) ─── */}
       {showLoginModal && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }}>
-          <div className="rounded-2xl border border-white/15 bg-black/50 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/20 backdrop-blur-md p-4" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }}>
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative" onClick={(e) => e.stopPropagation()}>
             <button type="button" onClick={() => { setShowLoginModal(false); setRegisterSuccess(false); }} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
 
             {authMode === "login" ? (
