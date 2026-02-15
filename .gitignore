@@ -49,6 +49,8 @@ Thumbs.db
 # Audio files (don't commit large files)
 *.wav
 *.mp3
+# Exception: démos section Avant/Après (landing)
+!frontend/public/audio/demos/*.wav
 *.flac
 *.aiff
 
