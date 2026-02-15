@@ -7,7 +7,7 @@ import { ObserveSection } from "../ObserveSection";
 const plansMensuel = [
   { name: "Starter", subtitle: "Pour découvrir", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
   { name: "Creator", subtitle: "Pour les artistes réguliers", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: true },
-  { name: "Pro", subtitle: "Pour les power users", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
+  { name: "Pro", subtitle: "Mix + master à volonté", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
 ];
 
 const planAnnuel = {
@@ -78,13 +78,15 @@ export function PricingSection() {
                     : "landing-card border-white/10"
                 }`}
               >
-                {plan.featured && (
-                  <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
-                    Populaire
-                  </span>
-                )}
-                <h3 className="mt-3 font-heading text-xl font-semibold text-white">{plan.name}</h3>
-                <p className="text-sm text-slate-400">{plan.subtitle}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-heading text-xl font-semibold text-white">{plan.name}</h3>
+                  {plan.featured && (
+                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
+                      Populaire
+                    </span>
+                  )}
+                </div>
+                <p className="mt-3 text-sm text-slate-400">{plan.subtitle}</p>
                 <p className="mt-5 font-heading text-2xl font-bold text-white">{plan.price}</p>
                 <p className="mt-1 text-sm text-slate-400">{plan.tokens}</p>
                 <div className="mt-6">

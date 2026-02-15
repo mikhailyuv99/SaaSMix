@@ -5,7 +5,7 @@ import { useState } from "react";
 const PLANS_MENSUEL = [
   { name: "Starter", subtitle: "Pour découvrir", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
   { name: "Creator", subtitle: "Pour les artistes réguliers", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: true },
-  { name: "Pro", subtitle: "Pour les power users", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
+  { name: "Pro", subtitle: "Mix + master à volonté", price: "—", tokens: "Tokens inclus : à définir", cta: "Bientôt", featured: false },
 ];
 
 const PLAN_ANNUEL = {
@@ -65,12 +65,14 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                   plan.featured ? "border-white/25 bg-white/[0.06] ring-1 ring-white/10" : "border-white/10 bg-white/[0.03]"
                 }`}
               >
-                {plan.featured && (
-                  <span className="inline-block rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 mb-2">
-                    Populaire
-                  </span>
-                )}
-                <h3 className="font-heading text-lg font-semibold text-white">{plan.name}</h3>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-heading text-lg font-semibold text-white">{plan.name}</h3>
+                  {plan.featured && (
+                    <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-400">
+                      Populaire
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-slate-400 mt-1">{plan.subtitle}</p>
                 <p className="mt-4 font-heading text-xl font-bold text-white">{plan.price}</p>
                 <p className="mt-0.5 text-xs text-slate-400">{plan.tokens}</p>
