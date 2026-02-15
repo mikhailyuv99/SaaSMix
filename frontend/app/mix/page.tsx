@@ -3341,7 +3341,8 @@ export default function Home() {
                 onChange={(e) => {
                   const fileList = e.target.files;
                   if (!fileList?.length) return;
-                  const files = Array.from(fileList).filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  const all = Array.from(fileList);
+                  const files = all.filter((f) => f.name.toLowerCase().endsWith(".wav"));
                   if (files.length === 0) {
                     setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
                     e.target.value = "";
@@ -3350,6 +3351,9 @@ export default function Home() {
                   e.target.value = "";
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
+                  if (all.length > files.length) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
+                  }
                 }}
               />
               <button
@@ -3359,13 +3363,17 @@ export default function Home() {
                   e.preventDefault();
                   e.stopPropagation();
                   setMixDropzoneDragging(false);
-                  const files = Array.from(e.dataTransfer.files).filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  const all = Array.from(e.dataTransfer.files);
+                  const files = all.filter((f) => f.name.toLowerCase().endsWith(".wav"));
                   if (files.length === 0) {
                     setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
                     return;
                   }
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
+                  if (all.length > files.length) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
+                  }
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
@@ -4007,7 +4015,8 @@ export default function Home() {
                 onChange={(e) => {
                   const fileList = e.target.files;
                   if (!fileList?.length) return;
-                  const files = Array.from(fileList).filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  const all = Array.from(fileList);
+                  const files = all.filter((f) => f.name.toLowerCase().endsWith(".wav"));
                   if (files.length === 0) {
                     setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
                     e.target.value = "";
@@ -4016,6 +4025,9 @@ export default function Home() {
                   e.target.value = "";
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
+                  if (all.length > files.length) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
+                  }
                 }}
               />
               <button
@@ -4025,13 +4037,17 @@ export default function Home() {
                   e.preventDefault();
                   e.stopPropagation();
                   setAddTrackDropzoneDragging(false);
-                  const files = Array.from(e.dataTransfer.files).filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  const all = Array.from(e.dataTransfer.files);
+                  const files = all.filter((f) => f.name.toLowerCase().endsWith(".wav"));
                   if (files.length === 0) {
                     setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
                     return;
                   }
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
+                  if (all.length > files.length) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
+                  }
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(false); }}
