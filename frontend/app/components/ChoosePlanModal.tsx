@@ -111,7 +111,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
                   <button
                     type="button"
                     className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors ${
-                      plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                      plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10 uppercase" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white uppercase"
                     }`}
                   >
                     {plan.cta}
@@ -127,12 +127,9 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-heading text-xl font-semibold text-white">{PLAN_ANNUEL.name}</h3>
                 {PLAN_ANNUEL.featured && (
-                  <div className="shrink-0 flex flex-col items-end gap-0.5">
-                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
-                      Plus avantageux
-                    </span>
-                    <span className="text-[11px] font-medium text-slate-400">Économisez 25%</span>
-                  </div>
+                  <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400">
+                    Économisez 25%
+                  </span>
                 )}
               </div>
               <p className="mt-5 font-heading text-2xl font-bold text-white">{PLAN_ANNUEL.price}</p>
@@ -147,7 +144,7 @@ export function ChoosePlanModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               <div className="mt-6 mt-auto">
                 <button
                   type="button"
-                  className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10"
+                  className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-center text-sm text-white transition-colors hover:bg-white/10 uppercase"
                 >
                   {PLAN_ANNUEL.cta}
                 </button>
