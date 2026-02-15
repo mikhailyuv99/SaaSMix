@@ -1,5 +1,11 @@
 import { ObserveSection } from "../ObserveSection";
 
+const PlayIcon = () => (
+  <svg className="w-5 h-5 text-slate-400 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M9 6v12l9-6z" />
+  </svg>
+);
+
 const CardIcon = () => (
   <svg className="w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
     <rect x={1} y={4} width={22} height={16} rx={2} ry={2} />
@@ -8,7 +14,7 @@ const CardIcon = () => (
 );
 
 const items = [
-  { label: "Aperçu pleine longueur", desc: "Écoutez le résultat avant de télécharger.", icon: "▶" },
+  { label: "Aperçu pleine longueur", desc: "Écoutez le résultat avant de télécharger.", iconNode: <PlayIcon /> },
   { label: "Pas de carte bancaire", desc: "Pour commencer, rien à enregistrer.", iconNode: <CardIcon /> },
   { label: "Vous gardez vos droits", desc: "100 % de vos masters, toujours.", icon: "✓" },
 ];
@@ -23,8 +29,8 @@ export function TrustBullets() {
               key={item.label}
               className={`flex items-start gap-4 text-center sm:text-left group ${i === 0 ? "observe-stagger-1" : i === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-base text-slate-400 transition-colors duration-300 group-hover:border-white/25 group-hover:bg-white/10 sm:mx-auto sm:mb-1 sm:flex">
-                {"iconNode" in item && item.iconNode ? item.iconNode : item.icon}
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-slate-400 transition-colors duration-300 group-hover:border-white/25 group-hover:bg-white/10 sm:mx-auto sm:mb-1 sm:flex [&>svg]:block">
+                {"iconNode" in item && item.iconNode ? item.iconNode : <span className="text-base">{item.icon}</span>}
               </span>
               <div className="flex-1">
                 <p className="font-heading font-semibold text-white whitespace-nowrap">{item.label}</p>

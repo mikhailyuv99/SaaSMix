@@ -143,7 +143,7 @@ export function Header() {
               {isLeaveForDisconnect
                 ? "Vous avez des modifications non sauvegardées. Se déconnecter quand même ?"
                 : isLeaveForLoadProject
-                  ? "Charger ce projet remplacera les pistes actuelles. Continuer ?"
+                  ? "Sans sauvegarde, votre progression actuelle ne sera pas enregistrée. Charger un autre projet peut faire perdre vos modifications. Continuer ?"
                   : "Quitter cette page sans sauvegarder ? Vous perdrez toute progression en cours. Continuer ?"}
             </p>
             <div className="flex gap-3">

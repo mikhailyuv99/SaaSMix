@@ -2892,14 +2892,14 @@ export default function Home() {
                 <div className="flex flex-col border-t border-white/10">
                   <button
                     type="button"
-                    onClick={() => { appModal.onPrimary(); setAppModal(null); }}
+                    onClick={() => appModal.onPrimary()}
                     className="py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm border-b border-white/10"
                   >
                     {appModal.primaryLabel}
                   </button>
                   <button
                     type="button"
-                    onClick={() => { appModal.onSecondary(); setAppModal(null); }}
+                    onClick={() => appModal.onSecondary()}
                     className="py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm"
                   >
                     {appModal.secondaryLabel}
