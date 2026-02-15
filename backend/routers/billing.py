@@ -256,16 +256,16 @@ def change_plan(
 ):
     """
     Change l'abonnement vers un autre plan (upgrade/downgrade).
-    Stripe prorata automatiquement. Seuls les plans mensuels (starter, artiste, pro) sont acceptés.
+    Stripe prorata automatiquement. Plans acceptés : starter, artiste, pro (mensuel), pro annuel.
     """
     if not user.stripe_subscription_id or not STRIPE_SECRET:
         raise HTTPException(status_code=400, detail="Aucun abonnement actif.")
     price_id = (body.price_id or "").strip()
     if not price_id:
         raise HTTPException(status_code=400, detail="price_id requis.")
-    allowed = [p for p in (STRIPE_PRICE_STARTER, STRIPE_PRICE_ARTISTE, STRIPE_PRICE_PRO) if p]
+    allowed = [p for p in (STRIPE_PRICE_STARTER, STRIPE_PRICE_ARTISTE, STRIPE_PRICE_PRO, STRIPE_PRICE_PRO_ANNUAL or STRIPE_PRICE_ANNUAL) if p]
     if not allowed or price_id not in allowed:
-        raise HTTPException(status_code=400, detail="Plan non autorisé pour un changement (utilisez un plan mensuel).")
+        raise HTTPException(status_code=400, detail="Plan non autorisé pour un changement.")
     stripe.api_key = STRIPE_SECRET
     try:
         sub = stripe.Subscription.retrieve(

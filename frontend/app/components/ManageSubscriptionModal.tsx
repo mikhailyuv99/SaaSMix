@@ -9,6 +9,13 @@ const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 
 const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
 
+const PLAN_FEATURES: Record<string, string> = {
+  starter: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projets",
+  artiste: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets",
+  pro: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
+  pro_annual: "Téléchargements mix illimités\nTéléchargements master illimités\nSauvegardes de projets illimités",
+};
+
 const CARD_OPTIONS = {
   style: {
     base: {
@@ -135,6 +142,7 @@ export function ManageSubscriptionModal({
   type PlanOption = { id: string; name: string; priceDisplay: string; interval: string; priceId: string };
   const [subscription, setSubscription] = useState<Sub | null>(null);
   const [plansMonthly, setPlansMonthly] = useState<PlanOption[]>([]);
+  const [planAnnual, setPlanAnnual] = useState<PlanOption | null>(null);
   const [loading, setLoading] = useState(true);
   const [showUpdateCard, setShowUpdateCard] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -143,15 +151,20 @@ export function ManageSubscriptionModal({
   const [changePlanView, setChangePlanView] = useState(false);
   const [changePlanLoading, setChangePlanLoading] = useState<string | null>(null);
   const [changePlanError, setChangePlanError] = useState<string | null>(null);
+  const [proInterval, setProInterval] = useState<"year" | "month">("year");
+  const [featuresOpen, setFeaturesOpen] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
     setSubscription(null);
     setPlansMonthly([]);
+    setPlanAnnual(null);
     setShowUpdateCard(false);
     setChangePlanView(false);
     setChangePlanError(null);
+    setProInterval("year");
+    setFeaturesOpen(null);
     Promise.all([
       fetch(`${API_BASE}/api/billing/subscription`, { headers: getAuthHeaders() }).then((r) => r.json()),
       fetch(`${API_BASE}/api/billing/plans`).then((r) => (r.ok ? r.json() : null)),
@@ -160,6 +173,9 @@ export function ManageSubscriptionModal({
         setSubscription(subData.subscription || null);
         if (plansData && Array.isArray(plansData.plansMonthly)) {
           setPlansMonthly(plansData.plansMonthly);
+        }
+        if (plansData?.planAnnual) {
+          setPlanAnnual(plansData.planAnnual);
         }
       })
       .catch(() => setSubscription(null))
@@ -248,20 +264,51 @@ export function ManageSubscriptionModal({
               ← Retour
             </button>
             <h2 className="text-xl font-medium text-white mb-1">Changer de plan</h2>
-            <p className="text-slate-400 text-[10px] mb-4">Choisissez une formule mensuelle. Le prorata est appliqué automatiquement.</p>
+            <p className="text-slate-400 text-[10px] mb-3">Choisissez une formule. Le prorata est appliqué automatiquement.</p>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-slate-400 text-xs">Pro :</span>
+              <div className="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setProInterval("year")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${proInterval === "year" ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"}`}
+                >
+                  Annuel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProInterval("month")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${proInterval === "month" ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"}`}
+                >
+                  Mensuel
+                </button>
+              </div>
+            </div>
             {changePlanError && <p className="text-red-400 text-sm mb-3">{changePlanError}</p>}
             <div className="space-y-3">
               {plansMonthly.map((plan) => {
-                const isCurrent = isCurrentPlan(plan.id);
+                const isProPlan = plan.id === "pro";
+                const useProAnnual = isProPlan && proInterval === "year" && !!planAnnual;
+                const proPriceId = useProAnnual ? planAnnual!.priceId : plan.priceId;
+                const proPriceDisplay = useProAnnual ? `${planAnnual!.priceDisplay} / an` : `${plan.priceDisplay} / mois`;
+                const displayPrice = isProPlan ? proPriceDisplay : `${plan.priceDisplay} / mois`;
+                const priceIdToUse = isProPlan ? proPriceId : plan.priceId;
+                const planIdForCurrent = useProAnnual ? "pro_annual" : plan.id;
+                const proLabel = isProPlan ? (useProAnnual ? "Pro annuel" : "Pro mensuel") : null;
+                const isCurrent = isCurrentPlan(planIdForCurrent);
+                const featuresKey = isProPlan && proInterval === "year" ? "pro_annual" : plan.id;
+                const features = PLAN_FEATURES[featuresKey] || "";
+                const rowKey = plan.id + (isProPlan ? `_${proInterval}` : "");
+                const isFeaturesOpen = featuresOpen === rowKey;
                 return (
                   <div
-                    key={plan.id}
+                    key={plan.id + (isProPlan ? proInterval : "")}
                     className={`rounded-xl border p-4 ${isCurrent ? "border-emerald-500/50 bg-emerald-500/10" : "border-white/10 bg-white/5"}`}
                   >
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div>
-                        <p className="font-medium text-white">{plan.name}</p>
-                        <p className="text-slate-400 text-sm">{plan.priceDisplay} / mois</p>
+                        <p className="font-medium text-white">{proLabel ?? plan.name}</p>
+                        <p className="text-slate-400 text-sm">{displayPrice}</p>
                         {isCurrent && (
                           <span className="inline-block mt-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
                             Votre plan actuel
@@ -272,13 +319,35 @@ export function ManageSubscriptionModal({
                         <button
                           type="button"
                           disabled={!!changePlanLoading}
-                          onClick={() => handleChangePlan(plan.priceId)}
+                          onClick={() => handleChangePlan(priceIdToUse)}
                           className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 disabled:opacity-50 transition-colors"
                         >
-                          {changePlanLoading === plan.priceId ? "En cours…" : "Passer à ce plan"}
+                          {changePlanLoading === priceIdToUse ? "En cours…" : "Passer à ce plan"}
                         </button>
                       )}
                     </div>
+                    {features && (
+                      <div className="mt-3 border-t border-white/10 pt-3">
+                        <button
+                          type="button"
+                          onClick={() => setFeaturesOpen(isFeaturesOpen ? null : rowKey)}
+                          className="flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-medium"
+                        >
+                          {isFeaturesOpen ? "Masquer" : "Avantages"}
+                          <span className={`transition-transform ${isFeaturesOpen ? "rotate-180" : ""}`}>▼</span>
+                        </button>
+                        {isFeaturesOpen && (
+                          <ul className="mt-2 space-y-1.5 text-xs text-slate-400">
+                            {features.split("\n").map((line, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="mt-1 shrink-0 size-1 rounded-full bg-white/50" aria-hidden />
+                                <span>{line}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

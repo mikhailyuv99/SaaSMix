@@ -7,6 +7,7 @@ import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { useState, useEffect } from "react";
 import { ChoosePlanModal } from "./ChoosePlanModal";
+import { ManageSubscriptionModal } from "./ManageSubscriptionModal";
 import { SubscriptionModal } from "./SubscriptionModal";
 
 export function Header() {
@@ -18,6 +19,7 @@ export function Header() {
   const isHome = pathname === "/";
   const isMix = pathname === "/mix";
   const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [manageSubscriptionOpen, setManageSubscriptionOpen] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const [checkoutLabel, setCheckoutLabel] = useState<string | null>(null);
@@ -29,10 +31,16 @@ export function Header() {
   };
 
   useEffect(() => {
-    const open = () => setPlanModalOpen(true);
+    const open = () => {
+      if (user && isPro) {
+        setManageSubscriptionOpen(true);
+      } else {
+        setPlanModalOpen(true);
+      }
+    };
     window.addEventListener("openPlanModal", open);
     return () => window.removeEventListener("openPlanModal", open);
-  }, []);
+  }, [user, isPro]);
 
   const handleAccueilClick = (e: React.MouseEvent) => {
     if (isMix && hasUnsavedChanges) {
@@ -62,10 +70,12 @@ export function Header() {
   };
 
   const handlePlanClick = () => {
-    if (user && isPro && openManageSubscription) {
-      openManageSubscription();
-    } else if (user && isPro && !openManageSubscription) {
-      router.push("/mix?open=manage");
+    if (user && isPro) {
+      if (openManageSubscription) {
+        openManageSubscription();
+      } else {
+        setManageSubscriptionOpen(true);
+      }
     } else {
       setPlanModalOpen(true);
     }
@@ -190,6 +200,23 @@ export function Header() {
         </div>
       )}
 
+      {user && (
+        <ManageSubscriptionModal
+          isOpen={manageSubscriptionOpen}
+          onClose={() => setManageSubscriptionOpen(false)}
+          getAuthHeaders={getAuthHeaders}
+          onSubscriptionUpdated={async () => {
+            try {
+              const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+              const res = await fetch(`${API_BASE}/api/billing/me`, { headers: getAuthHeaders() });
+              const data = await res.json().catch(() => ({}));
+              if (data.isPro !== undefined) setIsPro(!!data.isPro);
+            } catch {
+              setIsPro(true);
+            }
+          }}
+        />
+      )}
       <ChoosePlanModal
         isOpen={planModalOpen}
         onClose={() => setPlanModalOpen(false)}
