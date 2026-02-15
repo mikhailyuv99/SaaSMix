@@ -79,20 +79,26 @@
   50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.06); }
 }
 
-@keyframes hero-tagline-punch {
+@keyframes hero-zoom-in-out {
   0%, 100% { transform: scale(1); }
-  15% { transform: scale(1.04); }
-  30% { transform: scale(1); }
-  45% { transform: scale(1.03); }
-  60% { transform: scale(1); }
+  20% { transform: scale(1.08); }
+  40% { transform: scale(1); }
+  100% { transform: scale(1); }
 }
 
 .animate-hero-tagline {
   animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
 }
 
-.animate-hero-tagline-punch {
-  animation: hero-tagline-punch 2s ease-in-out 0.9s infinite;
+/* Une ligne par ordre : zoom in/out, cycle ~2.7s */
+.animate-hero-line-1 {
+  animation: hero-zoom-in-out 2.7s ease-in-out 0.9s infinite;
+}
+.animate-hero-line-2 {
+  animation: hero-zoom-in-out 2.7s ease-in-out 1.8s infinite;
+}
+.animate-hero-line-3 {
+  animation: hero-zoom-in-out 2.7s ease-in-out 2.7s infinite;
 }
 
 @keyframes bg-fade-in {

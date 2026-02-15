@@ -2989,11 +2989,10 @@ export default function Home() {
       <div className="mx-auto max-w-6xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
           <nav className="max-lg:hidden flex flex-col items-center justify-center gap-2 mb-4 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-md:gap-1.5 max-md:mb-3 max-md:text-xs">
-            {user && (
-              <div className="flex flex-nowrap justify-center items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setShowProjectsModal(true); fetchProjectsList(); }}
+            <div className="flex flex-nowrap justify-center items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => { if (!user) { openAuthModal?.("login"); return; } setShowProjectsModal(true); fetchProjectsList(); }}
                     className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     MES PROJETS
@@ -3001,8 +3000,8 @@ export default function Home() {
                   <span className="text-slate-400 shrink-0">|</span>
                   <button
                     type="button"
-                    disabled={isSavingProject}
-                    onClick={createNewProject}
+                    disabled={user ? isSavingProject : false}
+                    onClick={() => { if (!user) { openAuthModal?.("login"); return; } createNewProject(); }}
                   className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   title="Créer un nouveau projet et l’enregistrer dans Mes projets"
                 >
@@ -3012,20 +3011,19 @@ export default function Home() {
                 <div className="relative flex flex-col items-center">
                   <button
                     type="button"
-                    disabled={isSavingProject}
-                    onClick={saveProject}
+                    disabled={user ? isSavingProject : false}
+                    onClick={() => { if (!user) { openAuthModal?.("login"); return; } saveProject(); }}
                     className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
-                    {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
+                    {user && isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                   </button>
-                  {currentProject && (
+                  {user && currentProject && (
                     <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1 text-slate-400 text-xs whitespace-nowrap" title={currentProject.name}>
                       {currentProject.name}
                     </span>
                   )}
                 </div>
-              </div>
-            )}
+            </div>
           </nav>
 
           {/* Menu burger mobile / tablette uniquement */}
@@ -3049,38 +3047,36 @@ export default function Home() {
                   onClick={() => setNavMenuOpen(false)}
                 />
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 min-w-[200px] py-2 rounded-lg bg-[#0f0f0f] border border-white/10 shadow-xl text-tagline text-slate-400 tracking-[0.2em] uppercase text-xs sm:text-sm max-md:text-[10px] text-center">
-                  {user && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => { setNavMenuOpen(false); setShowProjectsModal(true); fetchProjectsList(); }}
-                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors"
-                      >
-                        MES PROJETS
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isSavingProject}
-                        onClick={() => { setNavMenuOpen(false); createNewProject(); }}
-                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                      >
-                        CRÉER UN PROJET
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isSavingProject}
-                        onClick={() => { setNavMenuOpen(false); saveProject(); }}
-                        className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                      >
-                        {isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
-                      </button>
-                      {currentProject && (
-                        <p className="px-4 py-1.5 text-xs text-slate-400 truncate max-w-[220px] mx-auto" title={currentProject.name}>
-                          {currentProject.name}
-                        </p>
-                      )}
-                    </>
-                  )}
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => { if (!user) { openAuthModal?.("login"); setNavMenuOpen(false); return; } setNavMenuOpen(false); setShowProjectsModal(true); fetchProjectsList(); }}
+                      className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors"
+                    >
+                      MES PROJETS
+                    </button>
+                    <button
+                      type="button"
+                      disabled={user ? isSavingProject : false}
+                      onClick={() => { if (!user) { openAuthModal?.("login"); setNavMenuOpen(false); return; } setNavMenuOpen(false); createNewProject(); }}
+                      className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      CRÉER UN PROJET
+                    </button>
+                    <button
+                      type="button"
+                      disabled={user ? isSavingProject : false}
+                      onClick={() => { if (!user) { openAuthModal?.("login"); setNavMenuOpen(false); return; } setNavMenuOpen(false); saveProject(); }}
+                      className="block w-full text-center px-4 py-2.5 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                      {user && isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
+                    </button>
+                    {user && currentProject && (
+                      <p className="px-4 py-1.5 text-xs text-slate-400 truncate max-w-[220px] mx-auto" title={currentProject.name}>
+                        {currentProject.name}
+                      </p>
+                    )}
+                  </>
                 </div>
               </>
             )}
