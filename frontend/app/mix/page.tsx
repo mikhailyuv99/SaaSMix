@@ -426,6 +426,7 @@ export default function Home() {
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const [checkoutLabel, setCheckoutLabel] = useState<string | null>(null);
   const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
+  const [openManageWithChangePlanView, setOpenManageWithChangePlanView] = useState(false);
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const isCreatingInProgressRef = useRef(false);
@@ -1484,7 +1485,7 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       if (res.status === 402) {
         const msg = (data.detail as string) || "Vous avez atteint votre limite de projets sauvegardés. Passez au plan supérieur pour en sauvegarder plus.";
-        setAppModal({ type: "alert", message: msg, onClose: () => setSubscriptionModalOpen(true) });
+        setAppModal({ type: "alert", message: msg, onClose: () => { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } });
         return;
       }
       if (!res.ok) throw new Error(data.detail || "Erreur création");
@@ -1562,7 +1563,7 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       if (res.status === 402) {
         const msg = (data.detail as string) || "Vous avez atteint votre limite de projets sauvegardés. Passez au plan supérieur pour en sauvegarder plus.";
-        setAppModal({ type: "alert", message: msg, onClose: () => setSubscriptionModalOpen(true) });
+        setAppModal({ type: "alert", message: msg, onClose: () => { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } });
         return;
       }
       const errMsg = typeof data.detail === "string" ? data.detail : "Erreur sauvegarde";
@@ -2726,7 +2727,7 @@ export default function Home() {
       }
       if (res.status === 402) {
         const msg = (data.detail as string) || "Vous avez atteint votre limite de téléchargements ou votre plan ne le permet pas. Passez au plan supérieur pour en obtenir plus.";
-        setAppModal({ type: "alert", message: msg, onClose: () => setSubscriptionModalOpen(true) });
+        setAppModal({ type: "alert", message: msg, onClose: () => { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } });
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
@@ -2772,7 +2773,7 @@ export default function Home() {
       }
       if (res.status === 402) {
         const msg = (data.detail as string) || "Vous avez atteint votre limite de téléchargements ou votre plan ne le permet pas. Passez au plan supérieur pour en obtenir plus.";
-        setAppModal({ type: "alert", message: msg, onClose: () => setSubscriptionModalOpen(true) });
+        setAppModal({ type: "alert", message: msg, onClose: () => { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } });
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
@@ -4277,7 +4278,7 @@ export default function Home() {
       />
       <ManageSubscriptionModal
         isOpen={manageSubscriptionModalOpen}
-        onClose={() => setManageSubscriptionModalOpen(false)}
+        onClose={() => { setManageSubscriptionModalOpen(false); setOpenManageWithChangePlanView(false); }}
         getAuthHeaders={getAuthHeaders}
         onSubscriptionUpdated={() => { fetchBilling(); }}
         onRequestCheckout={(priceId, planName) => {
@@ -4286,6 +4287,7 @@ export default function Home() {
           setCheckoutLabel(planName);
           setSubscriptionModalOpen(true);
         }}
+        openWithChangePlanView={openManageWithChangePlanView}
       />
       </main>
   );

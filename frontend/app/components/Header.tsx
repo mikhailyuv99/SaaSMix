@@ -6,7 +6,6 @@ import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { useState, useEffect } from "react";
-import { ChoosePlanModal } from "./ChoosePlanModal";
 import { ManageSubscriptionModal } from "./ManageSubscriptionModal";
 import { SubscriptionModal } from "./SubscriptionModal";
 
@@ -18,7 +17,6 @@ export function Header() {
   const { isPro, openManageSubscription, setIsPro } = useSubscription();
   const isHome = pathname === "/";
   const isMix = pathname === "/mix";
-  const [planModalOpen, setPlanModalOpen] = useState(false);
   const [manageSubscriptionOpen, setManageSubscriptionOpen] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
@@ -35,7 +33,7 @@ export function Header() {
       if (user && isPro) {
         setManageSubscriptionOpen(true);
       } else {
-        setPlanModalOpen(true);
+        setSubscriptionModalOpen(true);
       }
     };
     window.addEventListener("openPlanModal", open);
@@ -77,7 +75,7 @@ export function Header() {
         setManageSubscriptionOpen(true);
       }
     } else {
-      setPlanModalOpen(true);
+      setSubscriptionModalOpen(true);
     }
   };
 
@@ -223,16 +221,6 @@ export function Header() {
           }}
         />
       )}
-      <ChoosePlanModal
-        isOpen={planModalOpen}
-        onClose={() => setPlanModalOpen(false)}
-        onSelectPlan={(priceId, planName) => {
-          setPlanModalOpen(false);
-          setCheckoutPriceId(priceId);
-          setCheckoutLabel(planName);
-          setSubscriptionModalOpen(true);
-        }}
-      />
       <SubscriptionModal
         isOpen={subscriptionModalOpen}
         onClose={() => {

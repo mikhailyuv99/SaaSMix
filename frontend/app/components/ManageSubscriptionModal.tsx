@@ -128,12 +128,14 @@ export function ManageSubscriptionModal({
   getAuthHeaders,
   onSubscriptionUpdated,
   onRequestCheckout,
+  openWithChangePlanView,
 }: {
   isOpen: boolean;
   onClose: () => void;
   getAuthHeaders: () => Record<string, string>;
   onSubscriptionUpdated: () => void;
   onRequestCheckout?: (priceId: string, planName: string) => void;
+  openWithChangePlanView?: boolean;
 }) {
   type Sub = {
     current_period_end: number | null;
@@ -170,6 +172,7 @@ export function ManageSubscriptionModal({
     setChangePlanError(null);
     setProInterval("year");
     setFeaturesOpen(null);
+    if (openWithChangePlanView) setChangePlanView(true);
     const headers = getAuthHeaders();
     Promise.all([
       fetch(`${API_BASE}/api/billing/subscription`, { headers }).then((r) => r.json()),
@@ -190,7 +193,7 @@ export function ManageSubscriptionModal({
       })
       .catch(() => setSubscription(null))
       .finally(() => setLoading(false));
-  }, [isOpen, getAuthHeaders]);
+  }, [isOpen, getAuthHeaders, openWithChangePlanView]);
 
   const handleCancelClick = () => setShowCancelConfirm(true);
 
@@ -415,6 +418,25 @@ export function ManageSubscriptionModal({
           </>
         ) : subscription ? (
           <div className="space-y-4">
+            {usage && (usage.mix_limit != null || usage.master_limit != null || usage.projects_limit != null) && (
+              <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">Votre utilisation</p>
+                <div className="space-y-1.5 text-[13px] text-slate-400">
+                  <div className="flex justify-between">
+                    <span>Téléchargements mix ce mois</span>
+                    <span className="text-white/90">{usage.mix_used}{usage.mix_limit != null ? ` / ${usage.mix_limit}` : " (illimité)"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Téléchargements master ce mois</span>
+                    <span className="text-white/90">{usage.master_used}{usage.master_limit != null ? ` / ${usage.master_limit}` : " (illimité)"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Projets sauvegardés</span>
+                    <span className="text-white/90">{usage.projects_used}{usage.projects_limit != null ? ` / ${usage.projects_limit}` : " (illimité)"}</span>
+                  </div>
+                </div>
+              </div>
+            )}
             <p className="text-slate-400 text-sm">
               Plan : <strong>{currentPlanLabel}{planSuffix}</strong>
             </p>
