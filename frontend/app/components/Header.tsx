@@ -113,16 +113,17 @@ export function Header() {
               </svg>
               <span>MIX</span>
             </Link>
-            <span
-              className="font-heading lg:hidden flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 cursor-default"
-              aria-hidden
+            <Link
+              href="/"
+              onClick={handleAccueilClick}
+              className="font-heading lg:hidden flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90"
             >
               <span>SIBERIA</span>
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M12 2 L22 12 L12 22 L2 12 Z" />
               </svg>
               <span>MIX</span>
-            </span>
+            </Link>
           </>
 
           {/* Desktop: nav + auth */}
