@@ -475,18 +475,6 @@ export default function Home() {
     return () => window.removeEventListener("beforeunload", handler);
   }, []);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault();
-        const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
-        if (token) saveProject();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [saveProject]);
-
   const masterMixBufferRef = useRef<AudioBuffer | null>(null);
   const masterMasterBufferRef = useRef<AudioBuffer | null>(null);
   const masterPlaybackRef = useRef<{
@@ -1578,6 +1566,18 @@ export default function Home() {
       });
     }
   }, [currentProject, doSaveProject]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+        if (token) saveProject();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [saveProject]);
 
   const fetchProjectsList = useCallback(async () => {
     const res = await fetch(`${API_BASE}/api/projects`, { headers: getAuthHeaders() });
