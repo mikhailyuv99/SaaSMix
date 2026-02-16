@@ -4191,7 +4191,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       if (!user) { openAuthModal?.("login"); return; }
-                      if (!isPro) { setSubscriptionModalOpen(true); return; }
+                      if (!isPro) { window.dispatchEvent(new CustomEvent("openPlanModal")); return; }
                       downloadMix();
                     }}
                     disabled={isRenderingMix}
@@ -4215,7 +4215,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       if (!user) { openAuthModal?.("login"); return; }
-                      if (!isPro) { setSubscriptionModalOpen(true); return; }
+                      if (!isPro) { window.dispatchEvent(new CustomEvent("openPlanModal")); return; }
                       runMaster();
                     }}
                     disabled={isMastering}
