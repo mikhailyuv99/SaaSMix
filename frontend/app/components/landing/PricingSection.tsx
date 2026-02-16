@@ -102,7 +102,7 @@ export function PricingSection() {
             return (
               <div
                 key={plan.name + (invisible ? "-ghost" : "")}
-                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-sm:p-1.5 max-sm:min-h-0 min-w-0 overflow-hidden ${
+                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px] max-sm:p-1.5 max-sm:min-h-[300px] min-w-0 overflow-hidden ${
                   invisible ? "invisible" : ""
                 } ${
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"

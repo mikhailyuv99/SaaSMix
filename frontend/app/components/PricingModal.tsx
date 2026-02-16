@@ -113,7 +113,7 @@ export function PricingModal({
               return (
                 <div
                   key={plan.name + (invisible ? "-ghost" : "")}
-                  className={`rounded-2xl border p-5 sm:p-6 flex flex-col min-h-[320px] max-lg:min-h-[300px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-sm:p-1.5 max-sm:min-h-0 min-w-0 overflow-hidden ${
+                  className={`rounded-2xl border p-5 sm:p-6 flex flex-col min-h-[320px] max-lg:min-h-[300px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px] max-sm:p-1.5 max-sm:min-h-[300px] min-w-0 overflow-hidden ${
                     invisible ? "invisible" : ""
                   } ${
                     plan.featured
@@ -130,7 +130,7 @@ export function PricingModal({
                     )}
                   </div>
                   <p className="mt-1.5 text-sm text-slate-400 max-md:text-xs max-sm:text-[10px] break-words">{plan.subtitle}</p>
-                  <p className="font-heading text-xl font-bold text-white max-md:text-base max-sm:text-sm mt-3 shrink-0">{plan.price}</p>
+                  <p className={`font-heading text-xl font-bold text-white max-md:text-base max-sm:text-sm mt-3 shrink-0 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
                   <ul className="mt-2 space-y-1.5 text-sm text-slate-400 flex-1 min-h-0 min-w-0 max-md:text-xs max-md:space-y-0.5 max-sm:text-[10px] max-sm:space-y-0.5 overflow-hidden">
                     {plan.features.split("\n").map((line, j) => (
                       <li key={j} className="flex items-start gap-2 max-md:gap-1 max-sm:gap-0.5 min-w-0 break-words">
