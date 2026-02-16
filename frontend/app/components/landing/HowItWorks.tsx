@@ -107,13 +107,14 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border howitworks-line-container">
-          {/* Ligne verticale : fond + progression blanche lumineuse (glow modéré pour éviter blocs blancs Safari) */}
+        <div className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
+          {/* Ligne verticale : fond + progression blanche lumineuse */}
           <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-white/20" />
           <div
-            className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-white transition-all duration-500 ease-out howitworks-line-glow"
+            className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-white transition-all duration-500 ease-out"
             style={{
               height: `${lineProgress * 100}%`,
+              boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
             }}
           />
 
@@ -129,7 +130,7 @@ export function HowItWorks() {
                 {/* Partie gauche */}
                 <div className={`flex-1 max-lg:w-full ${isLeft ? "pr-4 sm:pr-6 max-lg:pr-0" : "sm:pr-6 max-lg:pr-0"}`}>
                   {isLeft && (
-                    <ObserveElement className="rounded-2xl border border-white/10 bg-howitworks-card p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
+                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
                       <div className="flex items-start gap-4 max-md:gap-3">
                         <StepIcon icon={step.icon} />
                         <div className="min-w-0 flex-1">
@@ -174,7 +175,7 @@ export function HowItWorks() {
                 {/* Partie droite */}
                 <div className={`flex-1 max-lg:w-full ${!isLeft ? "pl-4 sm:pl-6 max-lg:pl-0" : "sm:pl-6 max-lg:pl-0"}`}>
                   {!isLeft && (
-                    <ObserveElement className="rounded-2xl border border-white/10 bg-howitworks-card p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
+                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
                       <div className="flex items-start gap-4 max-md:gap-3">
                         <StepIcon icon={step.icon} />
                         <div className="min-w-0 flex-1">

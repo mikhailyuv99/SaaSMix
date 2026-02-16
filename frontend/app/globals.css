@@ -79,21 +79,6 @@ body::-webkit-scrollbar-thumb:hover {
   background-image: linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03));
 }
 
-/* Safari iOS: same dark-base pattern for HowItWorks step cards and line container to avoid white blocks. */
-.bg-howitworks-card {
-  background-color: #0a0a0a;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04));
-}
-.howitworks-line-container {
-  isolation: isolate;
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-.howitworks-line-glow {
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.2);
-}
-
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
   from {
