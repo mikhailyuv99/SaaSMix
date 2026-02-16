@@ -63,9 +63,15 @@ export function HeroSection() {
       const ignoredCount = files.length - wavFiles.length;
       const query = ignoredCount > 0 ? `?from=hero&ignored=${ignoredCount}` : "?from=hero";
       setHeroPendingFiles(wavFiles);
+      try {
+        await saveHeroUploadFiles(wavFiles);
+      } catch {
+        // IDB peut échouer (privé, quota); on garde la mémoire pour la nav client-side.
+      }
+      await new Promise((r) => setTimeout(r, 150));
       router.push(`/mix${query}`);
     },
-    []
+    [router]
   );
 
   const onDrop = useCallback(
