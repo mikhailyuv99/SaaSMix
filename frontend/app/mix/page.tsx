@@ -18,6 +18,7 @@ import {
 import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
+import { getHeroPendingFiles } from "../lib/heroPendingFiles";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -531,8 +532,7 @@ export default function Home() {
   const bpmInputFocusedRef = useRef(false);
   bpmInputFocusedRef.current = bpmInputFocused;
 
-  // Hero upload: load files from IndexedDB after redirect. Mobile: longer initial delay (500ms) and
-  // two retries (350ms, 450ms) so IDB has time to commit on slower devices (e.g. Safari/iOS).
+  // Hero upload: prefer in-memory files (client-side nav), fallback to IndexedDB (full reload / old flow).
   const [heroLoadFailed, setHeroLoadFailed] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -540,36 +540,48 @@ export default function Home() {
     if (params.get("from") !== "hero") return;
     const ignoredParam = params.get("ignored");
     const ignoredCount = ignoredParam ? Number.parseInt(ignoredParam, 10) : 0;
+
+    const applyHeroFiles = (first: File, next: { blob: Blob; fileName: string }[]) => {
+      window.history.replaceState(null, "", window.location.pathname);
+      if (!first.name.toLowerCase().endsWith(".wav")) {
+        setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+        return;
+      }
+      setCategoryModal({ file: first, fromHero: true, nextHeroFiles: next });
+      if (ignoredCount > 0) {
+        setAppModal({
+          type: "alert",
+          message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.",
+          onClose: () => {},
+        });
+      }
+    };
+
+    const memoryFiles = getHeroPendingFiles();
+    if (memoryFiles.length > 0) {
+      const first = memoryFiles[0];
+      const next = memoryFiles.slice(1).map((f) => ({ blob: f, fileName: f.name }));
+      applyHeroFiles(first, next);
+      return;
+    }
+
     let cancelled = false;
     const retryDelays = [350, 450];
     const tryLoad = (retryIndex: number) => {
       getHeroUploadFiles().then(({ files, count }) => {
         if (cancelled) return;
-        window.history.replaceState(null, "", window.location.pathname);
         if (files.length > 0) {
           if (count > 0) clearHeroUploadFromIDB(count);
-          const first = files[0];
-          if (!first.fileName.toLowerCase().endsWith(".wav")) {
-            setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
-            return;
-          }
-          const file = new File([first.blob], first.fileName, { type: first.blob.type || "audio/wav" });
+          const first = new File([files[0].blob], files[0].fileName, { type: files[0].blob.type || "audio/wav" });
           const next = files.slice(1);
-          setCategoryModal({ file, fromHero: true, nextHeroFiles: next });
-          if (ignoredCount > 0) {
-            setAppModal({
-              type: "alert",
-              message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.",
-              onClose: () => {},
-            });
-          }
+          applyHeroFiles(first, next);
           return;
         }
         if (retryIndex < retryDelays.length) {
-          const delay = retryDelays[retryIndex];
-          setTimeout(() => tryLoad(retryIndex + 1), delay);
+          setTimeout(() => tryLoad(retryIndex + 1), retryDelays[retryIndex]);
         } else {
           setHeroLoadFailed(true);
+          window.history.replaceState(null, "", window.location.pathname);
         }
       }).catch(() => {
         if (cancelled) return;
