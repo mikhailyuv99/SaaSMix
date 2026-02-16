@@ -31,21 +31,6 @@ export function Header() {
     return t ? { Authorization: `Bearer ${t}` } : {};
   };
 
-  useEffect(() => {
-    const open = (e: Event) => {
-      const detail = (e as CustomEvent<{ priceId: string; planName: string } | undefined>)?.detail;
-      if (user && isPro) {
-        setManageSubscriptionOpen(true);
-      } else if (detail?.priceId && detail?.planName) {
-        handlePricingSelectPlan(detail.priceId, detail.planName);
-      } else {
-        setPricingModalOpen(true);
-      }
-    };
-    window.addEventListener("openPlanModal", open);
-    return () => window.removeEventListener("openPlanModal", open);
-  }, [user, isPro, handlePricingSelectPlan]);
-
   // Après connexion/inscription, ouvrir le paiement pour le plan choisi si pending
   useEffect(() => {
     if (user && pendingPlanAfterLogin) {
@@ -110,6 +95,21 @@ export function Header() {
       openAuthModal?.("login");
     }
   }, [user, openAuthModal]);
+
+  useEffect(() => {
+    const open = (e: Event) => {
+      const detail = (e as CustomEvent<{ priceId: string; planName: string } | undefined>)?.detail;
+      if (user && isPro) {
+        setManageSubscriptionOpen(true);
+      } else if (detail?.priceId && detail?.planName) {
+        handlePricingSelectPlan(detail.priceId, detail.planName);
+      } else {
+        setPricingModalOpen(true);
+      }
+    };
+    window.addEventListener("openPlanModal", open);
+    return () => window.removeEventListener("openPlanModal", open);
+  }, [user, isPro, handlePricingSelectPlan]);
 
   const handleLogoutClick = () => {
     if (hasUnsavedChanges) {
