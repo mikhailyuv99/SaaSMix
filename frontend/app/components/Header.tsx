@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ManageSubscriptionModal } from "./ManageSubscriptionModal";
 import { PricingModal } from "./PricingModal";
 import { SubscriptionModal } from "./SubscriptionModal";
@@ -32,16 +32,19 @@ export function Header() {
   };
 
   useEffect(() => {
-    const open = () => {
+    const open = (e: Event) => {
+      const detail = (e as CustomEvent<{ priceId: string; planName: string } | undefined>)?.detail;
       if (user && isPro) {
         setManageSubscriptionOpen(true);
+      } else if (detail?.priceId && detail?.planName) {
+        handlePricingSelectPlan(detail.priceId, detail.planName);
       } else {
         setPricingModalOpen(true);
       }
     };
     window.addEventListener("openPlanModal", open);
     return () => window.removeEventListener("openPlanModal", open);
-  }, [user, isPro]);
+  }, [user, isPro, handlePricingSelectPlan]);
 
   // Après connexion/inscription, ouvrir le paiement pour le plan choisi si pending
   useEffect(() => {
@@ -95,7 +98,7 @@ export function Header() {
     }
   };
 
-  const handlePricingSelectPlan = (priceId: string, planName: string) => {
+  const handlePricingSelectPlan = useCallback((priceId: string, planName: string) => {
     if (user) {
       setPricingModalOpen(false);
       setCheckoutPriceId(priceId);
@@ -106,7 +109,7 @@ export function Header() {
       setPricingModalOpen(false);
       openAuthModal?.("login");
     }
-  };
+  }, [user, openAuthModal]);
 
   const handleLogoutClick = () => {
     if (hasUnsavedChanges) {
