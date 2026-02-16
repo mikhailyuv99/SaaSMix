@@ -88,8 +88,8 @@ export function PricingSection() {
           </div>
         </div>
 
-        <div className="w-full max-w-5xl mx-auto mt-5 box-border">
-          <div className="mt-5 grid gap-6 sm:grid-cols-3 max-lg:gap-3 max-lg:grid-cols-3 max-md:mt-4 max-md:gap-2 items-stretch">
+        <div className="w-full max-w-5xl mx-auto mt-5 box-border overflow-x-hidden">
+          <div className="mt-5 grid gap-6 sm:grid-cols-3 max-lg:gap-3 max-lg:grid-cols-3 max-md:mt-4 max-md:gap-2 max-sm:grid-cols-1 max-sm:gap-3 items-stretch">
           {(billingPeriod === "mensuel"
             ? plansMensuel.map((plan, i) => ({ plan, invisible: false, index: i }))
             : [
@@ -102,8 +102,8 @@ export function PricingSection() {
             return (
               <div
                 key={plan.name + (invisible ? "-ghost" : "")}
-                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-[300px] ${
-                  invisible ? "invisible" : ""
+                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-md:min-h-0 max-sm:min-h-0 max-sm:p-3 min-w-0 overflow-hidden ${
+                  invisible ? "invisible max-sm:hidden" : ""
                 } ${
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"
                 } ${
@@ -112,21 +112,21 @@ export function PricingSection() {
                     : "landing-card border-white/10"
                 }`}
               >
-                <div className="flex items-center justify-between gap-2 min-h-[2rem]">
-                  <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs">{plan.name}</h3>
+                <div className="flex items-center justify-between gap-2 min-h-[2rem] min-w-0 shrink-0">
+                  <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs truncate">{plan.name}</h3>
                   {badgeLabel && (
                     <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-lg:text-[9px] max-lg:px-1.5 max-md:text-[8px] max-md:px-1">
                       {badgeLabel}
                     </span>
                   )}
                 </div>
-                <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px]">{plan.subtitle}</p>
-                <p className={`min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base mt-4 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
-                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5">
+                <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px] break-words">{plan.subtitle}</p>
+                <p className={`min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base mt-4 shrink-0 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 min-h-0 min-w-0 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5 overflow-hidden">
                   {plan.features.split("\n").map((line, j) => (
-                    <li key={j} className="flex items-start gap-2.5 max-lg:gap-1.5">
+                    <li key={j} className="flex items-start gap-2.5 max-lg:gap-1.5 min-w-0 break-words">
                       <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50 max-lg:size-1" aria-hidden />
-                      <span>{line}</span>
+                      <span className="min-w-0">{line}</span>
                     </li>
                   ))}
                 </ul>

@@ -63,7 +63,7 @@ export function PricingModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 max-lg:p-3 overflow-y-auto" onClick={onClose}>
       <div
-        className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-5xl max-h-[90vh] overflow-y-auto my-auto relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl"
+        className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-5xl max-h-[90vh] overflow-y-auto my-auto relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl max-sm:max-h-[85vh] max-sm:rounded-lg max-sm:m-2"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -75,7 +75,7 @@ export function PricingModal({
           &times;
         </button>
 
-        <div className="p-6 sm:p-8 max-lg:p-4">
+        <div className="p-6 sm:p-8 max-lg:p-4 max-sm:px-3 max-sm:py-4">
           <div className="text-center mb-6 max-lg:mb-4">
             <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 max-md:text-xs">Tarification</p>
             <h2 className="mt-2 font-heading text-2xl font-bold text-white sm:text-3xl max-lg:text-xl">Choisir une formule</h2>
@@ -106,36 +106,36 @@ export function PricingModal({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3 max-lg:gap-3 max-md:gap-2 items-stretch">
+          <div className="grid gap-4 sm:grid-cols-3 max-lg:gap-3 max-md:gap-2 max-sm:grid-cols-1 max-sm:gap-3 items-stretch">
             {plansForPeriod.map(({ plan, invisible, index: i }) => {
               const priceId = nameToPriceId[plan.name];
               const badgeLabel = plan.name === "Pro annuel" ? "−25%" : plan.featured ? "Populaire" : null;
               return (
                 <div
                   key={plan.name + (invisible ? "-ghost" : "")}
-                  className={`rounded-2xl border p-5 sm:p-6 flex flex-col min-h-[320px] max-lg:min-h-[300px] max-lg:p-3 max-lg:rounded-xl max-md:min-h-[280px] max-md:p-2 ${
-                    invisible ? "invisible" : ""
+                  className={`rounded-2xl border p-5 sm:p-6 flex flex-col min-h-[320px] max-lg:min-h-[300px] max-lg:p-3 max-lg:rounded-xl max-md:min-h-0 max-md:p-2 max-sm:min-h-0 max-sm:p-3 min-w-0 overflow-hidden ${
+                    invisible ? "invisible max-sm:hidden" : ""
                   } ${
                     plan.featured
                       ? "border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 hover:border-white/30"
                       : "border-white/10 bg-white/[0.02] hover:border-white/15"
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2 min-h-[2rem]">
-                    <h3 className="font-heading text-lg font-semibold text-white max-md:text-sm">{plan.name}</h3>
+                  <div className="flex items-center justify-between gap-2 min-h-[2rem] min-w-0 shrink-0">
+                    <h3 className="font-heading text-lg font-semibold text-white max-md:text-sm max-sm:text-sm truncate">{plan.name}</h3>
                     {badgeLabel && (
                       <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 max-md:text-[9px] max-md:px-1.5">
                         {badgeLabel}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1.5 text-sm text-slate-400 max-md:text-xs">{plan.subtitle}</p>
-                  <p className="font-heading text-xl font-bold text-white max-md:text-base mt-3">{plan.price}</p>
-                  <ul className="mt-2 space-y-1.5 text-sm text-slate-400 flex-1 max-md:text-xs max-md:space-y-0.5">
+                  <p className="mt-1.5 text-sm text-slate-400 max-md:text-xs break-words">{plan.subtitle}</p>
+                  <p className="font-heading text-xl font-bold text-white max-md:text-base mt-3 shrink-0">{plan.price}</p>
+                  <ul className="mt-2 space-y-1.5 text-sm text-slate-400 flex-1 min-h-0 min-w-0 max-md:text-xs max-md:space-y-0.5 overflow-hidden">
                     {plan.features.split("\n").map((line, j) => (
-                      <li key={j} className="flex items-start gap-2 max-md:gap-1">
+                      <li key={j} className="flex items-start gap-2 max-md:gap-1 min-w-0 break-words">
                         <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50 max-md:size-1" aria-hidden />
-                        <span>{line}</span>
+                        <span className="min-w-0">{line}</span>
                       </li>
                     ))}
                   </ul>
