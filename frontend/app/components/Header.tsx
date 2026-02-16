@@ -7,6 +7,7 @@ import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { useState, useEffect } from "react";
 import { ManageSubscriptionModal } from "./ManageSubscriptionModal";
+import { PricingModal } from "./PricingModal";
 import { SubscriptionModal } from "./SubscriptionModal";
 
 export function Header() {
@@ -18,9 +19,11 @@ export function Header() {
   const isHome = pathname === "/";
   const isMix = pathname === "/mix";
   const [manageSubscriptionOpen, setManageSubscriptionOpen] = useState(false);
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const [checkoutLabel, setCheckoutLabel] = useState<string | null>(null);
+  const [pendingPlanAfterLogin, setPendingPlanAfterLogin] = useState<{ priceId: string; label: string } | null>(null);
 
   const getAuthHeaders = (): Record<string, string> => {
     if (typeof window === "undefined") return {};
@@ -33,12 +36,22 @@ export function Header() {
       if (user && isPro) {
         setManageSubscriptionOpen(true);
       } else {
-        setSubscriptionModalOpen(true);
+        setPricingModalOpen(true);
       }
     };
     window.addEventListener("openPlanModal", open);
     return () => window.removeEventListener("openPlanModal", open);
   }, [user, isPro]);
+
+  // Après connexion/inscription, ouvrir le paiement pour le plan choisi si pending
+  useEffect(() => {
+    if (user && pendingPlanAfterLogin) {
+      setCheckoutPriceId(pendingPlanAfterLogin.priceId);
+      setCheckoutLabel(pendingPlanAfterLogin.label);
+      setSubscriptionModalOpen(true);
+      setPendingPlanAfterLogin(null);
+    }
+  }, [user, pendingPlanAfterLogin]);
 
   const handleAccueilClick = (e: React.MouseEvent) => {
     if (isMix && hasUnsavedChanges) {
@@ -78,7 +91,20 @@ export function Header() {
         setManageSubscriptionOpen(true);
       }
     } else {
+      setPricingModalOpen(true);
+    }
+  };
+
+  const handlePricingSelectPlan = (priceId: string, planName: string) => {
+    if (user) {
+      setPricingModalOpen(false);
+      setCheckoutPriceId(priceId);
+      setCheckoutLabel(planName);
       setSubscriptionModalOpen(true);
+    } else {
+      setPendingPlanAfterLogin({ priceId, label: planName });
+      setPricingModalOpen(false);
+      openAuthModal?.("login");
     }
   };
 
@@ -279,6 +305,11 @@ export function Header() {
           }}
         />
       )}
+      <PricingModal
+        isOpen={pricingModalOpen}
+        onClose={() => setPricingModalOpen(false)}
+        onSelectPlan={handlePricingSelectPlan}
+      />
       <SubscriptionModal
         isOpen={subscriptionModalOpen}
         onClose={() => {
