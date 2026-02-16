@@ -68,17 +68,6 @@ body::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.35);
 }
 
-/* Safari iOS: avoid white blocks when backdrop-filter misbehaves on mix page.
-   Use a dark base + subtle overlay so compositing failure still shows dark. */
-.bg-mix-panel {
-  background-color: #0c0c0c;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04));
-}
-.bg-mix-card {
-  background-color: #0a0a0a;
-  background-image: linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03));
-}
-
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
   from {

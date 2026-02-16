@@ -3353,7 +3353,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-mix-panel shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
+        <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
           {currentProject && (
             <p className="text-center text-slate-400 text-sm font-heading tracking-wide mb-4 max-lg:mb-3 max-md:mb-2 truncate px-2" title={currentProject.name}>
@@ -3409,7 +3409,7 @@ export default function Home() {
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
-                className={`font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-mix-panel px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
+                className={`font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
                   mixDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
                 }`}
               >
@@ -3428,7 +3428,7 @@ export default function Home() {
             </>
           )}
           {tracks.map((track) => (
-            <div key={track.id} className="rounded-xl border border-white/10 bg-mix-card backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
+            <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
               <button
                 type="button"
                 onClick={() => removeTrack(track.id)}
@@ -4084,7 +4084,7 @@ export default function Home() {
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(false); }}
                 className={`group w-full max-w-2xl mx-auto rounded-xl border backdrop-blur-sm py-5 max-lg:py-4 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus:outline-none focus:ring-0 ${
-                  addTrackDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "border-white/10 bg-mix-card hover:border-white/15 hover:bg-white/[0.06]"
+                  addTrackDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "border-white/10 bg-white/[0.04] hover:border-white/15 hover:bg-white/[0.06]"
                 }`}
                 aria-label="Glisser-déposer ou choisir des pistes"
               >
@@ -4227,7 +4227,7 @@ export default function Home() {
 
         {masterResult && (
           <section ref={masterResultSectionRef} className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
-            <div className="rounded-2xl border border-white/10 bg-mix-panel backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
               <h2 className="text-tagline text-slate-400 mb-4">Résultat du master</h2>
               <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
                 {!isMasterResultPlaying ? (
