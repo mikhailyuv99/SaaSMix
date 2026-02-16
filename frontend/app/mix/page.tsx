@@ -531,40 +531,54 @@ export default function Home() {
   const bpmInputFocusedRef = useRef(false);
   bpmInputFocusedRef.current = bpmInputFocused;
 
-  // Préchargement depuis le hero (dropzone accueil) : un ou plusieurs fichiers en IDB.
-  // Court délai pour laisser la transaction IDB de la page précédente se committer après la navigation.
+  // Hero upload: load files from IndexedDB after redirect. Mobile: longer initial delay (500ms) and
+  // two retries (350ms, 450ms) so IDB has time to commit on slower devices (e.g. Safari/iOS).
+  const [heroLoadFailed, setHeroLoadFailed] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("from") !== "hero") return;
     const ignoredParam = params.get("ignored");
-    const ignoredCount = ignoredParam ? parseInt(ignoredParam, 10) : 0;
-    const run = () => {
+    const ignoredCount = ignoredParam ? Number.parseInt(ignoredParam, 10) : 0;
+    let cancelled = false;
+    const retryDelays = [350, 450];
+    const tryLoad = (retryIndex: number) => {
       getHeroUploadFiles().then(({ files, count }) => {
+        if (cancelled) return;
         window.history.replaceState(null, "", window.location.pathname);
-        if (!files.length) return;
-        if (count > 0) clearHeroUploadFromIDB(count);
-        const first = files[0];
-        if (!first.fileName.toLowerCase().endsWith(".wav")) {
-          setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+        if (files.length > 0) {
+          if (count > 0) clearHeroUploadFromIDB(count);
+          const first = files[0];
+          if (!first.fileName.toLowerCase().endsWith(".wav")) {
+            setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+            return;
+          }
+          const file = new File([first.blob], first.fileName, { type: first.blob.type || "audio/wav" });
+          const next = files.slice(1);
+          setCategoryModal({ file, fromHero: true, nextHeroFiles: next });
+          if (ignoredCount > 0) {
+            setAppModal({
+              type: "alert",
+              message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.",
+              onClose: () => {},
+            });
+          }
           return;
         }
-        const file = new File([first.blob], first.fileName, { type: first.blob.type || "audio/wav" });
-        const next = files.slice(1);
-        setCategoryModal({ file, fromHero: true, nextHeroFiles: next });
-        if (ignoredCount > 0) {
-          setAppModal({
-            type: "alert",
-            message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.",
-            onClose: () => {},
-          });
+        if (retryIndex < retryDelays.length) {
+          const delay = retryDelays[retryIndex];
+          setTimeout(() => tryLoad(retryIndex + 1), delay);
+        } else {
+          setHeroLoadFailed(true);
         }
       }).catch(() => {
+        if (cancelled) return;
         window.history.replaceState(null, "", window.location.pathname);
+        setHeroLoadFailed(true);
       });
     };
-    const t = setTimeout(run, 80);
-    return () => clearTimeout(t);
+    const t = setTimeout(() => tryLoad(0), 500);
+    return () => { cancelled = true; clearTimeout(t); };
   }, []);
 
   // Utilisateur connecté (localStorage) + restauration des pistes depuis sessionStorage.
@@ -2042,8 +2056,7 @@ export default function Home() {
           if (!res.ok) throw new Error(`fetch ${res.status}`);
           ab = await res.arrayBuffer();
           abCacheRef.current.set(cacheKey, ab);
-        } catch (_) {
-          // Blob URL is stale (full page reload) — fallback to IDB
+        } catch {
           const data = await getFileFromIDB(id);
           if (data) {
             const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
@@ -2051,23 +2064,40 @@ export default function Home() {
             const res2 = await fetch(freshUrl);
             ab = await res2.arrayBuffer();
             abCacheRef.current.set(`raw:${freshUrl}`, ab);
-            // Update the track with the new valid blob URL
             updateTrack(id, { file, rawAudioUrl: freshUrl, rawFileName: data.fileName });
           }
         }
       }
-      if (ab) entry.raw = await ctx.decodeAudioData(ab.slice(0));
+      if (ab) {
+        try {
+          entry.raw = await ctx.decodeAudioData(ab.slice(0));
+        } catch {
+          // Decode failed (e.g. unsupported format or device limit); entry.raw stays null
+        }
+      }
     }
     if (mixedUrl && !entry.mixed) {
       const fullUrl = mixedUrl.startsWith("http") ? mixedUrl : `${API_BASE}${mixedUrl}`;
       const cacheKey = `mixed:${fullUrl}`;
-      let ab = abCacheRef.current.get(cacheKey);
-      if (!ab) {
-        const res = await fetch(fullUrl);
-        ab = await res.arrayBuffer();
-        abCacheRef.current.set(cacheKey, ab);
+      let mixedAb: ArrayBuffer | undefined = abCacheRef.current.get(cacheKey);
+      if (!mixedAb) {
+        try {
+          const res = await fetch(fullUrl);
+          if (res.ok) {
+            mixedAb = await res.arrayBuffer();
+            abCacheRef.current.set(cacheKey, mixedAb);
+          }
+        } catch {
+          // Fetch failed; entry.mixed stays null
+        }
       }
-      entry.mixed = await ctx.decodeAudioData(ab.slice(0));
+      if (mixedAb) {
+        try {
+          entry.mixed = await ctx.decodeAudioData(mixedAb.slice(0));
+        } catch {
+          // Decode failed; entry.mixed stays null
+        }
+      }
     }
     buffersRef.current.set(id, entry);
   }
@@ -2402,9 +2432,13 @@ export default function Home() {
       try {
         await ensureAllBuffersLoaded(playable);
       } catch (e) {
+        const msg = e instanceof Error ? e.message : "Impossible de charger les pistes. Réessayez.";
+        const isFileLoadErr = /chargement du fichier|échoué/i.test(msg);
         setAppModal({
           type: "alert",
-          message: e instanceof Error ? e.message : "Impossible de charger les pistes. Réessayez.",
+          message: isFileLoadErr
+            ? "Le fichier n'a pas pu être chargé sur cet appareil. Cliquez sur « Fichier WAV » ou « REMPLACER » sur la piste pour choisir à nouveau le fichier."
+            : msg,
           onClose: () => {},
         });
         return;
@@ -3313,7 +3347,13 @@ export default function Home() {
           </nav>
         </header>
 
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
+        {heroLoadFailed && (
+          <div className="mx-4 mb-4 max-md:mx-3 max-md:mb-3 rounded-xl border border-amber-500/30 bg-amber-950/30 px-4 py-3 text-center text-sm text-amber-200/90 font-heading">
+            Les fichiers n&apos;ont pas pu être récupérés depuis la page d&apos;accueil. Ajoutez vos pistes ci-dessous.
+          </div>
+        )}
+
+        <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-mix-panel shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
           {currentProject && (
             <p className="text-center text-slate-400 text-sm font-heading tracking-wide mb-4 max-lg:mb-3 max-md:mb-2 truncate px-2" title={currentProject.name}>
@@ -3369,7 +3409,7 @@ export default function Home() {
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
-                className={`font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
+                className={`font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-mix-panel px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
                   mixDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
                 }`}
               >
@@ -3388,7 +3428,7 @@ export default function Home() {
             </>
           )}
           {tracks.map((track) => (
-            <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
+            <div key={track.id} className="rounded-xl border border-white/10 bg-mix-card backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
               <button
                 type="button"
                 onClick={() => removeTrack(track.id)}
@@ -4044,7 +4084,7 @@ export default function Home() {
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(false); }}
                 className={`group w-full max-w-2xl mx-auto rounded-xl border backdrop-blur-sm py-5 max-lg:py-4 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus:outline-none focus:ring-0 ${
-                  addTrackDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "border-white/10 bg-white/[0.03] hover:border-white/15 hover:bg-white/[0.06]"
+                  addTrackDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "border-white/10 bg-mix-card hover:border-white/15 hover:bg-white/[0.06]"
                 }`}
                 aria-label="Glisser-déposer ou choisir des pistes"
               >
@@ -4187,7 +4227,7 @@ export default function Home() {
 
         {masterResult && (
           <section ref={masterResultSectionRef} className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
+            <div className="rounded-2xl border border-white/10 bg-mix-panel backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
               <h2 className="text-tagline text-slate-400 mb-4">Résultat du master</h2>
               <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
                 {!isMasterResultPlaying ? (
