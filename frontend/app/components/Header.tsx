@@ -166,7 +166,7 @@ export function Header() {
             {!isHome && (
               <Link href="/" onClick={handleAccueilClick} className="text-sm text-white/90 transition-colors hover:text-white">Accueil</Link>
             )}
-            {!isHome && <a href="/#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>}
+            {!isHome && <a href={isMix ? "#faq-contact" : "/#faq-contact"} className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>}
             <button type="button" onClick={handlePlanClick} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase">
               {user && isPro ? "GÉRER MON ABONNEMENT" : "CHOISIR UN PLAN"}
             </button>
@@ -234,7 +234,7 @@ export function Header() {
                   Accueil
                 </Link>
               )}
-              {!isHome && <a href="/#faq-contact" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">FAQ & Contact</a>}
+              {!isHome && <a href={isMix ? "#faq-contact" : "/#faq-contact"} onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">FAQ & Contact</a>}
               <button type="button" onClick={() => { handlePlanClick(); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">
                 {user && isPro ? "Gérer mon abonnement" : "Choisir un plan"}
               </button>
