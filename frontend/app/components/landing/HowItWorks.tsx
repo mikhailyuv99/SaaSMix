@@ -75,8 +75,14 @@ export function HowItWorks() {
   const containerRef = useRef<HTMLDivElement>(null);
   const circleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [lineProgress, setLineProgress] = useState(0);
+  const [smoothedProgress, setSmoothedProgress] = useState(0);
+  const targetProgressRef = useRef(0);
+  const smoothedRef = useRef(0);
   const [segmentRects, setSegmentRects] = useState<SegmentRect[]>([]);
   const rafId = useRef<number | null>(null);
+  const smoothRafId = useRef<number | null>(null);
+
+  const SMOOTH_FACTOR = 0.09;
 
   const computeSegments = useCallback(() => {
     const container = containerRef.current;
@@ -121,11 +127,28 @@ export function HowItWorks() {
         const sectionH = rect.height;
         const sectionTop = rect.top;
         const effectiveHeight = viewportH + sectionH * 0.35;
-        const progress = (viewportH - sectionTop) / effectiveHeight;
-        setLineProgress(Math.min(1, Math.max(0, progress)));
+        const progress = Math.min(1, Math.max(0, (viewportH - sectionTop) / effectiveHeight));
+        targetProgressRef.current = progress;
+        setLineProgress(progress);
         computeSegments();
       });
     };
+
+    const tick = () => {
+      const target = targetProgressRef.current;
+      const current = smoothedRef.current;
+      const diff = target - current;
+      if (Math.abs(diff) < 0.0005) {
+        smoothedRef.current = target;
+        setSmoothedProgress(target);
+      } else {
+        const next = current + diff * SMOOTH_FACTOR;
+        smoothedRef.current = next;
+        setSmoothedProgress(next);
+      }
+      smoothRafId.current = requestAnimationFrame(tick);
+    };
+    smoothRafId.current = requestAnimationFrame(tick);
 
     const scheduleCompute = () => requestAnimationFrame(computeSegments);
     scheduleCompute();
@@ -139,6 +162,7 @@ export function HowItWorks() {
       window.removeEventListener("resize", scheduleCompute);
       ro?.disconnect();
       if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+      if (smoothRafId.current !== null) cancelAnimationFrame(smoothRafId.current);
     };
   }, [computeSegments]);
 
@@ -165,7 +189,7 @@ export function HowItWorks() {
             const start = segmentStarts[segIndex] ?? segIndex / 5;
             const end = segmentEnds[segIndex] ?? (segIndex + 1) / 5;
             const span = end - start;
-            const fillRatio = span > 0 ? Math.min(1, Math.max(0, (lineProgress - start) / span)) : 0;
+            const fillRatio = span > 0 ? Math.min(1, Math.max(0, (smoothedProgress - start) / span)) : 0;
             return (
               <div
                 key={segIndex}
@@ -174,9 +198,9 @@ export function HowItWorks() {
               >
                 <div className="absolute inset-0 w-px bg-white/20" />
                 <div
-                  className="absolute left-0 top-0 w-px bg-white transition-[height] duration-500 ease-out"
+                  className="absolute left-0 top-0 h-full w-px origin-top bg-white will-change-transform"
                   style={{
-                    height: `${fillRatio * 100}%`,
+                    transform: `scaleY(${fillRatio})`,
                     boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
                   }}
                 />
