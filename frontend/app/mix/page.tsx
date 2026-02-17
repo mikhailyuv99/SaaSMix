@@ -461,6 +461,19 @@ export default function Home() {
     | null;
   const [appModal, setAppModal] = useState<AppModal>(null);
   const [promptInputValue, setPromptInputValue] = useState("");
+
+  /** Affiche un message "réservé aux abonnés" puis ouvre la modale Choisir un plan au clic sur OK. */
+  const showSubscriptionRequired = useCallback((message: string) => {
+    setAppModal({
+      type: "alert",
+      message,
+      onClose: () => {
+        setAppModal(null);
+        window.dispatchEvent(new CustomEvent("openPlanModal"));
+      },
+    });
+  }, []);
+
   const [categoryModal, setCategoryModal] = useState<{
     trackId?: string;
     file: File;
@@ -1757,6 +1770,10 @@ export default function Home() {
   const createNewProject = useCallback(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
     if (!token) return;
+    if (user && !isPro) {
+      showSubscriptionRequired("Sauvegarde de projet réservée aux abonnés. Choisissez une formule pour sauvegarder vos projets.");
+      return;
+    }
     if (tracks.length >= 1) {
       setAppModal({
         type: "confirm_two",
@@ -1796,11 +1813,15 @@ export default function Home() {
     } else {
       openCreateProjectNamePrompt(false);
     }
-  }, [tracks.length, openCreateProjectNamePrompt, setHasUnsavedChanges, hasUnsavedChanges]);
+  }, [tracks.length, openCreateProjectNamePrompt, setHasUnsavedChanges, hasUnsavedChanges, user, isPro, showSubscriptionRequired]);
 
   const saveProject = useCallback(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
     if (!token) return;
+    if (user && !isPro) {
+      showSubscriptionRequired("Sauvegarde de projet réservée aux abonnés. Choisissez une formule pour sauvegarder vos projets.");
+      return;
+    }
     const isUpdate = currentProject != null;
     if (isUpdate) {
       doSaveProject(null);
@@ -1842,7 +1863,7 @@ export default function Home() {
         onCancel: () => {},
       });
     }
-  }, [currentProject, doSaveProject, projectsList, fetchProjectsList]);
+  }, [currentProject, doSaveProject, projectsList, fetchProjectsList, user, isPro, showSubscriptionRequired]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -4191,7 +4212,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       if (!user) { openAuthModal?.("login"); return; }
-                      if (!isPro) { window.dispatchEvent(new CustomEvent("openPlanModal")); return; }
+                      if (!isPro) { showSubscriptionRequired("Téléchargement du mix réservé aux abonnés. Choisissez une formule pour télécharger vos mixes."); return; }
                       downloadMix();
                     }}
                     disabled={isRenderingMix}
@@ -4215,7 +4236,7 @@ export default function Home() {
                     type="button"
                     onClick={() => {
                       if (!user) { openAuthModal?.("login"); return; }
-                      if (!isPro) { window.dispatchEvent(new CustomEvent("openPlanModal")); return; }
+                      if (!isPro) { showSubscriptionRequired("Mastering réservé aux abonnés. Choisissez une formule pour accéder au mastering."); return; }
                       runMaster();
                     }}
                     disabled={isMastering}
