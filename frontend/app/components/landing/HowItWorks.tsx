@@ -7,7 +7,6 @@ import { ObserveElement } from "../ObserveElement";
 
 /** Play-button blue-gray from landing (Aperçu pleine longueur) */
 const CIRCLE_BG = "#2C313B";
-const CIRCLE_SIZE_PX = 48;
 
 const steps = [
   {
@@ -74,14 +73,14 @@ export function HowItWorks() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const circleRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [lineProgress, setLineProgress] = useState(0);
   const [segmentRects, setSegmentRects] = useState<SegmentRect[]>([]);
   const rafId = useRef<number | null>(null);
 
   const computeSegments = useCallback(() => {
     const container = containerRef.current;
-    const stepEls = stepRefs.current;
+    const circleEls = circleRefs.current;
     if (!container) return;
     const contRect = container.getBoundingClientRect();
     const contTop = contRect.top;
@@ -90,13 +89,12 @@ export function HowItWorks() {
     const circleTops: number[] = [];
     const circleBottoms: number[] = [];
     for (let i = 0; i < steps.length; i++) {
-      const row = stepEls[i];
-      if (!row) continue;
-      const r = row.getBoundingClientRect();
-      const centerY = r.top + r.height / 2;
-      const ct = centerY - CIRCLE_SIZE_PX / 2 - contTop;
+      const circleEl = circleEls[i];
+      if (!circleEl) continue;
+      const r = circleEl.getBoundingClientRect();
+      const ct = r.top - contTop;
       circleTops.push(ct);
-      circleBottoms.push(ct + CIRCLE_SIZE_PX);
+      circleBottoms.push(ct + r.height);
     }
 
     if (circleTops.length < 4) return;
@@ -193,7 +191,6 @@ export function HowItWorks() {
             return (
               <div
                 key={step.num}
-                ref={(el) => { stepRefs.current[i] = el; }}
                 className={`relative flex items-center gap-0 max-lg:flex-col max-lg:items-stretch max-lg:gap-4 ${i < steps.length - 1 ? "mb-6 sm:mb-8 max-lg:mb-5 max-md:mb-4" : ""}`}
               >
                 {/* Partie gauche */}
@@ -223,6 +220,7 @@ export function HowItWorks() {
 
                 {/* Centre : cercle sur la ligne (couleur play button + glow au scroll) */}
                 <div
+                  ref={(el) => { circleRefs.current[i] = el; }}
                   className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 font-heading text-sm font-bold shadow-lg transition-all duration-500 sm:h-12 sm:w-12 max-lg:self-center max-lg:order-first max-lg:-order-1 ${
                     isGlowing
                       ? "border-white/80 bg-white/15 text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]"
