@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ObserveSection } from "../ObserveSection";
 import { ObserveElement } from "../ObserveElement";
 
 /** Play-button blue-gray from landing (Aperçu pleine longueur) */
 const CIRCLE_BG = "#2C313B";
+const CIRCLE_SIZE_PX = 48;
 
 const steps = [
   {
@@ -67,11 +68,47 @@ function StepIcon({ icon }: { icon: string }) {
   return null;
 }
 
+type SegmentRect = { top: number; height: number };
+
 export function HowItWorks() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [lineProgress, setLineProgress] = useState(0);
+  const [segmentRects, setSegmentRects] = useState<SegmentRect[]>([]);
   const rafId = useRef<number | null>(null);
+
+  const computeSegments = useCallback(() => {
+    const container = containerRef.current;
+    const stepEls = stepRefs.current;
+    if (!container) return;
+    const contRect = container.getBoundingClientRect();
+    const contTop = contRect.top;
+    const contH = contRect.height;
+
+    const circleTops: number[] = [];
+    const circleBottoms: number[] = [];
+    for (let i = 0; i < steps.length; i++) {
+      const row = stepEls[i];
+      if (!row) continue;
+      const r = row.getBoundingClientRect();
+      const centerY = r.top + r.height / 2;
+      const ct = centerY - CIRCLE_SIZE_PX / 2 - contTop;
+      circleTops.push(ct);
+      circleBottoms.push(ct + CIRCLE_SIZE_PX);
+    }
+
+    if (circleTops.length < 4) return;
+    const rects: SegmentRect[] = [
+      { top: 0, height: Math.max(0, circleTops[0]) },
+      { top: circleBottoms[0], height: Math.max(0, circleTops[1] - circleBottoms[0]) },
+      { top: circleBottoms[1], height: Math.max(0, circleTops[2] - circleBottoms[1]) },
+      { top: circleBottoms[2], height: Math.max(0, circleTops[3] - circleBottoms[2]) },
+      { top: circleBottoms[3], height: Math.max(0, contH - circleBottoms[3]) },
+    ];
+    setSegmentRects(rects);
+  }, []);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -88,16 +125,24 @@ export function HowItWorks() {
         const effectiveHeight = viewportH + sectionH * 0.5;
         const progress = (viewportH - sectionTop) / effectiveHeight;
         setLineProgress(Math.min(1, Math.max(0, progress)));
+        computeSegments();
       });
     };
 
+    const scheduleCompute = () => requestAnimationFrame(computeSegments);
+    scheduleCompute();
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", scheduleCompute);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(scheduleCompute) : null;
+    if (ro && containerRef.current) ro.observe(containerRef.current);
     return () => {
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", scheduleCompute);
+      ro?.disconnect();
       if (rafId.current !== null) cancelAnimationFrame(rafId.current);
     };
-  }, []);
+  }, [computeSegments]);
 
   return (
     <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
@@ -114,26 +159,20 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
-          {/* Piste grise + 5 segments de ligne (s’arrêtent avant/après chaque cercle) */}
-          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-white/20 pointer-events-none" />
-          {[
-            { top: "0%", h: "14%" },
-            { top: "22%", h: "14%" },
-            { top: "44%", h: "14%" },
-            { top: "66%", h: "14%" },
-            { top: "88%", h: "12%" },
-          ].map((seg, segIndex) => {
-            const n = 5;
-            const fillRatio = Math.min(1, Math.max(0, (lineProgress - segIndex / n) * n));
+        <div ref={containerRef} className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
+          {/* Piste et progression en segments : s’arrêtent en haut de chaque cercle, reprennent en bas */}
+          {segmentRects.map((seg, segIndex) => {
+            const n = segmentRects.length;
+            const fillRatio = n > 0 ? Math.min(1, Math.max(0, (lineProgress - segIndex / n) * n)) : 0;
             return (
               <div
                 key={segIndex}
                 className="absolute left-1/2 w-px -translate-x-1/2 pointer-events-none overflow-hidden"
-                style={{ top: seg.top, height: seg.h }}
+                style={{ top: seg.top, height: seg.height }}
               >
+                <div className="absolute inset-0 w-px bg-white/20" />
                 <div
-                  className="w-full bg-white transition-[height] duration-500 ease-out"
+                  className="absolute left-0 top-0 w-px bg-white transition-[height] duration-500 ease-out"
                   style={{
                     height: `${fillRatio * 100}%`,
                     boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
@@ -150,6 +189,7 @@ export function HowItWorks() {
             return (
               <div
                 key={step.num}
+                ref={(el) => { stepRefs.current[i] = el; }}
                 className={`relative flex items-center gap-0 max-lg:flex-col max-lg:items-stretch max-lg:gap-4 ${i < steps.length - 1 ? "mb-6 sm:mb-8 max-lg:mb-5 max-md:mb-4" : ""}`}
               >
                 {/* Partie gauche */}
