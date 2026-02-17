@@ -185,7 +185,7 @@ export function HeroSection() {
               </svg>
             </span>
             <span className="text-sm text-slate-400">
-              ou cliquez pour choisir un fichier
+              ou cliquez pour choisir un ou plusieurs fichiers
             </span>
             {error && (
               <p className="text-sm text-red-400 mt-1" role="alert">

@@ -7,6 +7,7 @@ import { ObserveElement } from "../ObserveElement";
 
 /** Play-button blue-gray from landing (Aperçu pleine longueur) */
 const CIRCLE_BG = "#2C313B";
+const CIRCLE_HEIGHT_PX = 44;
 
 const steps = [
   {
@@ -67,29 +68,83 @@ function StepIcon({ icon }: { icon: string }) {
   return null;
 }
 
+type SegmentRect = { top: number; height: number };
+
 export function HowItWorks() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [lineProgress, setLineProgress] = useState(0);
+  const [segmentRects, setSegmentRects] = useState<SegmentRect[]>([]);
+  const rafId = useRef<number | null>(null);
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section) return;
+    const stepEls = stepRefs.current;
 
-    const onScroll = () => {
-      const rect = section.getBoundingClientRect();
-      const viewportH = window.innerHeight;
-      const sectionH = rect.height;
-      const sectionTop = rect.top;
-      // Progress 0→1 over ~50% of section scroll so step 4 is reached without scrolling too far
-      const effectiveHeight = viewportH + sectionH * 0.5;
-      const progress = (viewportH - sectionTop) / effectiveHeight;
-      setLineProgress(Math.min(1, Math.max(0, progress)));
+    const compute = () => {
+      if (!section) return;
+      const sectionRect = section.getBoundingClientRect();
+      const sectionTop = sectionRect.top;
+      const sectionH = sectionRect.height;
+
+      const circleTops: number[] = [];
+      const circleBottoms: number[] = [];
+      for (let i = 0; i < steps.length; i++) {
+        const row = stepEls[i];
+        if (!row) continue;
+        const rowRect = row.getBoundingClientRect();
+        const rowTop = rowRect.top - sectionTop;
+        const rowHeight = rowRect.height;
+        const ct = rowTop + (rowHeight - CIRCLE_HEIGHT_PX) / 2;
+        circleTops.push(ct);
+        circleBottoms.push(ct + CIRCLE_HEIGHT_PX);
+      }
+
+      const rects: SegmentRect[] = [];
+      if (circleTops.length > 0) {
+        rects.push({ top: 0, height: Math.max(0, circleTops[0]) });
+        for (let i = 1; i < steps.length; i++) {
+          const segTop = circleBottoms[i - 1];
+          const segBottom = circleTops[i];
+          rects.push({ top: segTop, height: Math.max(0, segBottom - segTop) });
+        }
+        rects.push({ top: circleBottoms[circleBottoms.length - 1], height: Math.max(0, sectionH - circleBottoms[circleBottoms.length - 1]) });
+      }
+      if (rects.length > 0) setSegmentRects(rects);
     };
 
+    const onScroll = () => {
+      if (rafId.current !== null) return;
+      rafId.current = requestAnimationFrame(() => {
+        rafId.current = null;
+        const section = sectionRef.current;
+        if (!section) return;
+        const rect = section.getBoundingClientRect();
+        const viewportH = window.innerHeight;
+        const sectionH = rect.height;
+        const sectionTop = rect.top;
+        const effectiveHeight = viewportH + sectionH * 0.5;
+        const progress = (viewportH - sectionTop) / effectiveHeight;
+        const clamped = Math.min(1, Math.max(0, progress));
+        setLineProgress(clamped);
+        compute();
+      });
+    };
+
+    const onResize = () => {
+      compute();
+    };
+
+    compute();
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+    };
   }, []);
 
   return (
@@ -108,15 +163,31 @@ export function HowItWorks() {
         </div>
 
         <div className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
-          {/* Ligne verticale : fond + progression blanche lumineuse */}
-          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-white/20" />
-          <div
-            className="absolute left-1/2 top-0 w-px -translate-x-1/2 bg-white transition-all duration-500 ease-out"
-            style={{
-              height: `${lineProgress * 100}%`,
-              boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
-            }}
-          />
+          {/* Ligne verticale en segments (s’arrête en haut/bas de chaque cercle) */}
+          <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-white/20 pointer-events-none" />
+          {segmentRects.map((seg, segIndex) => {
+            const numSegments = segmentRects.length;
+            const fillRatio = Math.min(1, Math.max(0, (lineProgress - segIndex / numSegments) * numSegments));
+            return (
+              <div
+                key={segIndex}
+                className="absolute left-1/2 w-px -translate-x-1/2 pointer-events-none overflow-hidden"
+                style={{
+                  top: seg.top,
+                  height: seg.height,
+                  willChange: "contents",
+                }}
+              >
+                <div
+                  className="h-full w-full bg-white transition-[height] duration-300 ease-out"
+                  style={{
+                    height: `${fillRatio * 100}%`,
+                    boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
+                  }}
+                />
+              </div>
+            );
+          })}
 
           {steps.map((step, i) => {
             const isLeft = i % 2 === 0;
@@ -125,6 +196,7 @@ export function HowItWorks() {
             return (
               <div
                 key={step.num}
+                ref={(el) => { stepRefs.current[i] = el; }}
                 className={`relative flex items-center gap-0 max-lg:flex-col max-lg:items-stretch max-lg:gap-4 ${i < steps.length - 1 ? "mb-6 sm:mb-8 max-lg:mb-5 max-md:mb-4" : ""}`}
               >
                 {/* Partie gauche */}
