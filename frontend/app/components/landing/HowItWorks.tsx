@@ -122,7 +122,7 @@ export function HowItWorks() {
         const viewportH = window.innerHeight;
         const sectionH = rect.height;
         const sectionTop = rect.top;
-        const effectiveHeight = viewportH + sectionH * 0.5;
+        const effectiveHeight = viewportH + sectionH * 0.35;
         const progress = (viewportH - sectionTop) / effectiveHeight;
         setLineProgress(Math.min(1, Math.max(0, progress)));
         computeSegments();
@@ -184,7 +184,7 @@ export function HowItWorks() {
 
           {steps.map((step, i) => {
             const isLeft = i % 2 === 0;
-            const threshold = (i + 0.5) / steps.length;
+            const threshold = (i + 0.2) / steps.length;
             const isGlowing = lineProgress >= threshold;
             return (
               <div
