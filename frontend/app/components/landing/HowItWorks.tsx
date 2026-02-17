@@ -162,8 +162,8 @@ export function HowItWorks() {
         <div ref={containerRef} className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
           {/* Piste et progression en segments : s’arrêtent en haut de chaque cercle, reprennent en bas */}
           {segmentRects.map((seg, segIndex) => {
-            const segmentStarts = [0, 0.12, 0.42, 0.62, 0.82];
-            const segmentEnds = [0.12, 0.42, 0.62, 0.82, 1];
+            const segmentStarts = [0, 0.12, 0.52, 0.72, 0.88];
+            const segmentEnds = [0.12, 0.52, 0.72, 0.88, 1];
             const start = segmentStarts[segIndex] ?? segIndex / 5;
             const end = segmentEnds[segIndex] ?? (segIndex + 1) / 5;
             const span = end - start;
@@ -188,7 +188,7 @@ export function HowItWorks() {
 
           {steps.map((step, i) => {
             const isLeft = i % 2 === 0;
-            const lineReachesCircleAt = [0.12, 0.42, 0.62, 0.82];
+            const lineReachesCircleAt = [0.12, 0.52, 0.72, 0.88];
             const isGlowing = lineProgress >= (lineReachesCircleAt[i] ?? 1);
             return (
               <div
