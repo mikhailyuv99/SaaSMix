@@ -3194,7 +3194,7 @@ export default function Home() {
             {appModal.type === "alert" && (
               <>
                 <div className="p-4">
-                  <p className="text-tagline text-slate-400 text-center text-sm tracking-wide">{appModal.message}</p>
+                  <p className="text-tagline text-slate-400 text-center text-sm tracking-wide" role="alert" aria-live="polite">{appModal.message}</p>
                 </div>
                 <div className="border-t border-white/10">
                   <button

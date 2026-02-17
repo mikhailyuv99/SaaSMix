@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "../context";
 import type { AuthModalMode } from "../context/AuthContext";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const TOKEN_KEY = "saas_mix_token";
@@ -50,6 +51,8 @@ export function AuthModal() {
     setRegisterSuccess(false);
   };
 
+  const trapRef = useFocusTrap(isOpen, close);
+
   if (!isOpen) return null;
 
   return (
@@ -58,8 +61,10 @@ export function AuthModal() {
       onClick={close}
       aria-modal="true"
       role="dialog"
+      aria-labelledby="auth-modal-title"
     >
       <div
+        ref={trapRef}
         className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -74,7 +79,7 @@ export function AuthModal() {
 
         {mode === "login" ? (
           <>
-            <h2 className="text-xl font-medium text-white mb-1 text-center">Connexion</h2>
+            <h2 id="auth-modal-title" className="text-xl font-medium text-white mb-1 text-center">Connexion</h2>
             <p className="text-tagline text-slate-400 text-center text-xs mb-6">Accéder à votre compte</p>
             {registerSuccess && (
               <p className="text-center text-green-400 text-sm mb-4">Compte créé. Connectez-vous.</p>
@@ -146,7 +151,7 @@ export function AuthModal() {
                   placeholder="••••••••"
                 />
               </div>
-              {error && <p className="text-red-400 text-sm">{error}</p>}
+              {error && <p className="text-red-400 text-sm" role="alert" aria-live="polite">{error}</p>}
               <button type="submit" disabled={loading} className="btn-primary w-full py-2.5">
                 {loading ? "Connexion…" : "Se connecter"}
               </button>
@@ -167,7 +172,7 @@ export function AuthModal() {
           </>
         ) : (
           <>
-            <h2 className="text-xl font-medium text-white mb-1 text-center">Inscription</h2>
+            <h2 id="auth-modal-title" className="text-xl font-medium text-white mb-1 text-center">Inscription</h2>
             <p className="text-tagline text-slate-400 text-center text-xs mb-6">Créer un compte</p>
             <form
               onSubmit={async (e) => {
@@ -228,7 +233,7 @@ export function AuthModal() {
                   placeholder="••••••••"
                 />
               </div>
-              {error && <p className="text-red-400 text-sm">{error}</p>}
+              {error && <p className="text-red-400 text-sm" role="alert" aria-live="polite">{error}</p>}
               <button type="submit" disabled={loading} className="btn-primary w-full py-2.5">
                 {loading ? "Création…" : "Créer mon compte"}
               </button>

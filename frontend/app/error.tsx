@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+const isProd = process.env.NODE_ENV === "production";
+
 export default function Error({
   error,
   reset,
@@ -13,11 +15,15 @@ export default function Error({
     console.error("Client error:", error);
   }, [error]);
 
+  const message = isProd
+    ? "Une erreur inattendue s'est produite. Réessayez ou revenez à l'accueil."
+    : (error.message || "Erreur côté client. Ouvre la console (F12) pour plus de détails.");
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#060608] text-white font-sans">
       <h1 className="text-xl font-semibold text-white mb-2">Une erreur est survenue</h1>
       <p className="text-slate-400 text-sm mb-4 max-w-md text-center">
-        {error.message || "Erreur côté client. Ouvre la console (F12) pour plus de détails."}
+        {message}
       </p>
       <button
         type="button"

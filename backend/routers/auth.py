@@ -3,7 +3,7 @@ Routes d'authentification : inscription et connexion.
 """
 
 import uuid
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -11,12 +11,14 @@ from models import User
 from schemas_auth import UserCreate, UserLogin, UserResponse, TokenResponse
 from auth_utils import hash_password, verify_password
 from jwt_utils import create_access_token
+from limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=UserResponse)
-def register(data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, data: UserCreate, db: Session = Depends(get_db)):
     """
     Création d'un compte utilisateur.
     Email unique, mot de passe haché en bcrypt.
@@ -54,7 +56,8 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, data: UserLogin, db: Session = Depends(get_db)):
     """
     Connexion : email + mot de passe. Retourne un token JWT et les infos utilisateur.
     """

@@ -1,3 +1,5 @@
+import { faqs } from '../data/faq'
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
 
 export function JsonLd() {
@@ -20,6 +22,15 @@ export function JsonLd() {
     logo: `${SITE_URL}/logo-black.png`,
     description: 'Siberia Mix : mix vocal en ligne, mastering en ligne, mix et master automatique pour artistes.',
   }
+  const faqPage = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(({ q, a }) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a },
+    })),
+  }
   return (
     <>
       <script
@@ -29,6 +40,10 @@ export function JsonLd() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqPage) }}
       />
     </>
   )

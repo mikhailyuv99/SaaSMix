@@ -27,6 +27,10 @@ from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from typing import Optional, List
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from limiter import limiter
 from presets import list_presets
 from mixing_service import MixingService
 from test_hise_direct import render as hise_render, master_only as hise_master_only, get_vst_status
@@ -44,6 +48,10 @@ app = FastAPI(
     description="Automatic vocal mixing platform API",
     version="0.1.0"
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Enable CORS (Cross-Origin Resource Sharing) so frontend can talk to backend
 app.add_middleware(
@@ -384,7 +392,9 @@ def _run_mix_job(
 
 
 @app.post("/api/track/mix")
+@limiter.limit("30/minute")
 async def track_mix(
+    request: Request,
     file: UploadFile = File(..., description="WAV de la piste vocale"),
     # Paramètres optionnels (défauts = comme le CLI)
     deesser: bool = Form(True, description="Activer le de-esser"),
@@ -593,7 +603,9 @@ def _ensure_usage_month(user: User, db: Session) -> None:
 
 
 @app.post("/api/render/mix")
+@limiter.limit("30/minute")
 async def render_mix(
+    request: Request,
     current_user: User = Depends(get_current_user_row),
     db: Session = Depends(get_db),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),
@@ -661,7 +673,9 @@ async def render_mix(
 
 
 @app.post("/api/master")
+@limiter.limit("30/minute")
 async def master_render(
+    request: Request,
     current_user: User = Depends(get_current_user_row),
     db: Session = Depends(get_db),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),

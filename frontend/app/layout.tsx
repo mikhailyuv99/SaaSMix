@@ -1,10 +1,18 @@
 import './globals.css'
-import { StarryCeiling } from './components/StarryCeiling'
 import { JsonLd } from './components/JsonLd'
 import { Header } from './components/Header'
 import { PageBackground } from './components/PageBackground'
 import { LandingTheme } from './components/LandingTheme'
 import { FooterWithLegalModals } from './components/FooterWithLegalModals'
+import { Plus_Jakarta_Sans } from 'next/font/google'
+import { OfflineBanner } from './components/OfflineBanner'
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-plus-jakarta',
+})
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
 const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, '')}/logo-og.png`
@@ -64,20 +72,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <html lang="fr" className={plusJakarta.variable}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="icon" type="image/png" href="/icon.png" />
         <link rel="alternate icon" href="/favicon.ico" />
         {process.env.NEXT_PUBLIC_FB_APP_ID ? (
           <meta property="fb:app_id" content={process.env.NEXT_PUBLIC_FB_APP_ID} />
         ) : null}
       </head>
-      <body className="antialiased text-slate-400 uppercase" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <body className={`${plusJakarta.className} antialiased text-slate-400 uppercase`}>
         <JsonLd />
-        {/* <StarryCeiling /> */}
+        <OfflineBanner />
         <div className="relative min-h-screen flex flex-col">
           <PageBackground />
           <LandingTheme>
