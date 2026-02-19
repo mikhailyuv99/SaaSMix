@@ -2687,22 +2687,37 @@ export default function Home() {
       form.append("doubler", String(p.doubler));
       form.append("robot", String(p.robot));
 
+      let mixedAudioUrlToSet: string | null = null;
+      const MIX_POST_TIMEOUT_MS = 120000; // 2 min (upload + server accept)
       try {
         await acquireMixSlot();
         const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
         const headers: Record<string, string> = {};
         if (token) headers["Authorization"] = `Bearer ${token}`;
         let res: Response;
-        try {
-          res = await fetch(`${API_BASE}/api/track/mix`, {
-            method: "POST",
-            headers,
-            body: form,
-          });
-        } finally {
-          releaseMixSlot();
+        let lastPostErr: unknown;
+        for (let postAttempt = 0; postAttempt <= 1; postAttempt++) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), MIX_POST_TIMEOUT_MS);
+          try {
+            res = await fetch(`${API_BASE}/api/track/mix`, {
+              method: "POST",
+              headers,
+              body: form,
+              signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            lastPostErr = null;
+            break;
+          } catch (e) {
+            clearTimeout(timeoutId);
+            lastPostErr = e;
+            if (postAttempt < 1) await new Promise((r) => setTimeout(r, 2000));
+          }
         }
-        const data = await res.json().catch(() => ({}));
+        releaseMixSlot();
+        if (lastPostErr !== null && lastPostErr !== undefined) throw lastPostErr;
+        const data = await res!.json().catch(() => ({}));
         if (res.status === 401) {
           logout();
           throw new Error("Session expirée. Reconnectez-vous.");
@@ -2814,6 +2829,7 @@ export default function Home() {
         }
 
         const mixedAudioUrl = path.startsWith("http") ? path : `${API_BASE}${path}`;
+        mixedAudioUrlToSet = mixedAudioUrl; // pour le catch : afficher toggle même si fetch/decode échoue
         const fullUrl = mixedAudioUrl.startsWith("http") ? mixedAudioUrl : `${API_BASE}${mixedAudioUrl}`;
         const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
         entry.mixed = null;
@@ -2915,7 +2931,7 @@ export default function Home() {
           mixFinishIntervalRef.current = null;
         }
         clearProgress();
-        updateTrack(id, { isMixing: false });
+        updateTrack(id, { isMixing: false, ...(mixedAudioUrlToSet ? { mixedAudioUrl: mixedAudioUrlToSet } : {}) });
         console.error(e);
         let errMsg = formatApiError(e);
         const raw = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
