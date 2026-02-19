@@ -2717,12 +2717,13 @@ export default function Home() {
         }
         releaseMixSlot();
         if (lastPostErr !== null && lastPostErr !== undefined) throw lastPostErr;
-        const data = await res!.json().catch(() => ({}));
-        if (res.status === 401) {
+        const response = res!;
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 401) {
           logout();
           throw new Error("Session expirée. Reconnectez-vous.");
         }
-        if (!res.ok) {
+        if (!response.ok) {
           const msg = typeof data.detail === "string" ? data.detail : Array.isArray(data.detail) ? data.detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ") : JSON.stringify(data.detail ?? data);
           throw new Error(msg || "Mix failed");
         }
