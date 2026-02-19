@@ -3410,7 +3410,7 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 flex flex-col items-center justify-center min-h-[55vh] max-lg:min-h-[50vh] max-md:min-h-[45vh]" aria-label="Pistes">
+        <div className="mt-8 max-lg:mt-6 max-md:mt-4 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 py-8 max-lg:py-6 max-md:py-6 flex flex-col items-center justify-center min-h-[55vh] max-lg:min-h-[50vh] max-md:min-h-[45vh]" aria-label="Pistes">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
@@ -3588,7 +3588,7 @@ export default function Home() {
               </div>
           </div>
         </div>
-        <section className="pt-4 max-lg:pt-3 max-md:pt-2 pb-8 max-lg:pb-6 max-md:pb-6 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
+        <section className="pt-4 max-lg:pt-3 max-md:pt-2 pb-4 max-lg:pb-3 max-md:pb-2.5 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.map((track) => (
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
