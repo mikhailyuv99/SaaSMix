@@ -472,6 +472,7 @@ MAX_MIX_FILE_SIZE_BYTES = int(os.environ.get("MAX_MIX_FILE_SIZE_BYTES", "1048576
 
 
 @app.post("/api/track/mix")
+@app.post("/api/track/mix/")  # évite redirect 307 → Method Not Allowed si le client envoie avec slash
 @limiter.limit("30/minute")
 async def track_mix(
     request: Request,
