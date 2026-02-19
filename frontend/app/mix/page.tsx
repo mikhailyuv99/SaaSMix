@@ -3409,7 +3409,7 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="mt-4 max-lg:mt-3 max-md:mt-2 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 py-6 max-lg:py-5 max-md:py-4 flex flex-col items-center justify-center min-h-[55vh] max-lg:min-h-[50vh] max-md:min-h-[45vh]" aria-label="Pistes">
+        <div className="mt-4 max-lg:mt-3 max-md:mt-2 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 py-6 max-lg:py-5 max-md:py-4 flex flex-col items-center justify-center min-h-[70vh] max-lg:min-h-[65vh] max-md:min-h-[60vh]" aria-label="Pistes">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
@@ -3456,7 +3456,7 @@ export default function Home() {
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
-                className={`font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
+                className={`font-sans uppercase flex min-h-[280px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-12 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[320px] sm:py-14 ${
                   mixDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
                 }`}
               >
