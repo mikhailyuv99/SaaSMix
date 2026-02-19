@@ -3409,8 +3409,73 @@ export default function Home() {
           </div>
         )}
 
+        {tracks.length === 0 ? (
+        <div className="mt-8 max-lg:mt-6 max-md:mt-4 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
+              <input
+                ref={mixDropzoneInputRef}
+                type="file"
+                accept=".wav,audio/wav"
+                multiple
+                className="sr-only"
+                aria-hidden
+                onChange={(e) => {
+                  const fileList = e.target.files;
+                  if (!fileList?.length) return;
+                  const all = Array.from(fileList);
+                  const files = all.filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  if (files.length === 0) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+                    e.target.value = "";
+                    return;
+                  }
+                  e.target.value = "";
+                  const first = files[0];
+                  setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
+                  if (all.length > files.length) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => mixDropzoneInputRef.current?.click()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMixDropzoneDragging(false);
+                  const all = Array.from(e.dataTransfer.files);
+                  const files = all.filter((f) => f.name.toLowerCase().endsWith(".wav"));
+                  if (files.length === 0) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
+                    return;
+                  }
+                  const first = files[0];
+                  setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
+                  if (all.length > files.length) {
+                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
+                  }
+                }}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
+                className={`font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
+                  mixDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
+                }`}
+              >
+                <span className="font-heading text-base font-medium text-white sm:text-lg">
+                  {mixDropzoneDragging ? "Déposez les fichiers" : "Glissez vos pistes ici"}
+                </span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white" aria-hidden>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1={12} y1={3} x2={12} y2={15} />
+                  </svg>
+                </span>
+                <span className="text-sm text-slate-400">ou cliquez pour choisir un ou plusieurs fichiers</span>
+              </button>
+            </div>
+        ) : (
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
-        {tracks.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02]">
           <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 shrink-0" title={currentProject?.name ?? "SANS TITRE"}>
             {currentProject?.name ?? "SANS TITRE"}
@@ -3523,75 +3588,8 @@ export default function Home() {
               </div>
           </div>
         </div>
-        )}
-        <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
+        <section className="pt-4 max-lg:pt-3 max-md:pt-2 pb-8 max-lg:pb-6 max-md:pb-6 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
-          {tracks.length === 0 && (
-            <>
-              <input
-                ref={mixDropzoneInputRef}
-                type="file"
-                accept=".wav,audio/wav"
-                multiple
-                className="sr-only"
-                aria-hidden
-                onChange={(e) => {
-                  const fileList = e.target.files;
-                  if (!fileList?.length) return;
-                  const all = Array.from(fileList);
-                  const files = all.filter((f) => f.name.toLowerCase().endsWith(".wav"));
-                  if (files.length === 0) {
-                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
-                    e.target.value = "";
-                    return;
-                  }
-                  e.target.value = "";
-                  const first = files[0];
-                  setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
-                  if (all.length > files.length) {
-                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => mixDropzoneInputRef.current?.click()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setMixDropzoneDragging(false);
-                  const all = Array.from(e.dataTransfer.files);
-                  const files = all.filter((f) => f.name.toLowerCase().endsWith(".wav"));
-                  if (files.length === 0) {
-                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
-                    return;
-                  }
-                  const first = files[0];
-                  setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
-                  if (all.length > files.length) {
-                    setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
-                  }
-                }}
-                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
-                onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
-                className={`font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center shadow-xl shadow-black/20 backdrop-blur-2xl transition-all duration-200 sm:min-h-[240px] ${
-                  mixDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "hover:border-white/15 hover:bg-white/[0.06]"
-                }`}
-              >
-                <span className="font-heading text-base font-medium text-white sm:text-lg">
-                  {mixDropzoneDragging ? "Déposez les fichiers" : "Glissez vos pistes ici"}
-                </span>
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white" aria-hidden>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1={12} y1={3} x2={12} y2={15} />
-                  </svg>
-                </span>
-                <span className="text-sm text-slate-400">ou cliquez pour choisir un ou plusieurs fichiers</span>
-              </button>
-            </>
-          )}
           {tracks.map((track) => (
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
               <button
@@ -4288,6 +4286,7 @@ export default function Home() {
         </section>
 
         </div>
+        )}
 
         {masterResult && (
           <section ref={masterResultSectionRef} className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
