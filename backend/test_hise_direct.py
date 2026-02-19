@@ -530,53 +530,75 @@ def apply_doubler_stereo(audio: np.ndarray, sr: int,
 
 
 def apply_tone_control(audio: np.ndarray, sr: int,
-                       tone_low: int = 2, tone_mid: int = 2, tone_high: int = 2,
+                       tone_low: int = 3, tone_mid: int = 3, tone_high: int = 3,
                        air: bool = False) -> np.ndarray:
     """
-    Tone presets (1/2/3) + Air on/off.
-    Low: 1=HPF 150Hz, 2=normal, 3=+2dB 150-200Hz
-    Mid: 1=-2dB 400-4k, 2=normal, 3=+2dB 400-4k
-    High: 1=shelf -2dB from 9k, 2=normal, 3=shelf +2dB from 9k
-    Air: on = +2dB shelf from 12500Hz
+    Tone (réglages finals) : Low / Mid / High 5 niveaux chacun (3 = neutre), + Air.
+    Low 1: bell -6 dB @ 260 Hz Q=1 | 2: bell -2.5 dB @ 200 Hz Q=1 | 3: neutre | 4: +3.5 dB 150-200 | 5: +7 dB 150-200
+    Mid 1-5: bell @ 1.5 kHz Q=1 → -6, -3, neutre, +2.5, +5 dB
+    High 1-5: bell @ 10 kHz Q=1 → -11, -6, neutre, +3, +6 dB
+    Air: +2.5 dB shelf from 12.5 kHz
     """
-    if tone_low == 2 and tone_mid == 2 and tone_high == 2 and not air:
+    t_l = max(1, min(5, tone_low))
+    t_m = max(1, min(5, tone_mid))
+    t_h = max(1, min(5, tone_high))
+    if t_l == 3 and t_m == 3 and t_h == 3 and not air:
         return audio.copy()
     nyq = sr / 2
     order = 2
     b_hp_150, a_hp_150 = butter(order, 150 / nyq, btype='high')
     b_lp_200, a_lp_200 = butter(order, 200 / nyq, btype='low')
-    b_hp_400, a_hp_400 = butter(order, 400 / nyq, btype='high')
-    b_lp_4k, a_lp_4k = butter(order, 4000 / nyq, btype='low')
-    b_hp_9k, a_hp_9k = butter(order, min(9000, nyq * 0.99) / nyq, btype='high')
+    low_35 = 10 ** (3.5 / 20) - 1
+    low_7 = 10 ** (7.0 / 20) - 1
+    air_25 = 10 ** (2.5 / 20) - 1
     b_hp_12500, a_hp_12500 = butter(order, min(12500, nyq * 0.99) / nyq, btype='high')
-    boost_2 = 10 ** (2 / 20) - 1
-    cut_2 = 10 ** (-2 / 20) - 1
 
     def process_channel(x):
         out = x.astype(np.float64)
-        if tone_low == 1:
-            out = lfilter(b_hp_150, a_hp_150, out)
-        if tone_low == 3:
+        # Low (Basses)
+        if t_l == 1:
+            bp, ap = _biquad_peaking(sr, 260.0, -6.0, 1.0)
+            out = lfilter(bp, ap, out)
+        elif t_l == 2:
+            bp, ap = _biquad_peaking(sr, 200.0, -2.5, 1.0)
+            out = lfilter(bp, ap, out)
+        elif t_l == 4:
             band = lfilter(b_lp_200, a_lp_200, out)
             band = lfilter(b_hp_150, a_hp_150, band)
-            out = out + band * boost_2
-        if tone_mid == 1:
-            band = lfilter(b_hp_400, a_hp_400, out)
-            band = lfilter(b_lp_4k, a_lp_4k, band)
-            out = out + band * cut_2
-        if tone_mid == 3:
-            band = lfilter(b_hp_400, a_hp_400, out)
-            band = lfilter(b_lp_4k, a_lp_4k, band)
-            out = out + band * boost_2
-        if tone_high == 1:
-            band = lfilter(b_hp_9k, a_hp_9k, out)
-            out = out + band * cut_2
-        if tone_high == 3:
-            band = lfilter(b_hp_9k, a_hp_9k, out)
-            out = out + band * boost_2
+            out = out + band * low_35
+        elif t_l == 5:
+            band = lfilter(b_lp_200, a_lp_200, out)
+            band = lfilter(b_hp_150, a_hp_150, band)
+            out = out + band * low_7
+        # Mid (Mids) — bell @ 1.5 kHz Q=1
+        if t_m == 1:
+            bp, ap = _biquad_peaking(sr, 1500.0, -6.0, 1.0)
+            out = lfilter(bp, ap, out)
+        elif t_m == 2:
+            bp, ap = _biquad_peaking(sr, 1500.0, -3.0, 1.0)
+            out = lfilter(bp, ap, out)
+        elif t_m == 4:
+            bp, ap = _biquad_peaking(sr, 1500.0, 2.5, 1.0)
+            out = lfilter(bp, ap, out)
+        elif t_m == 5:
+            bp, ap = _biquad_peaking(sr, 1500.0, 5.0, 1.0)
+            out = lfilter(bp, ap, out)
+        # High (Aigus) — bell @ 10 kHz Q=1
+        if t_h == 1:
+            bp, ap = _biquad_peaking(sr, 10000.0, -11.0, 1.0)
+            out = lfilter(bp, ap, out)
+        elif t_h == 2:
+            bp, ap = _biquad_peaking(sr, 10000.0, -6.0, 1.0)
+            out = lfilter(bp, ap, out)
+        elif t_h == 4:
+            bp, ap = _biquad_peaking(sr, 10000.0, 3.0, 1.0)
+            out = lfilter(bp, ap, out)
+        elif t_h == 5:
+            bp, ap = _biquad_peaking(sr, 10000.0, 6.0, 1.0)
+            out = lfilter(bp, ap, out)
         if air:
             band = lfilter(b_hp_12500, a_hp_12500, out)
-            out = out + band * boost_2
+            out = out + band * air_25
         return out.astype(np.float32)
 
     if audio.ndim == 1:
@@ -585,8 +607,8 @@ def apply_tone_control(audio: np.ndarray, sr: int,
 
 
 def apply_air_only(audio: np.ndarray, sr: int) -> np.ndarray:
-    """Air shelf: +2dB from 12.5kHz (sans modifier tone low/mid/high)."""
-    return apply_tone_control(audio, sr, tone_low=2, tone_mid=2, tone_high=2, air=True)
+    """Air shelf: +2.5 dB from 12.5 kHz (tone au neutre)."""
+    return apply_tone_control(audio, sr, tone_low=3, tone_mid=3, tone_high=3, air=True)
 
 
 def _biquad_peaking(sr: int, freq_hz: float, gain_db: float, q: float):

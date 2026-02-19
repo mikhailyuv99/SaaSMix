@@ -75,7 +75,7 @@ def render_chain_b(
     deesser: bool = True,
     deesser_mode: int = 2,
     noise_gate: bool = True,
-    noise_gate_mode: int = 1,
+    noise_gate_mode: int = 2,
     delay: bool = False,
     delay_intensity: int = 2,
     bpm: float = 120.0,
@@ -159,7 +159,7 @@ def render_chain_b(
 
     _progress("Préparation")
 
-    # 0 : Tone (Low / Mid / High) — first in chain, before gate
+    # 0 : Tone (Low/Mid/High 5 niveaux, 3=neutre) — first in chain, before gate
     if tone_low != 3 or tone_mid != 3 or tone_high != 3:
         _progress("Tone")
         audio, sr = read_wav(input_wav)

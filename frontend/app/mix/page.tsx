@@ -35,14 +35,16 @@ function formatApiError(e: unknown): string {
 type Category = "lead_vocal" | "adlibs_backs" | "instrumental";
 
 export interface MixParams {
+  noise_gate: boolean;
+  noise_gate_mode: 1 | 2 | 3 | 4;
   delay: boolean;
   reverb: boolean;
   reverb_mode: 1 | 2 | 3;
   deesser: boolean;
   deesser_mode: 1 | 2 | 3;
-  tone_low: 1 | 2 | 3;
-  tone_mid: 1 | 2 | 3;
-  tone_high: 1 | 2 | 3;
+  tone_low: 1 | 2 | 3 | 4 | 5;
+  tone_mid: 1 | 2 | 3 | 4 | 5;
+  tone_high: 1 | 2 | 3 | 4 | 5;
   air: boolean;
   bpm: number;
   delay_division: "1/4" | "1/2" | "1/8";
@@ -53,14 +55,16 @@ export interface MixParams {
 }
 
 const DEFAULT_MIX_PARAMS: MixParams = {
+  noise_gate: true,
+  noise_gate_mode: 2,
   delay: true,
   reverb: true,
   reverb_mode: 2,
   deesser: true,
   deesser_mode: 2,
-  tone_low: 2,
-  tone_mid: 2,
-  tone_high: 2,
+  tone_low: 3,
+  tone_mid: 3,
+  tone_high: 3,
   air: false,
   bpm: 120,
   delay_division: "1/4",
@@ -92,6 +96,14 @@ const CATEGORY_LABELS: Record<Category, string> = {
   adlibs_backs: "ADLIBS/BACKS",
   instrumental: "INSTRUMENTALE",
 };
+
+const TONE_OPTIONS = [
+  { value: 1, label: "Réduction forte" },
+  { value: 2, label: "Réduction" },
+  { value: 3, label: "Par défaut" },
+  { value: 4, label: "Boost léger" },
+  { value: 5, label: "Boost fort" },
+];
 
 function generateId() {
   return Math.random().toString(36).slice(2, 11);
@@ -2605,6 +2617,8 @@ export default function Home() {
       form.append("file", track.file);
       form.append("category", track.category);
       const p = track.mixParams;
+      form.append("noise_gate", String(p.noise_gate ?? true));
+      form.append("noise_gate_mode", String(p.noise_gate_mode ?? 2));
       form.append("deesser", String(p.deesser));
       form.append("deesser_mode", String(p.deesser_mode));
       form.append("delay", String(p.delay));
@@ -3935,26 +3949,33 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Paramètres mix desktop : L1 Basses/Mids/Aigus, L2 Reverb/Delay/De-esser, L3 col1 Doubler+FX robot | col2 BPM (taille Delay) | col3 FX tel+Air — mobile inchangé */}
+              {/* Paramètres mix desktop : L1 Basses/Mids/Aigus, L2 Noise gate/Reverb/Delay/De-esser, L3 Doubler+FX robot+FX tel+Air — mobile idem */}
               {track.paramsOpen && isVocal(track.category) && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06] flex flex-col gap-4 max-lg:hidden">
                   {/* Ligne 1 : Basses, Mids, Aigus — libellés en glow+blanc quand la box réglages est ouverte */}
                   <div className="grid grid-cols-3 gap-4 min-h-[3rem] items-end">
                     <div className="flex flex-col min-w-0">
                       <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] block mb-1.5 text-center text-xs uppercase tracking-wider">Basses</span>
-                      <CustomSelect value={track.mixParams.tone_low} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                      <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_low ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full" options={TONE_OPTIONS} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] block mb-1.5 text-center text-xs uppercase tracking-wider">Mids</span>
-                      <CustomSelect value={track.mixParams.tone_mid} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                      <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_mid ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full" options={TONE_OPTIONS} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] block mb-1.5 text-center text-xs uppercase tracking-wider">Aigus</span>
-                      <CustomSelect value={track.mixParams.tone_high} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                      <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_high ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full" options={TONE_OPTIONS} />
                     </div>
                   </div>
-                  {/* Ligne 2 : Reverb, Delay, De-esser */}
-                  <div className="grid grid-cols-3 gap-4 min-h-[3rem] items-end">
+                  {/* Ligne 2 : Noise gate, Reverb, Delay, De-esser */}
+                  <div className="grid grid-cols-4 gap-4 min-h-[3rem] items-end">
+                    <div className="flex flex-col min-w-0">
+                      <label className="flex items-center justify-center gap-2 mb-1.5">
+                        <input type="checkbox" checked={track.mixParams.noise_gate ?? true} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, noise_gate: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.noise_gate !== false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>Noise gate</span>
+                      </label>
+                      <CustomSelect value={Math.min(4, Math.max(1, track.mixParams.noise_gate_mode ?? 2))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, noise_gate_mode: Number(v) as 1 | 2 | 3 | 4 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }, { value: 4, label: "Extrême" }]} />
+                    </div>
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
                         <input type="checkbox" checked={track.mixParams.reverb} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
@@ -4007,15 +4028,22 @@ export default function Home() {
                 <div className="mt-4 pt-4 border-t border-white/[0.06] lg:hidden flex flex-col gap-2">
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]">Basses</span>
-                        <CustomSelect value={track.mixParams.tone_low} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                        <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_low ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={TONE_OPTIONS} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]">Mids</span>
-                        <CustomSelect value={track.mixParams.tone_mid} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                        <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_mid ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={TONE_OPTIONS} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]">Aigus</span>
-                        <CustomSelect value={track.mixParams.tone_high} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Réduction" }, { value: 2, label: "Par Défaut" }, { value: 3, label: "Boost" }]} />
+                        <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_high ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={TONE_OPTIONS} />
+                      </div>
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
+                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.noise_gate !== false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
+                          <input type="checkbox" checked={track.mixParams.noise_gate ?? true} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, noise_gate: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
+                          Noise gate
+                        </label>
+                        <CustomSelect value={Math.min(4, Math.max(1, track.mixParams.noise_gate_mode ?? 2))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, noise_gate_mode: Number(v) as 1 | 2 | 3 | 4 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }, { value: 4, label: "Extrême" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
                         <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-slate-400"}`}>
