@@ -21,7 +21,8 @@ def get_rate_limit_key(request: Request) -> str:
     return get_remote_address(request)
 
 
+# Par user/IP : ~120 req/min par mix (polling status 500ms) → 720/min permet 6 mixes en parallèle + reste de l'API
 limiter = Limiter(
     key_func=get_rate_limit_key,
-    default_limits=["120/minute"],
+    default_limits=["720/minute"],
 )
