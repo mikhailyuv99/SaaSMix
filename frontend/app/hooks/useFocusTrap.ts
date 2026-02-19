@@ -23,7 +23,9 @@ export function useFocusTrap(
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
 
-    if (first) first.focus();
+    // Ne mettre le focus sur le premier élément que si le focus n'est pas déjà dans le trap
+    // (évite de voler le focus à l'input mot de passe à chaque frappe quand onEscape change à chaque rendu)
+    if (first && !el.contains(document.activeElement)) first.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
