@@ -3602,10 +3602,13 @@ export default function Home() {
               </button>
 
               {(track.file?.name ?? track.rawFileName) ? (
-                <div className="pr-10 pb-3 mb-3 border-b border-white/10 max-lg:pb-2 max-lg:mb-2">
-                  <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
-                    {track.file?.name ?? track.rawFileName}
-                  </p>
+                <div className="pr-10 pb-3 mb-3 max-lg:pb-2 max-lg:mb-2">
+                  <div className="min-h-[2.25rem] max-lg:min-h-[2rem] flex items-center justify-center">
+                    <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
+                      {track.file?.name ?? track.rawFileName}
+                    </p>
+                  </div>
+                  <div className="h-px bg-white/10 mx-4 max-lg:mx-3" aria-hidden />
                 </div>
               ) : null}
 
@@ -4068,11 +4071,6 @@ export default function Home() {
                     >
                       ✕
                     </button>
-                  </div>
-                  <div className="h-0 overflow-visible relative">
-                    <p className="absolute top-[0.15rem] left-0 right-0 text-tagline text-slate-400 text-[10px] max-md:text-[9px] text-center truncate w-full pointer-events-none" title={track.file?.name ?? track.rawFileName ?? ""}>
-                      {track.file?.name ?? track.rawFileName ?? ""}
-                    </p>
                   </div>
                 </div>
               )}
