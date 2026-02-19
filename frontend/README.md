@@ -13,6 +13,7 @@ npm install
 ```
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+For **Netlify staging**, set `NEXT_PUBLIC_API_URL=https://api-staging.siberiamix.com` (must be **https**, otherwise redirect turns POST into GET → "Method Not Allowed").
 
 3. Run the development server:
 ```bash

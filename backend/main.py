@@ -471,6 +471,16 @@ def _run_mix_job(
 MAX_MIX_FILE_SIZE_BYTES = int(os.environ.get("MAX_MIX_FILE_SIZE_BYTES", "104857600"))  # 100 MiB par défaut
 
 
+@app.get("/api/track/mix")
+@app.get("/api/track/mix/")
+async def track_mix_get():
+    """GET reçu au lieu de POST : souvent une redirection HTTP→HTTPS (301/302) a converti le POST en GET."""
+    raise HTTPException(
+        status_code=405,
+        detail="Use POST to start a mix. If you see this, the app may be calling the API over HTTP; set NEXT_PUBLIC_API_URL to https://api-staging.siberiamix.com (with https) in Netlify.",
+    )
+
+
 @app.post("/api/track/mix")
 @app.post("/api/track/mix/")  # évite redirect 307 → Method Not Allowed si le client envoie avec slash
 @limiter.limit("30/minute")
