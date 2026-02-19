@@ -575,6 +575,7 @@ async def track_mix(
             "doubler": _parse_bool_form(doubler),
         }
         with _mix_jobs_lock:
+            global _mix_running_count
             _mix_jobs[job_id] = {
                 "status": "running",
                 "percent": 0,
