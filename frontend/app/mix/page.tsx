@@ -1132,7 +1132,7 @@ export default function Home() {
           mixedAudioUrl: null,
           isMixing: false,
           playMode: "mixed",
-          mixParams: isSecondTrack ? { ...DEFAULT_MIX_PARAMS } : { ...DEFAULT_MIX_PARAMS, doubler: true, air: true },
+          mixParams: isSecondTrack ? { ...DEFAULT_MIX_PARAMS } : { ...DEFAULT_MIX_PARAMS, doubler: true },
         },
       ];
     });
@@ -1461,7 +1461,6 @@ export default function Home() {
         ...DEFAULT_MIX_PARAMS,
         phone_fx: category === "adlibs_backs",
         doubler: category === "lead_vocal" || category === "adlibs_backs",
-        air: category === "lead_vocal",
       },
       paramsOpen: false,
       rawFileName: file.name,
@@ -3410,7 +3409,10 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 py-8 max-lg:py-6 max-md:py-6 flex flex-col items-center justify-center min-h-[55vh] max-lg:min-h-[50vh] max-md:min-h-[45vh]" aria-label="Pistes">
+        <div className="mt-8 max-lg:mt-6 max-md:mt-4 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 flex flex-col items-center min-h-[55vh] max-lg:min-h-[50vh] max-md:min-h-[45vh]" aria-label="Pistes">
+              {/* Spacer so dropzone aligns with first track card (same space as project header + section pt) */}
+              <div className="w-full h-[4.5rem] max-lg:h-[4rem] max-md:h-[3.5rem] shrink-0" aria-hidden />
+              <div className="flex-1 w-full flex flex-col items-center justify-center py-8 max-lg:py-6 max-md:py-6">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
@@ -3473,6 +3475,7 @@ export default function Home() {
                 </span>
                 <span className="text-sm text-slate-400 uppercase">ou cliquez pour choisir un ou plusieurs fichiers</span>
               </button>
+              </div>
             </div>
         ) : (
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
@@ -3666,7 +3669,7 @@ export default function Home() {
                               ...track.mixParams,
                               phone_fx: newCategory === "adlibs_backs",
                               doubler: newCategory === "lead_vocal" || newCategory === "adlibs_backs" ? true : track.mixParams.doubler,
-                              air: newCategory === "lead_vocal" ? true : track.mixParams.air,
+                              air: track.mixParams.air,
                             },
                           });
                         }}
@@ -3841,7 +3844,7 @@ export default function Home() {
                               ...track.mixParams,
                               phone_fx: newCategory === "adlibs_backs",
                               doubler: newCategory === "lead_vocal" || newCategory === "adlibs_backs" ? true : track.mixParams.doubler,
-                              air: newCategory === "lead_vocal" ? true : track.mixParams.air,
+                              air: track.mixParams.air,
                             },
                           });
                         }}
