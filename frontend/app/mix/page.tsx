@@ -3601,6 +3601,14 @@ export default function Home() {
                 ✕
               </button>
 
+              {(track.file?.name ?? track.rawFileName) ? (
+                <div className="pr-10 pb-3 mb-3 border-b border-white/10 max-lg:pb-2 max-lg:mb-2">
+                  <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
+                    {track.file?.name ?? track.rawFileName}
+                  </p>
+                </div>
+              ) : null}
+
               {/* Affichage PC : 3 colonnes (Choisir, Catégorie, Gain) pour instrumental, 6 colonnes pour vocal */}
               <div
                 className="grid w-full pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
