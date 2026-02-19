@@ -2879,15 +2879,18 @@ export default function Home() {
       }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
-      // Direct link download: browser does the GET (avoids fetch() ERR_CONNECTION_RESET on large files)
+      // Fetch as blob and download locally — avoids popup/new tab on all platforms
+      const dlRes = await fetch(mixUrl);
+      const blob = await dlRes.blob();
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = mixUrl;
+      a.href = blobUrl;
       a.download = "mix.wav";
-      a.rel = "noopener noreferrer";
-      a.target = "_blank";
+      a.style.display = "none";
       document.body.appendChild(a);
       a.click();
-      a.remove();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
     } catch (e) {
       console.error(e);
       setAppModal({ type: "alert", message: "Erreur : " + formatApiError(e), onClose: () => {} });
@@ -4360,16 +4363,25 @@ export default function Home() {
                 <button
                   type="button"
                   disabled={isDownloadingMaster}
-                  onClick={() => {
-                    // Direct link download: browser does the GET (avoids fetch() ERR_CONNECTION_RESET on large files)
-                    const a = document.createElement("a");
-                    a.href = masterResult.masterUrl;
-                    a.download = "master.wav";
-                    a.rel = "noopener noreferrer";
-                    a.target = "_blank";
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
+                  onClick={async () => {
+                    setIsDownloadingMaster(true);
+                    try {
+                      const res = await fetch(masterResult.masterUrl);
+                      const blob = await res.blob();
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "master.wav";
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch {
+                      /* fallback : ouvre l'URL directement */
+                      window.open(masterResult.masterUrl, "_blank");
+                    } finally {
+                      setIsDownloadingMaster(false);
+                    }
                   }}
                   className={`inline-flex items-center justify-center text-center mt-2 rounded-lg px-4 py-2.5 text-tagline disabled:cursor-not-allowed ${
                     isDownloadingMaster
