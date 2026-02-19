@@ -3602,7 +3602,7 @@ export default function Home() {
               </button>
 
               {(track.file?.name ?? track.rawFileName) ? (
-                <div className="pr-10">
+                <div className="pr-10 -mt-5 max-lg:-mt-4">
                   <div className="py-2 max-lg:py-1.5 flex items-center justify-center">
                     <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName}
