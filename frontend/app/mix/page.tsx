@@ -3410,12 +3410,12 @@ export default function Home() {
         )}
 
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02]">
-          <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0" title={currentProject?.name ?? "SANS TITRE"}>
+        {tracks.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02]">
+          <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 shrink-0" title={currentProject?.name ?? "SANS TITRE"}>
             {currentProject?.name ?? "SANS TITRE"}
           </h2>
-          {tracks.length > 0 && (
-            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 shrink-0">
+          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-2 sm:gap-3">
               <div className="flex flex-col items-center justify-center gap-1">
                 {!isPlaying ? (
                   <button
@@ -3521,9 +3521,9 @@ export default function Home() {
                   ) : "MASTERISER"}
                 </button>
               </div>
-            </div>
-          )}
+          </div>
         </div>
+        )}
         <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.length === 0 && (
