@@ -157,16 +157,28 @@ def get_vst_status():
     vst_base = os.environ.get("VST_BASE", "NOT SET")
     host_env = os.environ.get("HISE_VST3_HOST_EXE", "NOT SET")
 
+    # Chaîne B : gate, reverb1point5, mixchain (peuvent être absents si vst_config sans VST_BASE)
+    def _opt(name, var):
+        p = globals().get(var) if isinstance(var, str) else var
+        return _info(name, p)
+
     return {
         "env": {
             "HISE_VST3_HOST_EXE": host_env,
             "VST_BASE": vst_base,
             "VST_BLOCK_SIZE": VST_BLOCK_SIZE,
+            "MAIN_CHAIN_CORE": os.environ.get("MAIN_CHAIN_CORE", "NOT SET"),
         },
         "HOST_EXE": _info("host", HOST_EXE),
         "Project1 (VST3_PATH)": _info("Project1", VST3_PATH),
+        "mixchain": _opt("mixchain", "MIXCHAIN_PATH"),
+        "gate1": _opt("gate1", "GATE1_PATH"),
+        "gate2": _opt("gate2", "GATE2_PATH"),
+        "gate2point5": _opt("gate2point5", "GATE2POINT5_PATH"),
+        "gate3": _opt("gate3", "GATE3_PATH"),
         "master (master2)": _info("master2", MASTER_PATH),
         "reverb1": _info("reverb1", REVERB1_PATH),
+        "reverb1point5": _opt("reverb1point5", "REVERB1POINT5_PATH"),
         "reverb2": _info("reverb2", REVERB2_PATH),
         "reverb3": _info("reverb3", REVERB3_PATH),
         "doubler": _info("doubler", DOUBLER_PATH),
