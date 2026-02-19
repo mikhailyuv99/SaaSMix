@@ -3410,7 +3410,7 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
+        <div className="mt-8 max-lg:mt-6 max-md:mt-4 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 flex flex-col items-center justify-center min-h-[55vh] max-lg:min-h-[50vh] max-md:min-h-[45vh]" aria-label="Pistes">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
@@ -3480,7 +3480,7 @@ export default function Home() {
           <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 shrink-0" title={currentProject?.name ?? "SANS TITRE"}>
             {currentProject?.name ?? "SANS TITRE"}
           </h2>
-          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-4 sm:gap-6 max-md:gap-3">
+          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-4">
               <div className="flex flex-col items-center justify-center gap-1">
                 {!isPlaying ? (
                   <button
