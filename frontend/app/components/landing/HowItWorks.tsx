@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ObserveSection } from "../ObserveSection";
 import { ObserveElement } from "../ObserveElement";
 
@@ -70,6 +71,7 @@ function StepIcon({ icon }: { icon: string }) {
 type SegmentRect = { top: number; height: number };
 
 export function HowItWorks() {
+  const router = useRouter();
   const [expanded, setExpanded] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -294,7 +296,11 @@ export function HowItWorks() {
 
         <div className="w-full max-w-2xl mx-auto mt-8 space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4 box-border overflow-x-hidden pt-2">
           <div className="text-center -mt-2 relative z-10">
-            <Link href="/mix" className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs">
+            <Link
+              href="/mix"
+              className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs"
+              onClick={(e) => { e.preventDefault(); router.push("/mix"); }}
+            >
               Essayer ces 4 étapes avec vos pistes
             </Link>
           </div>
