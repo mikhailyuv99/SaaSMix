@@ -3471,7 +3471,7 @@ export default function Home() {
                     <line x1={12} y1={3} x2={12} y2={15} />
                   </svg>
                 </span>
-                <span className="text-sm text-slate-400">ou cliquez pour choisir un ou plusieurs fichiers</span>
+                <span className="text-sm text-slate-400 uppercase">ou cliquez pour choisir un ou plusieurs fichiers</span>
               </button>
             </div>
         ) : (
@@ -3602,8 +3602,9 @@ export default function Home() {
               </button>
 
               {(track.file?.name ?? track.rawFileName) ? (
-                <div className="pr-10 -mt-5 max-lg:-mt-4 max-md:px-10 max-md:pr-10">
-                  <div className="py-2 max-lg:py-1.5 flex items-center justify-center">
+                <div className="pr-10 -mt-5 max-lg:-mt-4 max-md:px-10 max-md:pr-10 max-md:-mt-6">
+                  <div className="hidden max-md:block h-px bg-white/10 mx-4 max-md:mx-auto max-md:w-[calc(100%-2rem)] mb-2" aria-hidden />
+                  <div className="py-2 max-lg:py-1.5 max-md:py-1.5 flex items-center justify-center">
                     <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName}
                     </p>
@@ -4285,7 +4286,7 @@ export default function Home() {
                     <line x1={12} y1={3} x2={12} y2={15} />
                   </svg>
                 </span>
-                <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors">ou cliquez pour choisir un ou plusieurs fichiers</span>
+                <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors uppercase">ou cliquez pour choisir un ou plusieurs fichiers</span>
               </button>
             </div>
           )}
