@@ -3480,6 +3480,7 @@ export default function Home() {
           <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 shrink-0 max-md:w-full max-md:text-center max-md:order-first" title={currentProject?.name ?? "SANS TITRE"}>
             {currentProject?.name ?? "SANS TITRE"}
           </h2>
+          <div className="hidden max-md:block max-md:order-2 h-px bg-white/10 max-md:mx-auto max-md:w-[calc(100%-2rem)] shrink-0" aria-hidden />
           <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-3 max-md:w-full max-md:grid max-md:grid-cols-2 max-md:justify-items-center max-md:order-last">
               <div className="flex flex-col items-center justify-center gap-1">
                 {!isPlaying ? (
@@ -3603,7 +3604,6 @@ export default function Home() {
 
               {(track.file?.name ?? track.rawFileName) ? (
                 <div className="pr-10 -mt-5 max-lg:-mt-4 max-md:px-10 max-md:pr-10 max-md:-mt-6">
-                  <div className="hidden max-md:block h-px bg-white/10 mx-4 max-md:mx-auto max-md:w-[calc(100%-2rem)] mb-2" aria-hidden />
                   <div className="py-2 max-lg:py-1.5 max-md:py-1.5 flex items-center justify-center">
                     <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName}
