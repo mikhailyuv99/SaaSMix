@@ -3134,7 +3134,11 @@ export default function Home() {
   return (
     <main className="relative z-10 min-h-screen font-heading overflow-x-hidden">
       {appModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog">
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3"
+          aria-modal="true"
+          role="dialog"
+        >
           <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl">
             {appModal.type === "prompt" && (
               <>
@@ -4282,6 +4286,8 @@ export default function Home() {
             </div>
           )}
         </section>
+
+        </div>
 
         {masterResult && (
           <section ref={masterResultSectionRef} className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
