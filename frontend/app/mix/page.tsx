@@ -3410,7 +3410,7 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
+        <div className="mt-8 max-lg:mt-6 max-md:mt-4 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
@@ -3480,7 +3480,7 @@ export default function Home() {
           <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 shrink-0" title={currentProject?.name ?? "SANS TITRE"}>
             {currentProject?.name ?? "SANS TITRE"}
           </h2>
-          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-2 sm:gap-3">
+          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-4 sm:gap-6 max-md:gap-3">
               <div className="flex flex-col items-center justify-center gap-1">
                 {!isPlaying ? (
                   <button
@@ -4289,7 +4289,7 @@ export default function Home() {
         )}
 
         {masterResult && (
-          <section ref={masterResultSectionRef} className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
+          <section ref={masterResultSectionRef} className={tracks.length === 0 ? "mt-8 max-lg:mt-6 max-md:mt-4 max-w-xl mx-auto" : "mt-10 max-w-xl mx-auto"} aria-label="Résultat du master">
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
               <h2 className="text-tagline text-slate-400 mb-4">Résultat du master</h2>
               <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
