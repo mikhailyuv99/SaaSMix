@@ -33,7 +33,8 @@ from slowapi.middleware import SlowAPIMiddleware
 from limiter import limiter
 from presets import list_presets
 from mixing_service import MixingService
-from test_hise_direct import render as hise_render, master_only as hise_master_only, get_vst_status
+from test_hise_direct import master_only as hise_master_only, get_vst_status
+from mix_chain_b import render_chain_b
 from test_hise_direct import read_wav, write_wav
 from database import engine, Base, DATABASE_URL, get_db
 from models import Project, User, PLAN_LIMITS  # noqa: F401 - Project enregistre la table avec Base
@@ -320,6 +321,7 @@ def _run_mix_job(
     deesser: bool,
     deesser_mode: int,
     noise_gate: bool,
+    noise_gate_mode: int,
     delay: bool,
     delay_intensity: int,
     bpm: float,
@@ -344,6 +346,7 @@ def _run_mix_job(
         deesser=deesser,
         deesser_mode=deesser_mode,
         noise_gate=noise_gate,
+        noise_gate_mode=noise_gate_mode,
         delay=delay,
         delay_intensity=delay_intensity,
         bpm=bpm,
@@ -357,12 +360,13 @@ def _run_mix_job(
         phone_fx=phone_fx,
         robot=robot,
         doubler=doubler,
+        core_override=os.environ.get("MAIN_CHAIN_CORE"),
     )
     try:
         try:
-            ok, err_msg = hise_render(input_path, output_path, progress_callback=progress_callback, **kwargs)
+            ok, err_msg = render_chain_b(input_path, output_path, progress_callback=progress_callback, **kwargs)
         except TypeError:
-            ok, err_msg = hise_render(input_path, output_path, **kwargs)
+            ok, err_msg = render_chain_b(input_path, output_path, **kwargs)
         with _mix_jobs_lock:
             if job_id not in _mix_jobs:
                 return
@@ -400,6 +404,7 @@ async def track_mix(
     deesser: bool = Form(True, description="Activer le de-esser"),
     deesser_mode: int = Form(2, ge=1, le=3, description="De-esser: 1=leger, 2=moyen, 3=fort"),
     noise_gate: bool = Form(True, description="Activer le noise gate"),
+    noise_gate_mode: int = Form(1, ge=1, le=4, description="Gate VST3: 1=GATE1, 2=GATE2, 3=GATE2.5, 4=GATE3"),
     delay: bool = Form(False, description="Activer le delay ping-pong"),
     delay_intensity: int = Form(2, ge=1, le=3, description="Delay: 1=discret, 2=moyen, 3=fort"),
     bpm: float = Form(120.0, description="BPM (pour le delay)"),
@@ -468,6 +473,7 @@ async def track_mix(
             "deesser": deesser,
             "deesser_mode": deesser_mode,
             "noise_gate": noise_gate,
+            "noise_gate_mode": noise_gate_mode,
             "delay": delay,
             "delay_intensity": delay_intensity,
             "bpm": bpm,

@@ -33,16 +33,28 @@ try:
         return Path(p) if p else None
     MASTER_PATH = _vst_path("master2") or _vst_path("master")
     REVERB1_PATH = _vst_path("reverb1")
+    REVERB1POINT5_PATH = _vst_path("reverb1point5")
     REVERB2_PATH = _vst_path("reverb2")
     REVERB3_PATH = _vst_path("reverb3")
+    GATE1_PATH = _vst_path("gate1")
+    GATE2_PATH = _vst_path("gate2")
+    GATE2POINT5_PATH = _vst_path("gate2point5")
+    GATE3_PATH = _vst_path("gate3")
+    MIXCHAIN_PATH = _vst_path("mixchain")
     DOUBLER_PATH = _vst_path("doubler")
     ROBOT_PATH = _vst_path("robot")
 except Exception:
     MASTER_PATH = Path(r"C:\Users\mikha\Desktop\HISE\master2\Binaries\Compiled\VST3\master2.vst3")
     _base = Path(r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3")
     REVERB1_PATH = _base / "reverb1.vst3"
+    REVERB1POINT5_PATH = Path(r"C:\Users\mikha\Desktop\HISE\REVERB1Point5\Binaries\Compiled\VST3\REVERB1Point5.vst3")
     REVERB2_PATH = _base / "reverb2.vst3"
     REVERB3_PATH = _base / "reverb3.vst3"
+    GATE1_PATH = Path(r"C:\Users\mikha\Desktop\HISE\GATE1\Binaries\Compiled\VST3\GATE1.vst3")
+    GATE2_PATH = Path(r"C:\Users\mikha\Desktop\HISE\GATE2\Binaries\Compiled\VST3\GATE2.vst3")
+    GATE2POINT5_PATH = Path(r"C:\Users\mikha\Desktop\HISE\GATE2Point5\Binaries\Compiled\VST3\GATE2Point5.vst3")
+    GATE3_PATH = Path(r"C:\Users\mikha\Desktop\HISE\GATE3\Binaries\Compiled\VST3\GATE3.vst3")
+    MIXCHAIN_PATH = Path(r"C:\Users\mikha\Desktop\HISE\MIXCHAIN\Binaries\Compiled\VST3\MIXCHAIN.vst3")
     DOUBLER_PATH = Path(r"C:\Users\mikha\Desktop\HISE\doubler\Binaries\Compiled\VST3\doubler.vst3")
     ROBOT_PATH = Path(r"C:\Users\mikha\Desktop\HISE\robot\Binaries\Compiled\VST3\robot.vst3")
 if DOUBLER_PATH is None:
@@ -74,13 +86,33 @@ if os.environ.get("VST_BASE"):
                 return p
         return _base / f"{name}.vst3"
 
-    VST3_PATH = _vst_map.get("project1") or _vst_by_name("project1")
+    # Sur staging (VPS) : MAIN_CHAIN_CORE=mixchain → utiliser MIXCHAIN.vst3 au lieu de Project1
+    _main_core = os.environ.get("MAIN_CHAIN_CORE", "").strip().lower()
+    if _main_core == "mixchain":
+        VST3_PATH = _vst_map.get("mixchain") or _vst_by_name("mixchain")
+    else:
+        VST3_PATH = _vst_map.get("project1") or _vst_by_name("project1")
     MASTER_PATH = _vst_map.get("master2") or _vst_map.get("master") or _vst_by_name("master2", "master")
     REVERB1_PATH = _vst_map.get("reverb1") or _vst_by_name("reverb1")
+    REVERB1POINT5_PATH = _vst_map.get("reverb1point5") or _vst_by_name("reverb1point5")
     REVERB2_PATH = _vst_map.get("reverb2") or _vst_by_name("reverb2")
     REVERB3_PATH = _vst_map.get("reverb3new") or _vst_map.get("reverb3") or _vst_by_name("reverb3new", "reverb3")
+    GATE1_PATH = _vst_map.get("gate1") or _vst_by_name("gate1")
+    GATE2_PATH = _vst_map.get("gate2") or _vst_by_name("gate2")
+    GATE2POINT5_PATH = _vst_map.get("gate2point5") or _vst_by_name("gate2point5")
+    GATE3_PATH = _vst_map.get("gate3") or _vst_by_name("gate3")
+    MIXCHAIN_PATH = _vst_map.get("mixchain") or _vst_by_name("mixchain")
     DOUBLER_PATH = _vst_map.get("doubler") or _vst_by_name("doubler")
     ROBOT_PATH = _vst_map.get("robot") or _vst_by_name("robot")
+    # Pour mix_chain_b : résolution des cores depuis le scan VST_BASE (VPS)
+    RESOLVED_CORE_PATHS = {
+        "mixchain": _vst_map.get("mixchain") or _vst_by_name("mixchain"),
+        "project1": _vst_map.get("project1") or _vst_by_name("project1"),
+        "hise_vocal_chain": _vst_map.get("project1") or _vst_by_name("project1"),
+        "globalmix": _vst_map.get("globalmix") or _vst_by_name("globalmix"),
+    }
+else:
+    RESOLVED_CORE_PATHS = {}
 
 # Linux (production Render) : utiliser binaires téléchargés depuis R2
 if sys.platform == "linux":
@@ -536,6 +568,11 @@ def apply_tone_control(audio: np.ndarray, sr: int,
     if audio.ndim == 1:
         return process_channel(audio)
     return np.column_stack([process_channel(audio[:, 0]), process_channel(audio[:, 1])])
+
+
+def apply_air_only(audio: np.ndarray, sr: int) -> np.ndarray:
+    """Air shelf: +2dB from 12.5kHz (sans modifier tone low/mid/high)."""
+    return apply_tone_control(audio, sr, tone_low=2, tone_mid=2, tone_high=2, air=True)
 
 
 def _biquad_peaking(sr: int, freq_hz: float, gain_db: float, q: float):

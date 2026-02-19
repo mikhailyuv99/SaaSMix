@@ -1,4 +1,5 @@
 # Chemins VST trouvés sur ta machine (C:\Program Files\Common Files\VST3\...)
+import os
 # Waves = WaveShell (un seul .vst3 contient tous les plugins Waves ; il faudra peut-etre choisir le plugin par nom/index)
 
 VST3 = r"C:\Program Files\Common Files\VST3"
@@ -7,6 +8,12 @@ VST_PATHS = {
     # Plugin HISE (chaîne vocal principale) – GlobalMix remplace Project1
     "hise_vocal_chain": r"C:\Users\mikha\Desktop\HISE\Project1\Binaries\Compiled\VST3\Project1.vst3",
     "globalmix": r"C:\Users\mikha\Desktop\HISE\GlobalMix\Binaries\Compiled\VST3\GlobalMix.vst3",
+    "mixchain": r"C:\Users\mikha\Desktop\HISE\MIXCHAIN\Binaries\Compiled\VST3\MIXCHAIN.vst3",
+    # Gate 1/2/2.5/3 (noise gate VST3 : 1=léger, 2=moyen, 3=fort GATE2Point5, 4=extrême GATE3)
+    "gate1": r"C:\Users\mikha\Desktop\HISE\GATE1\Binaries\Compiled\VST3\GATE1.vst3",
+    "gate2": r"C:\Users\mikha\Desktop\HISE\GATE2\Binaries\Compiled\VST3\GATE2.vst3",
+    "gate2point5": r"C:\Users\mikha\Desktop\HISE\GATE2Point5\Binaries\Compiled\VST3\GATE2Point5.vst3",
+    "gate3": r"C:\Users\mikha\Desktop\HISE\GATE3\Binaries\Compiled\VST3\GATE3.vst3",
     # EQ1–EQ9 (début de chaîne : Basses / Mids / Aigus)
     "eq1": r"C:\Users\mikha\Desktop\HISE\EQ1\Binaries\Compiled\VST3\EQ1.vst3",
     "eq2": r"C:\Users\mikha\Desktop\HISE\EQ2\Binaries\Compiled\VST3\EQ2.vst3",
@@ -20,8 +27,9 @@ VST_PATHS = {
     # Master HISE (limiter / glue, appliqué au mix final)
     "master2": r"C:\Users\mikha\Desktop\HISE\master2\Binaries\Compiled\VST3\master2.vst3",
     "master": r"C:\Users\mikha\Desktop\HISE\master\Binaries\Compiled\VST3\master.vst3",
-    # Reverb HISE (1=leger, 2=moyen défaut, 3=large) — chaque reverb a son projet HISE
+    # Reverb HISE : 1=Léger REVERB1Point5, 2=Moyen reverb2, 3=Fort reverb3
     "reverb1": r"C:\Users\mikha\Desktop\HISE\reverb1\Binaries\Compiled\VST3\reverb1.vst3",
+    "reverb1point5": r"C:\Users\mikha\Desktop\HISE\REVERB1Point5\Binaries\Compiled\VST3\REVERB1Point5.vst3",
     "reverb2": r"C:\Users\mikha\Desktop\HISE\reverb2\Binaries\Compiled\VST3\reverb2.vst3",
     "reverb3": r"C:\Users\mikha\Desktop\HISE\reverb3new\Binaries\Compiled\VST3\reverb3new.vst3",
     "doubler": r"C:\Users\mikha\Desktop\HISE\doubler\Binaries\Compiled\VST3\doubler.vst3",
@@ -69,3 +77,6 @@ WAVES_PLUGIN_NAMES = {
 }
 
 SAMPLE_RATE = 48000
+
+# Chaîne B (staging) : core fixe
+CHAIN_B_CORE = os.environ.get("MAIN_CHAIN_CORE", "mixchain").strip() or "mixchain"
