@@ -1132,7 +1132,7 @@ export default function Home() {
           mixedAudioUrl: null,
           isMixing: false,
           playMode: "mixed",
-          mixParams: { ...DEFAULT_MIX_PARAMS },
+          mixParams: isSecondTrack ? { ...DEFAULT_MIX_PARAMS } : { ...DEFAULT_MIX_PARAMS, doubler: true, air: true },
         },
       ];
     });
@@ -1457,7 +1457,12 @@ export default function Home() {
       mixedAudioUrl: null,
       isMixing: false,
       playMode: "raw",
-      mixParams: { ...DEFAULT_MIX_PARAMS, phone_fx: category === "adlibs_backs" },
+      mixParams: {
+        ...DEFAULT_MIX_PARAMS,
+        phone_fx: category === "adlibs_backs",
+        doubler: category === "lead_vocal" || category === "adlibs_backs",
+        air: category === "lead_vocal",
+      },
       paramsOpen: false,
       rawFileName: file.name,
     };
@@ -3401,12 +3406,121 @@ export default function Home() {
         )}
 
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
-        <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
-          {currentProject && (
-            <p className="text-center text-slate-400 text-sm font-heading tracking-wide mb-4 max-lg:mb-3 max-md:mb-2 truncate px-2" title={currentProject.name}>
-              {currentProject.name}
-            </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02]">
+          <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0" title={currentProject?.name ?? "SANS TITRE"}>
+            {currentProject?.name ?? "SANS TITRE"}
+          </h2>
+          {tracks.length > 0 && (
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 shrink-0">
+              <div className="flex flex-col items-center justify-center gap-1">
+                {!isPlaying ? (
+                  <button
+                    type="button"
+                    onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); playAll(); }}
+                    className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0"
+                    aria-label={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
+                    title={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
+                  >
+                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); stopAll(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause" title="Pause">
+                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  </button>
+                )}
+                {showPlayNoFileMessage && (
+                  <p className="text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap px-2 py-1 rounded bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
+                    Veuillez d&apos;abord sélectionner un fichier pour chaque piste
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center justify-center">
+                <div
+                  ref={bpmBoxRef}
+                  className="h-10 max-md:h-9 rounded-lg px-4 flex flex-row items-center justify-center gap-2 border border-white/10 bg-white/5 select-none overflow-visible shrink-0 min-w-[7.5rem] text-tagline text-xs max-md:text-[10px]"
+                  title="Molette (desktop) ou toucher la valeur (mobile) pour saisir le BPM (1–300)"
+                >
+                  <span className="uppercase tracking-wider text-slate-400">BPM</span>
+                  <div className="relative inline-flex items-center justify-center min-w-[2.5rem] h-full cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
+                    <span className={`tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] select-none transition-opacity ${bpmInputFocused ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
+                      {bpmInput}
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={300}
+                      value={bpmInput}
+                      onChange={(e) => setBpmInput(e.target.value)}
+                      onFocus={() => setBpmInputFocused(true)}
+                      onBlur={() => {
+                        setBpmInputFocused(false);
+                        const n = Number(bpmInput);
+                        if (!bpmInput || isNaN(n) || n < 1) {
+                          setProjectBpm(120);
+                          setBpmInput("120");
+                        } else {
+                          const clamped = Math.max(1, Math.min(300, Math.round(n)));
+                          setProjectBpm(clamped);
+                          setBpmInput(String(clamped));
+                        }
+                      }}
+                      className="absolute inset-0 w-full min-w-0 text-center bg-white/5 border border-white/10 rounded text-tagline text-xs max-md:text-[10px] tabular-nums text-white focus:outline-none focus:ring-1 focus:ring-white/30 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
+                      style={{ opacity: bpmInputFocused ? 1 : 0 }}
+                      aria-label="BPM (cliquer pour saisir)"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="relative shrink-0 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) { openAuthModal?.("login"); return; }
+                    if (!isPro) { showSubscriptionRequired("Téléchargement du mix réservé aux abonnés. Choisissez une formule pour télécharger vos mixes."); return; }
+                    downloadMix();
+                  }}
+                  disabled={isRenderingMix}
+                  className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
+                    isRenderingMix
+                      ? "border border-white/30 bg-slate-800 text-white"
+                      : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors disabled:opacity-50"
+                  }`}
+                >
+                  {isRenderingMix ? (
+                    <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
+                      RENDU<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
+                    </span>
+                  ) : (
+                    "TÉLÉCHARGER LE MIX"
+                  )}
+                </button>
+              </div>
+              <div className="relative shrink-0 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!user) { openAuthModal?.("login"); return; }
+                    if (!isPro) { showSubscriptionRequired("Mastering réservé aux abonnés. Choisissez une formule pour accéder au mastering."); return; }
+                    runMaster();
+                  }}
+                  disabled={isMastering}
+                  className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap min-w-[7.5rem] ${
+                    isMastering
+                      ? "border border-white/30 bg-slate-800 text-white"
+                      : "border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
+                  }`}
+                >
+                  {isMastering ? (
+                    <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
+                      MASTERING<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
+                    </span>
+                  ) : "MASTERISER"}
+                </button>
+              </div>
+            </div>
           )}
+        </div>
+        <section className={`${tracks.length > 0 ? "pt-4 max-lg:pt-3 max-md:pt-2" : "pt-6 max-lg:pt-5 max-md:pt-4"} px-4 max-lg:px-3 max-md:px-3`} aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.length === 0 && (
             <>
@@ -3537,6 +3651,8 @@ export default function Home() {
                             mixParams: {
                               ...track.mixParams,
                               phone_fx: newCategory === "adlibs_backs",
+                              doubler: newCategory === "lead_vocal" || newCategory === "adlibs_backs" ? true : track.mixParams.doubler,
+                              air: newCategory === "lead_vocal" ? true : track.mixParams.air,
                             },
                           });
                         }}
@@ -3710,6 +3826,8 @@ export default function Home() {
                             mixParams: {
                               ...track.mixParams,
                               phone_fx: newCategory === "adlibs_backs",
+                              doubler: newCategory === "lead_vocal" || newCategory === "adlibs_backs" ? true : track.mixParams.doubler,
+                              air: newCategory === "lead_vocal" ? true : track.mixParams.air,
                             },
                           });
                         }}
@@ -4164,127 +4282,6 @@ export default function Home() {
             </div>
           )}
         </section>
-
-        <div className={`grid gap-3 px-4 py-4 max-lg:px-3 max-lg:py-3 w-full max-w-6xl mx-auto ${tracks.length > 0 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1"}`}>
-            <div className="flex flex-col items-center justify-center gap-1">
-            {tracks.length > 0 ? (
-              !isPlaying ? (
-                <button
-                  type="button"
-                  onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); playAll(); }}
-                  className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0"
-                  aria-label={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
-                  title={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
-                >
-                  <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
-                </button>
-              ) : (
-                <button type="button" onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); stopAll(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause" title="Pause">
-                  <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                </button>
-              )
-            ) : (
-              <div className="w-12 h-12 max-md:w-11 max-md:h-11 shrink-0" />
-            )}
-            {showPlayNoFileMessage && (
-              <p className="text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap px-2 py-1 rounded bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
-                Veuillez d&apos;abord sélectionner un fichier pour chaque piste
-              </p>
-            )}
-            </div>
-
-            {tracks.length > 0 && (
-            <div className="flex items-center justify-center">
-            <div
-              ref={bpmBoxRef}
-              className="h-10 max-md:h-9 rounded-lg px-4 flex flex-row items-center justify-center gap-2 border border-white/10 bg-white/5 select-none overflow-visible shrink-0 min-w-[7.5rem] text-tagline text-xs max-md:text-[10px]"
-              title="Molette (desktop) ou toucher la valeur (mobile) pour saisir le BPM (1–300)"
-            >
-              <span className="uppercase tracking-wider text-slate-400">BPM</span>
-              <div className="relative inline-flex items-center justify-center min-w-[2.5rem] h-full cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
-                <span className={`tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)] select-none transition-opacity ${bpmInputFocused ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
-                  {bpmInput}
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={300}
-                  value={bpmInput}
-                  onChange={(e) => setBpmInput(e.target.value)}
-                  onFocus={() => setBpmInputFocused(true)}
-                  onBlur={() => {
-                    setBpmInputFocused(false);
-                    const n = Number(bpmInput);
-                    if (!bpmInput || isNaN(n) || n < 1) {
-                      setProjectBpm(120);
-                      setBpmInput("120");
-                    } else {
-                      const clamped = Math.max(1, Math.min(300, Math.round(n)));
-                      setProjectBpm(clamped);
-                      setBpmInput(String(clamped));
-                    }
-                  }}
-                  className="absolute inset-0 w-full min-w-0 text-center bg-white/5 border border-white/10 rounded text-tagline text-xs max-md:text-[10px] tabular-nums text-white focus:outline-none focus:ring-1 focus:ring-white/30 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
-                  style={{ opacity: bpmInputFocused ? 1 : 0 }}
-                  aria-label="BPM (cliquer pour saisir)"
-                />
-              </div>
-            </div>
-            </div>
-            )}
-
-            {tracks.length > 0 && (
-              <>
-                <div className="relative shrink-0 flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!user) { openAuthModal?.("login"); return; }
-                      if (!isPro) { showSubscriptionRequired("Téléchargement du mix réservé aux abonnés. Choisissez une formule pour télécharger vos mixes."); return; }
-                      downloadMix();
-                    }}
-                    disabled={isRenderingMix}
-                    className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
-                      isRenderingMix
-                        ? "border border-white/30 bg-slate-800 text-white"
-                        : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors disabled:opacity-50"
-                    }`}
-                  >
-                    {isRenderingMix ? (
-                      <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-                        RENDU<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
-                      </span>
-                    ) : (
-                      "TÉLÉCHARGER LE MIX"
-                    )}
-                  </button>
-                </div>
-                <div className="relative shrink-0 flex items-center justify-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!user) { openAuthModal?.("login"); return; }
-                      if (!isPro) { showSubscriptionRequired("Mastering réservé aux abonnés. Choisissez une formule pour accéder au mastering."); return; }
-                      runMaster();
-                    }}
-                    disabled={isMastering}
-                    className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap min-w-[7.5rem] ${
-                      isMastering
-                        ? "border border-white/30 bg-slate-800 text-white"
-                        : "border border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
-                    }`}
-                  >
-                    {isMastering ? (
-                      <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-                        MASTERING<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
-                      </span>
-                    ) : "MASTERISER"}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
 
         {masterResult && (
           <section ref={masterResultSectionRef} className="mt-10 max-w-xl mx-auto" aria-label="Résultat du master">
