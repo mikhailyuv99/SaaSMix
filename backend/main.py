@@ -467,6 +467,10 @@ def _run_mix_job(
                 t.start()
 
 
+# Taille max du fichier vocal pour /api/track/mix (évite OOM et timeouts)
+MAX_MIX_FILE_SIZE_BYTES = int(os.environ.get("MAX_MIX_FILE_SIZE_BYTES", "104857600"))  # 100 MiB par défaut
+
+
 @app.post("/api/track/mix")
 @limiter.limit("30/minute")
 async def track_mix(
@@ -495,87 +499,111 @@ async def track_mix(
     Démarre le mix d'une piste vocale (chaîne HISE). Retourne immédiatement un jobId.
     Suivre la progression via GET /api/track/mix/status?job_id=...
     """
-    if not file.filename or not file.filename.lower().endswith(".wav"):
-        raise HTTPException(status_code=400, detail="Le fichier doit être un WAV")
-
-    os.makedirs(MIXED_TRACKS_DIR, exist_ok=True)
-    mixed_id = str(uuid.uuid4())
-    job_id = str(uuid.uuid4())
-    input_path = os.path.join(tempfile.gettempdir(), f"mix_input_{os.getpid()}_{mixed_id[:8]}.wav")
-    output_path = os.path.join(MIXED_TRACKS_DIR, f"{mixed_id}.wav")
-
-    content = await file.read()
-    with open(input_path, "wb") as f:
-        f.write(content)
-
-    # Normaliser en PCM 16-bit (format 65534 / float non supporté par hise_vst3_host)
-    normalized_path = os.path.join(tempfile.gettempdir(), f"mix_norm_{os.getpid()}_{mixed_id[:8]}.wav")
+    input_path = None
+    normalized_path = None
     try:
-        audio, sr = read_wav(input_path)
-        write_wav(normalized_path, audio, sr)
-    except Exception as e:
-        if os.path.exists(input_path):
-            try:
-                os.remove(input_path)
-            except OSError:
-                pass
-        raise HTTPException(status_code=400, detail=f"Fichier WAV invalide ou format non supporté: {e}")
-    try:
-        os.remove(input_path)
-    except OSError:
-        pass
-    input_path = normalized_path
+        if not file.filename or not file.filename.lower().endswith(".wav"):
+            raise HTTPException(status_code=400, detail="Le fichier doit être un WAV")
 
-    owner = get_rate_limit_key(request)
-    job_kwargs = {
-        "job_id": job_id,
-        "input_path": input_path,
-        "output_path": output_path,
-        "mixed_id": mixed_id,
-        "deesser": deesser,
-        "deesser_mode": deesser_mode,
-        "noise_gate": noise_gate,
-        "noise_gate_mode": noise_gate_mode,
-        "delay": delay,
-        "delay_intensity": delay_intensity,
-        "bpm": bpm,
-        "delay_division": delay_division,
-        "tone_low": tone_low,
-        "tone_mid": tone_mid,
-        "tone_high": tone_high,
-        "air": _parse_bool_form(air),
-        "reverb": reverb,
-        "reverb_mode": reverb_mode,
-        "phone_fx": _parse_bool_form(phone_fx),
-        "robot": _parse_bool_form(robot),
-        "doubler": _parse_bool_form(doubler),
-    }
-    with _mix_jobs_lock:
-        _mix_jobs[job_id] = {
-            "status": "running",
-            "percent": 0,
-            "step": "",
-            "mixedTrackUrl": None,
-            "error": None,
-            "created_at": time.time(),
-            "owner": owner,
+        content = await file.read()
+        if len(content) > MAX_MIX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Fichier trop volumineux (max {MAX_MIX_FILE_SIZE_BYTES // (1024 * 1024)} Mo). Réduisez la durée ou la résolution.",
+            )
+
+        os.makedirs(MIXED_TRACKS_DIR, exist_ok=True)
+        mixed_id = str(uuid.uuid4())
+        job_id = str(uuid.uuid4())
+        input_path = os.path.join(tempfile.gettempdir(), f"mix_input_{os.getpid()}_{mixed_id[:8]}.wav")
+        output_path = os.path.join(MIXED_TRACKS_DIR, f"{mixed_id}.wav")
+
+        with open(input_path, "wb") as f:
+            f.write(content)
+
+        # Normaliser en PCM 16-bit (format 65534 / float non supporté par hise_vst3_host)
+        normalized_path = os.path.join(tempfile.gettempdir(), f"mix_norm_{os.getpid()}_{mixed_id[:8]}.wav")
+        try:
+            audio, sr = read_wav(input_path)
+            write_wav(normalized_path, audio, sr)
+        except Exception as e:
+            if os.path.exists(input_path):
+                try:
+                    os.remove(input_path)
+                except OSError:
+                    pass
+            raise HTTPException(status_code=400, detail=f"Fichier WAV invalide ou format non supporté: {e}")
+        try:
+            os.remove(input_path)
+        except OSError:
+            pass
+        input_path = normalized_path
+
+        owner = get_rate_limit_key(request)
+        job_kwargs = {
+            "job_id": job_id,
+            "input_path": input_path,
+            "output_path": output_path,
+            "mixed_id": mixed_id,
+            "deesser": deesser,
+            "deesser_mode": deesser_mode,
+            "noise_gate": noise_gate,
+            "noise_gate_mode": noise_gate_mode,
+            "delay": delay,
+            "delay_intensity": delay_intensity,
+            "bpm": bpm,
+            "delay_division": delay_division,
+            "tone_low": tone_low,
+            "tone_mid": tone_mid,
+            "tone_high": tone_high,
+            "air": _parse_bool_form(air),
+            "reverb": reverb,
+            "reverb_mode": reverb_mode,
+            "phone_fx": _parse_bool_form(phone_fx),
+            "robot": _parse_bool_form(robot),
+            "doubler": _parse_bool_form(doubler),
         }
-        running_for_owner = _count_running_for_owner(owner)
-        over_global = _mix_running_count >= MAX_CONCURRENT_MIX_JOBS
-        over_per_owner = running_for_owner >= MAX_CONCURRENT_MIX_JOBS_PER_OWNER
-        if over_global or over_per_owner:
-            _mix_jobs[job_id]["status"] = "queued"
-            _mix_pending_queue.append(job_kwargs)
-        else:
-            _mix_running_count += 1
-            thread = threading.Thread(target=_run_mix_job, kwargs=job_kwargs, daemon=True)
-            thread.start()
+        with _mix_jobs_lock:
+            _mix_jobs[job_id] = {
+                "status": "running",
+                "percent": 0,
+                "step": "",
+                "mixedTrackUrl": None,
+                "error": None,
+                "created_at": time.time(),
+                "owner": owner,
+            }
+            running_for_owner = _count_running_for_owner(owner)
+            over_global = _mix_running_count >= MAX_CONCURRENT_MIX_JOBS
+            over_per_owner = running_for_owner >= MAX_CONCURRENT_MIX_JOBS_PER_OWNER
+            if over_global or over_per_owner:
+                _mix_jobs[job_id]["status"] = "queued"
+                _mix_pending_queue.append(job_kwargs)
+            else:
+                _mix_running_count += 1
+                thread = threading.Thread(target=_run_mix_job, kwargs=job_kwargs, daemon=True)
+                thread.start()
 
-    return {
-        "jobId": job_id,
-        "status": "running",
-        "message": "Mix démarré. Utilisez GET /api/track/mix/status?job_id=... pour la progression.",
-    }
+        return {
+            "jobId": job_id,
+            "status": "running",
+            "message": "Mix démarré. Utilisez GET /api/track/mix/status?job_id=... pour la progression.",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        for p in (input_path, normalized_path):
+            if p and os.path.exists(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+        import traceback
+        traceback.print_exc()
+        err_msg = str(e)
+        if os.environ.get("STAGING") or os.environ.get("DEBUG"):
+            err_msg = err_msg + " | " + traceback.format_exc()
+        raise HTTPException(status_code=500, detail=err_msg)
 
 
 @app.get("/api/track/mix/status")
