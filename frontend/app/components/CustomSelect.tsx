@@ -200,7 +200,7 @@ export function CustomSelect({
         aria-expanded={open}
         aria-label={currentOption?.label}
       >
-        <span className={isCategory ? "block w-full text-center truncate px-1 pr-9" : "block w-full text-center truncate px-1"}>
+        <span className="block w-full text-center truncate px-1 pr-9">
           {currentOption?.label ?? value}
         </span>
         <span className="absolute right-0 top-0 bottom-0 w-9 rounded-r-lg bg-white/5 flex items-center justify-center pointer-events-none" aria-hidden>
