@@ -3476,11 +3476,11 @@ export default function Home() {
             </div>
         ) : (
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02]">
-          <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 shrink-0" title={currentProject?.name ?? "SANS TITRE"}>
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3">
+          <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 shrink-0 max-md:w-full max-md:text-center max-md:order-first" title={currentProject?.name ?? "SANS TITRE"}>
             {currentProject?.name ?? "SANS TITRE"}
           </h2>
-          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-4">
+          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-3 max-md:w-full max-md:grid max-md:grid-cols-2 max-md:justify-items-center max-md:order-last">
               <div className="flex flex-col items-center justify-center gap-1">
                 {!isPlaying ? (
                   <button
@@ -3602,13 +3602,13 @@ export default function Home() {
               </button>
 
               {(track.file?.name ?? track.rawFileName) ? (
-                <div className="pr-10 -mt-5 max-lg:-mt-4">
+                <div className="pr-10 -mt-5 max-lg:-mt-4 max-md:px-10 max-md:pr-10">
                   <div className="py-2 max-lg:py-1.5 flex items-center justify-center">
                     <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName}
                     </p>
                   </div>
-                  <div className="h-px bg-white/10 mx-4 max-lg:mx-3 mb-3 max-lg:mb-2" aria-hidden />
+                  <div className="h-px bg-white/10 mx-4 max-lg:mx-3 max-md:mx-auto max-md:w-[calc(100%-2rem)] mb-3 max-lg:mb-2" aria-hidden />
                 </div>
               ) : null}
 
