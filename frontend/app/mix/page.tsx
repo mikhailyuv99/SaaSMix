@@ -3409,10 +3409,7 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 flex flex-col items-center min-h-[55vh] max-lg:min-h-[50vh] max-md:min-h-[45vh]" aria-label="Pistes">
-              {/* Spacer so dropzone aligns with first track card (same space as project header + section pt) */}
-              <div className="w-full h-[4.5rem] max-lg:h-[4rem] max-md:h-[3.5rem] shrink-0" aria-hidden />
-              <div className="flex-1 w-full flex flex-col items-center justify-center py-8 max-lg:py-6 max-md:py-6">
+        <div className="mt-4 max-lg:mt-3 max-md:mt-2 mb-8 max-lg:mb-6 max-md:mb-4 px-4 max-lg:px-3 max-md:px-3 py-6 max-lg:py-5 max-md:py-4 flex flex-col items-center justify-center min-h-[55vh] max-lg:min-h-[50vh] max-md:min-h-[45vh]" aria-label="Pistes">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
@@ -3475,7 +3472,6 @@ export default function Home() {
                 </span>
                 <span className="text-sm text-slate-400 uppercase">ou cliquez pour choisir un ou plusieurs fichiers</span>
               </button>
-              </div>
             </div>
         ) : (
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
