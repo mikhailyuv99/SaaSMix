@@ -292,8 +292,8 @@ export function HowItWorks() {
           })}
         </div>
 
-        <div className="w-full max-w-2xl mx-auto mt-8 space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4 box-border overflow-x-hidden">
-          <div className="text-center">
+        <div className="w-full max-w-2xl mx-auto mt-8 space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4 box-border overflow-x-hidden pt-2">
+          <div className="text-center -mt-2 relative z-10">
             <Link href="/mix" className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs">
               Essayer ces 4 étapes avec vos pistes
             </Link>
