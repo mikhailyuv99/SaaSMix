@@ -582,6 +582,25 @@ export default function Home() {
   const bpmBoxRef = useRef<HTMLDivElement | null>(null);
   const bpmInputFocusedRef = useRef(false);
   bpmInputFocusedRef.current = bpmInputFocused;
+  // File côté client : max 2 POST /api/track/mix en même temps pour éviter timeouts (6 clics = 2 en vol, 4 en attente)
+  const mixRequestCountRef = useRef(0);
+  const mixRequestQueueRef = useRef<Array<() => void>>([]);
+  const acquireMixSlot = () =>
+    new Promise<void>((resolve) => {
+      if (mixRequestCountRef.current < 2) {
+        mixRequestCountRef.current += 1;
+        resolve();
+      } else {
+        mixRequestQueueRef.current.push(() => resolve());
+      }
+    });
+  const releaseMixSlot = () => {
+    if (mixRequestQueueRef.current.length > 0) {
+      mixRequestQueueRef.current.shift()!();
+    } else {
+      mixRequestCountRef.current = Math.max(0, mixRequestCountRef.current - 1);
+    }
+  };
 
   // Hero upload: prefer in-memory files (client-side nav), fallback to IndexedDB (full reload / old flow).
   const [heroLoadFailed, setHeroLoadFailed] = useState(false);
@@ -2669,14 +2688,20 @@ export default function Home() {
       form.append("robot", String(p.robot));
 
       try {
+        await acquireMixSlot();
         const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
         const headers: Record<string, string> = {};
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`${API_BASE}/api/track/mix`, {
-          method: "POST",
-          headers,
-          body: form,
-        });
+        let res: Response;
+        try {
+          res = await fetch(`${API_BASE}/api/track/mix`, {
+            method: "POST",
+            headers,
+            body: form,
+          });
+        } finally {
+          releaseMixSlot();
+        }
         const data = await res.json().catch(() => ({}));
         if (res.status === 401) {
           logout();
