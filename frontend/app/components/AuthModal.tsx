@@ -20,6 +20,7 @@ export function AuthModal() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
     setOpenAuthModal((m) => {
@@ -27,6 +28,9 @@ export function AuthModal() {
       setMode(m ?? "login");
       setError("");
       setRegisterSuccess(false);
+      setEmail("");
+      setPassword("");
+      setFormKey((k) => k + 1);
     });
     return () => setOpenAuthModal(null);
   }, [setOpenAuthModal]);
@@ -38,6 +42,9 @@ export function AuthModal() {
       setMode(auth);
       setError("");
       setRegisterSuccess(false);
+      setEmail("");
+      setPassword("");
+      setFormKey((k) => k + 1);
       const url = new URL(window.location.href);
       url.searchParams.delete("auth");
       url.searchParams.delete("inscrit");
@@ -85,6 +92,8 @@ export function AuthModal() {
               <p className="text-center text-green-400 text-sm mb-4">Compte créé. Connectez-vous.</p>
             )}
             <form
+              key={formKey}
+              autoComplete="off"
               onSubmit={async (e) => {
                 e.preventDefault();
                 setError("");
@@ -131,7 +140,7 @@ export function AuthModal() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="email"
+                  autoComplete="off"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                   placeholder="vous@exemple.com"
                 />
@@ -146,7 +155,7 @@ export function AuthModal() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
+                  autoComplete="off"
                   className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                   placeholder="••••••••"
                 />
