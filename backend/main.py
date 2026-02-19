@@ -18,6 +18,7 @@ import re
 import sys
 import tempfile
 import threading
+import time
 import uuid
 from datetime import datetime
 import numpy as np
@@ -30,7 +31,7 @@ from typing import Optional, List
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from limiter import limiter
+from limiter import limiter, get_rate_limit_key
 from presets import list_presets
 from mixing_service import MixingService
 from test_hise_direct import master_only as hise_master_only, get_vst_status
@@ -120,6 +121,9 @@ def startup_sync_r2():
                 print("[R2] Sync R2 non effectuée (config manquante ou erreur).")
         except Exception as e:
             print("[R2] Startup sync:", e)
+    # Nettoyage périodique : éviction des jobs expirés + fichiers audio (robustesse multi-utilisateurs)
+    cleanup_thread = threading.Thread(target=_run_periodic_cleanup, daemon=True)
+    cleanup_thread.start()
 
 # Dossier pour les pistes mixées (téléchargement par ID, pas par path)
 MIXED_TRACKS_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_mixed")
@@ -127,9 +131,65 @@ MIXED_TRACKS_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_mixed")
 RENDER_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_render")
 TARGET_SR = 44100
 
-# Jobs de mix (progression réelle) : job_id -> { status, percent, step, mixedTrackUrl?, error? }
+# Jobs de mix (progression réelle) : job_id -> { status, percent, step, mixedTrackUrl?, error?, created_at }
 _mix_jobs: dict = {}
 _mix_jobs_lock = threading.Lock()
+# TTL : jobs et fichiers audio expirés après 24h (évite saturation mémoire/disque multi-utilisateurs)
+MIX_JOB_TTL_SECONDS = 24 * 3600
+AUDIO_FILE_MAX_AGE_SECONDS = 24 * 3600
+_CLEANUP_INTERVAL_SECONDS = 15 * 60  # 15 min
+
+# File d'attente mix : max 4 jobs simultanés, max 2 par user/IP (queue non affichée à l'utilisateur)
+MAX_CONCURRENT_MIX_JOBS = int(os.environ.get("MAX_CONCURRENT_MIX_JOBS", "4"))
+MAX_CONCURRENT_MIX_JOBS_PER_OWNER = 2
+_mix_running_count = 0
+_mix_pending_queue: List[dict] = []
+
+
+def _evict_old_mix_jobs() -> None:
+    """Supprime les jobs de mix plus vieux que MIX_JOB_TTL_SECONDS."""
+    now = time.time()
+    with _mix_jobs_lock:
+        to_remove = [jid for jid, j in _mix_jobs.items() if (j.get("created_at") or 0) < now - MIX_JOB_TTL_SECONDS]
+        for jid in to_remove:
+            del _mix_jobs[jid]
+
+
+def _cleanup_old_audio_dirs() -> None:
+    """Supprime les WAV dans MIXED_TRACKS_DIR et RENDER_DIR plus vieux que AUDIO_FILE_MAX_AGE_SECONDS."""
+    now = time.time()
+    cutoff = now - AUDIO_FILE_MAX_AGE_SECONDS
+    for dir_path in (MIXED_TRACKS_DIR, RENDER_DIR):
+        if not os.path.isdir(dir_path):
+            continue
+        try:
+            for name in os.listdir(dir_path):
+                if not name.endswith(".wav"):
+                    continue
+                path = os.path.join(dir_path, name)
+                try:
+                    if os.path.getmtime(path) < cutoff:
+                        os.remove(path)
+                except OSError:
+                    pass
+        except OSError:
+            pass
+
+
+def _run_periodic_cleanup() -> None:
+    """Boucle en arrière-plan : éviction des jobs expirés + nettoyage des fichiers audio."""
+    while True:
+        time.sleep(_CLEANUP_INTERVAL_SECONDS)
+        try:
+            _evict_old_mix_jobs()
+            _cleanup_old_audio_dirs()
+        except Exception:
+            pass
+
+
+def _count_running_for_owner(owner: str) -> int:
+    """Compte les jobs en status 'running' pour cet owner. À appeler avec _mix_jobs_lock tenu."""
+    return sum(1 for j in _mix_jobs.values() if j.get("status") == "running" and j.get("owner") == owner)
 
 
 def _assemble_tracks(track_paths_gains: List[tuple], output_path: str) -> bool:
@@ -393,6 +453,18 @@ def _run_mix_job(
                 os.remove(input_path)
             except OSError:
                 pass
+        # Libérer un slot et démarrer le prochain job en file d'attente
+        with _mix_jobs_lock:
+            global _mix_running_count
+            _mix_running_count = max(0, _mix_running_count - 1)
+            if _mix_pending_queue:
+                next_job = _mix_pending_queue.pop(0)
+                jid = next_job["job_id"]
+                if jid in _mix_jobs:
+                    _mix_jobs[jid]["status"] = "running"
+                _mix_running_count += 1
+                t = threading.Thread(target=_run_mix_job, kwargs=next_job, daemon=True)
+                t.start()
 
 
 @app.post("/api/track/mix")
@@ -454,6 +526,30 @@ async def track_mix(
         pass
     input_path = normalized_path
 
+    owner = get_rate_limit_key(request)
+    job_kwargs = {
+        "job_id": job_id,
+        "input_path": input_path,
+        "output_path": output_path,
+        "mixed_id": mixed_id,
+        "deesser": deesser,
+        "deesser_mode": deesser_mode,
+        "noise_gate": noise_gate,
+        "noise_gate_mode": noise_gate_mode,
+        "delay": delay,
+        "delay_intensity": delay_intensity,
+        "bpm": bpm,
+        "delay_division": delay_division,
+        "tone_low": tone_low,
+        "tone_mid": tone_mid,
+        "tone_high": tone_high,
+        "air": _parse_bool_form(air),
+        "reverb": reverb,
+        "reverb_mode": reverb_mode,
+        "phone_fx": _parse_bool_form(phone_fx),
+        "robot": _parse_bool_form(robot),
+        "doubler": _parse_bool_form(doubler),
+    }
     with _mix_jobs_lock:
         _mix_jobs[job_id] = {
             "status": "running",
@@ -461,36 +557,19 @@ async def track_mix(
             "step": "",
             "mixedTrackUrl": None,
             "error": None,
+            "created_at": time.time(),
+            "owner": owner,
         }
-
-    thread = threading.Thread(
-        target=_run_mix_job,
-        kwargs={
-            "job_id": job_id,
-            "input_path": input_path,
-            "output_path": output_path,
-            "mixed_id": mixed_id,
-            "deesser": deesser,
-            "deesser_mode": deesser_mode,
-            "noise_gate": noise_gate,
-            "noise_gate_mode": noise_gate_mode,
-            "delay": delay,
-            "delay_intensity": delay_intensity,
-            "bpm": bpm,
-            "delay_division": delay_division,
-            "tone_low": tone_low,
-            "tone_mid": tone_mid,
-            "tone_high": tone_high,
-            "air": _parse_bool_form(air),
-            "reverb": reverb,
-            "reverb_mode": reverb_mode,
-            "phone_fx": _parse_bool_form(phone_fx),
-            "robot": _parse_bool_form(robot),
-            "doubler": _parse_bool_form(doubler),
-        },
-        daemon=True,
-    )
-    thread.start()
+        running_for_owner = _count_running_for_owner(owner)
+        over_global = _mix_running_count >= MAX_CONCURRENT_MIX_JOBS
+        over_per_owner = running_for_owner >= MAX_CONCURRENT_MIX_JOBS_PER_OWNER
+        if over_global or over_per_owner:
+            _mix_jobs[job_id]["status"] = "queued"
+            _mix_pending_queue.append(job_kwargs)
+        else:
+            _mix_running_count += 1
+            thread = threading.Thread(target=_run_mix_job, kwargs=job_kwargs, daemon=True)
+            thread.start()
 
     return {
         "jobId": job_id,
@@ -502,6 +581,7 @@ async def track_mix(
 @app.get("/api/track/mix/status")
 async def track_mix_status(job_id: str):
     """Retourne la progression du mix : status (running|done|error), percent, step, mixedTrackUrl (si done), error (si error)."""
+    _evict_old_mix_jobs()
     with _mix_jobs_lock:
         job = _mix_jobs.get(job_id)
     if not job:
@@ -756,8 +836,8 @@ async def master_render(
 
 
 @app.get("/api/download/render")
-async def download_render(id: str, type: str = "mix"):
-    """Télécharge le mix ou le master (type=mix|master)."""
+async def download_render(request: Request, id: str, type: str = "mix"):
+    """Télécharge le mix ou le master (type=mix|master). Supporte Range pour limiter timeouts sur gros fichiers."""
     if not re.match(r"^[a-f0-9\-]{36}$", id):
         raise HTTPException(status_code=400, detail="ID invalide")
     if type not in ("mix", "master"):
@@ -765,10 +845,43 @@ async def download_render(id: str, type: str = "mix"):
     path = os.path.join(RENDER_DIR, f"{type}_{id}.wav")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Fichier introuvable ou expiré")
-    return FileResponse(
-        path,
+    size = os.path.getsize(path)
+    range_header = request.headers.get("range")
+    if not range_header or not range_header.strip().lower().startswith("bytes="):
+        return FileResponse(
+            path,
+            media_type="audio/wav",
+            filename=f"{type}_render.wav",
+            headers={"Accept-Ranges": "bytes"},
+        )
+    try:
+        parts = range_header.strip().split("=")[1].strip().split("-")
+        start = int(parts[0]) if parts[0] else 0
+        end = int(parts[1]) if len(parts) > 1 and parts[1] else size - 1
+        if start >= size or end >= size:
+            end = size - 1
+        if start > end:
+            start, end = 0, size - 1
+        length = end - start + 1
+    except (ValueError, IndexError):
+        return FileResponse(
+            path,
+            media_type="audio/wav",
+            filename=f"{type}_render.wav",
+            headers={"Accept-Ranges": "bytes"},
+        )
+    with open(path, "rb") as f:
+        f.seek(start)
+        body = f.read(length)
+    return Response(
+        content=body,
+        status_code=206,
         media_type="audio/wav",
-        filename=f"{type}_render.wav",
+        headers={
+            "Accept-Ranges": "bytes",
+            "Content-Range": f"bytes {start}-{end}/{size}",
+            "Content-Length": str(len(body)),
+        },
     )
 
 

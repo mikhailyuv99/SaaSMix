@@ -32,6 +32,30 @@ function formatApiError(e: unknown): string {
   return msg;
 }
 
+/** Fetch avec timeout et retry (robustesse : évite blocage / ERR_CONNECTION_RESET sur gros fichiers). */
+async function fetchWithTimeoutAndRetry(
+  url: string,
+  opts: { timeoutMs?: number; retries?: number; headers?: Record<string, string> } = {}
+): Promise<Response> {
+  const { timeoutMs = 90000, retries = 2, headers } = opts;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { signal: controller.signal, headers });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res;
+    } catch (e) {
+      clearTimeout(timeoutId);
+      lastErr = e;
+      if (attempt < retries) await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+    }
+  }
+  throw lastErr;
+}
+
 type Category = "lead_vocal" | "adlibs_backs" | "instrumental";
 
 export interface MixParams {
@@ -465,6 +489,8 @@ export default function Home() {
   const mixSmoothIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const MIX_ESTIMATED_DURATION_MS = 85000; // 0→99% temps (fallback backend synchrone)
   const MIX_PROGRESS_TICK_MS = 50;
+  const MIX_POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 min max (robustesse : évite polling infini)
+  const MIX_POLL_RETRIES = 3; // retries avec backoff si une requête status échoue
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
     | { type: "confirm"; message: string; onConfirm: () => void; onCancel: () => void }
@@ -2105,7 +2131,8 @@ export default function Home() {
           if (!res.ok) throw new Error(`fetch ${res.status}`);
           ab = await res.arrayBuffer();
           abCacheRef.current.set(cacheKey, ab);
-        } catch {
+        } catch (e) {
+          console.error("[mix] raw fetch failed, trying IDB", id, e);
           const data = await getFileFromIDB(id);
           if (data) {
             const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
@@ -2120,8 +2147,8 @@ export default function Home() {
       if (ab) {
         try {
           entry.raw = await ctx.decodeAudioData(ab.slice(0));
-        } catch {
-          // Decode failed (e.g. unsupported format or device limit); entry.raw stays null
+        } catch (e) {
+          console.error("[mix] raw decode failed", id, e);
         }
       }
     }
@@ -2136,15 +2163,15 @@ export default function Home() {
             mixedAb = await res.arrayBuffer();
             abCacheRef.current.set(cacheKey, mixedAb);
           }
-        } catch {
-          // Fetch failed; entry.mixed stays null
+        } catch (e) {
+          console.error("[mix] mixed fetch failed", id, e);
         }
       }
       if (mixedAb) {
         try {
           entry.mixed = await ctx.decodeAudioData(mixedAb.slice(0));
-        } catch {
-          // Decode failed; entry.mixed stays null
+        } catch (e) {
+          console.error("[mix] mixed decode failed", id, e);
         }
       }
     }
@@ -2423,6 +2450,7 @@ export default function Home() {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
+        buffersRef.current.clear();
 
         try {
           const dest = ctx.createMediaStreamDestination();
@@ -2439,6 +2467,7 @@ export default function Home() {
         ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         contextRef.current = ctx;
         audioUnlockedRef.current = false;
+        buffersRef.current.clear();
       }
 
       unlockAudioContextSync(ctx);
@@ -2686,14 +2715,39 @@ export default function Home() {
           }, MIX_PROGRESS_TICK_MS);
 
           let statusData: { status: string; percent: number; step?: string; mixedTrackUrl?: string; error?: string } = { status: "running", percent: 0 };
-          while (statusData.status === "running") {
-            await new Promise((r) => setTimeout(r, 500));
-            const statusRes = await fetch(`${API_BASE}/api/track/mix/status?job_id=${encodeURIComponent(jobId)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-            if (!statusRes.ok) {
-              statusData = { status: "error", percent: 0, error: "Impossible de récupérer le statut du mix" };
+          const pollStart = Date.now();
+          while (statusData.status === "running" || statusData.status === "queued") {
+            if (Date.now() - pollStart > MIX_POLL_TIMEOUT_MS) {
+              statusData = { status: "error", percent: 0, error: "Mix trop long. Réessayez." };
               break;
             }
-            statusData = await statusRes.json();
+            await new Promise((r) => setTimeout(r, 500));
+            let lastStatusError: string | null = null;
+            for (let attempt = 0; attempt <= MIX_POLL_RETRIES; attempt++) {
+              try {
+                const statusRes = await fetch(`${API_BASE}/api/track/mix/status?job_id=${encodeURIComponent(jobId)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                if (!statusRes.ok) {
+                  lastStatusError = "Impossible de récupérer le statut du mix";
+                  if (attempt < MIX_POLL_RETRIES) {
+                    await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+                    continue;
+                  }
+                  statusData = { status: "error", percent: 0, error: lastStatusError };
+                  break;
+                }
+                statusData = await statusRes.json();
+                lastStatusError = null;
+                break;
+              } catch (e) {
+                lastStatusError = e instanceof Error ? e.message : "Erreur réseau";
+                if (attempt < MIX_POLL_RETRIES) {
+                  await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+                } else {
+                  statusData = { status: "error", percent: 0, error: lastStatusError || "Erreur réseau" };
+                }
+              }
+            }
+            if (statusData.status === "error") break;
             mixProgressTargetRef.current[id] = Math.max(mixProgressTargetRef.current[id] ?? 0, statusData.percent);
           }
 
@@ -2743,7 +2797,11 @@ export default function Home() {
         try {
           const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
           if (!contextRef.current) contextRef.current = ctx;
-          const audioRes = await fetch(fullUrl);
+          const audioRes = await fetchWithTimeoutAndRetry(fullUrl, {
+            timeoutMs: 90000,
+            retries: 2,
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          });
           const ab = await audioRes.arrayBuffer();
           // Cache the ArrayBuffer for mobile re-decode (playAll creates fresh context and clears decoded buffers).
           // Must clone BEFORE decodeAudioData which detaches the original.
@@ -2816,6 +2874,11 @@ export default function Home() {
           preload.load();
           preload.addEventListener("canplay", () => setMixedPreloadReady((p) => ({ ...p, [id]: true })), { once: true });
           preloadMixedRef.current.set(id, preload);
+          setAppModal({
+            type: "alert",
+            message: "Le mix est prêt mais la lecture n'a pas pu être préparée (contexte audio). Cliquez sur Play pour réessayer.",
+            onClose: () => {},
+          });
         }
       } catch (e) {
         if (mixSimulationIntervalRef.current) {
@@ -2880,7 +2943,11 @@ export default function Home() {
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       // Fetch as blob and download locally — avoids popup/new tab on all platforms
-      const dlRes = await fetch(mixUrl);
+      const dlRes = await fetchWithTimeoutAndRetry(mixUrl, {
+        timeoutMs: 120000,
+        retries: 2,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       const blob = await dlRes.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -2929,7 +2996,10 @@ export default function Home() {
       // Decode waveforms BEFORE ending the mastering animation so everything is ready to play
       try {
         const decodeCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-        const [mixBufRes, masterBufRes] = await Promise.all([fetch(mixUrl), fetch(masterUrl)]);
+        const [mixBufRes, masterBufRes] = await Promise.all([
+          fetchWithTimeoutAndRetry(mixUrl, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
+          fetchWithTimeoutAndRetry(masterUrl, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
+        ]);
         const [mixBuf, masterBuf] = await Promise.all([
           mixBufRes.arrayBuffer().then((b) => decodeCtx.decodeAudioData(b)),
           masterBufRes.arrayBuffer().then((b) => decodeCtx.decodeAudioData(b)),
@@ -2941,8 +3011,8 @@ export default function Home() {
           master: { peaks: computeWaveformPeaks(masterBuf, WAVEFORM_POINTS), duration: masterBuf.duration },
         });
         decodeCtx.close();
-      } catch (_) {
-        // Waveform decode failed — still show result, useEffect will retry
+      } catch (e) {
+        console.error("[mix] master waveform decode failed", e);
       }
       stopAll();
       setMasterResult({ mixUrl, masterUrl });
@@ -4366,7 +4436,12 @@ export default function Home() {
                   onClick={async () => {
                     setIsDownloadingMaster(true);
                     try {
-                      const res = await fetch(masterResult.masterUrl);
+                      const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+                      const res = await fetchWithTimeoutAndRetry(masterResult.masterUrl, {
+                        timeoutMs: 120000,
+                        retries: 2,
+                        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                      });
                       const blob = await res.blob();
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
@@ -4376,8 +4451,8 @@ export default function Home() {
                       a.click();
                       a.remove();
                       URL.revokeObjectURL(url);
-                    } catch {
-                      /* fallback : ouvre l'URL directement */
+                    } catch (e) {
+                      console.error("[mix] master download failed", e);
                       window.open(masterResult.masterUrl, "_blank");
                     } finally {
                       setIsDownloadingMaster(false);
