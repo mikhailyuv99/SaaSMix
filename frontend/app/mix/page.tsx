@@ -536,8 +536,7 @@ export default function Home() {
   const [mixDropzoneDragging, setMixDropzoneDragging] = useState(false);
   const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [addTrackDropzoneDragging, setAddTrackDropzoneDragging] = useState(false);
-  const trackMoveDragStartYRef = useRef(0);
-  const trackMoveLastAtRef = useRef(0);
+  const tracksListRef = useRef<HTMLDivElement>(null);
   const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ trackId: string; startIndex: number; offset: number } | null>(null);
 
@@ -3847,10 +3846,11 @@ export default function Home() {
         </div>
         {!projectFolded && (
         <section className="pt-4 max-lg:pt-3 max-md:pt-2 pb-4 max-lg:pb-3 max-md:pb-2.5 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
-          <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
+          <div ref={tracksListRef} className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.map((track, trackIndex) => (
             <Fragment key={track.id}>
             <div
+              data-track-index={trackIndex}
               className={`rounded-xl border backdrop-blur-sm p-5 relative max-lg:p-4 transition-all duration-200 ease-out ${
                 lastMovedTrackId === track.id ? "animate-track-moved" : ""
               } ${
@@ -3873,33 +3873,25 @@ export default function Home() {
                     const el = e.currentTarget as HTMLElement;
                     const pointerId = e.pointerId;
                     el.setPointerCapture(pointerId);
-                    trackMoveDragStartYRef.current = e.clientY;
                     const trackId = track.id;
                     const startIndex = trackIndex;
-                    const threshold = 36;
-                    const cooldownMs = 100;
                     setDragState({ trackId, startIndex, offset: 0 });
                     const onMove = (e2: PointerEvent) => {
-                      const startY = trackMoveDragStartYRef.current;
-                      const delta = e2.clientY - startY;
-                      const now = Date.now();
-                      if (now - trackMoveLastAtRef.current < cooldownMs) return;
-                      setDragState((prev) => {
-                        if (!prev || prev.trackId !== trackId) return prev;
-                        if (delta < -threshold) {
-                          trackMoveDragStartYRef.current = e2.clientY;
-                          trackMoveLastAtRef.current = now;
-                          const newOffset = Math.max(prev.offset - 1, -startIndex);
-                          return { ...prev, offset: newOffset };
+                      const listEl = tracksListRef.current;
+                      if (!listEl) return;
+                      const cards = listEl.querySelectorAll<HTMLElement>("[data-track-index]");
+                      const y = e2.clientY;
+                      for (let i = 0; i < cards.length; i++) {
+                        const rect = cards[i].getBoundingClientRect();
+                        if (y >= rect.top && y <= rect.bottom) {
+                          const targetIndex = parseInt(cards[i].getAttribute("data-track-index") ?? "", 10);
+                          if (Number.isFinite(targetIndex)) {
+                            const newOffset = Math.max(-startIndex, Math.min(tracks.length - 1 - startIndex, targetIndex - startIndex));
+                            setDragState((prev) => (prev && prev.trackId === trackId ? { ...prev, offset: newOffset } : prev));
+                          }
+                          break;
                         }
-                        if (delta > threshold) {
-                          trackMoveDragStartYRef.current = e2.clientY;
-                          trackMoveLastAtRef.current = now;
-                          const newOffset = Math.min(prev.offset + 1, tracks.length - 1 - startIndex);
-                          return { ...prev, offset: newOffset };
-                        }
-                        return prev;
-                      });
+                      }
                     };
                     const onUp = () => {
                       setDragState((prev) => {
@@ -3921,9 +3913,9 @@ export default function Home() {
                 >
                   <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4 shrink-0 text-slate-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                     <path d="M12 4 L8 9 L16 9 Z" />
-                    <rect x="4" y="10" width="16" height="2" />
-                    <rect x="4" y="13" width="16" height="2" />
-                    <rect x="4" y="16" width="16" height="2" />
+                    <rect x="4" y="9.5" width="16" height="1.5" />
+                    <rect x="4" y="11.5" width="16" height="1.5" />
+                    <rect x="4" y="13.5" width="16" height="1.5" />
                     <path d="M12 20 L8 15 L16 15 Z" />
                   </svg>
                 </div>
