@@ -442,8 +442,6 @@ export default function Home() {
   const demoPlaybackRef = useRef<{ playPause: () => void; getIsPlaying: () => boolean } | null>(null);
   const [masterResumeFrom, setMasterResumeFrom] = useState(0);
   const [gainSliderHoveredTrackId, setGainSliderHoveredTrackId] = useState<string | null>(null);
-  const [gainEditTrackId, setGainEditTrackId] = useState<string | null>(null);
-  const [gainEditValue, setGainEditValue] = useState<string>("");
   const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
   const [fileChooserActiveTrackId, setFileChooserActiveTrackId] = useState<string | null>(null);
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
@@ -3765,7 +3763,7 @@ export default function Home() {
                   </div>
                   <div className="h-px bg-white/10 mx-4 max-lg:mx-3 max-md:mx-auto max-md:w-[calc(100%-2rem)] mb-3 max-lg:mb-2" aria-hidden />
                   {track.waveformPeaks != null && track.waveformDuration != null && track.waveformDuration > 0 && (
-                    <div className="flex justify-center -mt-1 mb-1">
+                    <div className="flex justify-center -mt-1 mb-1 max-lg:mt-3 max-lg:mb-2">
                       <button
                         type="button"
                         onClick={() => updateTrack(track.id, { folded: !track.folded })}
@@ -3800,46 +3798,10 @@ export default function Home() {
                     <div className="flex items-center justify-center min-h-[32px]">
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[32px] gap-2 max-lg:hidden">
-                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain</span>
-                      <div
-                        className="relative inline-flex items-center justify-center min-w-[3rem] h-7 rounded border border-white/10 bg-white/5 cursor-text text-tagline text-sm"
-                        onClick={() => {
-                          if (gainEditTrackId !== track.id) {
-                            setGainEditTrackId(track.id);
-                            setGainEditValue(String(track.gain ?? 100));
-                            setTimeout(() => document.getElementById(`gain-input-${track.id}`)?.focus(), 0);
-                          }
-                        }}
-                      >
-                        <span className={`tabular-nums text-white px-2 transition-opacity ${gainEditTrackId === track.id ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
-                          {track.gain}%
-                        </span>
-                        <input
-                          id={`gain-input-${track.id}`}
-                          type="number"
-                          min={0}
-                          max={200}
-                          value={gainEditTrackId === track.id ? gainEditValue : String(track.gain ?? 100)}
-                          onChange={(e) => setGainEditValue(e.target.value)}
-                          onFocus={() => {
-                            setGainEditTrackId(track.id);
-                            setGainEditValue(String(track.gain ?? 100));
-                          }}
-                          onBlur={() => {
-                            const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
-                            updateTrack(track.id, { gain: v });
-                            applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
-                            setGainEditTrackId(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                          }}
-                          className="absolute inset-0 w-full min-w-0 text-center bg-transparent border-none rounded tabular-nums text-white text-sm focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
-                          style={{ opacity: gainEditTrackId === track.id ? 1 : 0 }}
-                          aria-label="Gain (0-200)"
-                        />
-                      </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>
+                        Gain {track.gain ?? 100}%
+                      </span>
                     </div>
                     <div className="flex items-center min-w-0">
                       <label
@@ -3932,46 +3894,10 @@ export default function Home() {
                     <div className="flex items-center justify-center min-h-[32px]">
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[32px] gap-2 max-lg:hidden">
-                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain</span>
-                      <div
-                        className="relative inline-flex items-center justify-center min-w-[3rem] h-7 rounded border border-white/10 bg-white/5 cursor-text text-tagline text-sm"
-                        onClick={() => {
-                          if (gainEditTrackId !== track.id) {
-                            setGainEditTrackId(track.id);
-                            setGainEditValue(String(track.gain ?? 100));
-                            setTimeout(() => document.getElementById(`gain-input-vocal-${track.id}`)?.focus(), 0);
-                          }
-                        }}
-                      >
-                        <span className={`tabular-nums text-white px-2 transition-opacity ${gainEditTrackId === track.id ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
-                          {track.gain}%
-                        </span>
-                        <input
-                          id={`gain-input-vocal-${track.id}`}
-                          type="number"
-                          min={0}
-                          max={200}
-                          value={gainEditTrackId === track.id ? gainEditValue : String(track.gain ?? 100)}
-                          onChange={(e) => setGainEditValue(e.target.value)}
-                          onFocus={() => {
-                            setGainEditTrackId(track.id);
-                            setGainEditValue(String(track.gain ?? 100));
-                          }}
-                          onBlur={() => {
-                            const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
-                            updateTrack(track.id, { gain: v });
-                            applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
-                            setGainEditTrackId(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                          }}
-                          className="absolute inset-0 w-full min-w-0 text-center bg-transparent border-none rounded tabular-nums text-white text-sm focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
-                          style={{ opacity: gainEditTrackId === track.id ? 1 : 0 }}
-                          aria-label="Gain (0-200)"
-                        />
-                      </div>
+                    <div className="flex items-center justify-center min-h-[32px]">
+                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>
+                        Gain {track.gain ?? 100}%
+                      </span>
                     </div>
                     <div className="flex items-center min-w-0">
                       <label
@@ -4175,40 +4101,9 @@ export default function Home() {
                         />
                       </div>
                       <div>
-                        {gainEditTrackId === track.id ? (
-                          <input
-                            type="number"
-                            min={0}
-                            max={200}
-                            value={gainEditValue}
-                            onChange={(e) => setGainEditValue(e.target.value)}
-                            onBlur={() => {
-                              const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
-                              updateTrack(track.id, { gain: v });
-                              applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
-                              setGainEditTrackId(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                            }}
-                            className="w-14 text-center bg-white/5 border border-white/10 rounded px-1 py-0.5 text-tagline text-white text-xs block mb-1 max-md:text-[10px]"
-                            autoFocus
-                          />
-                        ) : (
-                          <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">
-                            Gain{" "}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setGainEditTrackId(track.id);
-                                setGainEditValue(String(track.gain ?? 100));
-                              }}
-                              className="hover:text-white"
-                            >
-                              {track.gain}%
-                            </button>
-                          </span>
-                        )}
+                        <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">
+                          Gain {track.gain ?? 100}%
+                        </span>
                         <input
                           type="range"
                           min="0"
@@ -4312,40 +4207,9 @@ export default function Home() {
                         />
                       </div>
                       <div>
-                        {gainEditTrackId === track.id ? (
-                          <input
-                            type="number"
-                            min={0}
-                            max={200}
-                            value={gainEditValue}
-                            onChange={(e) => setGainEditValue(e.target.value)}
-                            onBlur={() => {
-                              const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
-                              updateTrack(track.id, { gain: v });
-                              applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
-                              setGainEditTrackId(null);
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                            }}
-                            className="w-14 text-center bg-white/5 border border-white/10 rounded px-1 py-0.5 text-tagline text-white text-xs block mb-1 max-md:text-[10px]"
-                            autoFocus
-                          />
-                        ) : (
-                          <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">
-                            Gain{" "}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setGainEditTrackId(track.id);
-                                setGainEditValue(String(track.gain ?? 100));
-                              }}
-                              className="hover:text-white"
-                            >
-                              {track.gain}%
-                            </button>
-                          </span>
-                        )}
+                        <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">
+                          Gain {track.gain ?? 100}%
+                        </span>
                         <input
                           type="range"
                           min="0"
