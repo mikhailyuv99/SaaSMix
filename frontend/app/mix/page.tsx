@@ -3635,7 +3635,7 @@ export default function Home() {
         ) : (
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3">
-          <div className="flex items-center gap-2 min-w-0 shrink-0 max-md:w-full max-md:justify-center max-md:order-first">
+          <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-md:w-full max-md:order-first max-md:justify-center">
             {(() => {
               const fullTitle = currentProject ? currentProject.name : (draftProjectName || "SANS TITRE");
               const displayTitle = fullTitle.length > 20 ? fullTitle.slice(0, 20) + "…" : fullTitle;
@@ -3643,7 +3643,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={openProjectTitleModal}
-                  className="text-slate-200 text-sm font-heading tracking-wide min-w-0 text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate max-w-[20ch]"
+                  className="min-w-0 flex-1 text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate"
                   title={fullTitle}
                   aria-label="Modifier le titre du projet"
                 >
