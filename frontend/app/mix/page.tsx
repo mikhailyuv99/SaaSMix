@@ -1179,7 +1179,7 @@ export default function Home() {
             ? t.mixedAudioUrl
             : `${API_BASE}${t.mixedAudioUrl}`
           : null;
-      decodeTrackBuffers(t.id, rawUrl, mixedUrl).catch(() => {});
+      decodeTrackBuffers(t.id, rawUrl, mixedUrl, t.file).catch(() => {});
     }
   }, [tracks]);
 
@@ -2272,7 +2272,8 @@ export default function Home() {
   async function decodeTrackBuffers(
     id: string,
     rawUrl: string | null,
-    mixedUrl: string | null
+    mixedUrl: string | null,
+    fileFallback?: File | null
   ) {
     const ctx = contextRef.current;
     if (!ctx) return;
@@ -2287,15 +2288,36 @@ export default function Home() {
           ab = await res.arrayBuffer();
           abCacheRef.current.set(cacheKey, ab);
         } catch (e) {
-          console.error("[mix] raw fetch failed, trying IDB", id, e);
-          const data = await getFileFromIDB(id);
-          if (data) {
-            const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
-            const freshUrl = URL.createObjectURL(file);
-            const res2 = await fetch(freshUrl);
-            ab = await res2.arrayBuffer();
-            abCacheRef.current.set(`raw:${freshUrl}`, ab);
-            updateTrack(id, { file, rawAudioUrl: freshUrl, rawFileName: data.fileName });
+          console.error("[mix] raw fetch failed, trying file/IDB", id, e);
+          // On mobile (iOS) fetch(blobUrl) often fails; use in-memory file first, then IDB
+          let resolved = false;
+          if (fileFallback) {
+            try {
+              const freshUrl = URL.createObjectURL(fileFallback);
+              try {
+                const res2 = await fetch(freshUrl);
+                if (res2.ok) {
+                  ab = await res2.arrayBuffer();
+                  abCacheRef.current.set(cacheKey, ab);
+                  abCacheRef.current.set(`raw:${freshUrl}`, ab);
+                  updateTrack(id, { rawAudioUrl: freshUrl });
+                  resolved = true;
+                }
+              } finally {
+                if (!resolved) URL.revokeObjectURL(freshUrl);
+              }
+            } catch (_) {}
+          }
+          if (!resolved) {
+            const data = await getFileFromIDB(id);
+            if (data) {
+              const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
+              const freshUrl = URL.createObjectURL(file);
+              const res2 = await fetch(freshUrl);
+              ab = await res2.arrayBuffer();
+              abCacheRef.current.set(`raw:${freshUrl}`, ab);
+              updateTrack(id, { file, rawAudioUrl: freshUrl, rawFileName: data.fileName });
+            }
           }
         }
       }
@@ -2362,7 +2384,7 @@ export default function Home() {
           ? t.mixedAudioUrl
           : `${API_BASE}${t.mixedAudioUrl}`
         : null;
-    await Promise.all(playable.map((t) => decodeTrackBuffers(t.id, fullRaw(t), fullMixed(t))));
+    await Promise.all(playable.map((t) => decodeTrackBuffers(t.id, fullRaw(t), fullMixed(t), t.file)));
     for (const t of playable) {
       const entry = buffersRef.current.get(t.id) ?? { raw: null, mixed: null };
       if (!entry.raw) throw new Error("Chargement du fichier en cours ou échoué. Réessayez.");
