@@ -3643,7 +3643,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={openProjectTitleModal}
-                  className="min-w-0 flex-1 text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate"
+                  className="w-fit max-w-[20ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0"
                   title={fullTitle}
                   aria-label="Modifier le titre du projet"
                 >
