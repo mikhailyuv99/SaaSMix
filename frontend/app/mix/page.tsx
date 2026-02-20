@@ -32,6 +32,11 @@ function formatApiError(e: unknown): string {
   return msg;
 }
 
+const NO_VALID_TRACK_MSG = "Aucune piste valide";
+function isNoValidTrackError(msg: string): boolean {
+  return msg === "Aucune piste" || /Aucune piste valide/i.test(msg);
+}
+
 /** Fetch avec timeout et retry (robustesse : évite blocage / ERR_CONNECTION_RESET sur gros fichiers). */
 async function fetchWithTimeoutAndRetry(
   url: string,
@@ -444,8 +449,6 @@ export default function Home() {
   const [gainSliderHoveredTrackId, setGainSliderHoveredTrackId] = useState<string | null>(null);
   const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
   const [fileChooserActiveTrackId, setFileChooserActiveTrackId] = useState<string | null>(null);
-  const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
-  const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
   const [projectFolded, setProjectFolded] = useState(false);
   const [draftProjectName, setDraftProjectName] = useState("");
   const [projectBpm, setProjectBpm] = useState(120);
@@ -2569,8 +2572,7 @@ export default function Home() {
       }
 
       if (playable.length === 0) {
-        setShowPlayNoFileMessage(true);
-        setTimeout(() => setShowPlayNoFileMessage(false), 3000);
+        setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
         return;
       }
       try {
@@ -2854,7 +2856,7 @@ export default function Home() {
             } else if (String(errMsg).includes("Unable to allocate") || String(errMsg).includes("MiB for an array")) {
               errMsg = "Mémoire serveur insuffisante. Essayez un fichier audio plus court (ex. < 2 minutes).";
             }
-            setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
+            setAppModal({ type: "alert", message: isNoValidTrackError(String(errMsg)) ? NO_VALID_TRACK_MSG : "Erreur lors du mix : " + errMsg, onClose: () => {} });
             return;
           }
           path = statusData.mixedTrackUrl as string;
@@ -2985,7 +2987,7 @@ export default function Home() {
         const raw = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
         if (raw.includes("3221226505") || raw.includes("0xC0000409")) errMsg = "Le moteur de mix a planté (crash Windows). Réessayez avec un fichier plus court, ou vérifiez les logs backend.";
         else if (raw.includes("Unable to allocate") || raw.includes("MiB for an array")) errMsg = "Mémoire serveur insuffisante. Essayez un fichier audio plus court (ex. < 2 minutes).";
-        setAppModal({ type: "alert", message: "Erreur lors du mix : " + errMsg, onClose: () => {} });
+        setAppModal({ type: "alert", message: isNoValidTrackError(errMsg) ? NO_VALID_TRACK_MSG : "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
     },
     [tracks, updateTrack, projectBpm]
@@ -3008,7 +3010,10 @@ export default function Home() {
 
   const downloadMix = useCallback(async () => {
     const { specs, files } = buildTrackSpecsAndFiles();
-    if (specs.length === 0) return;
+    if (specs.length === 0) {
+      setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
+      return;
+    }
     setIsRenderingMix(true);
     try {
       const form = new FormData();
@@ -3049,7 +3054,8 @@ export default function Home() {
       URL.revokeObjectURL(blobUrl);
     } catch (e) {
       console.error(e);
-      setAppModal({ type: "alert", message: "Erreur : " + formatApiError(e), onClose: () => {} });
+      const msg = formatApiError(e);
+      setAppModal({ type: "alert", message: isNoValidTrackError(msg) ? NO_VALID_TRACK_MSG : "Erreur : " + msg, onClose: () => {} });
     } finally {
       setIsRenderingMix(false);
     }
@@ -3057,7 +3063,10 @@ export default function Home() {
 
   const runMaster = useCallback(async () => {
     const { specs, files } = buildTrackSpecsAndFiles();
-    if (specs.length === 0) return;
+    if (specs.length === 0) {
+      setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
+      return;
+    }
     setIsMastering(true);
     setMasterResult(null);
     try {
@@ -3110,7 +3119,8 @@ export default function Home() {
       setActivePlayer("master");
     } catch (e) {
       console.error(e);
-      setAppModal({ type: "alert", message: "Erreur : " + formatApiError(e), onClose: () => {} });
+      const msg = formatApiError(e);
+      setAppModal({ type: "alert", message: isNoValidTrackError(msg) ? NO_VALID_TRACK_MSG : "Erreur : " + msg, onClose: () => {} });
     } finally {
       setIsMastering(false);
     }
@@ -3698,11 +3708,6 @@ export default function Home() {
                       <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                     </button>
                   )}
-                  {showPlayNoFileMessage && (
-                    <p className="text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap px-2 py-1 rounded bg-[#0a0a0a]/95 border border-white/10 shadow-lg max-md:hidden">
-                      Veuillez d&apos;abord sélectionner un fichier pour chaque piste
-                    </p>
-                  )}
                 </div>
                 <button
                   type="button"
@@ -4012,8 +4017,7 @@ export default function Home() {
                         type="button"
                         onClick={() => {
                           if (!track.file) {
-                            setNoFileMessageTrackId(track.id);
-                            setTimeout(() => setNoFileMessageTrackId(null), 3000);
+                            setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
                             return;
                           }
                           runMix(track.id);
@@ -4033,11 +4037,6 @@ export default function Home() {
                           "Mixer"
                         )}
                       </button>
-                      {noFileMessageTrackId === track.id && (
-                        <p className="absolute left-1/2 top-full z-10 -translate-x-1/2 mt-1 px-2 py-1 rounded text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
-                          Veuillez choisir un fichier
-                        </p>
-                      )}
                     </div>
                     <div className="flex items-center">
                       <button
@@ -4236,8 +4235,7 @@ export default function Home() {
                           type="button"
                           onClick={() => {
                             if (!track.file) {
-                              setNoFileMessageTrackId(track.id);
-                              setTimeout(() => setNoFileMessageTrackId(null), 3000);
+                              setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
                               return;
                             }
                             runMix(track.id);
@@ -4310,9 +4308,6 @@ export default function Home() {
                     </>
                   )}
                 </div>
-                {noFileMessageTrackId === track.id && (
-                  <p className="text-tagline text-slate-400 text-sm max-md:text-xs text-center">Choisir un fichier pour mixer.</p>
-                )}
               </div>
               )}
 
