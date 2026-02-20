@@ -3720,18 +3720,20 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => updateTrack(track.id, { muted: !track.muted })}
-                className={`absolute top-4 left-4 p-2 rounded transition-colors z-10 max-lg:top-0.5 max-lg:left-2 max-lg:p-1.5 ${track.muted ? "text-amber-500/90 hover:bg-white/5 hover:text-amber-400" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
+                className={`absolute top-4 left-4 p-2 rounded transition-colors z-10 max-lg:top-0.5 max-lg:left-2 max-lg:p-1.5 ${track.muted ? "text-red-500 hover:bg-white/5 hover:text-red-400" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
                 title={track.muted ? "Réactiver la piste" : "Couper le son de la piste"}
                 aria-label={track.muted ? "Réactiver le son" : "Couper le son"}
               >
                 {track.muted ? (
-                  <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 8.028 12 8.028 12 9.414v5.172c0 1.386-1.077 1.386-1.707.707L5.586 15z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                  <svg className="w-6 h-6 max-lg:w-5 max-lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                    <line x1="23" y1="9" x2="17" y2="15" />
+                    <line x1="17" y1="9" x2="23" y2="15" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 8.028 12 8.028 12 9.414v5.172c0 1.386-1.077 1.386-1.707.707L5.586 15z" />
+                  <svg className="w-6 h-6 max-lg:w-5 max-lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                    <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07" />
                   </svg>
                 )}
               </button>
