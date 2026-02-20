@@ -109,6 +109,7 @@ interface Track {
   playMode: "raw" | "mixed";
   mixParams: MixParams;
   paramsOpen?: boolean;
+  muted?: boolean;
   waveformPeaks?: number[];
   waveformDuration?: number;
   /** Après restauration depuis sessionStorage : nom du fichier pour recharger depuis IndexedDB */
@@ -278,6 +279,7 @@ function tracksToStorage(tracks: Track[]): string {
       mixedAudioUrl: t.mixedAudioUrl,
       rawAudioUrl: t.rawAudioUrl ?? null,
       rawFileName: t.file?.name ?? t.rawFileName ?? null,
+      muted: t.muted ?? false,
     }))
   );
 }
@@ -296,6 +298,7 @@ function tracksFromStorage(): Track[] | null {
       mixedAudioUrl: string | null;
       rawAudioUrl?: string | null;
       rawFileName?: string | null;
+      muted?: boolean;
     }>;
     if (!Array.isArray(arr) || arr.length === 0) return null;
     return arr.map((t) => ({
@@ -309,6 +312,7 @@ function tracksFromStorage(): Track[] | null {
       playMode: "mixed" as const,
       mixParams: { ...DEFAULT_MIX_PARAMS, ...(t.mixParams || {}) },
       paramsOpen: false,
+      muted: t.muted ?? false,
       rawFileName: t.rawFileName ?? null,
     }));
   } catch {
@@ -1177,6 +1181,7 @@ export default function Home() {
           mixedAudioUrl: null,
           isMixing: false,
           playMode: "mixed",
+          muted: false,
           mixParams: isSecondTrack ? { ...DEFAULT_MIX_PARAMS } : { ...DEFAULT_MIX_PARAMS, doubler: true },
         },
       ];
@@ -1305,7 +1310,7 @@ export default function Home() {
   }, []);
 
   const applyGainToNodes = useCallback(
-    (id: string, gainVal: number, playMode?: "raw" | "mixed", hasMixed?: boolean) => {
+    (id: string, gainVal: number, playMode?: "raw" | "mixed", hasMixed?: boolean, mutedOverride?: boolean) => {
       const g = Math.max(0, Math.min(2, Number(gainVal) / 100));
       if (!Number.isFinite(g)) return;
       try {
@@ -1314,9 +1319,11 @@ export default function Home() {
         const t = tracksRef.current.find((tr) => tr.id === id);
         const pm = playMode ?? t?.playMode ?? "raw";
         const hm = hasMixed ?? Boolean(t?.mixedAudioUrl);
-        if (nodes.mainGain?.gain != null) nodes.mainGain.gain.value = g;
+        const mute = mutedOverride !== undefined ? mutedOverride : (t?.muted ?? false);
+        const effectiveG = mute ? 0 : g;
+        if (nodes.mainGain?.gain != null) nodes.mainGain.gain.value = effectiveG;
         if (nodes.type === "instrumental" && "media" in nodes && nodes.media?.element) {
-          if (!nodes.media.source) nodes.media.element.volume = Math.min(1, g);
+          if (!nodes.media.source) nodes.media.element.volume = Math.min(1, effectiveG);
         }
         if (nodes.type === "vocal") {
           // PC (Web Audio): raw/mixed gains control which buffer is heard; keep in sync with playMode
@@ -1324,8 +1331,8 @@ export default function Home() {
           if (nodes.mixedGain?.gain != null) nodes.mixedGain.gain.value = pm === "mixed" && hm ? 1 : 0;
           // Mobile (HTML5 Audio): element volumes
           if (!nodes.rawMedia?.source && !nodes.mixedMedia?.source) {
-            const rawVol = (pm === "raw" || !hm ? 1 : 0) * Math.min(1, g);
-            const mixedVol = (pm === "mixed" && hm ? 1 : 0) * Math.min(1, g);
+            const rawVol = (pm === "raw" || !hm ? 1 : 0) * Math.min(1, effectiveG);
+            const mixedVol = (pm === "mixed" && hm ? 1 : 0) * Math.min(1, effectiveG);
             if (nodes.rawMedia?.element) nodes.rawMedia.element.volume = rawVol;
             if (nodes.mixedMedia?.element) nodes.mixedMedia.element.volume = mixedVol;
           }
@@ -1345,6 +1352,10 @@ export default function Home() {
       );
       if ("gain" in updates && updates.gain !== undefined) {
         applyGainToNodes(id, updates.gain);
+      }
+      if ("muted" in updates && updates.muted !== undefined) {
+        const t = tracksRef.current.find((tr) => tr.id === id);
+        applyGainToNodes(id, t?.gain ?? 100, t?.playMode, Boolean(t?.mixedAudioUrl), updates.muted);
       }
     },
     [applyGainToNodes, setHasUnsavedChanges]
@@ -1502,6 +1513,7 @@ export default function Home() {
       mixedAudioUrl: null,
       isMixing: false,
       playMode: "raw",
+      muted: false,
       mixParams: {
         ...DEFAULT_MIX_PARAMS,
         phone_fx: category === "adlibs_backs",
@@ -2035,6 +2047,7 @@ export default function Home() {
               mixedAudioUrl: t.mixedAudioUrl ?? null,
               isMixing: false,
               playMode: "mixed",
+              muted: false,
               mixParams: { ...DEFAULT_MIX_PARAMS, ...(t.mixParams || {}) },
               paramsOpen: false,
               rawFileName: t.rawFileName ?? null,
@@ -2313,7 +2326,7 @@ export default function Home() {
         if (!bufEntry?.raw) continue; // buffer not decoded — skip
 
         const trackMainGain = ctx.createGain();
-        trackMainGain.gain.value = Math.max(0, Math.min(2, track.gain / 100));
+        trackMainGain.gain.value = track.muted ? 0 : Math.max(0, Math.min(2, track.gain / 100));
         // On mobile: route through MediaStreamDestination → HTMLAudioElement (iOS audio fix)
         // On PC: connect directly to ctx.destination
         const audioOutput = streamDestRef.current ?? ctx.destination;
@@ -3706,6 +3719,24 @@ export default function Home() {
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
               <button
                 type="button"
+                onClick={() => updateTrack(track.id, { muted: !track.muted })}
+                className={`absolute top-4 left-4 p-2 rounded transition-colors z-10 max-lg:top-0.5 max-lg:left-2 max-lg:p-1.5 ${track.muted ? "text-amber-500/90 hover:bg-white/5 hover:text-amber-400" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
+                title={track.muted ? "Réactiver la piste" : "Couper le son de la piste"}
+                aria-label={track.muted ? "Réactiver le son" : "Couper le son"}
+              >
+                {track.muted ? (
+                  <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 8.028 12 8.028 12 9.414v5.172c0 1.386-1.077 1.386-1.707.707L5.586 15z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 8.028 12 8.028 12 9.414v5.172c0 1.386-1.077 1.386-1.707.707L5.586 15z" />
+                  </svg>
+                )}
+              </button>
+              <button
+                type="button"
                 onClick={() => removeTrack(track.id)}
                 className="absolute top-4 right-4 p-2 rounded text-slate-400 hover:bg-white/5 hover:text-slate-400 transition-colors z-10 max-lg:top-0.5 max-lg:right-2 max-lg:p-1.5"
                 title="Supprimer la piste"
@@ -3714,7 +3745,7 @@ export default function Home() {
               </button>
 
               {(track.file?.name ?? track.rawFileName) ? (
-                <div className="pr-10 -mt-5 max-lg:-mt-4 max-md:px-10 max-md:pr-10">
+                <div className="pl-10 pr-10 -mt-5 max-lg:-mt-4 max-md:px-10 max-md:pr-10">
                   <div className="py-2 max-lg:py-1.5 max-md:py-1.5 flex items-center justify-center">
                     <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName}
@@ -3726,7 +3757,7 @@ export default function Home() {
 
               {/* Affichage PC : 3 colonnes (Choisir, Catégorie, Gain) pour instrumental, 6 colonnes pour vocal */}
               <div
-                className="grid w-full pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
+                className="grid w-full pl-10 pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
                 style={{
                   gridTemplateColumns: track.category === "instrumental" ? "1fr 1.2fr 1fr" : "1fr 1fr 1fr 1fr 1.2fr 1fr",
                 }}
