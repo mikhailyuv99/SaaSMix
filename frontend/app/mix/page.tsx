@@ -543,6 +543,7 @@ export default function Home() {
   const trackDragScrollAccumRef = useRef<number>(0);
   const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ trackId: string; startIndex: number; offset: number } | null>(null);
+  const [moveTrackModal, setMoveTrackModal] = useState<{ trackId: string; trackIndex: number } | null>(null);
 
   useEffect(() => {
     if (lastMovedTrackId == null) return;
@@ -3462,6 +3463,65 @@ export default function Home() {
         </div>
       )}
 
+      {moveTrackModal != null && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog" aria-labelledby="move-track-modal-title" onClick={() => setMoveTrackModal(null)}>
+          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
+            <p id="move-track-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide pb-4 border-b border-white/10">
+              Déplacer la piste
+            </p>
+            <div className="pt-4 flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={moveTrackModal.trackIndex === 0}
+                onClick={() => {
+                  const toIndex = Math.max(0, moveTrackModal.trackIndex - 1);
+                  moveTrackToIndex(moveTrackModal.trackId, moveTrackModal.trackIndex, toIndex);
+                  setLastMovedTrackId(moveTrackModal.trackId);
+                  setMoveTrackModal(null);
+                  setTimeout(() => {
+                    const list = tracksListRef.current;
+                    const card = list?.querySelector(`[data-track-index="${toIndex}"]`);
+                    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }, 80);
+                }}
+                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 text-tagline text-slate-300 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M5 15l7-7 7 7"/></svg>
+                Déplacer en haut
+              </button>
+              <button
+                type="button"
+                disabled={moveTrackModal.trackIndex === tracks.length - 1}
+                onClick={() => {
+                  const toIndex = Math.min(tracks.length - 1, moveTrackModal.trackIndex + 1);
+                  moveTrackToIndex(moveTrackModal.trackId, moveTrackModal.trackIndex, toIndex);
+                  setLastMovedTrackId(moveTrackModal.trackId);
+                  setMoveTrackModal(null);
+                  setTimeout(() => {
+                    const list = tracksListRef.current;
+                    const card = list?.querySelector(`[data-track-index="${toIndex}"]`);
+                    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }, 80);
+                }}
+                className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 text-tagline text-slate-300 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M19 9l-7 7-7-7"/></svg>
+                Déplacer vers le bas
+              </button>
+            </div>
+            <div className="pt-4 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setMoveTrackModal(null)}
+                className="w-full py-3 text-tagline text-slate-400 hover:bg-white/5 transition-colors text-sm rounded-lg"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {categoryModal && (
         <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
           <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl">
@@ -3874,6 +3934,10 @@ export default function Home() {
                   className="touch-none select-none flex items-center justify-center rounded border border-white/10 bg-white/[0.02] p-1.5 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-400 hover:bg-white/5 max-lg:p-1 max-lg:border-transparent max-lg:bg-transparent"
                   onPointerDown={(e) => {
                     e.preventDefault();
+                    if (isMobileRef.current) {
+                      setMoveTrackModal({ trackId: track.id, trackIndex });
+                      return;
+                    }
                     const el = e.currentTarget as HTMLElement;
                     const pointerId = e.pointerId;
                     el.setPointerCapture(pointerId);
@@ -3973,7 +4037,7 @@ export default function Home() {
                     el.addEventListener("pointercancel", onUp);
                   }}
                 >
-                  <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4 shrink-0 text-slate-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <svg className="w-5 h-5 max-lg:hidden shrink-0 text-slate-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                     <circle cx="9" cy="6" r="1.5" />
                     <circle cx="15" cy="6" r="1.5" />
                     <circle cx="9" cy="12" r="1.5" />
@@ -3981,6 +4045,7 @@ export default function Home() {
                     <circle cx="9" cy="18" r="1.5" />
                     <circle cx="15" cy="18" r="1.5" />
                   </svg>
+                  <img src="/icons/deplacer-mobile.png" alt="" className="hidden max-lg:block w-4 h-4 shrink-0 object-contain max-lg:invert max-lg:opacity-80" aria-hidden />
                 </div>
                 <div className="flex items-center gap-1">
                 <button
