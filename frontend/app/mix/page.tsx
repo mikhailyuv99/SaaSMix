@@ -3889,7 +3889,7 @@ export default function Home() {
                     const scrollLoop = () => {
                       const dir = trackDragScrollDirectionRef.current;
                       if (dir !== 0) {
-                        const step = isMobileRef.current ? 10 : 4;
+                        const step = isMobileRef.current ? 5 : 4;
                         window.scrollBy(0, dir * step);
                         trackDragScrollRafRef.current = requestAnimationFrame(scrollLoop);
                       }
