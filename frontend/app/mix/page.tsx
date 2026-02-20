@@ -489,7 +489,7 @@ export default function Home() {
   const mixSmoothIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const MIX_ESTIMATED_DURATION_MS = 85000; // 0→99% temps (fallback backend synchrone)
   const MIX_PROGRESS_TICK_MS = 50;
-  const MIX_POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5 min max (robustesse : évite polling infini)
+  const MIX_POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 min max (robustesse : évite polling infini)
   const MIX_POLL_RETRIES = 3; // retries avec backoff si une requête status échoue
   type AppModal =
     | { type: "prompt"; title: string; defaultValue?: string; onConfirm: (value: string) => void; onCancel: () => void }
