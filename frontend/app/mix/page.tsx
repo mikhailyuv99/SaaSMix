@@ -1250,6 +1250,7 @@ export default function Home() {
   }, [setHasUnsavedChanges]);
 
   const removeTrack = useCallback((id: string) => {
+    downloadAbortRef.current?.abort();
     setHasUnsavedChanges(true);
     deleteFileFromIDB(id);
     const nodes = trackPlaybackRef.current.get(id);
@@ -3091,7 +3092,8 @@ export default function Home() {
 
   const downloadMix = useCallback(async () => {
     const { specs, files } = buildTrackSpecsAndFiles();
-    if (specs.length === 0) {
+    const hasValidTrack = tracks.some((t) => !t.muted && (t.file || t.mixedAudioUrl));
+    if (specs.length === 0 || !hasValidTrack) {
       setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
       return;
     }
@@ -3151,11 +3153,12 @@ export default function Home() {
       downloadAbortRef.current = null;
       setIsRenderingMix(false);
     }
-  }, [buildTrackSpecsAndFiles]);
+  }, [buildTrackSpecsAndFiles, tracks]);
 
   const runMaster = useCallback(async () => {
     const { specs, files } = buildTrackSpecsAndFiles();
-    if (specs.length === 0) {
+    const hasValidTrack = tracks.some((t) => !t.muted && (t.file || t.mixedAudioUrl));
+    if (specs.length === 0 || !hasValidTrack) {
       setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
       return;
     }
