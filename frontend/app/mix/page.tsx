@@ -537,6 +537,7 @@ export default function Home() {
   const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [addTrackDropzoneDragging, setAddTrackDropzoneDragging] = useState(false);
   const tracksListRef = useRef<HTMLDivElement>(null);
+  const trackDragScrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ trackId: string; startIndex: number; offset: number } | null>(null);
 
@@ -3876,24 +3877,45 @@ export default function Home() {
                     const trackId = track.id;
                     const startIndex = trackIndex;
                     setDragState({ trackId, startIndex, offset: 0 });
+                    const EDGE_ZONE = 56;
+                    const SCROLL_STEP = 6;
+                    const clearScrollInterval = () => {
+                      if (trackDragScrollIntervalRef.current) {
+                        clearInterval(trackDragScrollIntervalRef.current);
+                        trackDragScrollIntervalRef.current = null;
+                      }
+                    };
                     const onMove = (e2: PointerEvent) => {
                       const listEl = tracksListRef.current;
-                      if (!listEl) return;
-                      const cards = listEl.querySelectorAll<HTMLElement>("[data-track-index]");
-                      const y = e2.clientY;
-                      for (let i = 0; i < cards.length; i++) {
-                        const rect = cards[i].getBoundingClientRect();
-                        if (y >= rect.top && y <= rect.bottom) {
-                          const targetIndex = parseInt(cards[i].getAttribute("data-track-index") ?? "", 10);
-                          if (Number.isFinite(targetIndex)) {
-                            const newOffset = Math.max(-startIndex, Math.min(tracks.length - 1 - startIndex, targetIndex - startIndex));
-                            setDragState((prev) => (prev && prev.trackId === trackId ? { ...prev, offset: newOffset } : prev));
+                      if (listEl) {
+                        const cards = listEl.querySelectorAll<HTMLElement>("[data-track-index]");
+                        const y = e2.clientY;
+                        for (let i = 0; i < cards.length; i++) {
+                          const rect = cards[i].getBoundingClientRect();
+                          if (y >= rect.top && y <= rect.bottom) {
+                            const targetIndex = parseInt(cards[i].getAttribute("data-track-index") ?? "", 10);
+                            if (Number.isFinite(targetIndex)) {
+                              const newOffset = Math.max(-startIndex, Math.min(tracks.length - 1 - startIndex, targetIndex - startIndex));
+                              setDragState((prev) => (prev && prev.trackId === trackId ? { ...prev, offset: newOffset } : prev));
+                            }
+                            break;
                           }
-                          break;
                         }
+                      }
+                      const cy = e2.clientY;
+                      const winH = typeof window !== "undefined" ? window.innerHeight : 0;
+                      if (cy < EDGE_ZONE) {
+                        clearScrollInterval();
+                        trackDragScrollIntervalRef.current = setInterval(() => { window.scrollBy(0, -SCROLL_STEP); }, 16);
+                      } else if (cy > winH - EDGE_ZONE) {
+                        clearScrollInterval();
+                        trackDragScrollIntervalRef.current = setInterval(() => { window.scrollBy(0, SCROLL_STEP); }, 16);
+                      } else {
+                        clearScrollInterval();
                       }
                     };
                     const onUp = () => {
+                      clearScrollInterval();
                       setDragState((prev) => {
                         if (prev && prev.offset !== 0) {
                           const toIndex = Math.max(0, Math.min(tracks.length - 1, prev.startIndex + prev.offset));
@@ -3912,11 +3934,12 @@ export default function Home() {
                   }}
                 >
                   <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4 shrink-0 text-slate-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d="M12 4 L8 9 L16 9 Z" />
-                    <rect x="4" y="9.5" width="16" height="1.5" />
-                    <rect x="4" y="11.5" width="16" height="1.5" />
-                    <rect x="4" y="13.5" width="16" height="1.5" />
-                    <path d="M12 20 L8 15 L16 15 Z" />
+                    <circle cx="9" cy="6" r="1.5" />
+                    <circle cx="15" cy="6" r="1.5" />
+                    <circle cx="9" cy="12" r="1.5" />
+                    <circle cx="15" cy="12" r="1.5" />
+                    <circle cx="9" cy="18" r="1.5" />
+                    <circle cx="15" cy="18" r="1.5" />
                   </svg>
                 </div>
                 <div className="flex items-center gap-1">
