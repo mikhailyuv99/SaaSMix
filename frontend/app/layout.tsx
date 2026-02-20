@@ -4,6 +4,7 @@ import { Header } from './components/Header'
 import { PageBackground } from './components/PageBackground'
 import { LandingTheme } from './components/LandingTheme'
 import { FooterWithLegalModals } from './components/FooterWithLegalModals'
+import { WhiteScreenUntilReady } from './components/WhiteScreenUntilReady'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { OfflineBanner } from './components/OfflineBanner'
 
@@ -74,6 +75,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className={plusJakarta.variable}>
       <head>
+        <style dangerouslySetInnerHTML={{ __html: 'html,body{background:#fff!important}' }} />
         <link rel="icon" type="image/png" href="/icon.png" />
         <link rel="alternate icon" href="/favicon.ico" />
         {process.env.NEXT_PUBLIC_FB_APP_ID ? (
@@ -83,16 +85,18 @@ export default function RootLayout({
       <body className={`${plusJakarta.className} antialiased text-slate-400 uppercase`}>
         <JsonLd />
         <OfflineBanner />
-        <div className="relative min-h-screen flex flex-col">
-          <PageBackground />
-          <LandingTheme>
-            <>
-              <Header />
-              <div className="relative z-10 flex-1">{children}</div>
-              <FooterWithLegalModals />
-            </>
-          </LandingTheme>
-        </div>
+        <WhiteScreenUntilReady>
+          <div className="relative min-h-screen flex flex-col">
+            <PageBackground />
+            <LandingTheme>
+              <>
+                <Header />
+                <div className="relative z-10 flex-1">{children}</div>
+                <FooterWithLegalModals />
+              </>
+            </LandingTheme>
+          </div>
+        </WhiteScreenUntilReady>
       </body>
     </html>
   )

@@ -136,6 +136,7 @@ export function Header() {
             <Link
               href="/"
               className="font-heading max-lg:hidden flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90"
+              style={{ color: "rgba(255,255,255,0.9)" }}
             >
               <span>SIBERIA</span>
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -147,6 +148,7 @@ export function Header() {
               href="/"
               onClick={handleAccueilClick}
               className="font-heading lg:hidden flex items-center gap-1.5 text-xl font-semibold tracking-tight text-white sm:text-2xl shrink-0 transition-colors hover:text-white/90"
+              style={{ color: "rgba(255,255,255,0.9)" }}
             >
               <span>SIBERIA</span>
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white/90 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
