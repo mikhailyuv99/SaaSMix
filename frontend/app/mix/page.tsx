@@ -3093,6 +3093,8 @@ export default function Home() {
       return;
     }
     setIsRenderingMix(true);
+    const mixAbortController = new AbortController();
+    downloadAbortRef.current = mixAbortController;
     try {
       const form = new FormData();
       form.append("track_specs", JSON.stringify(specs));
@@ -3100,7 +3102,12 @@ export default function Home() {
       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/api/render/mix`, { method: "POST", headers, body: form });
+      const res = await fetch(`${API_BASE}/api/render/mix`, {
+        method: "POST",
+        headers,
+        body: form,
+        signal: mixAbortController.signal,
+      });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
         logout();
@@ -3115,34 +3122,29 @@ export default function Home() {
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       const downloadUrl = mixUrl + (mixUrl.includes("?") ? "&" : "?") + "download=1";
-      const dlController = new AbortController();
-      downloadAbortRef.current = dlController;
-      try {
-        const dlRes = await fetchWithTimeoutAndRetry(downloadUrl, {
-          timeoutMs: 120000,
-          retries: 2,
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          signal: dlController.signal,
-        });
-        const blob = await dlRes.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = "mix.wav";
-        a.style.display = "none";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
-      } finally {
-        downloadAbortRef.current = null;
-      }
+      const dlRes = await fetchWithTimeoutAndRetry(downloadUrl, {
+        timeoutMs: 120000,
+        retries: 2,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        signal: mixAbortController.signal,
+      });
+      const blob = await dlRes.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "mix.wav";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
     } catch (e) {
       if ((e as { name?: string })?.name === "AbortError") return;
       console.error(e);
       const msg = formatApiError(e);
       setAppModal({ type: "alert", message: isNoValidTrackError(msg) ? NO_VALID_TRACK_MSG : "Erreur : " + msg, onClose: () => {} });
     } finally {
+      downloadAbortRef.current = null;
       setIsRenderingMix(false);
     }
   }, [buildTrackSpecsAndFiles]);
