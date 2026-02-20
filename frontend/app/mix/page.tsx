@@ -537,7 +537,8 @@ export default function Home() {
   const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [addTrackDropzoneDragging, setAddTrackDropzoneDragging] = useState(false);
   const tracksListRef = useRef<HTMLDivElement>(null);
-  const trackDragScrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const trackDragScrollRafRef = useRef<number | null>(null);
+  const trackDragScrollDirectionRef = useRef<number>(0);
   const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ trackId: string; startIndex: number; offset: number } | null>(null);
 
@@ -3878,11 +3879,19 @@ export default function Home() {
                     const startIndex = trackIndex;
                     setDragState({ trackId, startIndex, offset: 0 });
                     const EDGE_ZONE = 56;
-                    const SCROLL_STEP = 6;
-                    const clearScrollInterval = () => {
-                      if (trackDragScrollIntervalRef.current) {
-                        clearInterval(trackDragScrollIntervalRef.current);
-                        trackDragScrollIntervalRef.current = null;
+                    const SCROLL_STEP = 2;
+                    const stopScroll = () => {
+                      trackDragScrollDirectionRef.current = 0;
+                      if (trackDragScrollRafRef.current != null) {
+                        cancelAnimationFrame(trackDragScrollRafRef.current);
+                        trackDragScrollRafRef.current = null;
+                      }
+                    };
+                    const scrollLoop = () => {
+                      const dir = trackDragScrollDirectionRef.current;
+                      if (dir !== 0) {
+                        window.scrollBy(0, dir * SCROLL_STEP);
+                        trackDragScrollRafRef.current = requestAnimationFrame(scrollLoop);
                       }
                     };
                     const onMove = (e2: PointerEvent) => {
@@ -3905,17 +3914,17 @@ export default function Home() {
                       const cy = e2.clientY;
                       const winH = typeof window !== "undefined" ? window.innerHeight : 0;
                       if (cy < EDGE_ZONE) {
-                        clearScrollInterval();
-                        trackDragScrollIntervalRef.current = setInterval(() => { window.scrollBy(0, -SCROLL_STEP); }, 16);
+                        trackDragScrollDirectionRef.current = -1;
+                        if (trackDragScrollRafRef.current == null) trackDragScrollRafRef.current = requestAnimationFrame(scrollLoop);
                       } else if (cy > winH - EDGE_ZONE) {
-                        clearScrollInterval();
-                        trackDragScrollIntervalRef.current = setInterval(() => { window.scrollBy(0, SCROLL_STEP); }, 16);
+                        trackDragScrollDirectionRef.current = 1;
+                        if (trackDragScrollRafRef.current == null) trackDragScrollRafRef.current = requestAnimationFrame(scrollLoop);
                       } else {
-                        clearScrollInterval();
+                        stopScroll();
                       }
                     };
                     const onUp = () => {
-                      clearScrollInterval();
+                      stopScroll();
                       setDragState((prev) => {
                         if (prev && prev.offset !== 0) {
                           const toIndex = Math.max(0, Math.min(tracks.length - 1, prev.startIndex + prev.offset));
@@ -3996,7 +4005,7 @@ export default function Home() {
                       {track.file?.name ?? track.rawFileName}
                     </p>
                   </div>
-                  <div className="h-px bg-white/10 mx-4 max-lg:mx-3 max-md:mx-auto max-md:w-[calc(100%-2rem)] mb-3 max-lg:mb-2" aria-hidden />
+                  <div className="h-px bg-white/10 mx-10 max-lg:mx-6 max-md:mx-6 max-md:w-[calc(100%-3rem)] mb-3 max-lg:mb-2" aria-hidden />
                 </div>
               ) : null}
 
