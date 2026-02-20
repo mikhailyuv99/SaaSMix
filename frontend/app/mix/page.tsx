@@ -3725,26 +3725,43 @@ export default function Home() {
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.map((track) => (
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
-              <button
-                type="button"
-                onClick={() => updateTrack(track.id, { muted: !track.muted })}
-                className={`absolute top-4 left-4 p-2 rounded transition-colors z-10 max-lg:top-0.5 max-lg:left-2 max-lg:p-1.5 ${track.muted ? "text-red-500 hover:bg-white/5 hover:text-red-400" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
-                title={track.muted ? "Réactiver la piste" : "Couper le son de la piste"}
-                aria-label={track.muted ? "Réactiver le son" : "Couper le son"}
-              >
-                {track.muted ? (
-                  <svg className="w-6 h-6 max-lg:w-5 max-lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                    <line x1="23" y1="9" x2="17" y2="15" />
-                    <line x1="17" y1="9" x2="23" y2="15" />
-                  </svg>
-                ) : (
-                  <svg className="w-6 h-6 max-lg:w-5 max-lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                    <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07" />
-                  </svg>
+              <div className="absolute top-4 left-4 flex items-center gap-1 z-10 max-lg:top-0.5 max-lg:left-2">
+                <button
+                  type="button"
+                  onClick={() => updateTrack(track.id, { muted: !track.muted })}
+                  className={`p-2 rounded transition-colors max-lg:p-1.5 ${track.muted ? "text-red-500 hover:bg-white/5 hover:text-red-400" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}
+                  title={track.muted ? "Réactiver la piste" : "Couper le son de la piste"}
+                  aria-label={track.muted ? "Réactiver le son" : "Couper le son"}
+                >
+                  {track.muted ? (
+                    <svg className="w-6 h-6 max-lg:w-5 max-lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                      <line x1="23" y1="9" x2="17" y2="15" />
+                      <line x1="17" y1="9" x2="23" y2="15" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6 max-lg:w-5 max-lg:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                      <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07" />
+                    </svg>
+                  )}
+                </button>
+                {track.waveformPeaks != null && track.waveformDuration != null && track.waveformDuration > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => updateTrack(track.id, { folded: !track.folded })}
+                    className="p-1.5 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors max-lg:p-1"
+                    title={track.folded ? "Déplier la piste" : "Replier la piste"}
+                    aria-label={track.folded ? "Déplier la piste" : "Replier la piste"}
+                  >
+                    {track.folded ? (
+                      <svg className="w-4 h-4 max-lg:w-3.5 max-lg:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                    ) : (
+                      <svg className="w-4 h-4 max-lg:w-3.5 max-lg:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                    )}
+                  </button>
                 )}
-              </button>
+              </div>
               <button
                 type="button"
                 onClick={() => removeTrack(track.id)}
@@ -3755,37 +3772,20 @@ export default function Home() {
               </button>
 
               {(track.file?.name ?? track.rawFileName) ? (
-                <div className="pl-10 pr-10 -mt-5 max-lg:-mt-4 max-md:px-10 max-md:pr-10">
+                <div className="pl-24 pr-10 -mt-5 max-lg:pl-20 max-lg:-mt-4 max-md:pl-16 max-md:px-10 max-md:pr-10">
                   <div className="py-2 max-lg:py-1.5 max-md:py-1.5 flex items-center justify-center">
                     <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName}
                     </p>
                   </div>
                   <div className="h-px bg-white/10 mx-4 max-lg:mx-3 max-md:mx-auto max-md:w-[calc(100%-2rem)] mb-3 max-lg:mb-2" aria-hidden />
-                  {track.waveformPeaks != null && track.waveformDuration != null && track.waveformDuration > 0 && (
-                    <div className="flex justify-center -mt-1 mb-1 max-lg:mt-3 max-lg:mb-2">
-                      <button
-                        type="button"
-                        onClick={() => updateTrack(track.id, { folded: !track.folded })}
-                        className="p-1.5 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
-                        title={track.folded ? "Déplier la piste" : "Replier la piste"}
-                        aria-label={track.folded ? "Déplier la piste" : "Replier la piste"}
-                      >
-                        {track.folded ? (
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
-                        )}
-                      </button>
-                    </div>
-                  )}
                 </div>
               ) : null}
 
               {/* Affichage PC : 3 colonnes (Choisir, Catégorie, Gain) pour instrumental, 6 colonnes pour vocal */}
               {!track.folded && (
               <div
-                className="grid w-full pl-10 pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
+                className="grid w-full pl-24 pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
                 style={{
                   gridTemplateColumns: track.category === "instrumental" ? "1fr 1.2fr 1fr" : "1fr 1fr 1fr 1fr 1.2fr 1fr",
                 }}
