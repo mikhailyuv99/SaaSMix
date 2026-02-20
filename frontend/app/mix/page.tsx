@@ -477,6 +477,14 @@ export default function Home() {
     return () => el.removeEventListener("wheel", onWheel);
   }, [tracks.length]);
 
+  // When all tracks are removed (or default dropzone), project title resets to "Sans titre"
+  useEffect(() => {
+    if (tracks.length === 0) {
+      setDraftProjectName("");
+      setCurrentProject(null);
+    }
+  }, [tracks.length]);
+
   const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
   const { user, setUser, logout, openAuthModal } = useAuth();
   const { hasUnsavedChanges, setHasUnsavedChanges, showLeaveModal, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction } = useLeaveWarning();
@@ -3039,12 +3047,13 @@ export default function Home() {
     c === "lead_vocal" || c === "adlibs_backs";
 
   const buildTrackSpecsAndFiles = useCallback(() => {
-    const specs = tracks.map((t) => ({
+    const active = tracks.filter((t) => !t.muted);
+    const specs = active.map((t) => ({
       category: t.category,
       gain: t.gain,
       mixedTrackId: extractMixedTrackId(t.mixedAudioUrl) ?? undefined,
     }));
-    const files = tracks
+    const files = active
       .filter((t) => !t.mixedAudioUrl && t.file)
       .map((t) => t.file!);
     return { specs, files };
@@ -3648,16 +3657,6 @@ export default function Home() {
                     MES PROJETS
                   </button>
                   <span className="text-slate-400 shrink-0">|</span>
-                  <button
-                    type="button"
-                    disabled={user ? (isSavingProject || isCreatingProject) : false}
-                    onClick={() => { if (!user) { openAuthModal?.("login"); return; } createNewProject(); }}
-                  className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
-                  title="Créer un nouveau projet et l’enregistrer dans Mes projets"
-                >
-                  {user && isCreatingProject ? <span className="animate-dots">CRÉATION</span> : "CRÉER UN PROJET"}
-                </button>
-                <span className="text-slate-400 shrink-0">|</span>
                 <div className="relative flex flex-col items-center">
                   <button
                     type="button"
@@ -3699,6 +3698,8 @@ export default function Home() {
                   }
                   e.target.value = "";
                   const first = files[0];
+                  setDraftProjectName("");
+                  setCurrentProject(null);
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
                   if (all.length > files.length) {
                     setAppModal({ type: "alert", message: "Seuls les fichiers .wav ont été chargés. Les autres fichiers (MP3, etc.) n'ont pas été pris en compte.", onClose: () => {} });
@@ -3718,6 +3719,8 @@ export default function Home() {
                     setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés.", onClose: () => {} });
                     return;
                   }
+                  setDraftProjectName("");
+                  setCurrentProject(null);
                   const first = files[0];
                   setCategoryModal(() => ({ file: first, nextFiles: files.slice(1) }));
                   if (all.length > files.length) {
@@ -4261,7 +4264,7 @@ export default function Home() {
                         disabled={track.isMixing}
                         className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
                           track.isMixing
-                            ? "border-white/30 bg-slate-800 text-white"
+                            ? "border border-white/30 bg-slate-800 text-white"
                             : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
                         }`}
                       >
@@ -4479,12 +4482,12 @@ export default function Home() {
                           disabled={track.isMixing}
                           className={`py-2.5 rounded-lg border text-tagline text-sm max-md:text-xs ${
                             track.isMixing
-                              ? "border-white/30 bg-slate-800 text-white disabled:opacity-50"
+                              ? "border border-white/30 bg-slate-800 text-white disabled:opacity-50"
                               : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
                           }`}
                         >
                           {track.isMixing ? (
-                            <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">
+                            <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
                               MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                             </span>
                           ) : (
