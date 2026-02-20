@@ -536,6 +536,7 @@ export default function Home() {
   const [mixDropzoneDragging, setMixDropzoneDragging] = useState(false);
   const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [addTrackDropzoneDragging, setAddTrackDropzoneDragging] = useState(false);
+  const trackMoveDragStartYRef = useRef(0);
 
   useEffect(() => {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
@@ -1247,6 +1248,20 @@ export default function Home() {
       const t = prev.find((x) => x.id === id);
       if (t?.rawAudioUrl) URL.revokeObjectURL(t.rawAudioUrl);
       return prev.filter((x) => x.id !== id);
+    });
+  }, [setHasUnsavedChanges]);
+
+  const moveTrack = useCallback((id: string, direction: "up" | "down") => {
+    setHasUnsavedChanges(true);
+    setTracks((prev) => {
+      const i = prev.findIndex((t) => t.id === id);
+      if (i < 0) return prev;
+      if (direction === "up" && i === 0) return prev;
+      if (direction === "down" && i === prev.length - 1) return prev;
+      const j = direction === "up" ? i - 1 : i + 1;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
     });
   }, [setHasUnsavedChanges]);
 
@@ -3812,9 +3827,48 @@ export default function Home() {
         {!projectFolded && (
         <section className="pt-4 max-lg:pt-3 max-md:pt-2 pb-4 max-lg:pb-3 max-md:pb-2.5 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
-          {tracks.map((track) => (
+          {tracks.map((track, trackIndex) => (
             <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
               <div className="absolute top-4 left-4 flex items-center gap-1 z-10 max-lg:top-0.5 max-lg:left-2">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  title="Maintenir et glisser vers le haut ou le bas pour déplacer la piste"
+                  aria-label="Déplacer la piste (maintenir et glisser)"
+                  className="touch-none select-none flex items-center justify-center rounded border border-white/10 bg-white/[0.02] p-1.5 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-400 hover:bg-white/5 max-lg:p-1 max-lg:border-transparent max-lg:bg-transparent"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    const el = e.currentTarget as HTMLElement;
+                    const pointerId = e.pointerId;
+                    el.setPointerCapture(pointerId);
+                    trackMoveDragStartYRef.current = e.clientY;
+                    const trackId = track.id;
+                    const threshold = 32;
+                    const onMove = (e2: PointerEvent) => {
+                      const startY = trackMoveDragStartYRef.current;
+                      const delta = e2.clientY - startY;
+                      if (delta < -threshold) {
+                        moveTrack(trackId, "up");
+                        trackMoveDragStartYRef.current = e2.clientY;
+                      } else if (delta > threshold) {
+                        moveTrack(trackId, "down");
+                        trackMoveDragStartYRef.current = e2.clientY;
+                      }
+                    };
+                    const onUp = () => {
+                      document.removeEventListener("pointermove", onMove);
+                      document.removeEventListener("pointerup", onUp);
+                      document.removeEventListener("pointercancel", onUp);
+                      try { el.releasePointerCapture(pointerId); } catch (_) {}
+                    };
+                    document.addEventListener("pointermove", onMove);
+                    document.addEventListener("pointerup", onUp);
+                    document.addEventListener("pointercancel", onUp);
+                  }}
+                >
+                  <svg className="w-4 h-4 max-lg:w-3.5 max-lg:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                </div>
+                <div className="flex items-center gap-1 max-lg:ml-1 ml-2">
                 <button
                   type="button"
                   onClick={() => updateTrack(track.id, { muted: !track.muted })}
@@ -3850,6 +3904,7 @@ export default function Home() {
                     )}
                   </button>
                 )}
+                </div>
               </div>
               <button
                 type="button"
