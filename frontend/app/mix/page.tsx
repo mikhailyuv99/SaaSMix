@@ -3850,18 +3850,15 @@ export default function Home() {
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.map((track, trackIndex) => (
             <Fragment key={track.id}>
-              {dragState && dragState.offset !== 0 && dragState.startIndex + dragState.offset === trackIndex && (
-                <div className="min-h-[72px] max-lg:min-h-[64px] rounded-xl border-2 border-dashed border-white/30 bg-white/[0.08] shadow-[inset_0_2px_12px_rgba(0,0,0,0.2)] flex items-center justify-center my-0.5 flex-shrink-0 transition-all duration-150" aria-hidden>
-                  <span className="text-tagline text-slate-400 text-xs">Déposer ici</span>
-                </div>
-              )}
             <div
               className={`rounded-xl border backdrop-blur-sm p-5 relative max-lg:p-4 transition-all duration-200 ease-out ${
                 lastMovedTrackId === track.id ? "animate-track-moved" : ""
               } ${
                 dragState?.trackId === track.id
                   ? "border-white/30 bg-white/[0.08] shadow-lg shadow-black/30 scale-[1.02] z-20"
-                  : "border-white/10 bg-white/[0.04] hover:border-white/15"
+                  : dragState && dragState.offset !== 0 && dragState.startIndex + dragState.offset === trackIndex
+                    ? "border-white/25 bg-white/[0.12] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.2),0_4px_20px_rgba(0,0,0,0.25)]"
+                    : "border-white/10 bg-white/[0.04] hover:border-white/15"
               }`}
             >
               <div className="absolute top-4 left-4 flex items-center gap-1 z-10 max-lg:top-0.5 max-lg:left-2">
@@ -3922,12 +3919,12 @@ export default function Home() {
                     el.addEventListener("pointercancel", onUp);
                   }}
                 >
-                  <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d="M12 5 8 10h8L12 5z" />
-                    <rect x="5" y="10.5" width="14" height="2" rx="1" />
-                    <rect x="5" y="14.5" width="14" height="2" rx="1" />
-                    <rect x="5" y="18.5" width="14" height="2" rx="1" />
-                    <path d="M12 19 8 14h8l-4 5z" />
+                  <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4 shrink-0 text-slate-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                    <path d="M12 4 L8 9 L16 9 Z" />
+                    <rect x="4" y="10" width="16" height="2" />
+                    <rect x="4" y="13" width="16" height="2" />
+                    <rect x="4" y="16" width="16" height="2" />
+                    <path d="M12 20 L8 15 L16 15 Z" />
                   </svg>
                 </div>
                 <div className="flex items-center gap-1">
