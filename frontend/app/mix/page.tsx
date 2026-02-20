@@ -37,25 +37,41 @@ function isNoValidTrackError(msg: string): boolean {
   return msg === "Aucune piste" || /Aucune piste valide/i.test(msg);
 }
 
-/** Fetch avec timeout et retry (robustesse : évite blocage / ERR_CONNECTION_RESET sur gros fichiers). */
+/** Fetch avec timeout et retry (robustesse : évite blocage / ERR_CONNECTION_RESET sur gros fichiers). Optionally aborts when opts.signal aborts. */
 async function fetchWithTimeoutAndRetry(
   url: string,
-  opts: { timeoutMs?: number; retries?: number; headers?: Record<string, string> } = {}
+  opts: { timeoutMs?: number; retries?: number; headers?: Record<string, string>; signal?: AbortSignal } = {}
 ): Promise<Response> {
-  const { timeoutMs = 90000, retries = 2, headers } = opts;
+  const { timeoutMs = 90000, retries = 2, headers, signal: externalSignal } = opts;
   let lastErr: unknown;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    let offAbort: (() => void) | undefined;
     try {
+      if (externalSignal?.aborted) {
+        clearTimeout(timeoutId);
+        throw Object.assign(new Error("Aborted"), { name: "AbortError" });
+      }
+      if (externalSignal) {
+        offAbort = () => externalSignal.removeEventListener("abort", onAbort);
+        const onAbort = () => controller.abort();
+        externalSignal.addEventListener("abort", onAbort);
+      }
       const res = await fetch(url, { signal: controller.signal, headers });
+      offAbort?.();
       clearTimeout(timeoutId);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res;
     } catch (e) {
+      offAbort?.();
       clearTimeout(timeoutId);
       lastErr = e;
-      if (attempt < retries) await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+      if (attempt < retries && (e as { name?: string })?.name !== "AbortError") {
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+      } else {
+        break;
+      }
     }
   }
   throw lastErr;
@@ -487,7 +503,7 @@ export default function Home() {
 
   const [isDownloadingMaster, setIsDownloadingMaster] = useState(false);
   const { user, setUser, logout, openAuthModal } = useAuth();
-  const { hasUnsavedChanges, setHasUnsavedChanges, showLeaveModal, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction } = useLeaveWarning();
+  const { hasUnsavedChanges, setHasUnsavedChanges, showLeaveModal, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction, setOnBeforeLeave } = useLeaveWarning();
   const { isPro, setIsPro, setOpenManageSubscription } = useSubscription();
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
@@ -569,7 +585,17 @@ export default function Home() {
   }, [hasUnsavedChanges, showLeaveModal]);
 
   useEffect(() => {
+    setOnBeforeLeave(() => () => downloadAbortRef.current?.abort());
+    return () => setOnBeforeLeave(null);
+  }, [setOnBeforeLeave]);
+
+  useEffect(() => {
+    if (tracks.length === 0) downloadAbortRef.current?.abort();
+  }, [tracks.length]);
+
+  useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
+      downloadAbortRef.current?.abort();
       if ((window as unknown as { __saas_mix_has_unsaved?: boolean }).__saas_mix_has_unsaved) {
         e.preventDefault();
         e.returnValue = "";
@@ -589,6 +615,7 @@ export default function Home() {
   } | null>(null);
   const masterStartTimeRef = useRef<number>(0);
   const masterResultSectionRef = useRef<HTMLElement | null>(null);
+  const downloadAbortRef = useRef<AbortController | null>(null);
 
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
@@ -3088,22 +3115,30 @@ export default function Home() {
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       const downloadUrl = mixUrl + (mixUrl.includes("?") ? "&" : "?") + "download=1";
-      const dlRes = await fetchWithTimeoutAndRetry(downloadUrl, {
-        timeoutMs: 120000,
-        retries: 2,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      const blob = await dlRes.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = "mix.wav";
-      a.style.display = "none";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
+      const dlController = new AbortController();
+      downloadAbortRef.current = dlController;
+      try {
+        const dlRes = await fetchWithTimeoutAndRetry(downloadUrl, {
+          timeoutMs: 120000,
+          retries: 2,
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          signal: dlController.signal,
+        });
+        const blob = await dlRes.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = "mix.wav";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } finally {
+        downloadAbortRef.current = null;
+      }
     } catch (e) {
+      if ((e as { name?: string })?.name === "AbortError") return;
       console.error(e);
       const msg = formatApiError(e);
       setAppModal({ type: "alert", message: isNoValidTrackError(msg) ? NO_VALID_TRACK_MSG : "Erreur : " + msg, onClose: () => {} });
@@ -4876,13 +4911,16 @@ export default function Home() {
                   disabled={isDownloadingMaster}
                   onClick={async () => {
                     setIsDownloadingMaster(true);
+                    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+                    const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
+                    const dlController = new AbortController();
+                    downloadAbortRef.current = dlController;
                     try {
-                      const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
-                      const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
                       const res = await fetchWithTimeoutAndRetry(masterDownloadUrl, {
                         timeoutMs: 120000,
                         retries: 2,
                         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                        signal: dlController.signal,
                       });
                       const blob = await res.blob();
                       const url = URL.createObjectURL(blob);
@@ -4894,10 +4932,12 @@ export default function Home() {
                       a.remove();
                       URL.revokeObjectURL(url);
                     } catch (e) {
+                      if ((e as { name?: string })?.name === "AbortError") return;
                       console.error("[mix] master download failed", e);
                       const fallbackUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
                       window.open(fallbackUrl, "_blank");
                     } finally {
+                      downloadAbortRef.current = null;
                       setIsDownloadingMaster(false);
                     }
                   }}

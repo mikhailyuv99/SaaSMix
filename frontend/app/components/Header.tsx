@@ -14,7 +14,7 @@ export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, openAuthModal } = useAuth();
-  const { hasUnsavedChanges, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction, showLeaveModal, leaveIntent, leaveConfirmAction } = useLeaveWarning();
+  const { hasUnsavedChanges, setShowLeaveModal, setLeaveIntent, setLeaveConfirmAction, showLeaveModal, leaveIntent, leaveConfirmAction, onBeforeLeave } = useLeaveWarning();
   const { isPro, openManageSubscription, setIsPro } = useSubscription();
   const isHome = pathname === "/";
   const isMix = pathname === "/mix";
@@ -50,6 +50,7 @@ export function Header() {
   };
 
   const handleLeaveConfirm = () => {
+    onBeforeLeave?.();
     if (leaveIntent === "disconnect") {
       if (typeof window !== "undefined") sessionStorage.removeItem("saas_mix_tracks");
       logout();

@@ -13,6 +13,8 @@ type LeaveWarningContextValue = {
   setLeaveIntent: (v: LeaveIntent) => void;
   leaveConfirmAction: (() => void) | null;
   setLeaveConfirmAction: (fn: (() => void) | null) => void;
+  onBeforeLeave: (() => void) | null;
+  setOnBeforeLeave: (fn: (() => void) | null) => void;
 };
 
 const LeaveWarningContext = createContext<LeaveWarningContextValue | null>(null);
@@ -22,9 +24,14 @@ export function LeaveWarningProvider({ children }: { children: React.ReactNode }
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveIntent, setLeaveIntent] = useState<LeaveIntent>(null);
   const [leaveConfirmAction, setLeaveConfirmActionState] = useState<(() => void) | null>(null);
+  const [onBeforeLeave, setOnBeforeLeaveState] = useState<(() => void) | null>(null);
 
   const setLeaveConfirmAction = useCallback((fn: (() => void) | null) => {
     setLeaveConfirmActionState(() => fn);
+  }, []);
+
+  const setOnBeforeLeave = useCallback((fn: (() => void) | null) => {
+    setOnBeforeLeaveState(() => fn);
   }, []);
 
   return (
@@ -38,6 +45,8 @@ export function LeaveWarningProvider({ children }: { children: React.ReactNode }
         setLeaveIntent,
         leaveConfirmAction,
         setLeaveConfirmAction,
+        onBeforeLeave,
+        setOnBeforeLeave,
       }}
     >
       {children}
