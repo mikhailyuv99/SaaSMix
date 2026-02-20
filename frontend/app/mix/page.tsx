@@ -3615,11 +3615,11 @@ export default function Home() {
           </h2>
           <div className="hidden max-md:block max-md:order-2 h-px bg-white/10 max-md:mx-auto max-md:w-[calc(100%-2rem)] shrink-0" aria-hidden />
           <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-3 max-md:w-full max-md:grid max-md:grid-cols-2 max-md:justify-items-stretch max-md:items-center max-md:order-last">
-              <div className="flex flex-row items-center justify-center gap-2 max-md:w-full max-md:h-9 max-md:min-h-[2.25rem] max-md:rounded-lg max-md:border max-md:border-white/10 max-md:bg-white/5 max-md:px-2">
+              <div className="flex flex-row items-center justify-center gap-2 max-md:w-full max-md:justify-center">
                 <button
                   type="button"
                   onClick={() => setProjectFolded(!projectFolded)}
-                  className="p-2 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0 max-md:p-1.5 max-md:border-0 max-md:rounded-lg"
+                  className="w-12 h-12 max-md:w-10 max-md:h-10 flex items-center justify-center rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0"
                   title={projectFolded ? "Déplier le projet" : "Replier le projet"}
                   aria-label={projectFolded ? "Déplier le projet" : "Replier le projet"}
                 >
@@ -3629,7 +3629,7 @@ export default function Home() {
                     <svg className="w-4 h-4 max-md:w-3.5 max-md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
                   )}
                 </button>
-                <div className="flex flex-col items-center justify-center gap-1 max-md:flex-1 max-md:flex-row max-md:justify-center max-md:ml-1">
+                <div className="flex flex-col items-center justify-center gap-1 max-md:flex-row max-md:justify-center">
                   {!isPlaying ? (
                     <button
                       type="button"
