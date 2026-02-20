@@ -3615,7 +3615,7 @@ export default function Home() {
           </h2>
           <div className="hidden max-md:block max-md:order-2 h-px bg-white/10 max-md:mx-auto max-md:w-[calc(100%-2rem)] shrink-0" aria-hidden />
           <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-3 max-md:w-full max-md:grid max-md:grid-cols-2 max-md:justify-items-stretch max-md:items-center max-md:order-last">
-              <div className="flex flex-row items-center justify-center gap-2 max-md:w-full max-md:justify-center">
+              <div className="flex flex-row items-center justify-center gap-2 lg:gap-8 max-md:w-full max-md:justify-center">
                 <button
                   type="button"
                   onClick={() => setProjectFolded(!projectFolded)}
