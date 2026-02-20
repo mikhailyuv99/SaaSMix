@@ -60,14 +60,22 @@ async function main() {
 
   floydSteinberg(data, info.width, info.height, DITHER_STEP);
 
-  const tmpPath = outPath + ".tmp";
-  await sharp(data, {
+  const pipeline = sharp(data, {
     raw: { width: info.width, height: info.height, channels: 4 },
-  })
-    .png()
-    .toFile(tmpPath);
+  });
+
+  const tmpPath = outPath + ".tmp";
+  await pipeline.clone().png().toFile(tmpPath);
   renameSync(tmpPath, outPath);
   console.log("Written:", outPath, info.width, "x", info.height);
+
+  const outWebp = join(frontendDir, "public", "background.webp");
+  await pipeline.clone().webp({ quality: 82, effort: 4 }).toFile(outWebp);
+  console.log("Written:", outWebp);
+
+  const outAvif = join(frontendDir, "public", "background.avif");
+  await pipeline.clone().avif({ quality: 65, effort: 4 }).toFile(outAvif);
+  console.log("Written:", outAvif);
 }
 
 main().catch((e) => {

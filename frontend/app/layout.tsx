@@ -4,7 +4,6 @@ import { Header } from './components/Header'
 import { PageBackground } from './components/PageBackground'
 import { LandingTheme } from './components/LandingTheme'
 import { FooterWithLegalModals } from './components/FooterWithLegalModals'
-import { WhiteScreenUntilReady } from './components/WhiteScreenUntilReady'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { OfflineBanner } from './components/OfflineBanner'
 
@@ -75,7 +74,6 @@ export default function RootLayout({
   return (
     <html lang="fr" className={plusJakarta.variable}>
       <head>
-        <style dangerouslySetInnerHTML={{ __html: 'html,body{background:#fff!important}' }} />
         <link rel="preconnect" href="https://js.stripe.com" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="icon" type="image/png" href="/icon.png" />
@@ -87,18 +85,16 @@ export default function RootLayout({
       <body className={`${plusJakarta.className} antialiased text-slate-400 uppercase`}>
         <JsonLd />
         <OfflineBanner />
-        <WhiteScreenUntilReady>
-          <div className="relative min-h-screen flex flex-col">
-            <PageBackground />
-            <LandingTheme>
-              <>
-                <Header />
-                <div className="relative z-10 flex-1">{children}</div>
-                <FooterWithLegalModals />
-              </>
-            </LandingTheme>
-          </div>
-        </WhiteScreenUntilReady>
+        <div className="relative min-h-screen flex flex-col">
+          <PageBackground />
+          <LandingTheme>
+            <>
+              <Header />
+              <div className="relative z-10 flex-1">{children}</div>
+              <FooterWithLegalModals />
+            </>
+          </LandingTheme>
+        </div>
       </body>
     </html>
   )
