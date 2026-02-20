@@ -110,6 +110,7 @@ interface Track {
   mixParams: MixParams;
   paramsOpen?: boolean;
   muted?: boolean;
+  folded?: boolean;
   waveformPeaks?: number[];
   waveformDuration?: number;
   /** Après restauration depuis sessionStorage : nom du fichier pour recharger depuis IndexedDB */
@@ -280,6 +281,7 @@ function tracksToStorage(tracks: Track[]): string {
       rawAudioUrl: t.rawAudioUrl ?? null,
       rawFileName: t.file?.name ?? t.rawFileName ?? null,
       muted: t.muted ?? false,
+      folded: t.folded ?? false,
     }))
   );
 }
@@ -299,6 +301,7 @@ function tracksFromStorage(): Track[] | null {
       rawAudioUrl?: string | null;
       rawFileName?: string | null;
       muted?: boolean;
+      folded?: boolean;
     }>;
     if (!Array.isArray(arr) || arr.length === 0) return null;
     return arr.map((t) => ({
@@ -313,6 +316,7 @@ function tracksFromStorage(): Track[] | null {
       mixParams: { ...DEFAULT_MIX_PARAMS, ...(t.mixParams || {}) },
       paramsOpen: false,
       muted: t.muted ?? false,
+      folded: t.folded ?? false,
       rawFileName: t.rawFileName ?? null,
     }));
   } catch {
@@ -438,6 +442,8 @@ export default function Home() {
   const demoPlaybackRef = useRef<{ playPause: () => void; getIsPlaying: () => boolean } | null>(null);
   const [masterResumeFrom, setMasterResumeFrom] = useState(0);
   const [gainSliderHoveredTrackId, setGainSliderHoveredTrackId] = useState<string | null>(null);
+  const [gainEditTrackId, setGainEditTrackId] = useState<string | null>(null);
+  const [gainEditValue, setGainEditValue] = useState<string>("");
   const [focusedCategoryTrackId, setFocusedCategoryTrackId] = useState<string | null>(null);
   const [fileChooserActiveTrackId, setFileChooserActiveTrackId] = useState<string | null>(null);
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
@@ -1182,6 +1188,7 @@ export default function Home() {
           isMixing: false,
           playMode: "mixed",
           muted: false,
+          folded: false,
           mixParams: isSecondTrack ? { ...DEFAULT_MIX_PARAMS } : { ...DEFAULT_MIX_PARAMS, doubler: true },
         },
       ];
@@ -1514,6 +1521,7 @@ export default function Home() {
       isMixing: false,
       playMode: "raw",
       muted: false,
+      folded: false,
       mixParams: {
         ...DEFAULT_MIX_PARAMS,
         phone_fx: category === "adlibs_backs",
@@ -2048,6 +2056,7 @@ export default function Home() {
               isMixing: false,
               playMode: "mixed",
               muted: false,
+              folded: false,
               mixParams: { ...DEFAULT_MIX_PARAMS, ...(t.mixParams || {}) },
               paramsOpen: false,
               rawFileName: t.rawFileName ?? null,
@@ -3758,6 +3767,7 @@ export default function Home() {
               ) : null}
 
               {/* Affichage PC : 3 colonnes (Choisir, Catégorie, Gain) pour instrumental, 6 colonnes pour vocal */}
+              {!track.folded && (
               <div
                 className="grid w-full pl-10 pr-10 gap-x-4 gap-y-1.5 max-lg:hidden"
                 style={{
@@ -3773,7 +3783,40 @@ export default function Home() {
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
-                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain {track.gain}%</span>
+                      {gainEditTrackId === track.id ? (
+                        <input
+                          type="number"
+                          min={0}
+                          max={200}
+                          value={gainEditValue}
+                          onChange={(e) => setGainEditValue(e.target.value)}
+                          onBlur={() => {
+                            const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
+                            updateTrack(track.id, { gain: v });
+                            applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
+                            setGainEditTrackId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          }}
+                          className="w-14 text-center bg-white/5 border border-white/10 rounded px-1 py-0.5 text-tagline text-white text-sm"
+                          autoFocus
+                        />
+                      ) : (
+                        <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>
+                          Gain{" "}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setGainEditTrackId(track.id);
+                              setGainEditValue(String(track.gain ?? 100));
+                            }}
+                            className="hover:underline"
+                          >
+                            {track.gain}%
+                          </button>
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center min-w-0">
                       <label
@@ -3867,7 +3910,40 @@ export default function Home() {
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
-                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain {track.gain}%</span>
+                      {gainEditTrackId === track.id ? (
+                        <input
+                          type="number"
+                          min={0}
+                          max={200}
+                          value={gainEditValue}
+                          onChange={(e) => setGainEditValue(e.target.value)}
+                          onBlur={() => {
+                            const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
+                            updateTrack(track.id, { gain: v });
+                            applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
+                            setGainEditTrackId(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                          }}
+                          className="w-14 text-center bg-white/5 border border-white/10 rounded px-1 py-0.5 text-tagline text-white text-sm"
+                          autoFocus
+                        />
+                      ) : (
+                        <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>
+                          Gain{" "}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setGainEditTrackId(track.id);
+                              setGainEditValue(String(track.gain ?? 100));
+                            }}
+                            className="hover:underline"
+                          >
+                            {track.gain}%
+                          </button>
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center min-w-0">
                       <label
@@ -4024,8 +4100,10 @@ export default function Home() {
                   </>
                 )}
               </div>
+              )}
 
               {/* Interface mobile : instrumental = empilement vertical (Choisir, Catégorie, Gain) comme lead ; vocal = layout avec Mixer/Réglages/Avant-Après */}
+              {!track.folded && (
               <div className="lg:hidden space-y-4 mt-4">
                 <div className={track.category === "instrumental" ? "space-y-3" : "space-y-3"}>
                   {track.category === "instrumental" ? (
@@ -4069,7 +4147,40 @@ export default function Home() {
                         />
                       </div>
                       <div>
-                        <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">Gain {track.gain}%</span>
+                        {gainEditTrackId === track.id ? (
+                          <input
+                            type="number"
+                            min={0}
+                            max={200}
+                            value={gainEditValue}
+                            onChange={(e) => setGainEditValue(e.target.value)}
+                            onBlur={() => {
+                              const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
+                              updateTrack(track.id, { gain: v });
+                              applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
+                              setGainEditTrackId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                            }}
+                            className="w-14 text-center bg-white/5 border border-white/10 rounded px-1 py-0.5 text-tagline text-white text-xs block mb-1 max-md:text-[10px]"
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">
+                            Gain{" "}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setGainEditTrackId(track.id);
+                                setGainEditValue(String(track.gain ?? 100));
+                              }}
+                              className="hover:text-white"
+                            >
+                              {track.gain}%
+                            </button>
+                          </span>
+                        )}
                         <input
                           type="range"
                           min="0"
@@ -4173,7 +4284,40 @@ export default function Home() {
                         />
                       </div>
                       <div>
-                        <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">Gain {track.gain}%</span>
+                        {gainEditTrackId === track.id ? (
+                          <input
+                            type="number"
+                            min={0}
+                            max={200}
+                            value={gainEditValue}
+                            onChange={(e) => setGainEditValue(e.target.value)}
+                            onBlur={() => {
+                              const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
+                              updateTrack(track.id, { gain: v });
+                              applyGainToNodes(track.id, v, track.playMode, Boolean(track.mixedAudioUrl));
+                              setGainEditTrackId(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                            }}
+                            className="w-14 text-center bg-white/5 border border-white/10 rounded px-1 py-0.5 text-tagline text-white text-xs block mb-1 max-md:text-[10px]"
+                            autoFocus
+                          />
+                        ) : (
+                          <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">
+                            Gain{" "}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setGainEditTrackId(track.id);
+                                setGainEditValue(String(track.gain ?? 100));
+                              }}
+                              className="hover:text-white"
+                            >
+                              {track.gain}%
+                            </button>
+                          </span>
+                        )}
                         <input
                           type="range"
                           min="0"
@@ -4194,6 +4338,7 @@ export default function Home() {
                   <p className="text-tagline text-slate-400 text-sm max-md:text-xs text-center">Choisir un fichier pour mixer.</p>
                 )}
               </div>
+              )}
 
               {track.waveformPeaks != null && track.waveformDuration != null && track.waveformDuration > 0 && (
                 <div className="mt-4 w-full">
@@ -4216,6 +4361,16 @@ export default function Home() {
                       aria-label="Supprimer le fichier de la piste"
                     >
                       ✕
+                    </button>
+                  </div>
+                  <div className="flex justify-center mt-2">
+                    <button
+                      type="button"
+                      onClick={() => updateTrack(track.id, { folded: !track.folded })}
+                      className="text-tagline text-slate-400 text-sm hover:text-white transition-colors py-1 px-3 rounded border border-white/10 hover:bg-white/5"
+                      title={track.folded ? "Déplier la piste" : "Replier la piste"}
+                    >
+                      {track.folded ? "Déplier" : "Replier"}
                     </button>
                   </div>
                 </div>
