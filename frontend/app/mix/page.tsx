@@ -3879,7 +3879,6 @@ export default function Home() {
                     const startIndex = trackIndex;
                     setDragState({ trackId, startIndex, offset: 0 });
                     const EDGE_ZONE = 56;
-                    const SCROLL_STEP = 4;
                     const stopScroll = () => {
                       trackDragScrollDirectionRef.current = 0;
                       if (trackDragScrollRafRef.current != null) {
@@ -3890,7 +3889,8 @@ export default function Home() {
                     const scrollLoop = () => {
                       const dir = trackDragScrollDirectionRef.current;
                       if (dir !== 0) {
-                        window.scrollBy(0, dir * SCROLL_STEP);
+                        const step = isMobileRef.current ? 10 : 4;
+                        window.scrollBy(0, dir * step);
                         trackDragScrollRafRef.current = requestAnimationFrame(scrollLoop);
                       }
                     };
