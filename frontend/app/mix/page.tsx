@@ -3945,8 +3945,8 @@ export default function Home() {
                     const startIndex = trackIndex;
                     setDragState({ trackId, startIndex, offset: 0 });
                     const EDGE_ZONE = 56;
-                    const SCROLL_PX_PER_SEC = 240;
-                    const SCROLL_MAX_PX_PER_FRAME = 12;
+                    const SCROLL_PX_PER_SEC = 480;
+                    const SCROLL_MAX_PX_PER_FRAME = 8;
                     const TARGET_UPDATE_THROTTLE_MS = 100;
                     const stopScroll = () => {
                       trackDragScrollDirectionRef.current = 0;
