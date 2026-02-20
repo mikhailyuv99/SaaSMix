@@ -1304,6 +1304,7 @@ export default function Home() {
               mixedAudioUrl: null,
               waveformPeaks: undefined,
               waveformDuration: undefined,
+              folded: false,
             }
           : p
       );
@@ -3763,6 +3764,23 @@ export default function Home() {
                     </p>
                   </div>
                   <div className="h-px bg-white/10 mx-4 max-lg:mx-3 max-md:mx-auto max-md:w-[calc(100%-2rem)] mb-3 max-lg:mb-2" aria-hidden />
+                  {track.waveformPeaks != null && track.waveformDuration != null && track.waveformDuration > 0 && (
+                    <div className="flex justify-center -mt-1 mb-1">
+                      <button
+                        type="button"
+                        onClick={() => updateTrack(track.id, { folded: !track.folded })}
+                        className="p-1.5 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                        title={track.folded ? "Déplier la piste" : "Replier la piste"}
+                        aria-label={track.folded ? "Déplier la piste" : "Replier la piste"}
+                      >
+                        {track.folded ? (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : null}
 
@@ -3782,14 +3800,32 @@ export default function Home() {
                     <div className="flex items-center justify-center min-h-[32px]">
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[32px]">
-                      {gainEditTrackId === track.id ? (
+                    <div className="flex items-center justify-center min-h-[32px] gap-2 max-lg:hidden">
+                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain</span>
+                      <div
+                        className="relative inline-flex items-center justify-center min-w-[3rem] h-7 rounded border border-white/10 bg-white/5 cursor-text text-tagline text-sm"
+                        onClick={() => {
+                          if (gainEditTrackId !== track.id) {
+                            setGainEditTrackId(track.id);
+                            setGainEditValue(String(track.gain ?? 100));
+                            setTimeout(() => document.getElementById(`gain-input-${track.id}`)?.focus(), 0);
+                          }
+                        }}
+                      >
+                        <span className={`tabular-nums text-white px-2 transition-opacity ${gainEditTrackId === track.id ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
+                          {track.gain}%
+                        </span>
                         <input
+                          id={`gain-input-${track.id}`}
                           type="number"
                           min={0}
                           max={200}
-                          value={gainEditValue}
+                          value={gainEditTrackId === track.id ? gainEditValue : String(track.gain ?? 100)}
                           onChange={(e) => setGainEditValue(e.target.value)}
+                          onFocus={() => {
+                            setGainEditTrackId(track.id);
+                            setGainEditValue(String(track.gain ?? 100));
+                          }}
                           onBlur={() => {
                             const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
                             updateTrack(track.id, { gain: v });
@@ -3799,24 +3835,11 @@ export default function Home() {
                           onKeyDown={(e) => {
                             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                           }}
-                          className="w-14 text-center bg-white/5 border border-white/10 rounded px-1 py-0.5 text-tagline text-white text-sm"
-                          autoFocus
+                          className="absolute inset-0 w-full min-w-0 text-center bg-transparent border-none rounded tabular-nums text-white text-sm focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
+                          style={{ opacity: gainEditTrackId === track.id ? 1 : 0 }}
+                          aria-label="Gain (0-200)"
                         />
-                      ) : (
-                        <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>
-                          Gain{" "}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setGainEditTrackId(track.id);
-                              setGainEditValue(String(track.gain ?? 100));
-                            }}
-                            className="hover:underline"
-                          >
-                            {track.gain}%
-                          </button>
-                        </span>
-                      )}
+                      </div>
                     </div>
                     <div className="flex items-center min-w-0">
                       <label
@@ -3909,14 +3932,32 @@ export default function Home() {
                     <div className="flex items-center justify-center min-h-[32px]">
                       <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Catégorie</span>
                     </div>
-                    <div className="flex items-center justify-center min-h-[32px]">
-                      {gainEditTrackId === track.id ? (
+                    <div className="flex items-center justify-center min-h-[32px] gap-2 max-lg:hidden">
+                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>Gain</span>
+                      <div
+                        className="relative inline-flex items-center justify-center min-w-[3rem] h-7 rounded border border-white/10 bg-white/5 cursor-text text-tagline text-sm"
+                        onClick={() => {
+                          if (gainEditTrackId !== track.id) {
+                            setGainEditTrackId(track.id);
+                            setGainEditValue(String(track.gain ?? 100));
+                            setTimeout(() => document.getElementById(`gain-input-vocal-${track.id}`)?.focus(), 0);
+                          }
+                        }}
+                      >
+                        <span className={`tabular-nums text-white px-2 transition-opacity ${gainEditTrackId === track.id ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
+                          {track.gain}%
+                        </span>
                         <input
+                          id={`gain-input-vocal-${track.id}`}
                           type="number"
                           min={0}
                           max={200}
-                          value={gainEditValue}
+                          value={gainEditTrackId === track.id ? gainEditValue : String(track.gain ?? 100)}
                           onChange={(e) => setGainEditValue(e.target.value)}
+                          onFocus={() => {
+                            setGainEditTrackId(track.id);
+                            setGainEditValue(String(track.gain ?? 100));
+                          }}
                           onBlur={() => {
                             const v = Math.max(0, Math.min(200, Number(gainEditValue) || 0));
                             updateTrack(track.id, { gain: v });
@@ -3926,24 +3967,11 @@ export default function Home() {
                           onKeyDown={(e) => {
                             if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                           }}
-                          className="w-14 text-center bg-white/5 border border-white/10 rounded px-1 py-0.5 text-tagline text-white text-sm"
-                          autoFocus
+                          className="absolute inset-0 w-full min-w-0 text-center bg-transparent border-none rounded tabular-nums text-white text-sm focus:outline-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text"
+                          style={{ opacity: gainEditTrackId === track.id ? 1 : 0 }}
+                          aria-label="Gain (0-200)"
                         />
-                      ) : (
-                        <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]" : "text-tagline"}>
-                          Gain{" "}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setGainEditTrackId(track.id);
-                              setGainEditValue(String(track.gain ?? 100));
-                            }}
-                            className="hover:underline"
-                          >
-                            {track.gain}%
-                          </button>
-                        </span>
-                      )}
+                      </div>
                     </div>
                     <div className="flex items-center min-w-0">
                       <label
@@ -4361,16 +4389,6 @@ export default function Home() {
                       aria-label="Supprimer le fichier de la piste"
                     >
                       ✕
-                    </button>
-                  </div>
-                  <div className="flex justify-center mt-2">
-                    <button
-                      type="button"
-                      onClick={() => updateTrack(track.id, { folded: !track.folded })}
-                      className="text-tagline text-slate-400 text-sm hover:text-white transition-colors py-1 px-3 rounded border border-white/10 hover:bg-white/5"
-                      title={track.folded ? "Déplier la piste" : "Replier la piste"}
-                    >
-                      {track.folded ? "Déplier" : "Replier"}
                     </button>
                   </div>
                 </div>
