@@ -3481,7 +3481,7 @@ export default function Home() {
                   setTimeout(() => {
                     const list = tracksListRef.current;
                     const card = list?.querySelector(`[data-track-index="${toIndex}"]`);
-                    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "center" });
                   }, 80);
                 }}
                 className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 text-tagline text-slate-300 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
@@ -3500,7 +3500,7 @@ export default function Home() {
                   setTimeout(() => {
                     const list = tracksListRef.current;
                     const card = list?.querySelector(`[data-track-index="${toIndex}"]`);
-                    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "center" });
                   }, 80);
                 }}
                 className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 text-tagline text-slate-300 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
@@ -3945,8 +3945,8 @@ export default function Home() {
                     const startIndex = trackIndex;
                     setDragState({ trackId, startIndex, offset: 0 });
                     const EDGE_ZONE = 56;
-                    const SCROLL_PX_PER_SEC = 560;
-                    const SCROLL_MAX_PX_PER_FRAME = 2;
+                    const SCROLL_PX_PER_SEC = 240;
+                    const SCROLL_MAX_PX_PER_FRAME = 12;
                     const TARGET_UPDATE_THROTTLE_MS = 100;
                     const stopScroll = () => {
                       trackDragScrollDirectionRef.current = 0;
