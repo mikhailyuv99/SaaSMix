@@ -56,7 +56,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
 # Enable CORS (Cross-Origin Resource Sharing) so frontend can talk to backend
-# allow_origin_regex covers Netlify deploy previews (e.g. 69989dfc27b87d00087bd7bb--stagingsiberiamix.netlify.app)
+# allow_origin_regex covers Netlify deploy previews (staging and prod)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -69,7 +69,7 @@ app.add_middleware(
         "https://siberiamix.com",
         "https://www.siberiamix.com",
     ],
-    allow_origin_regex=r"https://[a-z0-9-]+--stagingsiberiamix\.netlify\.app",
+    allow_origin_regex=r"https://[a-z0-9-]+--(?:stagingsiberiamix|siberiamix)\.netlify\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
