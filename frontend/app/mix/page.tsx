@@ -3481,7 +3481,7 @@ export default function Home() {
                   setTimeout(() => {
                     const list = tracksListRef.current;
                     const card = list?.querySelector(`[data-track-index="${toIndex}"]`);
-                    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }, 80);
                 }}
                 className="w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 text-tagline text-slate-300 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
@@ -3925,7 +3925,7 @@ export default function Home() {
                     : "border-white/10 bg-white/[0.04] hover:border-white/15"
               }`}
             >
-              <div className="absolute top-4 left-4 flex items-center gap-1 z-10 max-lg:top-0.5 max-lg:left-2">
+              <div className="absolute top-4 left-4 flex items-center gap-1 z-10 max-lg:top-0.5 max-lg:left-2 max-lg:gap-0.5">
                 <div
                   role="button"
                   tabIndex={0}
@@ -3945,7 +3945,7 @@ export default function Home() {
                     const startIndex = trackIndex;
                     setDragState({ trackId, startIndex, offset: 0 });
                     const EDGE_ZONE = 56;
-                    const SCROLL_PX_PER_SEC = 280;
+                    const SCROLL_PX_PER_SEC = 560;
                     const SCROLL_MAX_PX_PER_FRAME = 2;
                     const TARGET_UPDATE_THROTTLE_MS = 100;
                     const stopScroll = () => {
@@ -4047,7 +4047,7 @@ export default function Home() {
                   </svg>
                   <img src="/icons/deplacer-mobile.png" alt="" className="hidden max-lg:block w-4 h-4 shrink-0 object-contain max-lg:invert max-lg:opacity-80" aria-hidden />
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 max-lg:gap-0.5 max-lg:-ml-0.5">
                 <button
                   type="button"
                   onClick={() => updateTrack(track.id, { muted: !track.muted })}
