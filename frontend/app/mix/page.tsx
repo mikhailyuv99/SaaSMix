@@ -447,6 +447,9 @@ export default function Home() {
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
   const [projectFolded, setProjectFolded] = useState(false);
+  const [projectTitleEditing, setProjectTitleEditing] = useState(false);
+  const [projectTitleInput, setProjectTitleInput] = useState("");
+  const projectTitleInputRef = useRef<HTMLInputElement>(null);
   const [projectBpm, setProjectBpm] = useState(120);
   const [bpmInput, setBpmInput] = useState("120");
   const [bpmInputFocused, setBpmInputFocused] = useState(false);
@@ -3610,12 +3613,67 @@ export default function Home() {
         ) : (
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3">
-          <h2 className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 shrink-0 max-md:w-full max-md:text-center max-md:order-first" title={currentProject?.name ?? "SANS TITRE"}>
-            {currentProject?.name ?? "SANS TITRE"}
-          </h2>
+          <div className="flex items-center gap-2 min-w-0 shrink max-md:w-full max-md:order-first max-md:justify-center max-md:flex-col">
+            {projectTitleEditing ? (
+              <input
+                ref={projectTitleInputRef}
+                type="text"
+                value={projectTitleInput}
+                onChange={(e) => setProjectTitleInput(e.target.value)}
+                onBlur={() => {
+                  const name = projectTitleInput.trim();
+                  if (currentProject && name && name !== currentProject.name) {
+                    renameProject(currentProject.id, name);
+                  }
+                  setProjectTitleEditing(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                  if (e.key === "Escape") {
+                    setProjectTitleInput(currentProject?.name ?? "SANS TITRE");
+                    setProjectTitleEditing(false);
+                    projectTitleInputRef.current?.blur();
+                  }
+                }}
+                className="text-slate-200 text-sm font-heading tracking-wide bg-white/5 border border-white/10 rounded px-2 py-1 min-w-0 max-w-full focus:outline-none focus:ring-1 focus:ring-white/30"
+                aria-label="Nom du projet"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentProject) {
+                    setProjectTitleInput(currentProject.name);
+                    setProjectTitleEditing(true);
+                    setTimeout(() => projectTitleInputRef.current?.focus(), 0);
+                  } else {
+                    saveProject();
+                  }
+                }}
+                className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:cursor-default"
+                title={currentProject ? "Cliquer pour renommer" : "Cliquer pour sauvegarder le projet"}
+              >
+                {currentProject?.name ?? "SANS TITRE"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => { if (!user) { openAuthModal?.("login"); return; } saveProject(); }}
+              disabled={user ? (isSavingProject || isCreatingProject) : false}
+              className="p-1.5 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0 disabled:opacity-50 max-md:hidden"
+              title="Sauvegarder le projet"
+              aria-label="Sauvegarder le projet"
+            >
+              {user && (isSavingProject || isCreatingProject) ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12s5.373 12 12 12v-4a8 8 0 01-8-8z"/></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              )}
+            </button>
+          </div>
           <div className="hidden max-md:block max-md:order-2 h-px bg-white/10 max-md:mx-auto max-md:w-[calc(100%-2rem)] shrink-0" aria-hidden />
           <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-3 max-md:w-full max-md:grid max-md:grid-cols-2 max-md:justify-items-stretch max-md:items-center max-md:order-last">
-              <div className="flex flex-row items-center justify-center gap-2 lg:gap-8 max-md:w-full max-md:justify-center">
+              <div className="flex flex-row items-center gap-2 lg:gap-8 max-md:w-full max-md:justify-start max-md:pl-0">
                 <button
                   type="button"
                   onClick={() => setProjectFolded(!projectFolded)}
@@ -3651,6 +3709,20 @@ export default function Home() {
                     </p>
                   )}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => { if (!user) { openAuthModal?.("login"); return; } saveProject(); }}
+                  disabled={user ? (isSavingProject || isCreatingProject) : false}
+                  className="hidden max-md:flex w-10 h-10 flex-shrink-0 items-center justify-center rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors disabled:opacity-50"
+                  title="Sauvegarder le projet"
+                  aria-label="Sauvegarder le projet"
+                >
+                  {user && (isSavingProject || isCreatingProject) ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12s5.373 12 12 12v-4a8 8 0 01-8-8z"/></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  )}
+                </button>
               </div>
               <div className="flex items-center justify-center">
                 <div
