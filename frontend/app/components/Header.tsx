@@ -1,14 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { useState, useEffect, useCallback } from "react";
-import { ManageSubscriptionModal } from "./ManageSubscriptionModal";
 import { PricingModal } from "./PricingModal";
-import { SubscriptionModal } from "./SubscriptionModal";
+
+const ManageSubscriptionModal = dynamic(
+  () => import("./ManageSubscriptionModal").then((m) => ({ default: m.ManageSubscriptionModal })),
+  { ssr: false }
+);
+const SubscriptionModal = dynamic(
+  () => import("./SubscriptionModal").then((m) => ({ default: m.SubscriptionModal })),
+  { ssr: false }
+);
 
 export function Header() {
   const pathname = usePathname();
@@ -288,7 +296,7 @@ export function Header() {
         </div>
       )}
 
-      {user && (
+      {user && manageSubscriptionOpen && (
         <ManageSubscriptionModal
           isOpen={manageSubscriptionOpen}
           onClose={() => setManageSubscriptionOpen(false)}
@@ -316,9 +324,10 @@ export function Header() {
         onClose={() => setPricingModalOpen(false)}
         onSelectPlan={handlePricingSelectPlan}
       />
-      <SubscriptionModal
-        isOpen={subscriptionModalOpen}
-        onClose={() => {
+      {subscriptionModalOpen && (
+        <SubscriptionModal
+          isOpen={subscriptionModalOpen}
+          onClose={() => {
           setSubscriptionModalOpen(false);
           setCheckoutPriceId(null);
           setCheckoutLabel(null);
@@ -346,6 +355,7 @@ export function Header() {
         initialPriceId={checkoutPriceId}
         initialLabel={checkoutLabel}
       />
+      )}
     </>
   );
 }

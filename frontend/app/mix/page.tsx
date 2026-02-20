@@ -2,10 +2,9 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo, memo, Fragment } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { CustomSelect } from "../components/CustomSelect";
-import { SubscriptionModal } from "../components/SubscriptionModal";
-import { ManageSubscriptionModal } from "../components/ManageSubscriptionModal";
 import {
   TrustBullets,
   HowItWorks,
@@ -19,6 +18,15 @@ import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { getHeroPendingFiles } from "../lib/heroPendingFiles";
+
+const SubscriptionModal = dynamic(
+  () => import("../components/SubscriptionModal").then((m) => ({ default: m.SubscriptionModal })),
+  { ssr: false }
+);
+const ManageSubscriptionModal = dynamic(
+  () => import("../components/ManageSubscriptionModal").then((m) => ({ default: m.ManageSubscriptionModal })),
+  { ssr: false }
+);
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -5008,6 +5016,7 @@ export default function Home() {
       <FAQContactSection />
 
       {/* ─── Subscription Pro (modal Stripe Elements, sans quitter la page) ─── */}
+      {subscriptionModalOpen && (
       <SubscriptionModal
         isOpen={subscriptionModalOpen}
         onClose={() => { setSubscriptionModalOpen(false); setCheckoutPriceId(null); setCheckoutLabel(null); }}
@@ -5016,6 +5025,8 @@ export default function Home() {
         initialPriceId={checkoutPriceId}
         initialLabel={checkoutLabel}
       />
+      )}
+      {manageSubscriptionModalOpen && (
       <ManageSubscriptionModal
         isOpen={manageSubscriptionModalOpen}
         onClose={() => { setManageSubscriptionModalOpen(false); setOpenManageWithChangePlanView(false); }}
@@ -5029,6 +5040,7 @@ export default function Home() {
         }}
         openWithChangePlanView={openManageWithChangePlanView}
       />
+      )}
       </main>
   );
 }
