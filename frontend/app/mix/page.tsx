@@ -539,6 +539,7 @@ export default function Home() {
   const tracksListRef = useRef<HTMLDivElement>(null);
   const trackDragScrollRafRef = useRef<number | null>(null);
   const trackDragScrollDirectionRef = useRef<number>(0);
+  const trackDragScrollLastTimeRef = useRef<number>(0);
   const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ trackId: string; startIndex: number; offset: number } | null>(null);
 
@@ -3886,12 +3887,16 @@ export default function Home() {
                         trackDragScrollRafRef.current = null;
                       }
                     };
-                    const scrollLoop = () => {
+                    const scrollLoop = (now: number) => {
                       const dir = trackDragScrollDirectionRef.current;
                       if (dir !== 0) {
-                        const step = isMobileRef.current ? 5 : 4;
+                        const prev = trackDragScrollLastTimeRef.current;
+                        trackDragScrollLastTimeRef.current = now;
+                        const dt = prev > 0 ? Math.min(now - prev, 50) : 16;
+                        const speedPxPerSec = isMobileRef.current ? 280 : 140;
+                        const step = (speedPxPerSec * dt) / 1000;
                         window.scrollBy(0, dir * step);
-                        trackDragScrollRafRef.current = requestAnimationFrame(scrollLoop);
+                        trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoop(t));
                       }
                     };
                     const onMove = (e2: PointerEvent) => {
@@ -3915,10 +3920,16 @@ export default function Home() {
                       const winH = typeof window !== "undefined" ? window.innerHeight : 0;
                       if (cy < EDGE_ZONE) {
                         trackDragScrollDirectionRef.current = -1;
-                        if (trackDragScrollRafRef.current == null) trackDragScrollRafRef.current = requestAnimationFrame(scrollLoop);
+                        if (trackDragScrollRafRef.current == null) {
+                          trackDragScrollLastTimeRef.current = 0;
+                          trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoop(t));
+                        }
                       } else if (cy > winH - EDGE_ZONE) {
                         trackDragScrollDirectionRef.current = 1;
-                        if (trackDragScrollRafRef.current == null) trackDragScrollRafRef.current = requestAnimationFrame(scrollLoop);
+                        if (trackDragScrollRafRef.current == null) {
+                          trackDragScrollLastTimeRef.current = 0;
+                          trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoop(t));
+                        }
                       } else {
                         stopScroll();
                       }
