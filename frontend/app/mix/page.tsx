@@ -3843,7 +3843,7 @@ export default function Home() {
                     el.setPointerCapture(pointerId);
                     trackMoveDragStartYRef.current = e.clientY;
                     const trackId = track.id;
-                    const threshold = 32;
+                    const threshold = 28;
                     const onMove = (e2: PointerEvent) => {
                       const startY = trackMoveDragStartYRef.current;
                       const delta = e2.clientY - startY;
@@ -3856,19 +3856,25 @@ export default function Home() {
                       }
                     };
                     const onUp = () => {
-                      document.removeEventListener("pointermove", onMove);
-                      document.removeEventListener("pointerup", onUp);
-                      document.removeEventListener("pointercancel", onUp);
+                      el.removeEventListener("pointermove", onMove);
+                      el.removeEventListener("pointerup", onUp);
+                      el.removeEventListener("pointercancel", onUp);
                       try { el.releasePointerCapture(pointerId); } catch (_) {}
                     };
-                    document.addEventListener("pointermove", onMove);
-                    document.addEventListener("pointerup", onUp);
-                    document.addEventListener("pointercancel", onUp);
+                    el.addEventListener("pointermove", onMove);
+                    el.addEventListener("pointerup", onUp);
+                    el.addEventListener("pointercancel", onUp);
                   }}
                 >
-                  <svg className="w-4 h-4 max-lg:w-3.5 max-lg:h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                  <svg className="w-4 h-4 max-lg:w-3.5 max-lg:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <path d="M12 5l-3 3h6l-3-3z" />
+                    <line x1="6" y1="10" x2="18" y2="10" />
+                    <line x1="6" y1="14" x2="18" y2="14" />
+                    <line x1="6" y1="18" x2="18" y2="18" />
+                    <path d="M12 19l3-3H9l3 3z" />
+                  </svg>
                 </div>
-                <div className="flex items-center gap-1 max-lg:ml-1 ml-2">
+                <div className="flex items-center gap-1 max-lg:ml-0.5 ml-1">
                 <button
                   type="button"
                   onClick={() => updateTrack(track.id, { muted: !track.muted })}
