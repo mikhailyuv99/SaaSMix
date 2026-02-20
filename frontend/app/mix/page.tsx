@@ -826,10 +826,12 @@ export default function Home() {
     let cancelled = false;
     (async () => {
       const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
       try {
         const [mixRes, masterRes] = await Promise.all([
-          fetch(masterResult.mixUrl),
-          fetch(masterResult.masterUrl),
+          fetch(masterResult.mixUrl, { headers }),
+          fetch(masterResult.masterUrl, { headers }),
         ]);
         if (cancelled) return;
         const [mixBuf, masterBuf] = await Promise.all([
@@ -3076,8 +3078,8 @@ export default function Home() {
       }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
-      // Fetch as blob and download locally — avoids popup/new tab on all platforms
-      const dlRes = await fetchWithTimeoutAndRetry(mixUrl, {
+      const downloadUrl = mixUrl + (mixUrl.includes("?") ? "&" : "?") + "download=1";
+      const dlRes = await fetchWithTimeoutAndRetry(downloadUrl, {
         timeoutMs: 120000,
         retries: 2,
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -4865,7 +4867,8 @@ export default function Home() {
                     setIsDownloadingMaster(true);
                     try {
                       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
-                      const res = await fetchWithTimeoutAndRetry(masterResult.masterUrl, {
+                      const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
+                      const res = await fetchWithTimeoutAndRetry(masterDownloadUrl, {
                         timeoutMs: 120000,
                         retries: 2,
                         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -4881,7 +4884,8 @@ export default function Home() {
                       URL.revokeObjectURL(url);
                     } catch (e) {
                       console.error("[mix] master download failed", e);
-                      window.open(masterResult.masterUrl, "_blank");
+                      const fallbackUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
+                      window.open(fallbackUrl, "_blank");
                     } finally {
                       setIsDownloadingMaster(false);
                     }

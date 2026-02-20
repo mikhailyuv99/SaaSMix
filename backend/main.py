@@ -42,7 +42,7 @@ from models import Project, User, PLAN_LIMITS  # noqa: F401 - Project enregistre
 from routers.auth import router as auth_router
 from routers.projects import router as projects_router
 from routers.billing import router as billing_router
-from dependencies import get_current_user, get_current_user_row
+from dependencies import get_current_user, get_current_user_row, get_current_user_row_optional
 
 # Create the FastAPI app
 app = FastAPI(
@@ -738,21 +738,13 @@ async def render_mix(
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
     """
-    Assemble toutes les pistes en un seul WAV. Réservé aux abonnés (starter/artiste/pro).
-    Limites mensuelles selon le plan (starter: 10 mix, artiste: 30, pro: illimité). 402 si limite atteinte ou non abonné.
+    Assemble toutes les pistes en un seul WAV. Réservé aux abonnés. Les tokens sont consommés au téléchargement, pas à l'action MIXER.
     """
     plan = (current_user.plan or "free").lower()
     if plan not in ("starter", "artiste", "pro"):
         raise HTTPException(
             status_code=402,
-            detail="Téléchargement réservé aux abonnés. Choisissez une formule pour débloquer les téléchargements.",
-        )
-    _ensure_usage_month(current_user, db)
-    limits = PLAN_LIMITS.get(plan, (None, None))
-    if limits[0] is not None and (current_user.mix_downloads_count or 0) >= limits[0]:
-        raise HTTPException(
-            status_code=402,
-            detail=f"Vous avez atteint votre limite de téléchargements mix ce mois-ci ({limits[0]}/{limits[0]}). Passez au plan supérieur pour en obtenir plus.",
+            detail="Mix réservé aux abonnés. Choisissez une formule pour débloquer.",
         )
     try:
         specs = json.loads(track_specs)
@@ -780,7 +772,7 @@ async def render_mix(
                 pass
         if not ok or not os.path.exists(mix_path):
             raise HTTPException(status_code=500, detail="Assemblage du mix échoué")
-        current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+        # Tokens are consumed only on download, not on MIXER.
         db.commit()
         return {
             "status": "success",
@@ -816,19 +808,7 @@ async def master_render(
             status_code=402,
             detail="Master réservé aux abonnés. Choisissez une formule pour débloquer.",
         )
-    _ensure_usage_month(current_user, db)
-    limits = PLAN_LIMITS.get(plan, (None, None))
-    mix_limit, master_limit = limits[0], limits[1]
-    if mix_limit is not None and (current_user.mix_downloads_count or 0) >= mix_limit:
-        raise HTTPException(
-            status_code=402,
-            detail=f"Vous avez atteint votre limite de téléchargements mix ce mois-ci ({mix_limit}/{mix_limit}). Passez au plan supérieur pour en obtenir plus.",
-        )
-    if master_limit is not None and (current_user.master_downloads_count or 0) >= master_limit:
-        raise HTTPException(
-            status_code=402,
-            detail=f"Vous avez atteint votre limite de téléchargements master ce mois-ci ({master_limit}/{master_limit}). Passez au plan supérieur pour en obtenir plus.",
-        )
+    # Tokens are consumed only on download; MIXER and MASTERISER use no tokens.
     try:
         specs = json.loads(track_specs)
     except json.JSONDecodeError:
@@ -855,8 +835,7 @@ async def master_render(
             raise HTTPException(status_code=500, detail="Master (master.vst3) a échoué")
         if not os.path.exists(master_path):
             raise HTTPException(status_code=500, detail="Fichier master non créé")
-        current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
-        current_user.master_downloads_count = (current_user.master_downloads_count or 0) + 1
+        # Tokens consumed only on download (mix = 1 mix token, master = 1 mix + 1 master).
         db.commit()
         return {
             "status": "success",
@@ -876,8 +855,15 @@ async def master_render(
 
 
 @app.get("/api/download/render")
-async def download_render(request: Request, id: str, type: str = "mix"):
-    """Télécharge le mix ou le master (type=mix|master). Supporte Range pour limiter timeouts sur gros fichiers."""
+async def download_render(
+    request: Request,
+    id: str,
+    type: str = "mix",
+    download: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_row_optional),
+):
+    """Stream ou téléchargement (type=mix|master). Si download=1 : consomme tokens (1 mix pour mix, 1 mix+1 master pour master). Sinon lecture seule, auth requise, pas de déduction."""
     if not re.match(r"^[a-f0-9\-]{36}$", id):
         raise HTTPException(status_code=400, detail="ID invalide")
     if type not in ("mix", "master"):
@@ -885,6 +871,39 @@ async def download_render(request: Request, id: str, type: str = "mix"):
     path = os.path.join(RENDER_DIR, f"{type}_{id}.wav")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Fichier introuvable ou expiré")
+
+    consume_tokens = download == "1"
+    if type in ("mix", "master"):
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Connexion requise pour accéder au fichier.")
+        plan = (current_user.plan or "free").lower()
+        if plan not in ("starter", "artiste", "pro"):
+            raise HTTPException(status_code=402, detail="Accès réservé aux abonnés.")
+        if consume_tokens:
+            _ensure_usage_month(current_user, db)
+            mix_limit, master_limit = PLAN_LIMITS.get(plan, (None, None))
+            if type == "mix":
+                if mix_limit is not None and (current_user.mix_downloads_count or 0) >= mix_limit:
+                    raise HTTPException(
+                        status_code=402,
+                        detail=f"Limite de téléchargements mix atteinte ce mois-ci ({mix_limit}/{mix_limit}). Passez au plan supérieur.",
+                    )
+                current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+            else:
+                if mix_limit is not None and (current_user.mix_downloads_count or 0) >= mix_limit:
+                    raise HTTPException(
+                        status_code=402,
+                        detail=f"Limite mix atteinte ce mois-ci ({mix_limit}/{mix_limit}). Un téléchargement master consomme 1 mix + 1 master.",
+                    )
+                if master_limit is not None and (current_user.master_downloads_count or 0) >= master_limit:
+                    raise HTTPException(
+                        status_code=402,
+                        detail=f"Limite de téléchargements master atteinte ce mois-ci ({master_limit}/{master_limit}). Passez au plan supérieur.",
+                    )
+                current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+                current_user.master_downloads_count = (current_user.master_downloads_count or 0) + 1
+            db.commit()
+
     size = os.path.getsize(path)
     range_header = request.headers.get("range")
     if not range_header or not range_header.strip().lower().startswith("bytes="):

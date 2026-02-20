@@ -50,3 +50,25 @@ def get_current_user_row(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable.")
     return user
+
+
+def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> dict | None:
+    """JWT optionnel : retourne les infos user ou None si absent/invalide."""
+    if not credentials or credentials.scheme.lower() != "bearer":
+        return None
+    payload = decode_access_token(credentials.credentials)
+    if not payload or "sub" not in payload:
+        return None
+    return {"user_id": payload["sub"], "email": payload.get("email", "")}
+
+
+def get_current_user_row_optional(
+    db: Session = Depends(get_db),
+    current_user: dict | None = Depends(get_current_user_optional),
+) -> User | None:
+    """Utilisateur en base si auth fournie, sinon None."""
+    if not current_user:
+        return None
+    return db.query(User).filter(User.id == current_user["user_id"]).first()
