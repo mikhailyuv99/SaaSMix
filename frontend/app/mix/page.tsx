@@ -4796,7 +4796,15 @@ export default function Home() {
 
         {masterResult && (
           <section ref={masterResultSectionRef} className={tracks.length === 0 ? "mt-8 max-lg:mt-6 max-md:mt-4 max-w-xl mx-auto" : "mt-10 max-w-xl mx-auto"} aria-label="Résultat du master">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
+            <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
+              <button
+                type="button"
+                onClick={() => { stopMasterPlayback(); setMasterResult(null); }}
+                className="absolute top-3 right-3 w-8 h-8 max-md:w-7 max-md:h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="Fermer"
+              >
+                <svg className="w-4 h-4 max-md:w-3.5 max-md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
               <h2 className="text-tagline text-slate-400 mb-4">Résultat du master</h2>
               <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
                 {!isMasterResultPlaying ? (
