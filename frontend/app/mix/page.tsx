@@ -449,6 +449,7 @@ export default function Home() {
   const [projectFolded, setProjectFolded] = useState(false);
   const [projectTitleEditing, setProjectTitleEditing] = useState(false);
   const [projectTitleInput, setProjectTitleInput] = useState("");
+  const [draftProjectName, setDraftProjectName] = useState("");
   const projectTitleInputRef = useRef<HTMLInputElement>(null);
   const [projectBpm, setProjectBpm] = useState(120);
   const [bpmInput, setBpmInput] = useState("120");
@@ -1930,6 +1931,7 @@ export default function Home() {
               setAppModal({
                 type: "prompt",
                 title: "Nom du projet ?",
+                defaultValue: draftProjectName || "Sans titre",
                 onConfirm: saveConfirmHandler,
                 onCancel: () => {},
               });
@@ -1943,11 +1945,12 @@ export default function Home() {
       setAppModal({
         type: "prompt",
         title: "Nom du projet ?",
+        defaultValue: draftProjectName || "Sans titre",
         onConfirm: saveConfirmHandler,
         onCancel: () => {},
       });
     }
-  }, [currentProject, doSaveProject, projectsList, fetchProjectsList, user, isPro, showSubscriptionRequired]);
+  }, [currentProject, doSaveProject, projectsList, fetchProjectsList, user, isPro, showSubscriptionRequired, draftProjectName]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -3613,7 +3616,7 @@ export default function Home() {
         ) : (
         <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3">
-          <div className="flex items-center gap-2 min-w-0 shrink max-md:w-full max-md:order-first max-md:justify-center max-md:flex-col">
+          <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1 shrink max-md:w-full max-md:order-first max-md:justify-center max-md:flex-col">
             {projectTitleEditing ? (
               <input
                 ref={projectTitleInputRef}
@@ -3622,15 +3625,17 @@ export default function Home() {
                 onChange={(e) => setProjectTitleInput(e.target.value)}
                 onBlur={() => {
                   const name = projectTitleInput.trim();
-                  if (currentProject && name && name !== currentProject.name) {
-                    renameProject(currentProject.id, name);
+                  if (currentProject) {
+                    if (name && name !== currentProject.name) renameProject(currentProject.id, name);
+                  } else {
+                    setDraftProjectName(name);
                   }
                   setProjectTitleEditing(false);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                   if (e.key === "Escape") {
-                    setProjectTitleInput(currentProject?.name ?? "SANS TITRE");
+                    setProjectTitleInput(currentProject ? currentProject.name : (draftProjectName || "SANS TITRE"));
                     setProjectTitleEditing(false);
                     projectTitleInputRef.current?.blur();
                   }
@@ -3638,23 +3643,19 @@ export default function Home() {
                 className="text-slate-200 text-sm font-heading tracking-wide bg-white/5 border border-white/10 rounded px-2 py-1 min-w-0 max-w-full focus:outline-none focus:ring-1 focus:ring-white/30"
                 aria-label="Nom du projet"
               />
-            ) : currentProject ? (
+            ) : (
               <button
                 type="button"
                 onClick={() => {
-                  setProjectTitleInput(currentProject.name);
+                  setProjectTitleInput(currentProject ? currentProject.name : (draftProjectName || "SANS TITRE"));
                   setProjectTitleEditing(true);
                   setTimeout(() => projectTitleInputRef.current?.focus(), 0);
                 }}
-                className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 flex-1 w-full text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer py-1 -my-1 rounded focus:outline-none focus:ring-1 focus:ring-white/30"
                 title="Cliquer pour renommer"
               >
-                {currentProject.name}
+                {currentProject ? currentProject.name : (draftProjectName || "SANS TITRE")}
               </button>
-            ) : (
-              <span className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 block" title="Sans titre">
-                SANS TITRE
-              </span>
             )}
             <button
               type="button"
