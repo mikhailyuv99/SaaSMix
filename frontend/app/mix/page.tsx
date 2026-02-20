@@ -3059,11 +3059,14 @@ export default function Home() {
         }
         clearProgress();
         updateTrack(id, { isMixing: false, ...(mixedAudioUrlToSet ? { mixedAudioUrl: mixedAudioUrlToSet } : {}) });
+        const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
+        if (isAbort) return;
         console.error(e);
         let errMsg = formatApiError(e);
         const raw = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String((e as { message: unknown }).message) : String(e);
         if (raw.includes("3221226505") || raw.includes("0xC0000409")) errMsg = "Le moteur de mix a planté (crash Windows). Réessayez avec un fichier plus court, ou vérifiez les logs backend.";
         else if (raw.includes("Unable to allocate") || raw.includes("MiB for an array")) errMsg = "Mémoire serveur insuffisante. Essayez un fichier audio plus court (ex. < 2 minutes).";
+        else if (/aborted|timeout/i.test(raw)) errMsg = "Le mix a pris trop de temps (délai dépassé). Réessayez avec un fichier plus court.";
         setAppModal({ type: "alert", message: isNoValidTrackError(errMsg) ? NO_VALID_TRACK_MSG : "Erreur lors du mix : " + errMsg, onClose: () => {} });
       }
     },
@@ -3139,7 +3142,8 @@ export default function Home() {
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
     } catch (e) {
-      if ((e as { name?: string })?.name === "AbortError") return;
+      const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
+      if (isAbort) return;
       console.error(e);
       const msg = formatApiError(e);
       setAppModal({ type: "alert", message: isNoValidTrackError(msg) ? NO_VALID_TRACK_MSG : "Erreur : " + msg, onClose: () => {} });
@@ -3157,6 +3161,8 @@ export default function Home() {
     }
     setIsMastering(true);
     setMasterResult(null);
+    const masterAbortController = new AbortController();
+    downloadAbortRef.current = masterAbortController;
     try {
       const form = new FormData();
       form.append("track_specs", JSON.stringify(specs));
@@ -3164,7 +3170,12 @@ export default function Home() {
       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form });
+      const res = await fetch(`${API_BASE}/api/master`, {
+        method: "POST",
+        headers,
+        body: form,
+        signal: masterAbortController.signal,
+      });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
         logout();
@@ -3183,8 +3194,8 @@ export default function Home() {
       try {
         const decodeCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         const [mixBufRes, masterBufRes] = await Promise.all([
-          fetchWithTimeoutAndRetry(mixUrl, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
-          fetchWithTimeoutAndRetry(masterUrl, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined }),
+          fetchWithTimeoutAndRetry(mixUrl, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: masterAbortController.signal }),
+          fetchWithTimeoutAndRetry(masterUrl, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: masterAbortController.signal }),
         ]);
         const [mixBuf, masterBuf] = await Promise.all([
           mixBufRes.arrayBuffer().then((b) => decodeCtx.decodeAudioData(b)),
@@ -3198,7 +3209,8 @@ export default function Home() {
         });
         decodeCtx.close();
       } catch (e) {
-        console.error("[mix] master waveform decode failed", e);
+        const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
+        if (!isAbort) console.error("[mix] master waveform decode failed", e);
       }
       stopAll();
       setMasterResult({ mixUrl, masterUrl });
@@ -3206,10 +3218,13 @@ export default function Home() {
       demoPlaybackRef.current = null;
       setActivePlayer("master");
     } catch (e) {
+      const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
+      if (isAbort) return;
       console.error(e);
       const msg = formatApiError(e);
       setAppModal({ type: "alert", message: isNoValidTrackError(msg) ? NO_VALID_TRACK_MSG : "Erreur : " + msg, onClose: () => {} });
     } finally {
+      downloadAbortRef.current = null;
       setIsMastering(false);
     }
   }, [buildTrackSpecsAndFiles, tracks, stopAll]);
@@ -4934,7 +4949,8 @@ export default function Home() {
                       a.remove();
                       URL.revokeObjectURL(url);
                     } catch (e) {
-                      if ((e as { name?: string })?.name === "AbortError") return;
+                      const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
+                      if (isAbort) return;
                       console.error("[mix] master download failed", e);
                       const fallbackUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
                       window.open(fallbackUrl, "_blank");
