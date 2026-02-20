@@ -4482,12 +4482,12 @@ export default function Home() {
                           disabled={track.isMixing}
                           className={`py-2.5 rounded-lg border text-tagline text-sm max-md:text-xs ${
                             track.isMixing
-                              ? "border border-white/30 bg-slate-800 text-white disabled:opacity-50"
+                              ? "border border-white/30 bg-slate-800 text-white"
                               : "border-white/20 bg-white text-[#060608] hover:bg-white/90 disabled:opacity-50"
                           }`}
                         >
                           {track.isMixing ? (
-                            <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
+                            <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] [text-shadow:0_0_8px_rgba(255,255,255,0.9)]">
                               MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                             </span>
                           ) : (
