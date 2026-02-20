@@ -76,6 +76,8 @@ export default function RootLayout({
     <html lang="fr" className={plusJakarta.variable}>
       <head>
         <style dangerouslySetInnerHTML={{ __html: 'html,body{background:#fff!important}' }} />
+        <link rel="preconnect" href="https://js.stripe.com" />
+        <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="icon" type="image/png" href="/icon.png" />
         <link rel="alternate icon" href="/favicon.ico" />
         {process.env.NEXT_PUBLIC_FB_APP_ID ? (

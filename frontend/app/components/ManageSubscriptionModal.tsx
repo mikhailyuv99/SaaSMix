@@ -7,8 +7,6 @@ import { Elements, CardElement, useStripe, useElements } from "@stripe/react-str
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 
-const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
-
 const PLAN_FEATURES: Record<string, string> = {
   starter: "10 téléchargements mix / mois\n3 téléchargements master / mois\n5 sauvegardes de projets",
   artiste: "30 téléchargements mix / mois\n15 téléchargements master / mois\n15 sauvegardes de projets",
@@ -137,6 +135,13 @@ export function ManageSubscriptionModal({
   onRequestCheckout?: (priceId: string, planName: string) => void;
   openWithChangePlanView?: boolean;
 }) {
+  const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
+  useEffect(() => {
+    if (isOpen && PUBLISHABLE_KEY && !stripePromise) {
+      setStripePromise(loadStripe(PUBLISHABLE_KEY));
+    }
+  }, [isOpen]);
+
   type Sub = {
     current_period_end: number | null;
     cancel_at_period_end: boolean;

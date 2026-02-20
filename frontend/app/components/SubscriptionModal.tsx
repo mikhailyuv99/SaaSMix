@@ -7,8 +7,6 @@ import { Elements, CardElement, useStripe, useElements } from "@stripe/react-str
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 
-const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
-
 const CARD_OPTIONS = {
   style: {
     base: {
@@ -216,6 +214,13 @@ export function SubscriptionModal({
   initialPriceId?: string | null;
   initialLabel?: string | null;
 }) {
+  const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
+  useEffect(() => {
+    if (isOpen && PUBLISHABLE_KEY && !stripePromise) {
+      setStripePromise(loadStripe(PUBLISHABLE_KEY));
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
   if (!PUBLISHABLE_KEY) {
     return (
