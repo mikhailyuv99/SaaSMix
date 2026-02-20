@@ -3638,23 +3638,23 @@ export default function Home() {
                 className="text-slate-200 text-sm font-heading tracking-wide bg-white/5 border border-white/10 rounded px-2 py-1 min-w-0 max-w-full focus:outline-none focus:ring-1 focus:ring-white/30"
                 aria-label="Nom du projet"
               />
-            ) : (
+            ) : currentProject ? (
               <button
                 type="button"
                 onClick={() => {
-                  if (currentProject) {
-                    setProjectTitleInput(currentProject.name);
-                    setProjectTitleEditing(true);
-                    setTimeout(() => projectTitleInputRef.current?.focus(), 0);
-                  } else {
-                    saveProject();
-                  }
+                  setProjectTitleInput(currentProject.name);
+                  setProjectTitleEditing(true);
+                  setTimeout(() => projectTitleInputRef.current?.focus(), 0);
                 }}
-                className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer disabled:cursor-default"
-                title={currentProject ? "Cliquer pour renommer" : "Cliquer pour sauvegarder le projet"}
+                className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer"
+                title="Cliquer pour renommer"
               >
-                {currentProject?.name ?? "SANS TITRE"}
+                {currentProject.name}
               </button>
+            ) : (
+              <span className="text-slate-200 text-sm font-heading tracking-wide truncate min-w-0 block" title="Sans titre">
+                SANS TITRE
+              </span>
             )}
             <button
               type="button"
