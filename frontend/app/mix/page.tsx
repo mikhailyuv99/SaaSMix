@@ -3879,7 +3879,7 @@ export default function Home() {
                     const startIndex = trackIndex;
                     setDragState({ trackId, startIndex, offset: 0 });
                     const EDGE_ZONE = 56;
-                    const SCROLL_STEP = 2;
+                    const SCROLL_STEP = 4;
                     const stopScroll = () => {
                       trackDragScrollDirectionRef.current = 0;
                       if (trackDragScrollRafRef.current != null) {
@@ -3929,6 +3929,11 @@ export default function Home() {
                         if (prev && prev.offset !== 0) {
                           const toIndex = Math.max(0, Math.min(tracks.length - 1, prev.startIndex + prev.offset));
                           moveTrackToIndex(prev.trackId, prev.startIndex, toIndex);
+                          setTimeout(() => {
+                            const list = tracksListRef.current;
+                            const card = list?.querySelector(`[data-track-index="${toIndex}"]`);
+                            (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                          }, 80);
                         }
                         return null;
                       });
@@ -4000,7 +4005,7 @@ export default function Home() {
 
               {(track.file?.name ?? track.rawFileName) ? (
                 <div className="pl-24 pr-10 -mt-5 max-lg:pl-20 max-lg:-mt-4 max-md:pl-16 max-md:px-10 max-md:pr-10">
-                  <div className="py-2 max-lg:py-1.5 max-md:py-1.5 flex items-center justify-center">
+                  <div className="py-2 max-lg:py-1.5 max-md:py-1.5 flex items-center justify-center w-[24ch] max-md:w-[12ch] min-w-0 shrink-0 mx-auto">
                     <p className="text-tagline text-slate-400 text-sm text-center truncate w-full max-lg:text-xs" title={track.file?.name ?? track.rawFileName ?? ""}>
                       {track.file?.name ?? track.rawFileName}
                     </p>
