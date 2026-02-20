@@ -446,6 +446,7 @@ export default function Home() {
   const [fileChooserActiveTrackId, setFileChooserActiveTrackId] = useState<string | null>(null);
   const [noFileMessageTrackId, setNoFileMessageTrackId] = useState<string | null>(null);
   const [showPlayNoFileMessage, setShowPlayNoFileMessage] = useState(false);
+  const [projectFolded, setProjectFolded] = useState(false);
   const [projectBpm, setProjectBpm] = useState(120);
   const [bpmInput, setBpmInput] = useState("120");
   const [bpmInputFocused, setBpmInputFocused] = useState(false);
@@ -3613,28 +3614,43 @@ export default function Home() {
             {currentProject?.name ?? "SANS TITRE"}
           </h2>
           <div className="hidden max-md:block max-md:order-2 h-px bg-white/10 max-md:mx-auto max-md:w-[calc(100%-2rem)] shrink-0" aria-hidden />
-          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-3 max-md:w-full max-md:grid max-md:grid-cols-2 max-md:justify-items-center max-md:order-last">
-              <div className="flex flex-col items-center justify-center gap-1">
-                {!isPlaying ? (
-                  <button
-                    type="button"
-                    onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); playAll(); }}
-                    className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0"
-                    aria-label={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
-                    title={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
-                  >
-                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
-                  </button>
-                ) : (
-                  <button type="button" onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); stopAll(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause" title="Pause">
-                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                  </button>
-                )}
-                {showPlayNoFileMessage && (
-                  <p className="text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap px-2 py-1 rounded bg-[#0a0a0a]/95 border border-white/10 shadow-lg">
-                    Veuillez d&apos;abord sélectionner un fichier pour chaque piste
-                  </p>
-                )}
+          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-3 max-md:w-full max-md:grid max-md:grid-cols-2 max-md:justify-items-stretch max-md:items-center max-md:order-last">
+              <div className="flex flex-row items-center justify-center gap-2 max-md:w-full max-md:h-9 max-md:min-h-[2.25rem] max-md:rounded-lg max-md:border max-md:border-white/10 max-md:bg-white/5 max-md:px-2">
+                <button
+                  type="button"
+                  onClick={() => setProjectFolded(!projectFolded)}
+                  className="p-2 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0 max-md:p-1.5 max-md:border-0 max-md:rounded-lg"
+                  title={projectFolded ? "Déplier le projet" : "Replier le projet"}
+                  aria-label={projectFolded ? "Déplier le projet" : "Replier le projet"}
+                >
+                  {projectFolded ? (
+                    <svg className="w-4 h-4 max-md:w-3.5 max-md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                  ) : (
+                    <svg className="w-4 h-4 max-md:w-3.5 max-md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                  )}
+                </button>
+                <div className="flex flex-col items-center justify-center gap-1 max-md:flex-1 max-md:flex-row max-md:justify-center max-md:ml-1">
+                  {!isPlaying ? (
+                    <button
+                      type="button"
+                      onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); playAll(); }}
+                      className="w-12 h-12 max-md:w-10 max-md:h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0"
+                      aria-label={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
+                      title={hasPausedPosition ? "Reprendre" : "Lancer la lecture"}
+                    >
+                      <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                    </button>
+                  ) : (
+                    <button type="button" onClick={() => { demoPlaybackRef.current = null; setActivePlayer("mix"); stopAll(); }} className="w-12 h-12 max-md:w-10 max-md:h-10 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause" title="Pause">
+                      <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                  )}
+                  {showPlayNoFileMessage && (
+                    <p className="text-tagline text-slate-400 text-center text-xs leading-tight whitespace-nowrap px-2 py-1 rounded bg-[#0a0a0a]/95 border border-white/10 shadow-lg max-md:hidden">
+                      Veuillez d&apos;abord sélectionner un fichier pour chaque piste
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center justify-center">
                 <div
@@ -3673,7 +3689,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="relative shrink-0 flex items-center justify-center">
+              <div className="relative shrink-0 flex items-center justify-center max-md:w-full">
                 <button
                   type="button"
                   onClick={() => {
@@ -3682,7 +3698,7 @@ export default function Home() {
                     downloadMix();
                   }}
                   disabled={isRenderingMix}
-                  className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
+                  className={`h-10 max-md:h-9 max-md:w-full rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
                     isRenderingMix
                       ? "border border-white/30 bg-slate-800 text-white"
                       : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors disabled:opacity-50"
@@ -3721,6 +3737,7 @@ export default function Home() {
               </div>
           </div>
         </div>
+        {!projectFolded && (
         <section className="pt-4 max-lg:pt-3 max-md:pt-2 pb-4 max-lg:pb-3 max-md:pb-2.5 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
           {tracks.map((track) => (
@@ -4473,6 +4490,7 @@ export default function Home() {
             </div>
           )}
         </section>
+        )}
 
         </div>
         )}
