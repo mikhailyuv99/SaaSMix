@@ -539,7 +539,7 @@ export default function Home() {
   const trackMoveDragStartYRef = useRef(0);
   const trackMoveLastAtRef = useRef(0);
   const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
-  const [dropIndicator, setDropIndicator] = useState<{ trackId: string; position: "above" | "below" } | null>(null);
+  const [dragState, setDragState] = useState<{ trackId: string; startIndex: number; offset: number } | null>(null);
 
   useEffect(() => {
     if (lastMovedTrackId == null) return;
@@ -1272,6 +1272,18 @@ export default function Home() {
       [next[i], next[j]] = [next[j], next[i]];
       return next;
     });
+  }, [setHasUnsavedChanges]);
+
+  const moveTrackToIndex = useCallback((trackId: string, fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    setHasUnsavedChanges(true);
+    setTracks((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, removed);
+      return next;
+    });
+    setLastMovedTrackId(trackId);
   }, [setHasUnsavedChanges]);
 
   const clearTrackFile = useCallback((id: string) => {
@@ -3836,18 +3848,28 @@ export default function Home() {
         {!projectFolded && (
         <section className="pt-4 max-lg:pt-3 max-md:pt-2 pb-4 max-lg:pb-3 max-md:pb-2.5 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
-          {tracks.map((track) => (
+          {tracks.map((track, trackIndex) => (
             <Fragment key={track.id}>
-              {dropIndicator?.trackId === track.id && dropIndicator?.position === "above" && (
-                <div className="h-2 rounded-lg bg-white/10 border border-dashed border-white/25 shadow-[inset_0_1px_2px_rgba(255,255,255,0.08)] my-0.5 flex-shrink-0" aria-hidden title="La piste sera déposée ici" />
+              {dragState && dragState.offset !== 0 && dragState.startIndex + dragState.offset === trackIndex && (
+                <div className="min-h-[72px] max-lg:min-h-[64px] rounded-xl border-2 border-dashed border-white/30 bg-white/[0.08] shadow-[inset_0_2px_12px_rgba(0,0,0,0.2)] flex items-center justify-center my-0.5 flex-shrink-0 transition-all duration-150" aria-hidden>
+                  <span className="text-tagline text-slate-400 text-xs">Déposer ici</span>
+                </div>
               )}
-            <div className={`rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15 ${lastMovedTrackId === track.id ? "animate-track-moved" : ""}`}>
+            <div
+              className={`rounded-xl border backdrop-blur-sm p-5 relative max-lg:p-4 transition-all duration-200 ease-out ${
+                lastMovedTrackId === track.id ? "animate-track-moved" : ""
+              } ${
+                dragState?.trackId === track.id
+                  ? "border-white/30 bg-white/[0.08] shadow-lg shadow-black/30 scale-[1.02] z-20"
+                  : "border-white/10 bg-white/[0.04] hover:border-white/15"
+              }`}
+            >
               <div className="absolute top-4 left-4 flex items-center gap-1 z-10 max-lg:top-0.5 max-lg:left-2">
                 <div
                   role="button"
                   tabIndex={0}
-                  title="Maintenir et glisser vers le haut ou le bas pour déplacer la piste"
-                  aria-label="Déplacer la piste (maintenir et glisser)"
+                  title="Maintenir et glisser vers le haut ou le bas, relâcher pour déposer"
+                  aria-label="Déplacer la piste (maintenir, glisser, relâcher)"
                   className="touch-none select-none flex items-center justify-center rounded border border-white/10 bg-white/[0.02] p-1.5 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-400 hover:bg-white/5 max-lg:p-1 max-lg:border-transparent max-lg:bg-transparent"
                   onPointerDown={(e) => {
                     e.preventDefault();
@@ -3856,32 +3878,40 @@ export default function Home() {
                     el.setPointerCapture(pointerId);
                     trackMoveDragStartYRef.current = e.clientY;
                     const trackId = track.id;
-                    const threshold = 32;
-                    const cooldownMs = 120;
-                    const indicatorThreshold = 16;
+                    const startIndex = trackIndex;
+                    const threshold = 36;
+                    const cooldownMs = 100;
+                    setDragState({ trackId, startIndex, offset: 0 });
                     const onMove = (e2: PointerEvent) => {
                       const startY = trackMoveDragStartYRef.current;
                       const delta = e2.clientY - startY;
-                      if (delta < -indicatorThreshold) setDropIndicator({ trackId, position: "above" });
-                      else if (delta > indicatorThreshold) setDropIndicator({ trackId, position: "below" });
-                      else setDropIndicator(null);
-
                       const now = Date.now();
                       if (now - trackMoveLastAtRef.current < cooldownMs) return;
-                      if (delta < -threshold) {
-                        moveTrack(trackId, "up");
-                        trackMoveDragStartYRef.current = e2.clientY;
-                        trackMoveLastAtRef.current = now;
-                        setLastMovedTrackId(trackId);
-                      } else if (delta > threshold) {
-                        moveTrack(trackId, "down");
-                        trackMoveDragStartYRef.current = e2.clientY;
-                        trackMoveLastAtRef.current = now;
-                        setLastMovedTrackId(trackId);
-                      }
+                      setDragState((prev) => {
+                        if (!prev || prev.trackId !== trackId) return prev;
+                        if (delta < -threshold) {
+                          trackMoveDragStartYRef.current = e2.clientY;
+                          trackMoveLastAtRef.current = now;
+                          const newOffset = Math.max(prev.offset - 1, -startIndex);
+                          return { ...prev, offset: newOffset };
+                        }
+                        if (delta > threshold) {
+                          trackMoveDragStartYRef.current = e2.clientY;
+                          trackMoveLastAtRef.current = now;
+                          const newOffset = Math.min(prev.offset + 1, tracks.length - 1 - startIndex);
+                          return { ...prev, offset: newOffset };
+                        }
+                        return prev;
+                      });
                     };
                     const onUp = () => {
-                      setDropIndicator(null);
+                      setDragState((prev) => {
+                        if (prev && prev.offset !== 0) {
+                          const toIndex = Math.max(0, Math.min(tracks.length - 1, prev.startIndex + prev.offset));
+                          moveTrackToIndex(prev.trackId, prev.startIndex, toIndex);
+                        }
+                        return null;
+                      });
                       el.removeEventListener("pointermove", onMove);
                       el.removeEventListener("pointerup", onUp);
                       el.removeEventListener("pointercancel", onUp);
@@ -3892,12 +3922,12 @@ export default function Home() {
                     el.addEventListener("pointercancel", onUp);
                   }}
                 >
-                  <svg className="w-4 h-4 max-lg:w-3.5 max-lg:h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ shapeRendering: "geometricPrecision" }}>
-                    <path d="M12 6L9 9h6L12 6z" />
-                    <line x1="6" y1="11" x2="18" y2="11" />
-                    <line x1="6" y1="14" x2="18" y2="14" />
-                    <line x1="6" y1="17" x2="18" y2="17" />
-                    <path d="M12 18l3-3H9l3 3z" />
+                  <svg className="w-5 h-5 max-lg:w-4 max-lg:h-4 shrink-0 text-slate-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                    <path d="M12 5 8 10h8L12 5z" />
+                    <rect x="5" y="10.5" width="14" height="2" rx="1" />
+                    <rect x="5" y="14.5" width="14" height="2" rx="1" />
+                    <rect x="5" y="18.5" width="14" height="2" rx="1" />
+                    <path d="M12 19 8 14h8l-4 5z" />
                   </svg>
                 </div>
                 <div className="flex items-center gap-1">
@@ -4568,9 +4598,6 @@ export default function Home() {
               )}
 
             </div>
-              {dropIndicator?.trackId === track.id && dropIndicator?.position === "below" && (
-                <div className="h-2 rounded-lg bg-white/10 border border-dashed border-white/25 shadow-[inset_0_1px_2px_rgba(255,255,255,0.08)] my-0.5 flex-shrink-0" aria-hidden title="La piste sera déposée ici" />
-              )}
             </Fragment>
           ))}
           </div>
