@@ -4233,7 +4233,7 @@ export default function Home() {
               )}
 
               {track.waveformPeaks != null && track.waveformDuration != null && track.waveformDuration > 0 && (
-                <div className="mt-4 w-full">
+                <div className={`mt-4 w-full ${track.folded ? "lg:mt-5" : ""}`}>
                   <div className="relative">
                     <Waveform
                       peaks={track.waveformPeaks}
