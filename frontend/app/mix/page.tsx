@@ -4058,6 +4058,7 @@ export default function Home() {
                   ) : (
                     <>
                       <div>
+                        <span className="text-tagline text-slate-400 text-xs block mb-1 max-md:text-[10px]">{track.file ? "REMPLACER" : "FICHIER WAV"}</span>
                         <label
                           htmlFor={`file-mob-${track.id}`}
                           className="block w-full py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline cursor-pointer hover:bg-white/10 transition-colors text-center text-sm max-md:text-xs"
