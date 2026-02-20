@@ -450,6 +450,8 @@ export default function Home() {
   const [projectTitleEditing, setProjectTitleEditing] = useState(false);
   const [projectTitleInput, setProjectTitleInput] = useState("");
   const [draftProjectName, setDraftProjectName] = useState("");
+  const [titleEditWidth, setTitleEditWidth] = useState<number | null>(null);
+  const projectTitleButtonRef = useRef<HTMLButtonElement>(null);
   const projectTitleInputRef = useRef<HTMLInputElement>(null);
   const [projectBpm, setProjectBpm] = useState(120);
   const [bpmInput, setBpmInput] = useState("120");
@@ -3618,35 +3620,46 @@ export default function Home() {
         <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3">
           <div className="flex items-center gap-2 min-w-0 shrink-0 max-md:w-full max-md:justify-center max-md:order-first">
             {projectTitleEditing ? (
-              <input
-                ref={projectTitleInputRef}
-                type="text"
-                value={projectTitleInput}
-                onChange={(e) => setProjectTitleInput(e.target.value)}
-                onBlur={() => {
-                  const name = projectTitleInput.trim();
-                  if (currentProject) {
-                    if (name && name !== currentProject.name) renameProject(currentProject.id, name);
-                  } else {
-                    setDraftProjectName(name);
-                  }
-                  setProjectTitleEditing(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                  if (e.key === "Escape") {
-                    setProjectTitleInput(currentProject ? currentProject.name : (draftProjectName || "SANS TITRE"));
+              <span className="inline-block min-w-0 text-sm font-heading tracking-wide text-left" style={{ width: titleEditWidth ?? undefined }}>
+                <input
+                  ref={projectTitleInputRef}
+                  type="text"
+                  value={projectTitleInput}
+                  onChange={(e) => {
+                    setProjectTitleInput(e.target.value);
+                    const el = projectTitleInputRef.current;
+                    if (el) requestAnimationFrame(() => setTitleEditWidth(Math.max(20, el.scrollWidth)));
+                  }}
+                  onBlur={() => {
+                    const name = projectTitleInput.trim();
+                    if (currentProject) {
+                      if (name && name !== currentProject.name) renameProject(currentProject.id, name);
+                    } else {
+                      setDraftProjectName(name);
+                    }
                     setProjectTitleEditing(false);
-                    projectTitleInputRef.current?.blur();
-                  }
-                }}
-                className="text-slate-200 text-sm font-heading tracking-wide bg-white/5 border border-white/10 rounded px-2 py-1 min-w-0 max-w-full focus:outline-none focus:ring-1 focus:ring-white/30"
-                aria-label="Nom du projet"
-              />
+                    setTitleEditWidth(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                    if (e.key === "Escape") {
+                      setProjectTitleInput(currentProject ? currentProject.name : (draftProjectName || "SANS TITRE"));
+                      setProjectTitleEditing(false);
+                      setTitleEditWidth(null);
+                      projectTitleInputRef.current?.blur();
+                    }
+                  }}
+                  className="w-full min-w-0 text-slate-200 bg-transparent border-none rounded p-0 focus:outline-none focus:ring-0"
+                  aria-label="Nom du projet"
+                />
+              </span>
             ) : (
               <button
+                ref={projectTitleButtonRef}
                 type="button"
                 onClick={() => {
+                  const w = projectTitleButtonRef.current?.offsetWidth ?? null;
+                  setTitleEditWidth(w);
                   setProjectTitleInput(currentProject ? currentProject.name : (draftProjectName || "SANS TITRE"));
                   setProjectTitleEditing(true);
                   setTimeout(() => projectTitleInputRef.current?.focus(), 0);
