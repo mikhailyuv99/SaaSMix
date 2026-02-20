@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect, useMemo, memo } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo, memo, Fragment } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CustomSelect } from "../components/CustomSelect";
@@ -537,6 +537,15 @@ export default function Home() {
   const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [addTrackDropzoneDragging, setAddTrackDropzoneDragging] = useState(false);
   const trackMoveDragStartYRef = useRef(0);
+  const trackMoveLastAtRef = useRef(0);
+  const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
+  const [dropIndicator, setDropIndicator] = useState<{ trackId: string; position: "above" | "below" } | null>(null);
+
+  useEffect(() => {
+    if (lastMovedTrackId == null) return;
+    const t = setTimeout(() => setLastMovedTrackId(null), 450);
+    return () => clearTimeout(t);
+  }, [lastMovedTrackId]);
 
   useEffect(() => {
     if (appModal?.type === "prompt") setPromptInputValue(appModal.defaultValue ?? "");
@@ -3827,8 +3836,12 @@ export default function Home() {
         {!projectFolded && (
         <section className="pt-4 max-lg:pt-3 max-md:pt-2 pb-4 max-lg:pb-3 max-md:pb-2.5 px-4 max-lg:px-3 max-md:px-3" aria-label="Pistes">
           <div className="space-y-4 max-lg:space-y-3 max-md:space-y-2.5">
-          {tracks.map((track, trackIndex) => (
-            <div key={track.id} className="rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15">
+          {tracks.map((track) => (
+            <Fragment key={track.id}>
+              {dropIndicator?.trackId === track.id && dropIndicator?.position === "above" && (
+                <div className="h-2 rounded-lg bg-white/10 border border-dashed border-white/25 shadow-[inset_0_1px_2px_rgba(255,255,255,0.08)] my-0.5 flex-shrink-0" aria-hidden title="La piste sera déposée ici" />
+              )}
+            <div className={`rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-5 relative max-lg:p-4 transition-colors hover:border-white/15 ${lastMovedTrackId === track.id ? "animate-track-moved" : ""}`}>
               <div className="absolute top-4 left-4 flex items-center gap-1 z-10 max-lg:top-0.5 max-lg:left-2">
                 <div
                   role="button"
@@ -3843,19 +3856,32 @@ export default function Home() {
                     el.setPointerCapture(pointerId);
                     trackMoveDragStartYRef.current = e.clientY;
                     const trackId = track.id;
-                    const threshold = 28;
+                    const threshold = 32;
+                    const cooldownMs = 120;
+                    const indicatorThreshold = 16;
                     const onMove = (e2: PointerEvent) => {
                       const startY = trackMoveDragStartYRef.current;
                       const delta = e2.clientY - startY;
+                      if (delta < -indicatorThreshold) setDropIndicator({ trackId, position: "above" });
+                      else if (delta > indicatorThreshold) setDropIndicator({ trackId, position: "below" });
+                      else setDropIndicator(null);
+
+                      const now = Date.now();
+                      if (now - trackMoveLastAtRef.current < cooldownMs) return;
                       if (delta < -threshold) {
                         moveTrack(trackId, "up");
                         trackMoveDragStartYRef.current = e2.clientY;
+                        trackMoveLastAtRef.current = now;
+                        setLastMovedTrackId(trackId);
                       } else if (delta > threshold) {
                         moveTrack(trackId, "down");
                         trackMoveDragStartYRef.current = e2.clientY;
+                        trackMoveLastAtRef.current = now;
+                        setLastMovedTrackId(trackId);
                       }
                     };
                     const onUp = () => {
+                      setDropIndicator(null);
                       el.removeEventListener("pointermove", onMove);
                       el.removeEventListener("pointerup", onUp);
                       el.removeEventListener("pointercancel", onUp);
@@ -3866,15 +3892,15 @@ export default function Home() {
                     el.addEventListener("pointercancel", onUp);
                   }}
                 >
-                  <svg className="w-4 h-4 max-lg:w-3.5 max-lg:h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M12 5l-3 3h6l-3-3z" />
-                    <line x1="6" y1="10" x2="18" y2="10" />
+                  <svg className="w-4 h-4 max-lg:w-3.5 max-lg:h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ shapeRendering: "geometricPrecision" }}>
+                    <path d="M12 6L9 9h6L12 6z" />
+                    <line x1="6" y1="11" x2="18" y2="11" />
                     <line x1="6" y1="14" x2="18" y2="14" />
-                    <line x1="6" y1="18" x2="18" y2="18" />
-                    <path d="M12 19l3-3H9l3 3z" />
+                    <line x1="6" y1="17" x2="18" y2="17" />
+                    <path d="M12 18l3-3H9l3 3z" />
                   </svg>
                 </div>
-                <div className="flex items-center gap-1 max-lg:ml-0.5 ml-1">
+                <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => updateTrack(track.id, { muted: !track.muted })}
@@ -4542,6 +4568,10 @@ export default function Home() {
               )}
 
             </div>
+              {dropIndicator?.trackId === track.id && dropIndicator?.position === "below" && (
+                <div className="h-2 rounded-lg bg-white/10 border border-dashed border-white/25 shadow-[inset_0_1px_2px_rgba(255,255,255,0.08)] my-0.5 flex-shrink-0" aria-hidden title="La piste sera déposée ici" />
+              )}
+            </Fragment>
           ))}
           </div>
 

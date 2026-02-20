@@ -408,6 +408,15 @@ body::-webkit-scrollbar-thumb:hover {
   animation: loading-dots 1.2s steps(4, end) infinite;
 }
 
+@keyframes track-moved-flash {
+  0%   { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5); }
+  70%  { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2); }
+  100% { box-shadow: none; }
+}
+.animate-track-moved {
+  animation: track-moved-flash 0.4s ease-out forwards;
+}
+
 /* Force Plus Jakarta Sans partout */
 html, body, html *, body * {
   font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
