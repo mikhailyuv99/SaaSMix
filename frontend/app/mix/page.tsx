@@ -538,6 +538,7 @@ export default function Home() {
   const [addTrackDropzoneDragging, setAddTrackDropzoneDragging] = useState(false);
   const tracksListRef = useRef<HTMLDivElement>(null);
   const trackDragScrollRafRef = useRef<number | null>(null);
+  const trackDragScrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const trackDragScrollDirectionRef = useRef<number>(0);
   const trackDragScrollLastTimeRef = useRef<number>(0);
   const trackDragScrollAccumRef = useRef<number>(0);
@@ -3881,61 +3882,93 @@ export default function Home() {
                     const startIndex = trackIndex;
                     setDragState({ trackId, startIndex, offset: 0 });
                     const EDGE_ZONE = 56;
+                    const SCROLL_PX_PER_SEC = 140;
+                    const SCROLL_TICK_MS = 16;
+                    const SCROLL_MAX_PX_PER_TICK = 2;
                     const stopScroll = () => {
                       trackDragScrollDirectionRef.current = 0;
                       if (trackDragScrollRafRef.current != null) {
                         cancelAnimationFrame(trackDragScrollRafRef.current);
                         trackDragScrollRafRef.current = null;
                       }
+                      if (trackDragScrollIntervalRef.current != null) {
+                        clearInterval(trackDragScrollIntervalRef.current);
+                        trackDragScrollIntervalRef.current = null;
+                      }
                     };
-                    const scrollLoop = (now: number) => {
+                    const scrollTick = () => {
+                      const dir = trackDragScrollDirectionRef.current;
+                      if (dir === 0) return;
+                      trackDragScrollAccumRef.current += (SCROLL_PX_PER_SEC * SCROLL_TICK_MS) / 1000;
+                      const step = Math.min(SCROLL_MAX_PX_PER_TICK, Math.floor(trackDragScrollAccumRef.current));
+                      if (step > 0) {
+                        window.scrollBy(0, dir * step);
+                        trackDragScrollAccumRef.current -= step;
+                      }
+                    };
+                    const scrollLoopRaf = (now: number) => {
                       const dir = trackDragScrollDirectionRef.current;
                       if (dir !== 0) {
                         const prev = trackDragScrollLastTimeRef.current;
                         trackDragScrollLastTimeRef.current = now;
-                        const dt = prev > 0 ? Math.min(now - prev, 25) : 16;
-                        const speedPxPerSec = isMobileRef.current ? 260 : 140;
-                        trackDragScrollAccumRef.current += (speedPxPerSec * dt) / 1000;
-                        const step = Math.min(2, Math.floor(trackDragScrollAccumRef.current));
+                        const dt = prev > 0 ? Math.min(now - prev, 20) : 16;
+                        trackDragScrollAccumRef.current += (SCROLL_PX_PER_SEC * dt) / 1000;
+                        const step = Math.min(SCROLL_MAX_PX_PER_TICK, Math.floor(trackDragScrollAccumRef.current));
                         if (step > 0) {
                           window.scrollBy(0, dir * step);
                           trackDragScrollAccumRef.current -= step;
                         }
-                        trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoop(t));
+                        trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoopRaf(t));
                       }
                     };
+                    let lastTargetUpdate = 0;
                     const onMove = (e2: PointerEvent) => {
+                      const isMobile = isMobileRef.current;
+                      const now = typeof performance !== "undefined" ? performance.now() : 0;
                       const listEl = tracksListRef.current;
-                      if (listEl) {
-                        const cards = listEl.querySelectorAll<HTMLElement>("[data-track-index]");
-                        const y = e2.clientY;
-                        for (let i = 0; i < cards.length; i++) {
-                          const rect = cards[i].getBoundingClientRect();
-                          if (y >= rect.top && y <= rect.bottom) {
-                            const targetIndex = parseInt(cards[i].getAttribute("data-track-index") ?? "", 10);
-                            if (Number.isFinite(targetIndex)) {
-                              const newOffset = Math.max(-startIndex, Math.min(tracks.length - 1 - startIndex, targetIndex - startIndex));
-                              setDragState((prev) => (prev && prev.trackId === trackId ? { ...prev, offset: newOffset } : prev));
+                      if (listEl && (!isMobile || now - lastTargetUpdate >= 40)) {
+                        if (isMobile) lastTargetUpdate = now;
+                        {
+                            const cards = listEl.querySelectorAll<HTMLElement>("[data-track-index]");
+                            const y = e2.clientY;
+                            for (let i = 0; i < cards.length; i++) {
+                              const rect = cards[i].getBoundingClientRect();
+                              if (y >= rect.top && y <= rect.bottom) {
+                                const targetIndex = parseInt(cards[i].getAttribute("data-track-index") ?? "", 10);
+                                if (Number.isFinite(targetIndex)) {
+                                  const newOffset = Math.max(-startIndex, Math.min(tracks.length - 1 - startIndex, targetIndex - startIndex));
+                                  setDragState((prev) => (prev && prev.trackId === trackId ? { ...prev, offset: newOffset } : prev));
+                                }
+                                break;
+                              }
                             }
-                            break;
-                          }
                         }
                       }
                       const cy = e2.clientY;
                       const winH = typeof window !== "undefined" ? window.innerHeight : 0;
                       if (cy < EDGE_ZONE) {
                         trackDragScrollDirectionRef.current = -1;
-                        if (trackDragScrollRafRef.current == null) {
-                          trackDragScrollLastTimeRef.current = 0;
+                        if (trackDragScrollRafRef.current == null && trackDragScrollIntervalRef.current == null) {
                           trackDragScrollAccumRef.current = 0;
-                          trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoop(t));
+                          if (isMobile) {
+                            trackDragScrollLastTimeRef.current = 0;
+                            trackDragScrollIntervalRef.current = setInterval(scrollTick, SCROLL_TICK_MS);
+                          } else {
+                            trackDragScrollLastTimeRef.current = 0;
+                            trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoopRaf(t));
+                          }
                         }
                       } else if (cy > winH - EDGE_ZONE) {
                         trackDragScrollDirectionRef.current = 1;
-                        if (trackDragScrollRafRef.current == null) {
-                          trackDragScrollLastTimeRef.current = 0;
+                        if (trackDragScrollRafRef.current == null && trackDragScrollIntervalRef.current == null) {
                           trackDragScrollAccumRef.current = 0;
-                          trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoop(t));
+                          if (isMobile) {
+                            trackDragScrollLastTimeRef.current = 0;
+                            trackDragScrollIntervalRef.current = setInterval(scrollTick, SCROLL_TICK_MS);
+                          } else {
+                            trackDragScrollLastTimeRef.current = 0;
+                            trackDragScrollRafRef.current = requestAnimationFrame((t) => scrollLoopRaf(t));
+                          }
                         }
                       } else {
                         stopScroll();
