@@ -2269,6 +2269,15 @@ export default function Home() {
     [getAuthHeaders, fetchProjectsList, currentProject?.id]
   );
 
+  function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as ArrayBuffer);
+      r.onerror = () => reject(r.error);
+      r.readAsArrayBuffer(file);
+    });
+  }
+
   async function decodeTrackBuffers(
     id: string,
     rawUrl: string | null,
@@ -2282,41 +2291,31 @@ export default function Home() {
       const cacheKey = `raw:${rawUrl}`;
       let ab = abCacheRef.current.get(cacheKey);
       if (!ab) {
-        try {
-          const res = await fetch(rawUrl);
-          if (!res.ok) throw new Error(`fetch ${res.status}`);
-          ab = await res.arrayBuffer();
-          abCacheRef.current.set(cacheKey, ab);
-        } catch (e) {
-          console.error("[mix] raw fetch failed, trying file/IDB", id, e);
-          // On mobile (iOS) fetch(blobUrl) often fails; use in-memory file first, then IDB
-          let resolved = false;
-          if (fileFallback) {
-            try {
-              const freshUrl = URL.createObjectURL(fileFallback);
-              try {
-                const res2 = await fetch(freshUrl);
-                if (res2.ok) {
-                  ab = await res2.arrayBuffer();
-                  abCacheRef.current.set(cacheKey, ab);
-                  abCacheRef.current.set(`raw:${freshUrl}`, ab);
-                  updateTrack(id, { rawAudioUrl: freshUrl });
-                  resolved = true;
-                }
-              } finally {
-                if (!resolved) URL.revokeObjectURL(freshUrl);
-              }
-            } catch (_) {}
+        // On mobile (iOS) fetch(blobUrl) often fails with "Load failed". Prefer FileReader when we have a File.
+        if (fileFallback) {
+          try {
+            ab = await readFileAsArrayBuffer(fileFallback);
+            abCacheRef.current.set(cacheKey, ab);
+          } catch (e) {
+            console.error("[mix] raw FileReader failed", id, e);
           }
-          if (!resolved) {
+        }
+        if (!ab) {
+          try {
+            const res = await fetch(rawUrl);
+            if (!res.ok) throw new Error(`fetch ${res.status}`);
+            ab = await res.arrayBuffer();
+            abCacheRef.current.set(cacheKey, ab);
+          } catch (e) {
+            console.error("[mix] raw fetch failed, trying IDB", id, e);
             const data = await getFileFromIDB(id);
             if (data) {
               const file = new File([data.blob], data.fileName, { type: data.blob.type || "audio/wav" });
-              const freshUrl = URL.createObjectURL(file);
-              const res2 = await fetch(freshUrl);
-              ab = await res2.arrayBuffer();
-              abCacheRef.current.set(`raw:${freshUrl}`, ab);
-              updateTrack(id, { file, rawAudioUrl: freshUrl, rawFileName: data.fileName });
+              try {
+                ab = await readFileAsArrayBuffer(file);
+                abCacheRef.current.set(cacheKey, ab);
+                updateTrack(id, { file, rawAudioUrl: rawUrl, rawFileName: data.fileName });
+              } catch (_) {}
             }
           }
         }
