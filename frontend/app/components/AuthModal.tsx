@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "../context";
 import type { AuthModalMode } from "../context/AuthContext";
@@ -62,7 +63,7 @@ export function AuthModal() {
 
   if (!isOpen) return null;
 
-  return (
+  const modalContent = (
     <div
       className="modal-backdrop-dark fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3"
       onClick={close}
@@ -267,4 +268,9 @@ export function AuthModal() {
       </div>
     </div>
   );
+
+  if (typeof document !== "undefined") {
+    return createPortal(modalContent, document.body);
+  }
+  return modalContent;
 }

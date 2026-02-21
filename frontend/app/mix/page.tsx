@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo, memo, Fragment } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -3394,14 +3395,16 @@ export default function Home() {
           <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
         </div>
       )}
-      {appModal && (
-        <div
-          className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[110]"}`}
-          aria-modal="true"
-          role="dialog"
-        >
-          <div className="backdrop-blur-layer" aria-hidden="true" />
-          <div className="backdrop-tint-layer" aria-hidden="true" />
+      {appModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[110]"}`}
+            aria-modal="true"
+            role="dialog"
+          >
+            <div className="backdrop-blur-layer" aria-hidden="true" />
+            <div className="backdrop-tint-layer" aria-hidden="true" />
           <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl">
             {appModal.type === "prompt" && (
               <>
@@ -3515,13 +3518,16 @@ export default function Home() {
               </>
             )}
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
-      {moveTrackModal != null && (
-        <div className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="move-track-modal-title" onClick={() => setMoveTrackModal(null)}>
-          <div className="backdrop-blur-layer" aria-hidden="true" />
-          <div className="backdrop-tint-layer" aria-hidden="true" />
+      {moveTrackModal != null &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="move-track-modal-title" onClick={() => setMoveTrackModal(null)}>
+            <div className="backdrop-blur-layer" aria-hidden="true" />
+            <div className="backdrop-tint-layer" aria-hidden="true" />
           <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
             <p id="move-track-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide pb-4 border-b border-white/10">
               Déplacer la piste
@@ -3576,13 +3582,16 @@ export default function Home() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
-      {categoryModal && (
-        <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
-          <div className="backdrop-blur-layer" aria-hidden="true" />
-          <div className="backdrop-tint-layer" aria-hidden="true" />
+      {categoryModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
+            <div className="backdrop-blur-layer" aria-hidden="true" />
+            <div className="backdrop-tint-layer" aria-hidden="true" />
           <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl">
             <div className="pb-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
@@ -3616,13 +3625,16 @@ export default function Home() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
-      {showProjectsModal && (
-        <div className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog">
-          <div className="backdrop-blur-layer" aria-hidden="true" />
-          <div className="backdrop-tint-layer" aria-hidden="true" />
+      {showProjectsModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog">
+            <div className="backdrop-blur-layer" aria-hidden="true" />
+            <div className="backdrop-tint-layer" aria-hidden="true" />
           <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20 max-lg:max-w-[calc(100vw-1.5rem)] max-lg:max-h-[85vh] max-lg:rounded-xl">
             <div className="flex items-center justify-between p-4 border-b border-white/10 max-lg:p-3">
               <h2 className="text-lg font-medium text-white max-lg:text-base">Mes projets</h2>
@@ -3692,8 +3704,9 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
       <div className="mx-auto max-w-6xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
         {!isFullscreen && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
@@ -223,7 +224,7 @@ export function SubscriptionModal({
 
   if (!isOpen) return null;
   if (!PUBLISHABLE_KEY) {
-    return (
+    const noKeyContent = (
       <div className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3" onClick={onClose}>
         <div className="backdrop-blur-layer" aria-hidden="true" />
         <div className="backdrop-tint-layer" aria-hidden="true" />
@@ -233,8 +234,10 @@ export function SubscriptionModal({
         </div>
       </div>
     );
+    if (typeof document !== "undefined") return createPortal(noKeyContent, document.body);
+    return noKeyContent;
   }
-  return (
+  const content = (
     <div className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3" onClick={onClose}>
       <div className="backdrop-blur-layer" aria-hidden="true" />
       <div className="backdrop-tint-layer" aria-hidden="true" />
@@ -257,4 +260,6 @@ export function SubscriptionModal({
       </div>
     </div>
   );
+  if (typeof document !== "undefined") return createPortal(content, document.body);
+  return content;
 }

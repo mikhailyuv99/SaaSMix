@@ -3,6 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
@@ -217,12 +218,14 @@ export function Header() {
           </button>
         </div>
 
-        {/* Burger panel (mobile/tablet) - même style que le site : flou, pas noir plein. Classe header-burger-overlay pour fix iOS < 18. */}
-        {burgerOpen && (
-          <div className="header-burger-overlay lg:hidden fixed inset-0 z-40 top-14 sm:top-16 border-t border-white/10 overflow-y-auto">
-            <div className="backdrop-blur-layer" aria-hidden="true" />
-            <div className="backdrop-tint-layer" aria-hidden="true" />
-            <nav className="flex flex-col p-4 gap-1 max-w-6xl mx-auto">
+        {/* Burger panel (mobile/tablet) - portail vers body pour backdrop-filter Safari 17 / iOS 17 */}
+        {burgerOpen &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <div className="header-burger-overlay lg:hidden fixed inset-0 z-40 top-14 sm:top-16 border-t border-white/10 overflow-y-auto">
+              <div className="backdrop-blur-layer" aria-hidden="true" />
+              <div className="backdrop-tint-layer" aria-hidden="true" />
+              <nav className="flex flex-col p-4 gap-1 max-w-6xl mx-auto">
               {isHome && (
                 <>
                   <a href="#tarifs" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Tarifs</a>
@@ -264,12 +267,15 @@ export function Header() {
                 </>
               )}
             </nav>
-          </div>
-        )}
+          </div>,
+            document.body
+          )}
       </header>
 
-      {showLeaveModal && (
-        <div className="modal-backdrop-dark fixed inset-0 z-[200] flex items-center justify-center p-4 max-lg:p-3" aria-modal="true" role="dialog">
+      {showLeaveModal &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="modal-backdrop-dark fixed inset-0 z-[200] flex items-center justify-center p-4 max-lg:p-3" aria-modal="true" role="dialog">
           <div className="backdrop-blur-layer" aria-hidden="true" />
           <div className="backdrop-tint-layer" aria-hidden="true" />
           <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm max-lg:p-4 max-lg:max-w-[calc(100vw-1.5rem)]">
@@ -297,8 +303,9 @@ export function Header() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
       {user && manageSubscriptionOpen && (
         <ManageSubscriptionModal

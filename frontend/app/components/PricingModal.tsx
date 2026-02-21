@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -60,7 +61,7 @@ export function PricingModal({
           { plan: DISPLAY_PLANS_MENSUEL[2], invisible: true, index: 2 },
         ];
 
-  return (
+  const content = (
     <div className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3 overflow-y-auto" onClick={onClose}>
       <div className="backdrop-blur-layer" aria-hidden="true" />
       <div className="backdrop-tint-layer" aria-hidden="true" />
@@ -164,4 +165,8 @@ export function PricingModal({
       </div>
     </div>
   );
+  if (typeof document !== "undefined") {
+    return createPortal(content, document.body);
+  }
+  return content;
 }

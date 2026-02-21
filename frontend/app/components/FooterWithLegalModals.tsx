@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 type LegalModalType = "mentions" | "politique" | "cgu" | null;
 
@@ -156,36 +157,39 @@ export function FooterWithLegalModals() {
         </div>
       </footer>
 
-      {legalModal && (
-        <div
-          className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3"
-          onClick={closeModal}
-          aria-modal="true"
-          role="dialog"
-          aria-labelledby="legal-modal-title"
-        >
-          <div className="backdrop-blur-layer" aria-hidden="true" />
-          <div className="backdrop-tint-layer" aria-hidden="true" />
+      {legalModal &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl max-lg:max-h-[85vh]"
-            onClick={(e) => e.stopPropagation()}
+            className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3"
+            onClick={closeModal}
+            aria-modal="true"
+            role="dialog"
+            aria-labelledby="legal-modal-title"
           >
-            <div className="flex justify-end mb-2">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="rounded-lg p-2 text-slate-400 hover:text-white transition-colors"
-                aria-label="Fermer"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+            <div className="backdrop-blur-layer" aria-hidden="true" />
+            <div className="backdrop-tint-layer" aria-hidden="true" />
+            <div
+              className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl max-lg:max-h-[85vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-end mb-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded-lg p-2 text-slate-400 hover:text-white transition-colors"
+                  aria-label="Fermer"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <LegalModalContent type={legalModal} />
             </div>
-            <LegalModalContent type={legalModal} />
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
