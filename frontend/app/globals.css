@@ -188,24 +188,28 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 17 et moins / iOS 17 : blur sur l’overlay lui‑même (enfant = souvent ignoré sur WebKit) — Windows et 18+ inchangés */
+/* Safari 17 et moins / iOS 17 : blur plus fort sur l’overlay + couche GPU — Windows et 18+ inchangés */
 html.safari-webkit-old .modal-backdrop-dark,
 html.safari-webkit-old .modal-backdrop-slate,
 html.safari-ios-old .modal-backdrop-dark,
 html.safari-ios-old .modal-backdrop-slate {
-  -webkit-backdrop-filter: blur(16px) !important;
-  backdrop-filter: blur(16px) !important;
-  background-color: rgba(0, 0, 0, 0.03) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+  background-color: rgba(0, 0, 0, 0.04) !important;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 html.safari-webkit-old .header-burger-overlay,
 html.safari-ios-old .header-burger-overlay {
-  -webkit-backdrop-filter: blur(20px) !important;
-  backdrop-filter: blur(20px) !important;
-  background-color: rgba(0, 0, 0, 0.03) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  backdrop-filter: blur(28px) !important;
+  background-color: rgba(0, 0, 0, 0.04) !important;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   overflow: visible;
 }
 /* Pas de double blur : la couche enfant ne floute plus */
@@ -220,18 +224,18 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-/* Teinte plus forte sur Safari 17 / iOS 17 si le blur ne s’applique pas (fallback) */
+/* Teinte un peu plus forte sur Safari 17 / iOS 17 pour rapprocher du rendu 18+ (blur + tint) */
 html.safari-webkit-old .modal-backdrop-dark .backdrop-tint-layer,
 html.safari-ios-old .modal-backdrop-dark .backdrop-tint-layer {
-  background-color: rgba(0, 0, 0, 0.55);
+  background-color: rgba(0, 0, 0, 0.6);
 }
 html.safari-webkit-old .modal-backdrop-slate .backdrop-tint-layer,
 html.safari-ios-old .modal-backdrop-slate .backdrop-tint-layer {
-  background-color: rgba(15, 23, 42, 0.75);
+  background-color: rgba(15, 23, 42, 0.8);
 }
 html.safari-webkit-old .header-burger-overlay .backdrop-tint-layer,
 html.safari-ios-old .header-burger-overlay .backdrop-tint-layer {
-  background-color: rgba(0, 0, 0, 0.65);
+  background-color: rgba(0, 0, 0, 0.7);
 }
 
 /* ----- Landing: scroll & entrance animations ----- */
