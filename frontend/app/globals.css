@@ -68,6 +68,12 @@ body::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.35);
 }
 
+/* Mix page fullscreen: ensure dark background when main is fullscreen */
+main:fullscreen,
+main:-webkit-full-screen {
+  background-color: #000;
+}
+
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
   from {

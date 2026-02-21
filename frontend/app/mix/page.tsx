@@ -576,6 +576,37 @@ export default function Home() {
   const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ trackId: string; startIndex: number; offset: number } | null>(null);
   const [moveTrackModal, setMoveTrackModal] = useState<{ trackId: string; trackIndex: number } | null>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    const doc = document as Document & {
+      fullscreenElement?: Element | null;
+      webkitFullscreenElement?: Element | null;
+      exitFullscreen?: () => Promise<void>;
+      webkitExitFullscreen?: () => Promise<void>;
+    };
+    const elem = el as HTMLElement & { requestFullscreen?: () => Promise<void>; webkitRequestFullscreen?: () => Promise<void> };
+    const isFs = doc.fullscreenElement ?? doc.webkitFullscreenElement;
+    if (isFs) {
+      (doc.exitFullscreen ?? doc.webkitExitFullscreen)?.()?.catch(() => {});
+    } else {
+      (elem.requestFullscreen ?? elem.webkitRequestFullscreen)?.()?.catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const doc = document as Document & { fullscreenElement?: Element | null; webkitFullscreenElement?: Element | null };
+    const handler = () => setIsFullscreen(!!(doc.fullscreenElement ?? doc.webkitFullscreenElement));
+    document.addEventListener("fullscreenchange", handler);
+    document.addEventListener("webkitfullscreenchange", handler);
+    return () => {
+      document.removeEventListener("fullscreenchange", handler);
+      document.removeEventListener("webkitfullscreenchange", handler);
+    };
+  }, []);
 
   useEffect(() => {
     if (lastMovedTrackId == null) return;
@@ -3435,7 +3466,10 @@ export default function Home() {
   );
 
   return (
-    <main className="relative z-10 min-h-screen font-heading overflow-x-hidden">
+    <main
+      ref={mainRef}
+      className={`relative z-10 min-h-screen font-heading overflow-x-hidden ${isFullscreen ? "bg-black" : ""}`}
+    >
       {appModal && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3"
@@ -3733,6 +3767,24 @@ export default function Home() {
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
           <nav className="flex flex-col items-center justify-center gap-2 mb-4 mt-6 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-lg:text-xs max-md:gap-1.5 max-md:mb-3 max-md:text-[10px] max-md:mt-4">
             <div className="flex flex-nowrap justify-center items-center gap-2 max-md:gap-1">
+                <button
+                  type="button"
+                  onClick={toggleFullscreen}
+                  className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0"
+                  title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
+                  aria-label={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
+                >
+                  {isFullscreen ? (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+                    </svg>
+                  )}
+                </button>
+                <span className="text-slate-400 shrink-0">|</span>
                 <button
                   type="button"
                   onClick={() => { if (!user) { openAuthModal?.("login"); return; } setShowProjectsModal(true); fetchProjectsList(); }}
