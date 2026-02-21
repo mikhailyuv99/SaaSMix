@@ -6,6 +6,7 @@ import { LandingTheme } from './components/LandingTheme'
 import { FooterWithLegalModals } from './components/FooterWithLegalModals'
 import { Plus_Jakarta_Sans } from 'next/font/google'
 import { OfflineBanner } from './components/OfflineBanner'
+import { SafariDetect } from './components/SafariDetect'
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -83,6 +84,7 @@ export default function RootLayout({
         ) : null}
       </head>
       <body className={`${plusJakarta.className} antialiased text-slate-400 uppercase`}>
+        <SafariDetect />
         <JsonLd />
         <OfflineBanner />
         <div className="relative min-h-screen flex flex-col">

@@ -74,12 +74,10 @@ body[data-mix-fullscreen] footer {
   display: none !important;
 }
 
-/* Mix cards: Safari/WebKit fix — opaque white → glass transparent */
-/* Tailwind bg-white/[0.04] renders opaque white on Safari; force rgba + !important */
+/* Mix cards + modals: Safari 18 / macOS 15 fix — rgba + backdrop-filter = opaque white bug */
+/* Force rgba background. On Safari, disable backdrop-filter (workaround for regression). */
 .mix-card-glass {
   background-color: rgba(255, 255, 255, 0.04) !important;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
 }
 .mix-card-glass:hover {
   background-color: rgba(255, 255, 255, 0.06) !important;
@@ -91,21 +89,23 @@ body[data-mix-fullscreen] footer {
   background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Safari: modal/dropdown dark glass — rgb(value/opacity) misrenders on Safari */
 .modal-backdrop-dark {
   background-color: rgba(0, 0, 0, 0.2) !important;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
 }
 .modal-backdrop-slate {
   background-color: rgba(15, 23, 42, 0.4) !important;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
 }
 .modal-panel-dark {
   background-color: rgba(0, 0, 0, 0.1) !important;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+}
+
+/* Safari only: disable backdrop-filter — rgba+blur combo = opaque white in Safari 18 */
+html.safari-webkit .mix-card-glass,
+html.safari-webkit .modal-backdrop-dark,
+html.safari-webkit .modal-backdrop-slate,
+html.safari-webkit .modal-panel-dark {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 .modal-btn-subtle {
   background-color: rgba(255, 255, 255, 0.05) !important;
