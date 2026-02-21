@@ -68,6 +68,12 @@ body::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.35);
 }
 
+/* Mix fullscreen: hide layout header and footer for immersion */
+body[data-mix-fullscreen] header,
+body[data-mix-fullscreen] footer {
+  display: none !important;
+}
+
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
   from {

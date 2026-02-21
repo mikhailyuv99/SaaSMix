@@ -584,13 +584,16 @@ export default function Home() {
     if (isFullscreen) {
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
+      document.body.dataset.mixFullscreen = "true";
     } else {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
+      delete document.body.dataset.mixFullscreen;
     }
     return () => {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
+      delete document.body.dataset.mixFullscreen;
     };
   }, [isFullscreen]);
 
@@ -3465,10 +3468,19 @@ export default function Home() {
       <div className="min-h-screen w-full">
       {isFullscreen && tracks.length > 0 && (
         <div
-          className="fixed inset-0 z-[9998] bg-black"
+          className="fixed inset-0 z-[9998] pointer-events-none overflow-hidden bg-black"
           style={{ width: "100vw", height: "100dvh", minHeight: "100vh" }}
           aria-hidden
-        />
+        >
+          <div className="absolute inset-0 origin-center scale-[1.08] blur-[6px]" style={{ overflow: "hidden" }}>
+            <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
+              <source srcSet="/background-1280.avif 1280w, /background-1920.avif 1920w" type="image/avif" sizes="100vw" />
+              <source srcSet="/background-1280.webp 1280w, /background-1920.webp 1920w" type="image/webp" sizes="100vw" />
+              <img src="/background.png" alt="" className="block h-full w-full object-cover object-center" style={{ minHeight: "100%", minWidth: "100%" }} />
+            </picture>
+          </div>
+          <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
+        </div>
       )}
       {appModal && (
         <div
@@ -3875,18 +3887,6 @@ export default function Home() {
           }`}
           style={isFullscreen ? { height: "100dvh", minHeight: "100vh" } : undefined}
         >
-        {isFullscreen && (
-          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black" aria-hidden>
-            <div className="absolute inset-0 origin-center scale-[1.08] blur-[6px]" style={{ overflow: "hidden" }} aria-hidden>
-              <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
-                <source srcSet="/background-1280.avif 1280w, /background-1920.avif 1920w" type="image/avif" sizes="100vw" />
-                <source srcSet="/background-1280.webp 1280w, /background-1920.webp 1920w" type="image/webp" sizes="100vw" />
-                <img src="/background.png" alt="" className="block h-full w-full object-cover object-center" style={{ minHeight: "100%", minWidth: "100%" }} />
-              </picture>
-            </div>
-            <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
-          </div>
-        )}
         <div className={`flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`}>
           <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-md:w-full max-md:order-first max-md:justify-center">
             {(() => {
