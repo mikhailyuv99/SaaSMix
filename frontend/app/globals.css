@@ -96,7 +96,16 @@ body[data-mix-fullscreen] footer {
   background-color: rgba(15, 23, 42, 0.4) !important;
 }
 .modal-panel-dark {
-  background-color: rgba(0, 0, 0, 0.1) !important;
+  background-color: rgba(0, 0, 0, 0.55) !important;
+}
+.modal-btn-subtle {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+.modal-btn-subtle:hover {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+.modal-input {
+  background-color: rgba(0, 0, 0, 0.35) !important;
 }
 
 /* Safari only: disable backdrop-filter — rgba+blur combo = opaque white in Safari 18 */
@@ -106,12 +115,6 @@ html.safari-webkit .modal-backdrop-slate,
 html.safari-webkit .modal-panel-dark {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-}
-.modal-btn-subtle {
-  background-color: rgba(255, 255, 255, 0.05) !important;
-}
-.modal-btn-subtle:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* ----- Landing: scroll & entrance animations ----- */

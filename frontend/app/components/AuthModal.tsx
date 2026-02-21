@@ -141,7 +141,7 @@ export function AuthModal() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="off"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                  className="modal-input w-full rounded-lg border border-white/10 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                   placeholder="vous@exemple.com"
                 />
               </div>
@@ -156,7 +156,7 @@ export function AuthModal() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="off"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                  className="modal-input w-full rounded-lg border border-white/10 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                   placeholder="••••••••"
                 />
               </div>
@@ -222,7 +222,7 @@ export function AuthModal() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                  className="modal-input w-full rounded-lg border border-white/10 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                   placeholder="vous@exemple.com"
                 />
               </div>
@@ -238,7 +238,7 @@ export function AuthModal() {
                   required
                   minLength={8}
                   autoComplete="new-password"
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
+                  className="modal-input w-full rounded-lg border border-white/10 px-3 py-2 text-slate-400 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-white/20 text-sm"
                   placeholder="••••••••"
                 />
               </div>
