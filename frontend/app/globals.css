@@ -188,6 +188,17 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
+/* Safari 15–17 (macOS 12–14): modals trop transparents → opacité renforcée (Safari 18 et Windows inchangés) */
+html.safari-webkit-old .modal-backdrop-dark::after {
+  background-color: rgba(0, 0, 0, 0.55) !important;
+}
+html.safari-webkit-old .modal-backdrop-slate::after {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+html.safari-webkit-old .modal-panel-dark::after {
+  background-color: rgba(15, 18, 22, 0.85) !important;
+}
+
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
   from {
