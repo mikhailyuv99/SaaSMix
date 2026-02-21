@@ -576,44 +576,18 @@ export default function Home() {
   const [lastMovedTrackId, setLastMovedTrackId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<{ trackId: string; startIndex: number; offset: number } | null>(null);
   const [moveTrackModal, setMoveTrackModal] = useState<{ trackId: string; trackIndex: number } | null>(null);
-  const mainRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const toggleFullscreen = useCallback(() => {
-    const el = mainRef.current;
-    const doc = document as Document & {
-      fullscreenElement?: Element | null;
-      webkitFullscreenElement?: Element | null;
-      exitFullscreen?: () => Promise<void>;
-      webkitExitFullscreen?: () => Promise<void>;
-    };
-    const isFs = doc.fullscreenElement ?? doc.webkitFullscreenElement;
-    if (isFs) {
-      (doc.exitFullscreen ?? doc.webkitExitFullscreen)?.()?.catch(() => {});
-      return;
-    }
-    const reqFs = (target: HTMLElement) => {
-      const req = target.requestFullscreen ?? (target as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> }).webkitRequestFullscreen;
-      if (req) return req.call(target);
-      return Promise.reject(new Error("Fullscreen not supported"));
-    };
-    if (el) {
-      reqFs(el).catch(() => reqFs(document.documentElement).catch(() => {}));
-    } else {
-      reqFs(document.documentElement).catch(() => {});
-    }
-  }, []);
+  const toggleFullscreen = useCallback(() => setIsFullscreen((prev) => !prev), []);
 
   useEffect(() => {
-    const doc = document as Document & { fullscreenElement?: Element | null; webkitFullscreenElement?: Element | null };
-    const handler = () => setIsFullscreen(!!(doc.fullscreenElement ?? doc.webkitFullscreenElement));
-    document.addEventListener("fullscreenchange", handler);
-    document.addEventListener("webkitfullscreenchange", handler);
-    return () => {
-      document.removeEventListener("fullscreenchange", handler);
-      document.removeEventListener("webkitfullscreenchange", handler);
+    if (!isFullscreen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFullscreen(false);
     };
-  }, []);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isFullscreen]);
 
   useEffect(() => {
     if (lastMovedTrackId == null) return;
@@ -3475,9 +3449,24 @@ export default function Home() {
   return (
     <main className="relative z-10 min-h-screen font-heading overflow-x-hidden">
       <div
-        ref={mainRef}
-        className={`min-h-screen w-full ${isFullscreen ? "bg-black" : ""}`}
+        className={
+          isFullscreen
+            ? "fixed inset-0 z-[9999] overflow-y-auto overflow-x-hidden min-h-screen min-w-full"
+            : "min-h-screen w-full"
+        }
       >
+        {isFullscreen && (
+          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black" aria-hidden>
+            <div className="absolute inset-0 origin-center scale-[1.08] blur-[6px]" style={{ overflow: "hidden" }} aria-hidden>
+              <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
+                <source srcSet="/background-1280.avif 1280w, /background-1920.avif 1920w" type="image/avif" sizes="100vw" />
+                <source srcSet="/background-1280.webp 1280w, /background-1920.webp 1920w" type="image/webp" sizes="100vw" />
+                <img src="/background.png" alt="" className="block h-full w-full object-cover object-center" style={{ minHeight: "100%", minWidth: "100%" }} />
+              </picture>
+            </div>
+            <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
+          </div>
+        )}
       {appModal && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3"
