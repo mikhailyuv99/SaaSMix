@@ -3911,16 +3911,16 @@ export default function Home() {
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="hidden max-md:flex p-2 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0 max-md:absolute max-md:right-0"
+              className="hidden max-md:flex p-1.5 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0 max-md:absolute max-md:right-0"
               title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
               aria-label={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
             >
               {isFullscreen ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
                 </svg>
               )}
