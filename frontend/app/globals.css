@@ -188,7 +188,27 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 15–17: même two-layer que Safari 18, teinte (::after) plus forte pour que le contenu derrière ne transparaisse pas */
+/* Safari 15–17: le blur sur ::before ne rend pas — mettre le blur sur l’élément pour que le fond soit flouté */
+html.safari-webkit-old .modal-backdrop-dark::before,
+html.safari-webkit-old .modal-backdrop-slate::before {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.safari-webkit-old .modal-backdrop-dark,
+html.safari-webkit-old .modal-backdrop-slate {
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  transform: translateZ(0);
+}
+html.safari-webkit-old .modal-panel-dark::before {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.safari-webkit-old .modal-panel-dark {
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+  transform: translateZ(0);
+}
 html.safari-webkit-old .modal-backdrop-dark::after {
   background-color: rgba(0, 0, 0, 0.58) !important;
 }
@@ -198,8 +218,33 @@ html.safari-webkit-old .modal-backdrop-slate::after {
 html.safari-webkit-old .modal-panel-dark::after {
   background-color: rgba(0, 0, 0, 0.5) !important;
 }
+html.safari-webkit-old .header-burger-overlay {
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  transform: translateZ(0);
+}
 
-/* iOS 17 et moins: idem, teinte plus forte pour rendu identique à Safari 18+ (pas de texte derrière visible) */
+/* iOS 17 et moins: idem — blur sur l’élément (pas sur ::before) + teinte ::after */
+html.safari-ios-old .modal-backdrop-dark::before,
+html.safari-ios-old .modal-backdrop-slate::before {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.safari-ios-old .modal-backdrop-dark,
+html.safari-ios-old .modal-backdrop-slate {
+  -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
+  transform: translateZ(0);
+}
+html.safari-ios-old .modal-panel-dark::before {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.safari-ios-old .modal-panel-dark {
+  -webkit-backdrop-filter: blur(24px) !important;
+  backdrop-filter: blur(24px) !important;
+  transform: translateZ(0);
+}
 html.safari-ios-old .modal-backdrop-dark::after {
   background-color: rgba(0, 0, 0, 0.65) !important;
 }
@@ -210,11 +255,12 @@ html.safari-ios-old .modal-panel-dark::after {
   background-color: rgba(0, 0, 0, 0.55) !important;
 }
 
-/* iOS: overlay du menu burger plus opaque pour que le contenu derrière ne soit pas illisible */
+/* iOS: menu burger — blur sur l’élément + translateZ(0) pour que le flou s’applique */
 html.safari-ios-old .header-burger-overlay {
   background-color: rgba(0, 0, 0, 0.78) !important;
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  transform: translateZ(0);
 }
 
 /* ----- Landing: scroll & entrance animations ----- */
