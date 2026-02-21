@@ -4,111 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ObserveSection } from "../ObserveSection";
-
-const WAVEFORM_POINTS = 120;
-
-function computeWaveformPeaks(buffer: AudioBuffer, numPoints: number): number[] {
-  const data = buffer.length > 0 ? buffer.getChannelData(0) : new Float32Array(0);
-  const blockSize = Math.floor(data.length / numPoints) || 1;
-  const peaks: number[] = [];
-  for (let i = 0; i < numPoints; i++) {
-    const start = i * blockSize;
-    let max = 0;
-    for (let j = 0; j < blockSize && start + j < data.length; j++) {
-      const v = Math.abs(data[start + j]);
-      if (v > max) max = v;
-    }
-    peaks.push(max);
-  }
-  return peaks;
-}
-
-function DemoWaveform({
-  peaks,
-  duration,
-  currentTime,
-  onSeek,
-  className = "",
-}: {
-  peaks: number[];
-  duration: number;
-  currentTime: number;
-  onSeek?: (time: number) => void;
-  className?: string;
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const maxPeak = useMemo(() => Math.max(...peaks, 0.01), [peaks]);
-  const playheadPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-  // Étirer le contenu sur toute la largeur si la piste a du silence en fin (ex. Hiver)
-  const contentEnd = useMemo(() => {
-    const threshold = maxPeak * 0.02;
-    let last = peaks.length - 1;
-    while (last > 0 && peaks[last] < threshold) last--;
-    return Math.max(last, 1);
-  }, [peaks, maxPeak]);
-  const scaleX = (i: number) => (contentEnd > 0 ? (i / contentEnd) * 100 : (i / (peaks.length - 1 || 1)) * 100);
-
-  const handleClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (duration <= 0 || !onSeek) return;
-      const el = containerRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const fraction = Math.max(0, Math.min(1, x / rect.width));
-      onSeek(fraction * duration);
-    },
-    [duration, onSeek]
-  );
-
-  if (!peaks.length || duration <= 0) {
-    return null;
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      role={onSeek ? "button" : undefined}
-      tabIndex={onSeek ? 0 : undefined}
-      onClick={onSeek ? handleClick : undefined}
-      onKeyDown={
-        onSeek
-          ? (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSeek(0.5 * duration);
-              }
-            }
-          : undefined
-      }
-      className={`relative h-12 w-full min-w-0 rounded-lg bg-white/[0.04] border border-white/[0.06] overflow-hidden cursor-pointer ${className}`}
-      title={onSeek ? "Cliquer pour aller à ce moment" : undefined}
-    >
-      <svg className="absolute inset-0 w-full h-full min-w-0 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
-        {peaks.slice(0, contentEnd + 1).map((p, i) => {
-          const x = Math.min(100, scaleX(i));
-          const halfH = (p / maxPeak) * 50;
-          return (
-            <line
-              key={i}
-              x1={x}
-              y1={50 - halfH}
-              x2={x}
-              y2={50 + halfH}
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className="text-slate-400"
-            />
-          );
-        })}
-      </svg>
-      <div
-        className="absolute top-0 bottom-0 w-0.5 bg-white/60 pointer-events-none transition-[left] duration-75 ease-linear"
-        style={{ left: `${playheadPercent}%` }}
-      />
-    </div>
-  );
-}
+import { Waveform, computeWaveformPeaks, WAVEFORM_POINTS } from "../Waveform";
 
 type DemoId = "hublot" | "motema" | "hiver";
 
@@ -359,7 +255,7 @@ function DemoCard({
           </div>
         ) : (
           <div className="absolute inset-0 min-w-0">
-            <DemoWaveform
+            <Waveform
               peaks={currentWaveform?.peaks ?? []}
               duration={maxDuration > 0 ? maxDuration : currentDuration}
               currentTime={currentTime}
