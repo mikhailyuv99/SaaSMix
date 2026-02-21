@@ -226,6 +226,26 @@ html.safari-webkit-old .modal-btn-subtle:hover {
   background-color: rgba(55, 64, 76, 0.95) !important;
 }
 
+/* iOS Safari < 18: opacité encore plus forte (blur/transparence rendus plus légers sur iOS) */
+html.safari-ios-old .modal-backdrop-dark {
+  background-color: rgba(0, 0, 0, 0.72) !important;
+}
+html.safari-ios-old .modal-backdrop-slate {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+html.safari-ios-old .modal-panel-dark {
+  background-color: rgba(12, 15, 19, 0.98) !important;
+}
+html.safari-ios-old .modal-input {
+  background-color: rgba(20, 24, 30, 0.98) !important;
+}
+html.safari-ios-old .modal-btn-subtle {
+  background-color: rgba(35, 42, 52, 0.98) !important;
+}
+html.safari-ios-old .modal-btn-subtle:hover {
+  background-color: rgba(45, 52, 64, 0.98) !important;
+}
+
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
   from {
