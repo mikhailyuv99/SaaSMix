@@ -188,20 +188,7 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 17 et moins / iOS 17 et moins uniquement : modals et menu burger en bleu foncé plein (pas de blur). Safari 18+ et Windows inchangés. */
-html.safari-webkit-old .modal-backdrop-dark::before,
-html.safari-webkit-old .modal-backdrop-dark::after,
-html.safari-webkit-old .modal-backdrop-slate::before,
-html.safari-webkit-old .modal-backdrop-slate::after {
-  content: none !important;
-  display: none !important;
-}
-html.safari-webkit-old .modal-backdrop-dark,
-html.safari-webkit-old .modal-backdrop-slate {
-  background-color: #0f172a !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
+/* Safari 17 et moins / iOS 17 et moins : seul le panneau du modal (la boîte dialogue) en bleu foncé. Le fond (overlay / page) n’est pas touché. */
 html.safari-webkit-old .modal-panel-dark::before,
 html.safari-webkit-old .modal-panel-dark::after {
   content: none !important;
@@ -221,26 +208,8 @@ html.safari-webkit-old .modal-btn-subtle {
 html.safari-webkit-old .modal-btn-subtle:hover {
   background-color: #64748b !important;
 }
-html.safari-webkit-old .header-burger-overlay {
-  background-color: #0f172a !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
 
-/* iOS 17 et moins : idem — bleu foncé plein */
-html.safari-ios-old .modal-backdrop-dark::before,
-html.safari-ios-old .modal-backdrop-dark::after,
-html.safari-ios-old .modal-backdrop-slate::before,
-html.safari-ios-old .modal-backdrop-slate::after {
-  content: none !important;
-  display: none !important;
-}
-html.safari-ios-old .modal-backdrop-dark,
-html.safari-ios-old .modal-backdrop-slate {
-  background-color: #0f172a !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
+/* iOS 17 et moins : idem — uniquement le panneau modal en bleu foncé, pas le fond */
 html.safari-ios-old .modal-panel-dark::before,
 html.safari-ios-old .modal-panel-dark::after {
   content: none !important;
@@ -259,11 +228,6 @@ html.safari-ios-old .modal-btn-subtle {
 }
 html.safari-ios-old .modal-btn-subtle:hover {
   background-color: #64748b !important;
-}
-html.safari-ios-old .header-burger-overlay {
-  background-color: #0f172a !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
 }
 
 /* ----- Landing: scroll & entrance animations ----- */
