@@ -75,6 +75,11 @@ export default function RootLayout({
   return (
     <html lang="fr" className={plusJakarta.variable}>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var u=navigator.userAgent,v=navigator.vendor;if(v&&v.indexOf("Apple")>=0||(u.indexOf("Safari")>=0&&u.indexOf("Chrome")<0&&u.indexOf("CriOS")<0))document.documentElement.classList.add("safari-webkit");})();`,
+          }}
+        />
         <link rel="preconnect" href="https://js.stripe.com" />
         <link rel="dns-prefetch" href="https://js.stripe.com" />
         <link rel="icon" type="image/png" href="/icon.png" />
