@@ -182,6 +182,11 @@ html.safari-webkit .modal-panel-dark > * {
   position: relative;
   z-index: 1;
 }
+/* Croix de fermeture : garder position absolute (sinon écrasée par la règle ci‑dessus) */
+html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
+  position: absolute !important;
+  z-index: 10;
+}
 
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
