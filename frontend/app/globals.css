@@ -188,7 +188,7 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 15–17: le blur sur ::before ne rend pas — mettre le blur sur l’élément pour que le fond soit flouté */
+/* Safari 15–17: backdrop-filter exige parfois un fond non totalement transparent + isolation */
 html.safari-webkit-old .modal-backdrop-dark::before,
 html.safari-webkit-old .modal-backdrop-slate::before {
   -webkit-backdrop-filter: none !important;
@@ -196,18 +196,22 @@ html.safari-webkit-old .modal-backdrop-slate::before {
 }
 html.safari-webkit-old .modal-backdrop-dark,
 html.safari-webkit-old .modal-backdrop-slate {
+  background-color: rgba(0, 0, 0, 0.02) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   backdrop-filter: blur(12px) !important;
   transform: translateZ(0);
+  isolation: isolate;
 }
 html.safari-webkit-old .modal-panel-dark::before {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 html.safari-webkit-old .modal-panel-dark {
+  background-color: rgba(0, 0, 0, 0.02) !important;
   -webkit-backdrop-filter: blur(24px) !important;
   backdrop-filter: blur(24px) !important;
   transform: translateZ(0);
+  isolation: isolate;
 }
 html.safari-webkit-old .modal-backdrop-dark::after {
   background-color: rgba(0, 0, 0, 0.58) !important;
@@ -224,7 +228,7 @@ html.safari-webkit-old .header-burger-overlay {
   transform: translateZ(0);
 }
 
-/* iOS 17 et moins: idem — blur sur l’élément (pas sur ::before) + teinte ::after */
+/* iOS 17 et moins: idem — fond minimal + isolation pour que le blur s’applique */
 html.safari-ios-old .modal-backdrop-dark::before,
 html.safari-ios-old .modal-backdrop-slate::before {
   -webkit-backdrop-filter: none !important;
@@ -232,18 +236,22 @@ html.safari-ios-old .modal-backdrop-slate::before {
 }
 html.safari-ios-old .modal-backdrop-dark,
 html.safari-ios-old .modal-backdrop-slate {
+  background-color: rgba(0, 0, 0, 0.02) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   backdrop-filter: blur(12px) !important;
   transform: translateZ(0);
+  isolation: isolate;
 }
 html.safari-ios-old .modal-panel-dark::before {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
 html.safari-ios-old .modal-panel-dark {
+  background-color: rgba(0, 0, 0, 0.02) !important;
   -webkit-backdrop-filter: blur(24px) !important;
   backdrop-filter: blur(24px) !important;
   transform: translateZ(0);
+  isolation: isolate;
 }
 html.safari-ios-old .modal-backdrop-dark::after {
   background-color: rgba(0, 0, 0, 0.65) !important;
