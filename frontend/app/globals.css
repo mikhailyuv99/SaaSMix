@@ -188,54 +188,52 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 17 et moins / iOS 17 : blur plus fort sur l’overlay + couche GPU — Windows et 18+ inchangés */
+/* Safari 17 et moins / iOS 17 : backdrop-filter ne s’applique pas → overlay quasi opaque (Windows et 18+ inchangés) */
 html.safari-webkit-old .modal-backdrop-dark,
+html.safari-ios-old .modal-backdrop-dark {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-color: rgba(0, 0, 0, 0.92) !important;
+}
 html.safari-webkit-old .modal-backdrop-slate,
-html.safari-ios-old .modal-backdrop-dark,
 html.safari-ios-old .modal-backdrop-slate {
-  -webkit-backdrop-filter: blur(24px) !important;
-  backdrop-filter: blur(24px) !important;
-  background-color: rgba(0, 0, 0, 0.04) !important;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-color: rgba(15, 23, 42, 0.92) !important;
 }
 html.safari-webkit-old .header-burger-overlay,
 html.safari-ios-old .header-burger-overlay {
-  -webkit-backdrop-filter: blur(28px) !important;
-  backdrop-filter: blur(28px) !important;
-  background-color: rgba(0, 0, 0, 0.04) !important;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-color: rgba(0, 0, 0, 0.92) !important;
   overflow: visible;
 }
-/* Pas de double blur : la couche enfant ne floute plus */
-html.safari-webkit-old .backdrop-blur-layer,
-html.safari-ios-old .backdrop-blur-layer {
+html.safari-webkit-old .modal-backdrop-dark .backdrop-blur-layer,
+html.safari-webkit-old .modal-backdrop-slate .backdrop-blur-layer,
+html.safari-webkit-old .header-burger-overlay .backdrop-blur-layer,
+html.safari-ios-old .modal-backdrop-dark .backdrop-blur-layer,
+html.safari-ios-old .modal-backdrop-slate .backdrop-blur-layer,
+html.safari-ios-old .header-burger-overlay .backdrop-blur-layer {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   background: transparent !important;
+}
+html.safari-webkit-old .modal-backdrop-dark .backdrop-tint-layer,
+html.safari-ios-old .modal-backdrop-dark .backdrop-tint-layer {
+  background-color: transparent !important;
+}
+html.safari-webkit-old .modal-backdrop-slate .backdrop-tint-layer,
+html.safari-ios-old .modal-backdrop-slate .backdrop-tint-layer {
+  background-color: transparent !important;
+}
+html.safari-webkit-old .header-burger-overlay .backdrop-tint-layer,
+html.safari-ios-old .header-burger-overlay .backdrop-tint-layer {
+  background-color: transparent !important;
 }
 html.safari-webkit-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.backdrop-tint-layer),
 html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.backdrop-tint-layer) {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-}
-/* Teinte un peu plus forte sur Safari 17 / iOS 17 pour rapprocher du rendu 18+ (blur + tint) */
-html.safari-webkit-old .modal-backdrop-dark .backdrop-tint-layer,
-html.safari-ios-old .modal-backdrop-dark .backdrop-tint-layer {
-  background-color: rgba(0, 0, 0, 0.6);
-}
-html.safari-webkit-old .modal-backdrop-slate .backdrop-tint-layer,
-html.safari-ios-old .modal-backdrop-slate .backdrop-tint-layer {
-  background-color: rgba(15, 23, 42, 0.8);
-}
-html.safari-webkit-old .header-burger-overlay .backdrop-tint-layer,
-html.safari-ios-old .header-burger-overlay .backdrop-tint-layer {
-  background-color: rgba(0, 0, 0, 0.7);
 }
 
 /* ----- Landing: scroll & entrance animations ----- */
