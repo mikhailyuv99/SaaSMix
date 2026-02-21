@@ -383,35 +383,43 @@ const Waveform = memo(function Waveform({
   className?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   if (!peaks.length || duration <= 0) return null;
   const maxPeak = useMemo(() => Math.max(...peaks, 0.01), [peaks]);
   const playheadPercent = currentTime != null ? (currentTime / duration) * 100 : 0;
 
-  const pathD = useMemo(() => {
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const dpr = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+    canvas.width = w;
+    canvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+    const cx = h / 2;
     const n = peaks.length;
-    if (n < 1) return "";
-    if (n === 1) {
-      const halfH = (peaks[0]! / maxPeak) * 50;
-      return `M 0 50 L 100 ${50 - halfH} L 100 ${50 + halfH} L 0 50 Z`;
-    }
-    const pts: string[] = [];
-    const halfH0 = (peaks[0]! / maxPeak) * 50;
-    pts.push(`M 0 ${50 + halfH0}`);
+    const barW = Math.max(1, w / n);
+    ctx.fillStyle = "rgba(148, 163, 184, 0.4)";
     for (let i = 0; i < n; i++) {
-      const x = (i / (n - 1)) * 100;
-      const halfH = (peaks[i]! / maxPeak) * 50;
-      pts.push(`L ${x} ${50 - halfH}`);
+      const halfH = (peaks[i]! / maxPeak) * (cx - 1);
+      const x = (i / (n - 1 || 1)) * w;
+      ctx.fillRect(Math.max(0, Math.floor(x - barW / 2)), Math.floor(cx - halfH), Math.ceil(barW) + 1, Math.ceil(halfH * 2));
     }
-    pts.push(`L 100 50`);
-    pts.push(`L 100 ${50 + (peaks[n - 1]! / maxPeak) * 50}`);
-    for (let i = n - 1; i >= 0; i--) {
-      const x = (i / (n - 1)) * 100;
-      const halfH = (peaks[i]! / maxPeak) * 50;
-      pts.push(`L ${x} ${50 + halfH}`);
-    }
-    pts.push("Z");
-    return pts.join(" ");
   }, [peaks, maxPeak]);
+
+  useEffect(() => {
+    draw();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(canvas);
+    return () => ro.disconnect();
+  }, [draw]);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -443,14 +451,14 @@ const Waveform = memo(function Waveform({
       className={`relative h-12 w-full cursor-pointer rounded-lg bg-white/[0.04] border border-white/[0.06] overflow-hidden transition-opacity hover:opacity-90 ${className}`}
       title="Cliquer pour aller à ce moment"
     >
-      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100" shapeRendering="geometricPrecision">
-        <path
-          fill="currentColor"
-          fillOpacity="0.4"
-          className="text-slate-400"
-          d={pathD}
-        />
-      </svg>
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full rounded-lg"
+        style={{ backgroundColor: "transparent" }}
+        width={0}
+        height={0}
+        aria-hidden
+      />
       {currentTime != null && (
         <div
           className="absolute top-0 bottom-0 w-0.5 bg-white/60 pointer-events-none transition-[left] duration-75 ease-linear"
