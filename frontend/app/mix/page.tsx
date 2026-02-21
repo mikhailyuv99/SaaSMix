@@ -581,6 +581,20 @@ export default function Home() {
   const toggleFullscreen = useCallback(() => setIsFullscreen((prev) => !prev), []);
 
   useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [isFullscreen]);
+
+  useEffect(() => {
     if (!isFullscreen) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsFullscreen(false);
@@ -3449,9 +3463,16 @@ export default function Home() {
   return (
     <main className="relative z-10 min-h-screen font-heading overflow-x-hidden">
       <div className="min-h-screen w-full">
+      {isFullscreen && tracks.length > 0 && (
+        <div
+          className="fixed inset-0 z-[9998] bg-black"
+          style={{ width: "100vw", height: "100dvh", minHeight: "100vh" }}
+          aria-hidden
+        />
+      )}
       {appModal && (
         <div
-          className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3"
+          className={`fixed inset-0 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[110]"}`}
           aria-modal="true"
           role="dialog"
         >
@@ -3572,7 +3593,7 @@ export default function Home() {
       )}
 
       {moveTrackModal != null && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog" aria-labelledby="move-track-modal-title" onClick={() => setMoveTrackModal(null)}>
+        <div className={`fixed inset-0 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="move-track-modal-title" onClick={() => setMoveTrackModal(null)}>
           <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
             <p id="move-track-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide pb-4 border-b border-white/10">
               Déplacer la piste
@@ -3631,7 +3652,7 @@ export default function Home() {
       )}
 
       {categoryModal && (
-        <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
+        <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className={`fixed inset-0 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
           <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl">
             <div className="pb-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
@@ -3669,7 +3690,7 @@ export default function Home() {
       )}
 
       {showProjectsModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog">
+        <div className={`fixed inset-0 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog">
           <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20 max-lg:max-w-[calc(100vw-1.5rem)] max-lg:max-h-[85vh] max-lg:rounded-xl">
             <div className="flex items-center justify-between p-4 border-b border-white/10 max-lg:p-3">
               <h2 className="text-lg font-medium text-white max-lg:text-base">Mes projets</h2>
