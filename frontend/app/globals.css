@@ -188,15 +188,33 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 15–17 (macOS 12–14): modals trop transparents → opacité renforcée (Safari 18 et Windows inchangés) */
-html.safari-webkit-old .modal-backdrop-dark::after {
-  background-color: rgba(0, 0, 0, 0.55) !important;
-}
+/* Safari 15–17: même rendu que Safari 18 / Windows — pas de two-layer (pas de bug blanc), blur + fond sur l’élément */
+html.safari-webkit-old .modal-backdrop-dark::before,
+html.safari-webkit-old .modal-backdrop-dark::after,
+html.safari-webkit-old .modal-backdrop-slate::before,
 html.safari-webkit-old .modal-backdrop-slate::after {
-  background-color: rgba(0, 0, 0, 0.6) !important;
+  content: none !important;
+  display: none !important;
 }
+html.safari-webkit-old .modal-backdrop-dark {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+html.safari-webkit-old .modal-backdrop-slate {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+html.safari-webkit-old .modal-panel-dark::before,
 html.safari-webkit-old .modal-panel-dark::after {
-  background-color: rgba(15, 18, 22, 0.85) !important;
+  content: none !important;
+  display: none !important;
+}
+html.safari-webkit-old .modal-panel-dark {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
 }
 
 /* ----- Landing: scroll & entrance animations ----- */
