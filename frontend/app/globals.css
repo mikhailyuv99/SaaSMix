@@ -188,22 +188,41 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 17 et moins / iOS 17 et moins : forcer le rendu du blur (fond minimal + couche GPU) — Windows et 18+ inchangés */
+/* Safari 17 et moins / iOS 17 et moins : forcer le blur (couche GPU, fixed pour bon backdrop) — Windows et 18+ inchangés */
 html.safari-webkit-old .backdrop-blur-layer,
 html.safari-ios-old .backdrop-blur-layer {
-  background-color: rgba(0, 0, 0, 0.01) !important;
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.02) !important;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border: 1px solid transparent; /* workaround iOS 17 / Safari 17 backdrop-filter */
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
-html.safari-webkit-old .modal-backdrop-dark,
-html.safari-webkit-old .modal-backdrop-slate,
+html.safari-webkit-old .header-burger-overlay .backdrop-blur-layer,
+html.safari-ios-old .header-burger-overlay .backdrop-blur-layer {
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+/* Éviter overflow sur le parent du blur (connu pour casser backdrop-filter sur iOS 17) */
 html.safari-webkit-old .header-burger-overlay,
-html.safari-ios-old .modal-backdrop-dark,
-html.safari-ios-old .modal-backdrop-slate,
 html.safari-ios-old .header-burger-overlay {
-  isolation: isolate;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
+  overflow: visible;
+}
+html.safari-webkit-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.backdrop-tint-layer),
+html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.backdrop-tint-layer) {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ----- Landing: scroll & entrance animations ----- */
