@@ -3892,7 +3892,7 @@ export default function Home() {
           style={isFullscreen ? { height: "100dvh", minHeight: "100vh" } : undefined}
         >
         <div className={`flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`}>
-          <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-md:w-full max-md:order-first max-md:justify-center">
+          <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-md:w-full max-md:order-first max-md:justify-center max-md:min-w-0 max-md:relative">
             {(() => {
               const fullTitle = currentProject ? currentProject.name : (draftProjectName || "SANS TITRE");
               const displayTitle = fullTitle.length > 20 ? fullTitle.slice(0, 20) + "…" : fullTitle;
@@ -3900,7 +3900,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={openProjectTitleModal}
-                  className="w-fit max-w-[20ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0"
+                  className="w-fit max-w-[20ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0 max-md:min-w-0 max-md:text-center"
                   title={fullTitle}
                   aria-label="Modifier le titre du projet"
                 >
@@ -3908,6 +3908,23 @@ export default function Home() {
                 </button>
               );
             })()}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="hidden max-md:flex p-2 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0 max-md:absolute max-md:right-0"
+              title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
+              aria-label={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
+            >
+              {isFullscreen ? (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+                </svg>
+              )}
+            </button>
             <button
               type="button"
               onClick={() => { if (!user) { openAuthModal?.("login"); return; } saveProject(); }}
@@ -4054,7 +4071,7 @@ export default function Home() {
                   ) : "MASTERISER"}
                 </button>
               </div>
-              <div className="ml-auto flex items-center shrink-0 max-md:ml-0 max-md:w-full max-md:justify-end max-md:order-3">
+              <div className="ml-auto flex items-center shrink-0 max-md:hidden max-md:order-3">
                 <button
                   type="button"
                   onClick={toggleFullscreen}
