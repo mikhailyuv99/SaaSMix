@@ -208,8 +208,13 @@ html.safari-webkit-old .modal-btn-subtle {
 html.safari-webkit-old .modal-btn-subtle:hover {
   background-color: #64748b !important;
 }
+html.safari-webkit-old .header-burger-overlay {
+  background-color: #0f172a !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
 
-/* iOS 17 et moins : idem — uniquement le panneau modal en bleu foncé, pas le fond */
+/* iOS 17 et moins : idem — panneau modal + menu burger en plein (pas transparent) */
 html.safari-ios-old .modal-panel-dark::before,
 html.safari-ios-old .modal-panel-dark::after {
   content: none !important;
@@ -228,6 +233,11 @@ html.safari-ios-old .modal-btn-subtle {
 }
 html.safari-ios-old .modal-btn-subtle:hover {
   background-color: #64748b !important;
+}
+html.safari-ios-old .header-burger-overlay {
+  background-color: #0f172a !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 /* ----- Landing: scroll & entrance animations ----- */
