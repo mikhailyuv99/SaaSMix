@@ -158,14 +158,14 @@ export function FooterWithLegalModals() {
 
       {legalModal && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 max-lg:p-3"
+          className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-md p-4 max-lg:p-3"
           onClick={closeModal}
           aria-modal="true"
           role="dialog"
           aria-labelledby="legal-modal-title"
         >
           <div
-            className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl max-lg:max-h-[85vh]"
+            className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl max-lg:max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-end mb-2">

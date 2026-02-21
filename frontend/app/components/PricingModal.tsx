@@ -61,9 +61,9 @@ export function PricingModal({
         ];
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 max-lg:p-3 overflow-y-auto" onClick={onClose}>
+    <div className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-md p-4 max-lg:p-3 overflow-y-auto" onClick={onClose}>
       <div
-        className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-5xl max-h-[90vh] overflow-y-auto my-auto relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl"
+        className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-5xl max-h-[90vh] overflow-y-auto my-auto relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button

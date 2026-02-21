@@ -143,7 +143,7 @@ export function CustomSelect({
 
   /* Dropdown : même style que modal Connexion (transparent noir, pas de bleu) */
   const dropdownClass =
-    "z-[9999] w-max max-w-[min(100vw,24rem)] rounded-xl border border-white/15 bg-black/10 backdrop-blur-xl py-1.5 max-h-[min(20rem,70vh)] overflow-auto shadow-xl shadow-black/20 text-center";
+    "modal-panel-dark z-[9999] w-max max-w-[min(100vw,24rem)] rounded-xl border border-white/15 backdrop-blur-xl py-1.5 max-h-[min(20rem,70vh)] overflow-auto shadow-xl shadow-black/20 text-center";
 
   const dropdownContent = open && dropdownRect && typeof document !== "undefined" && (
     <ul

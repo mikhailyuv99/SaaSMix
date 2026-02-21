@@ -91,6 +91,29 @@ body[data-mix-fullscreen] footer {
   background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
+/* Safari: modal/dropdown dark glass — rgb(value/opacity) misrenders on Safari */
+.modal-backdrop-dark {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.modal-backdrop-slate {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.modal-panel-dark {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.modal-btn-subtle {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+.modal-btn-subtle:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
   from {

@@ -3513,11 +3513,11 @@ export default function Home() {
       )}
       {appModal && (
         <div
-          className={`fixed inset-0 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[110]"}`}
+          className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[110]"}`}
           aria-modal="true"
           role="dialog"
         >
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl">
+          <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl">
             {appModal.type === "prompt" && (
               <>
                 <div className="p-4 border-b border-white/10">
@@ -3537,7 +3537,7 @@ export default function Home() {
                         setAppModal(null);
                       }
                     }}
-                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-tagline text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/30"
+                    className="modal-btn-subtle w-full px-3 py-2 rounded-lg border border-white/10 text-tagline text-white text-sm focus:outline-none focus:ring-1 focus:ring-white/30"
                     placeholder="Nom du projet"
                     autoFocus
                   />
@@ -3634,8 +3634,8 @@ export default function Home() {
       )}
 
       {moveTrackModal != null && (
-        <div className={`fixed inset-0 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="move-track-modal-title" onClick={() => setMoveTrackModal(null)}>
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
+        <div className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="move-track-modal-title" onClick={() => setMoveTrackModal(null)}>
+          <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
             <p id="move-track-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide pb-4 border-b border-white/10">
               Déplacer la piste
             </p>
@@ -3693,8 +3693,8 @@ export default function Home() {
       )}
 
       {categoryModal && (
-        <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className={`fixed inset-0 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl">
+        <div key={`category-${categoryModal.file.name}-${categoryModal.file.size}-${categoryModal.file.lastModified}`} className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog" aria-labelledby="category-modal-title">
+          <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl">
             <div className="pb-4 border-b border-white/10">
               <p id="category-modal-title" className="font-heading text-tagline text-slate-400 text-center text-sm tracking-wide">
                 Quelle catégorie pour cette piste ?
@@ -3707,21 +3707,21 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("lead_vocal")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
+                className="modal-btn-subtle group w-full py-3 rounded-xl border border-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Lead vocal</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("adlibs_backs")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
+                className="modal-btn-subtle group w-full py-3 rounded-xl border border-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Adlibs / Backs</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("instrumental")}
-                className="group w-full py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
+                className="modal-btn-subtle group w-full py-3 rounded-xl border border-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
                 <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] group-hover:text-white transition-all duration-200">Instrumentale</span>
               </button>
@@ -3731,8 +3731,8 @@ export default function Home() {
       )}
 
       {showProjectsModal && (
-        <div className={`fixed inset-0 flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20 max-lg:max-w-[calc(100vw-1.5rem)] max-lg:max-h-[85vh] max-lg:rounded-xl">
+        <div className={`modal-backdrop-dark fixed inset-0 flex items-center justify-center p-4 backdrop-blur-md max-lg:p-3 ${isFullscreen ? "z-[100010]" : "z-[100]"}`} aria-modal="true" role="dialog">
+          <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-xl shadow-black/20 max-lg:max-w-[calc(100vw-1.5rem)] max-lg:max-h-[85vh] max-lg:rounded-xl">
             <div className="flex items-center justify-between p-4 border-b border-white/10 max-lg:p-3">
               <h2 className="text-lg font-medium text-white max-lg:text-base">Mes projets</h2>
               <button
@@ -3751,7 +3751,7 @@ export default function Home() {
               {projectsList.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg bg-white/[0.04] border border-white/6"
+                  className="mix-card-glass flex items-center justify-between gap-3 py-2 px-3 rounded-lg border border-white/6"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-white truncate">{p.name}</p>
@@ -5003,7 +5003,7 @@ export default function Home() {
 
         {masterResult && (
           <section ref={masterResultSectionRef} className={tracks.length === 0 ? "mt-8 max-lg:mt-6 max-md:mt-4 max-w-xl mx-auto" : "mt-10 max-w-xl mx-auto"} aria-label="Résultat du master">
-            <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
+            <div className="mix-card-glass relative rounded-2xl border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
               <button
                 type="button"
                 onClick={() => { stopMasterPlayback(); setMasterResult(null); }}

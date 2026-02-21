@@ -267,8 +267,8 @@ export function Header() {
       </header>
 
       {showLeaveModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog">
-          <div className="rounded-2xl border border-white/15 bg-black/10 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm max-lg:p-4 max-lg:max-w-[calc(100vw-1.5rem)]">
+        <div className="modal-backdrop-dark fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog">
+          <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm max-lg:p-4 max-lg:max-w-[calc(100vw-1.5rem)]">
             <p className="text-tagline text-slate-300 text-center text-sm mb-6">
               {isLeaveForDisconnect
                 ? "Vous avez des modifications non sauvegardées. Se déconnecter quand même ?"
@@ -280,7 +280,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={handleLeaveCancel}
-                className="flex-1 py-2.5 rounded-xl border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 transition-colors text-sm"
+                className="modal-btn-subtle flex-1 py-2.5 rounded-xl border border-white/10 text-slate-400 transition-colors text-sm"
               >
                 Annuler
               </button>
