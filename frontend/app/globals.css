@@ -188,26 +188,26 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 15–17: même two-layer que Safari 18, on renforce uniquement la teinte (::after) pour égaliser le rendu */
+/* Safari 15–17: même two-layer que Safari 18, teinte (::after) plus forte pour que le contenu derrière ne transparaisse pas */
 html.safari-webkit-old .modal-backdrop-dark::after {
-  background-color: rgba(0, 0, 0, 0.38) !important;
+  background-color: rgba(0, 0, 0, 0.58) !important;
 }
 html.safari-webkit-old .modal-backdrop-slate::after {
-  background-color: rgba(0, 0, 0, 0.52) !important;
+  background-color: rgba(0, 0, 0, 0.65) !important;
 }
 html.safari-webkit-old .modal-panel-dark::after {
-  background-color: rgba(0, 0, 0, 0.24) !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
-/* iOS 17 et moins: même two-layer que Safari 18, teinte (::after) un peu plus forte pour rendu identique */
+/* iOS 17 et moins: idem, teinte plus forte pour rendu identique à Safari 18+ (pas de texte derrière visible) */
 html.safari-ios-old .modal-backdrop-dark::after {
-  background-color: rgba(0, 0, 0, 0.48) !important;
+  background-color: rgba(0, 0, 0, 0.65) !important;
 }
 html.safari-ios-old .modal-backdrop-slate::after {
-  background-color: rgba(0, 0, 0, 0.55) !important;
+  background-color: rgba(0, 0, 0, 0.72) !important;
 }
 html.safari-ios-old .modal-panel-dark::after {
-  background-color: rgba(0, 0, 0, 0.32) !important;
+  background-color: rgba(0, 0, 0, 0.55) !important;
 }
 
 /* iOS: overlay du menu burger plus opaque pour que le contenu derrière ne soit pas illisible */
