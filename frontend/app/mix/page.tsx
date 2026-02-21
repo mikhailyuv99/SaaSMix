@@ -387,6 +387,32 @@ const Waveform = memo(function Waveform({
   const maxPeak = useMemo(() => Math.max(...peaks, 0.01), [peaks]);
   const playheadPercent = currentTime != null ? (currentTime / duration) * 100 : 0;
 
+  const pathD = useMemo(() => {
+    const n = peaks.length;
+    if (n < 1) return "";
+    if (n === 1) {
+      const halfH = (peaks[0]! / maxPeak) * 50;
+      return `M 0 50 L 100 ${50 - halfH} L 100 ${50 + halfH} L 0 50 Z`;
+    }
+    const pts: string[] = [];
+    const halfH0 = (peaks[0]! / maxPeak) * 50;
+    pts.push(`M 0 ${50 + halfH0}`);
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * 100;
+      const halfH = (peaks[i]! / maxPeak) * 50;
+      pts.push(`L ${x} ${50 - halfH}`);
+    }
+    pts.push(`L 100 50`);
+    pts.push(`L 100 ${50 + (peaks[n - 1]! / maxPeak) * 50}`);
+    for (let i = n - 1; i >= 0; i--) {
+      const x = (i / (n - 1)) * 100;
+      const halfH = (peaks[i]! / maxPeak) * 50;
+      pts.push(`L ${x} ${50 + halfH}`);
+    }
+    pts.push("Z");
+    return pts.join(" ");
+  }, [peaks, maxPeak]);
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -417,23 +443,13 @@ const Waveform = memo(function Waveform({
       className={`relative h-12 w-full cursor-pointer rounded-lg bg-white/[0.04] border border-white/[0.06] overflow-hidden transition-opacity hover:opacity-90 ${className}`}
       title="Cliquer pour aller à ce moment"
     >
-      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-        {peaks.map((p, i) => {
-          const x = (i / (peaks.length - 1 || 1)) * 100;
-          const halfH = (p / maxPeak) * 50;
-          return (
-            <line
-              key={i}
-              x1={x}
-              y1={50 - halfH}
-              x2={x}
-              y2={50 + halfH}
-              stroke="currentColor"
-              strokeWidth="1.5"
-              className="text-slate-400"
-            />
-          );
-        })}
+      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100" shapeRendering="geometricPrecision">
+        <path
+          fill="currentColor"
+          fillOpacity="0.4"
+          className="text-slate-400"
+          d={pathD}
+        />
       </svg>
       {currentTime != null && (
         <div
