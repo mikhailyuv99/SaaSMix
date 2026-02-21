@@ -188,68 +188,26 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 15–17: même rendu que Safari 18 / Windows — blur + fond sur l’élément, opacité renforcée (blur plus transparent sur ces versions) */
-html.safari-webkit-old .modal-backdrop-dark::before,
-html.safari-webkit-old .modal-backdrop-dark::after,
-html.safari-webkit-old .modal-backdrop-slate::before,
+/* Safari 15–17: même two-layer que Safari 18, on renforce uniquement la teinte (::after) pour égaliser le rendu */
+html.safari-webkit-old .modal-backdrop-dark::after {
+  background-color: rgba(0, 0, 0, 0.38) !important;
+}
 html.safari-webkit-old .modal-backdrop-slate::after {
-  content: none !important;
-  display: none !important;
+  background-color: rgba(0, 0, 0, 0.52) !important;
 }
-html.safari-webkit-old .modal-backdrop-dark {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-}
-html.safari-webkit-old .modal-backdrop-slate {
-  background-color: rgba(0, 0, 0, 0.55) !important;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-}
-html.safari-webkit-old .modal-panel-dark::before,
 html.safari-webkit-old .modal-panel-dark::after {
-  content: none !important;
-  display: none !important;
-}
-html.safari-webkit-old .modal-panel-dark {
-  background-color: rgba(18, 22, 28, 0.92) !important;
-  -webkit-backdrop-filter: blur(24px);
-  backdrop-filter: blur(24px);
-}
-html.safari-webkit-old .modal-input {
-  background-color: rgba(30, 36, 44, 0.9) !important;
-}
-html.safari-webkit-old .modal-btn-subtle {
-  background-color: rgba(45, 52, 62, 0.9) !important;
-}
-html.safari-webkit-old .modal-btn-subtle:hover {
-  background-color: rgba(55, 64, 76, 0.95) !important;
+  background-color: rgba(0, 0, 0, 0.24) !important;
 }
 
-/* iOS Safari < 18: modals et menu burger — fond plein (pas de transparence qui traverse) */
-html.safari-ios-old .modal-backdrop-dark {
-  background-color: rgba(0, 0, 0, 0.88) !important;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+/* iOS 17 et moins: même two-layer que Safari 18, teinte (::after) un peu plus forte pour rendu identique */
+html.safari-ios-old .modal-backdrop-dark::after {
+  background-color: rgba(0, 0, 0, 0.48) !important;
 }
-html.safari-ios-old .modal-backdrop-slate {
-  background-color: rgba(0, 0, 0, 0.9) !important;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+html.safari-ios-old .modal-backdrop-slate::after {
+  background-color: rgba(0, 0, 0, 0.55) !important;
 }
-html.safari-ios-old .modal-panel-dark {
-  background-color: rgb(14, 17, 21) !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-html.safari-ios-old .modal-input {
-  background-color: rgb(22, 26, 32) !important;
-}
-html.safari-ios-old .modal-btn-subtle {
-  background-color: rgb(38, 44, 54) !important;
-}
-html.safari-ios-old .modal-btn-subtle:hover {
-  background-color: rgb(48, 56, 68) !important;
+html.safari-ios-old .modal-panel-dark::after {
+  background-color: rgba(0, 0, 0, 0.32) !important;
 }
 
 /* iOS: overlay du menu burger plus opaque pour que le contenu derrière ne soit pas illisible */
