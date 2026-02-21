@@ -111,7 +111,7 @@ export interface MixParams {
 
 const DEFAULT_MIX_PARAMS: MixParams = {
   noise_gate: true,
-  noise_gate_mode: 2,
+  noise_gate_mode: 1, // Léger by default for lead and adlibs
   delay: true,
   reverb: true,
   reverb_mode: 2,
