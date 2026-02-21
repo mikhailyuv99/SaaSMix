@@ -3838,7 +3838,7 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden flex flex-col min-h-[calc(70vh-160px)] max-lg:min-h-[calc(65vh-160px)] max-md:min-h-[45vh]" aria-label="Pistes">
+        <div className="mix-card-glass mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden flex flex-col min-h-[calc(70vh-160px)] max-lg:min-h-[calc(65vh-160px)] max-md:min-h-[45vh]" aria-label="Pistes">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
@@ -3908,7 +3908,7 @@ export default function Home() {
             </div>
         ) : (
         <div
-          className={`border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden ${
+          className={`mix-card-glass border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden ${
             isFullscreen
               ? "fixed inset-0 z-[9999] m-0 rounded-none overflow-y-auto"
               : "mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl overflow-hidden"
@@ -4123,13 +4123,13 @@ export default function Home() {
             <Fragment key={track.id}>
             <div
               data-track-index={trackIndex}
-              className={`rounded-xl border backdrop-blur-sm p-5 relative max-lg:p-4 transition-all duration-200 ease-out ${
+              className={`mix-card-glass rounded-xl border backdrop-blur-sm p-5 relative max-lg:p-4 transition-all duration-200 ease-out ${
                 lastMovedTrackId === track.id ? "animate-track-moved" : ""
               } ${
                 dragState?.trackId === track.id
-                  ? "border-white/30 bg-white/[0.08] shadow-lg shadow-black/30 scale-[1.02] z-20"
+                  ? "mix-card-dragging border-white/30 bg-white/[0.08] shadow-lg shadow-black/30 scale-[1.02] z-20"
                   : dragState && dragState.offset !== 0 && dragState.startIndex + dragState.offset === trackIndex
-                    ? "border-white/25 bg-white/[0.12] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.2),0_4px_20px_rgba(0,0,0,0.25)]"
+                    ? "mix-card-drop-over border-white/25 bg-white/[0.12] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.2),0_4px_20px_rgba(0,0,0,0.25)]"
                     : "border-white/10 bg-white/[0.04] hover:border-white/15"
               }`}
             >
@@ -4975,8 +4975,8 @@ export default function Home() {
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(false); }}
-                className={`group w-full max-w-2xl mx-auto rounded-xl border backdrop-blur-sm py-5 max-lg:py-4 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus:outline-none focus:ring-0 ${
-                  addTrackDropzoneDragging ? "border-white/25 bg-white/[0.08]" : "border-white/10 bg-white/[0.04] hover:border-white/15 hover:bg-white/[0.06]"
+                className={`mix-card-glass group w-full max-w-2xl mx-auto rounded-xl border backdrop-blur-sm py-5 max-lg:py-4 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus:outline-none focus:ring-0 ${
+                  addTrackDropzoneDragging ? "mix-card-dragging border-white/25 bg-white/[0.08]" : "border-white/10 bg-white/[0.04] hover:border-white/15 hover:bg-white/[0.06]"
                 }`}
                 aria-label="Glisser-déposer ou choisir des pistes"
               >
