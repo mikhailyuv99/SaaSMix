@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo, memo, Fragment } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -3446,27 +3447,37 @@ export default function Home() {
     (t) => t.file && (t.rawAudioUrl || (t.mixedAudioUrl && isVocal(t.category)))
   );
 
+  const FullscreenWrapper = useCallback(
+    ({ children }: { children: React.ReactNode }) => {
+      if (isFullscreen && typeof document !== "undefined") {
+        return createPortal(
+          <div
+            className="fixed top-0 left-0 right-0 bottom-0 z-[99999] overflow-y-auto overflow-x-hidden"
+            style={{ width: "100vw", height: "100dvh", minHeight: "100vh" }}
+          >
+            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black" aria-hidden>
+              <div className="absolute inset-0 origin-center scale-[1.08] blur-[6px]" style={{ overflow: "hidden" }} aria-hidden>
+                <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
+                  <source srcSet="/background-1280.avif 1280w, /background-1920.avif 1920w" type="image/avif" sizes="100vw" />
+                  <source srcSet="/background-1280.webp 1280w, /background-1920.webp 1920w" type="image/webp" sizes="100vw" />
+                  <img src="/background.png" alt="" className="block h-full w-full object-cover object-center" style={{ minHeight: "100%", minWidth: "100%" }} />
+                </picture>
+              </div>
+              <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
+            </div>
+            <div className="relative z-10 min-h-screen">{children}</div>
+          </div>,
+          document.body
+        );
+      }
+      return <div className="min-h-screen w-full">{children}</div>;
+    },
+    [isFullscreen]
+  );
+
   return (
     <main className="relative z-10 min-h-screen font-heading overflow-x-hidden">
-      <div
-        className={
-          isFullscreen
-            ? "fixed inset-0 z-[9999] overflow-y-auto overflow-x-hidden min-h-screen min-w-full"
-            : "min-h-screen w-full"
-        }
-      >
-        {isFullscreen && (
-          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black" aria-hidden>
-            <div className="absolute inset-0 origin-center scale-[1.08] blur-[6px]" style={{ overflow: "hidden" }} aria-hidden>
-              <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
-                <source srcSet="/background-1280.avif 1280w, /background-1920.avif 1920w" type="image/avif" sizes="100vw" />
-                <source srcSet="/background-1280.webp 1280w, /background-1920.webp 1920w" type="image/webp" sizes="100vw" />
-                <img src="/background.png" alt="" className="block h-full w-full object-cover object-center" style={{ minHeight: "100%", minWidth: "100%" }} />
-              </picture>
-            </div>
-            <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
-          </div>
-        )}
+      <FullscreenWrapper>
       {appModal && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3"
@@ -5112,7 +5123,7 @@ export default function Home() {
         openWithChangePlanView={openManageWithChangePlanView}
       />
       )}
-      </div>
+      </FullscreenWrapper>
       </main>
   );
 }
