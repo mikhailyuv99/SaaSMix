@@ -75,19 +75,20 @@ body[data-mix-fullscreen] footer {
 }
 
 /* Mix cards: Safari/WebKit fix — opaque white → glass transparent */
+/* Tailwind bg-white/[0.04] renders opaque white on Safari; force rgba + !important */
 .mix-card-glass {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.04) !important;
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 .mix-card-glass:hover {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.06) !important;
 }
 .mix-card-glass.mix-card-dragging {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 .mix-card-glass.mix-card-drop-over {
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 /* ----- Landing: scroll & entrance animations ----- */

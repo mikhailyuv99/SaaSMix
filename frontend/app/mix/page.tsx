@@ -448,7 +448,8 @@ const Waveform = memo(function Waveform({
           }
         }
       }}
-      className={`relative h-12 w-full cursor-pointer rounded-lg bg-white/[0.04] border border-white/[0.06] overflow-hidden transition-opacity hover:opacity-90 ${className}`}
+      className={`relative h-12 w-full cursor-pointer rounded-lg border border-white/[0.06] overflow-hidden transition-opacity hover:opacity-90 ${className}`}
+      style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
       title="Cliquer pour aller à ce moment"
     >
       <canvas
@@ -3838,7 +3839,7 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="mix-card-glass mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden flex flex-col min-h-[calc(70vh-160px)] max-lg:min-h-[calc(65vh-160px)] max-md:min-h-[45vh]" aria-label="Pistes">
+        <div className="mix-card-glass mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden flex flex-col min-h-[calc(70vh-160px)] max-lg:min-h-[calc(65vh-160px)] max-md:min-h-[45vh]" aria-label="Pistes">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"
@@ -3889,8 +3890,8 @@ export default function Home() {
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
-                className={`font-sans uppercase flex flex-1 min-h-0 w-full flex-col items-center justify-center gap-3 px-4 py-8 max-md:py-6 text-center transition-all duration-200 ${
-                  mixDropzoneDragging ? "bg-white/[0.08]" : "hover:bg-white/[0.06]"
+                className={`mix-card-glass font-sans uppercase flex flex-1 min-h-0 w-full flex-col items-center justify-center gap-3 px-4 py-8 max-md:py-6 text-center transition-all duration-200 ${
+                  mixDropzoneDragging ? "mix-card-dragging" : ""
                 }`}
               >
                 <span className="font-heading text-base font-medium text-white sm:text-lg">
@@ -3908,14 +3909,14 @@ export default function Home() {
             </div>
         ) : (
         <div
-          className={`mix-card-glass border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden ${
+          className={`mix-card-glass border border-white/10 shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden ${
             isFullscreen
               ? "fixed inset-0 z-[9999] m-0 rounded-none overflow-y-auto"
               : "mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl overflow-hidden"
           }`}
           style={isFullscreen ? { height: "100dvh", minHeight: "100vh" } : undefined}
         >
-        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`}>
+        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 max-md:flex-col max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`} style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
           <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-md:w-full max-md:order-first max-md:justify-center max-md:min-w-0 max-md:relative">
             {(() => {
               const fullTitle = currentProject ? currentProject.name : (draftProjectName || "SANS TITRE");
@@ -4123,14 +4124,14 @@ export default function Home() {
             <Fragment key={track.id}>
             <div
               data-track-index={trackIndex}
-              className={`mix-card-glass rounded-xl border backdrop-blur-sm p-5 relative max-lg:p-4 transition-all duration-200 ease-out ${
+                className={`mix-card-glass rounded-xl border backdrop-blur-sm p-5 relative max-lg:p-4 transition-all duration-200 ease-out ${
                 lastMovedTrackId === track.id ? "animate-track-moved" : ""
               } ${
                 dragState?.trackId === track.id
-                  ? "mix-card-dragging border-white/30 bg-white/[0.08] shadow-lg shadow-black/30 scale-[1.02] z-20"
+                  ? "mix-card-dragging border-white/30 shadow-lg shadow-black/30 scale-[1.02] z-20"
                   : dragState && dragState.offset !== 0 && dragState.startIndex + dragState.offset === trackIndex
-                    ? "mix-card-drop-over border-white/25 bg-white/[0.12] shadow-[inset_0_0_0_2px_rgba(255,255,255,0.2),0_4px_20px_rgba(0,0,0,0.25)]"
-                    : "border-white/10 bg-white/[0.04] hover:border-white/15"
+                    ? "mix-card-drop-over border-white/25 shadow-[inset_0_0_0_2px_rgba(255,255,255,0.2),0_4px_20px_rgba(0,0,0,0.25)]"
+                    : "border-white/10 hover:border-white/15"
               }`}
             >
               <div className="absolute top-4 left-4 flex items-center gap-1 z-10 max-lg:top-0.5 max-lg:left-2 max-lg:gap-0.5">
@@ -4976,7 +4977,7 @@ export default function Home() {
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setAddTrackDropzoneDragging(false); }}
                 className={`mix-card-glass group w-full max-w-2xl mx-auto rounded-xl border backdrop-blur-sm py-5 max-lg:py-4 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 focus:outline-none focus:ring-0 ${
-                  addTrackDropzoneDragging ? "mix-card-dragging border-white/25 bg-white/[0.08]" : "border-white/10 bg-white/[0.04] hover:border-white/15 hover:bg-white/[0.06]"
+                  addTrackDropzoneDragging ? "mix-card-dragging border-white/25" : "border-white/10 hover:border-white/15"
                 }`}
                 aria-label="Glisser-déposer ou choisir des pistes"
               >
