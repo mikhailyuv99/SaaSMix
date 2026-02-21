@@ -2,9 +2,9 @@
 
 import { useEffect } from "react";
 
-/** Adds safari-webkit (all Safari), safari-webkit-old (Safari < 18 or any iOS), safari-ios-old (iOS only) to html.
- * Safari 18: rgba + backdrop-filter = opaque white → two-layer trick in CSS.
- * Safari 15–17 / iOS: modals too transparent → safari-webkit-old + safari-ios-old (iOS) get stronger opacity in CSS. */
+/** Adds safari-webkit (all Safari), safari-webkit-old (Safari / iOS < 18 only), safari-ios-old (iOS 17 and under only) to html.
+ * Safari 18 / iOS 18+: unchanged — two-layer trick in CSS.
+ * Safari 15–17 / iOS 17 and under: modals too transparent → safari-webkit-old + safari-ios-old get stronger opacity. */
 export function SafariDetect() {
   useEffect(() => {
     if (typeof navigator === "undefined") return;
@@ -17,7 +17,8 @@ export function SafariDetect() {
       const m = u.match(/Version\/(\d+)/);
       const ver = m ? parseInt(m[1], 10) : 0;
       const isIOS = /iPhone|iPad|iPod/.test(u);
-      if ((ver > 0 && ver < 18) || isIOS) {
+      const isOldSafari = (ver > 0 && ver < 18) || (isIOS && (ver < 18 || ver === 0));
+      if (isOldSafari) {
         document.documentElement.classList.add("safari-webkit-old");
         if (isIOS) document.documentElement.classList.add("safari-ios-old");
       }

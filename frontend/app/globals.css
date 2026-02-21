@@ -226,24 +226,37 @@ html.safari-webkit-old .modal-btn-subtle:hover {
   background-color: rgba(55, 64, 76, 0.95) !important;
 }
 
-/* iOS Safari < 18: opacité encore plus forte (blur/transparence rendus plus légers sur iOS) */
+/* iOS Safari < 18: modals et menu burger — fond plein (pas de transparence qui traverse) */
 html.safari-ios-old .modal-backdrop-dark {
-  background-color: rgba(0, 0, 0, 0.72) !important;
+  background-color: rgba(0, 0, 0, 0.88) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 html.safari-ios-old .modal-backdrop-slate {
-  background-color: rgba(0, 0, 0, 0.75) !important;
+  background-color: rgba(0, 0, 0, 0.9) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 html.safari-ios-old .modal-panel-dark {
-  background-color: rgba(12, 15, 19, 0.98) !important;
+  background-color: rgb(14, 17, 21) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 html.safari-ios-old .modal-input {
-  background-color: rgba(20, 24, 30, 0.98) !important;
+  background-color: rgb(22, 26, 32) !important;
 }
 html.safari-ios-old .modal-btn-subtle {
-  background-color: rgba(35, 42, 52, 0.98) !important;
+  background-color: rgb(38, 44, 54) !important;
 }
 html.safari-ios-old .modal-btn-subtle:hover {
-  background-color: rgba(45, 52, 64, 0.98) !important;
+  background-color: rgb(48, 56, 68) !important;
+}
+
+/* iOS: overlay du menu burger plus opaque pour que le contenu derrière ne soit pas illisible */
+html.safari-ios-old .header-burger-overlay {
+  background-color: rgba(0, 0, 0, 0.78) !important;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 }
 
 /* ----- Landing: scroll & entrance animations ----- */

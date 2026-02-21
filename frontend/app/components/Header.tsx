@@ -217,9 +217,9 @@ export function Header() {
           </button>
         </div>
 
-        {/* Burger panel (mobile/tablet) - même style que le site : flou, pas noir plein */}
+        {/* Burger panel (mobile/tablet) - même style que le site : flou, pas noir plein. Classe header-burger-overlay pour fix iOS < 18. */}
         {burgerOpen && (
-          <div className="lg:hidden fixed inset-0 z-40 top-14 sm:top-16 bg-black/40 backdrop-blur-xl border-t border-white/10 overflow-y-auto">
+          <div className="header-burger-overlay lg:hidden fixed inset-0 z-40 top-14 sm:top-16 bg-black/40 backdrop-blur-xl border-t border-white/10 overflow-y-auto">
             <nav className="flex flex-col p-4 gap-1 max-w-6xl mx-auto">
               {isHome && (
                 <>
