@@ -2753,6 +2753,13 @@ export default function Home() {
         }
       }
 
+      // Safari 17 / macOS 14 / iOS 17 and under: longer upload timeout, faster poll, less UI tick load (no backend change)
+      const isOldSafari = typeof document !== "undefined" && document.documentElement.classList.contains("safari-webkit-old");
+      const mixPostTimeoutMs = isOldSafari ? 180000 : 120000;
+      const progressTickMs = isOldSafari ? 100 : MIX_PROGRESS_TICK_MS;
+      const pollDelayMs = isOldSafari ? 350 : 500;
+      const STATUS_FETCH_TIMEOUT_MS = 15000;
+
       // Une seule progression 0→99% basée sur le temps (smooth, pas de backend)
       mixSimulationStartRef.current = Date.now();
       const tickSmooth = () => {
@@ -2761,7 +2768,7 @@ export default function Home() {
         setMixProgress((prev) => (prev[id] === 100 ? prev : { ...prev, [id]: Math.round(pct * 10) / 10 }));
       };
       tickSmooth();
-      mixSimulationIntervalRef.current = setInterval(tickSmooth, MIX_PROGRESS_TICK_MS);
+      mixSimulationIntervalRef.current = setInterval(tickSmooth, progressTickMs);
 
       const form = new FormData();
       form.append("file", track.file);
@@ -2786,7 +2793,6 @@ export default function Home() {
       form.append("robot", String(p.robot));
 
       let mixedAudioUrlToSet: string | null = null;
-      const MIX_POST_TIMEOUT_MS = 120000; // 2 min (upload + server accept)
       try {
         await acquireMixSlot();
         const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
@@ -2796,7 +2802,7 @@ export default function Home() {
         let lastPostErr: unknown;
         for (let postAttempt = 0; postAttempt <= 1; postAttempt++) {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), MIX_POST_TIMEOUT_MS);
+          const timeoutId = setTimeout(() => controller.abort(), mixPostTimeoutMs);
           try {
             res = await fetch(`${API_BASE}/api/track/mix`, {
               method: "POST",
@@ -2851,7 +2857,7 @@ export default function Home() {
               const next = cur + (effectiveTarget - cur) * 0.2;
               return { ...prev, [id]: Math.round(Math.min(next, effectiveTarget) * 10) / 10 };
             });
-          }, MIX_PROGRESS_TICK_MS);
+          }, progressTickMs);
 
           let statusData: { status: string; percent: number; step?: string; mixedTrackUrl?: string; error?: string } = { status: "running", percent: 0 };
           const pollStart = Date.now();
@@ -2860,11 +2866,17 @@ export default function Home() {
               statusData = { status: "error", percent: 0, error: "Mix trop long. Réessayez." };
               break;
             }
-            await new Promise((r) => setTimeout(r, 500));
+            await new Promise((r) => setTimeout(r, pollDelayMs));
             let lastStatusError: string | null = null;
             for (let attempt = 0; attempt <= MIX_POLL_RETRIES; attempt++) {
               try {
-                const statusRes = await fetch(`${API_BASE}/api/track/mix/status?job_id=${encodeURIComponent(jobId)}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                const statusAbort = new AbortController();
+                const statusTimeoutId = setTimeout(() => statusAbort.abort(), STATUS_FETCH_TIMEOUT_MS);
+                const statusRes = await fetch(`${API_BASE}/api/track/mix/status?job_id=${encodeURIComponent(jobId)}`, {
+                  headers: token ? { Authorization: `Bearer ${token}` } : {},
+                  signal: statusAbort.signal,
+                });
+                clearTimeout(statusTimeoutId);
                 if (!statusRes.ok) {
                   lastStatusError = "Impossible de récupérer le statut du mix";
                   if (attempt < MIX_POLL_RETRIES) {
@@ -3068,6 +3080,8 @@ export default function Home() {
       setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
       return;
     }
+    const isOldSafari = typeof document !== "undefined" && document.documentElement.classList.contains("safari-webkit-old");
+    const renderPostTimeoutMs = isOldSafari ? 180000 : 120000;
     setIsRenderingMix(true);
     const mixAbortController = new AbortController();
     downloadAbortRef.current = mixAbortController;
@@ -3078,12 +3092,18 @@ export default function Home() {
       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/api/render/mix`, {
-        method: "POST",
-        headers,
-        body: form,
-        signal: mixAbortController.signal,
-      });
+      const postTimeoutId = setTimeout(() => mixAbortController.abort(), renderPostTimeoutMs);
+      let res: Response;
+      try {
+        res = await fetch(`${API_BASE}/api/render/mix`, {
+          method: "POST",
+          headers,
+          body: form,
+          signal: mixAbortController.signal,
+        });
+      } finally {
+        clearTimeout(postTimeoutId);
+      }
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
         logout();
@@ -3133,6 +3153,8 @@ export default function Home() {
       setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
       return;
     }
+    const isOldSafari = typeof document !== "undefined" && document.documentElement.classList.contains("safari-webkit-old");
+    const masterPostTimeoutMs = isOldSafari ? 180000 : 120000;
     setIsMastering(true);
     setMasterResult(null);
     const masterAbortController = new AbortController();
@@ -3144,12 +3166,18 @@ export default function Home() {
       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/api/master`, {
-        method: "POST",
-        headers,
-        body: form,
-        signal: masterAbortController.signal,
-      });
+      const postTimeoutId = setTimeout(() => masterAbortController.abort(), masterPostTimeoutMs);
+      let res: Response;
+      try {
+        res = await fetch(`${API_BASE}/api/master`, {
+          method: "POST",
+          headers,
+          body: form,
+          signal: masterAbortController.signal,
+        });
+      } finally {
+        clearTimeout(postTimeoutId);
+      }
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
         logout();
