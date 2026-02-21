@@ -598,6 +598,10 @@ export default function Home() {
   }, [isFullscreen]);
 
   useEffect(() => {
+    if (tracks.length === 0 && isFullscreen) setIsFullscreen(false);
+  }, [tracks.length, isFullscreen]);
+
+  useEffect(() => {
     if (!isFullscreen) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsFullscreen(false);
@@ -3880,10 +3884,10 @@ export default function Home() {
             </div>
         ) : (
         <div
-          className={`rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden ${
+          className={`border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden ${
             isFullscreen
-              ? "fixed inset-0 z-[9999] m-0 rounded-2xl overflow-y-auto"
-              : "mt-8 max-lg:mt-6 max-md:mt-4 overflow-hidden"
+              ? "fixed inset-0 z-[9999] m-0 rounded-none overflow-y-auto"
+              : "mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl overflow-hidden"
           }`}
           style={isFullscreen ? { height: "100dvh", minHeight: "100vh" } : undefined}
         >
