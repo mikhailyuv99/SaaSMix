@@ -77,7 +77,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var u=navigator.userAgent,v=navigator.vendor;var isSafari=v&&v.indexOf("Apple")>=0||(u.indexOf("Safari")>=0&&u.indexOf("Chrome")<0&&u.indexOf("CriOS")<0);if(isSafari){document.documentElement.classList.add("safari-webkit");var m=u.match(/Version\\/(\\d+)/);if(m){var ver=parseInt(m[1],10);if(ver>0&&ver<18)document.documentElement.classList.add("safari-webkit-old");}}})();`,
+            __html: `(function(){var u=navigator.userAgent,v=navigator.vendor;var isSafari=v&&v.indexOf("Apple")>=0||(u.indexOf("Safari")>=0&&u.indexOf("Chrome")<0&&u.indexOf("CriOS")<0);if(isSafari){document.documentElement.classList.add("safari-webkit");var m=u.match(/Version\\/(\\d+)/);var ver=m?parseInt(m[1],10):0;var isIOS=/iPhone|iPad|iPod/.test(u);if((ver>0&&ver<18)||(isIOS&&ver===0))document.documentElement.classList.add("safari-webkit-old");}})();`,
           }}
         />
         <link rel="preconnect" href="https://js.stripe.com" />
