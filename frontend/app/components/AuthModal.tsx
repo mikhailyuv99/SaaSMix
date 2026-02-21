@@ -64,12 +64,14 @@ export function AuthModal() {
 
   return (
     <div
-      className="modal-backdrop-dark fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-md p-4 max-lg:p-3"
+      className="modal-backdrop-dark fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3"
       onClick={close}
       aria-modal="true"
       role="dialog"
       aria-labelledby="auth-modal-title"
     >
+      <div className="backdrop-blur-layer" aria-hidden="true" />
+      <div className="backdrop-tint-layer" aria-hidden="true" />
       <div
         ref={trapRef}
         className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl"

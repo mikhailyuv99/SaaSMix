@@ -219,7 +219,9 @@ export function Header() {
 
         {/* Burger panel (mobile/tablet) - même style que le site : flou, pas noir plein. Classe header-burger-overlay pour fix iOS < 18. */}
         {burgerOpen && (
-          <div className="header-burger-overlay lg:hidden fixed inset-0 z-40 top-14 sm:top-16 bg-black/40 backdrop-blur-xl border-t border-white/10 overflow-y-auto">
+          <div className="header-burger-overlay lg:hidden fixed inset-0 z-40 top-14 sm:top-16 border-t border-white/10 overflow-y-auto">
+            <div className="backdrop-blur-layer" aria-hidden="true" />
+            <div className="backdrop-tint-layer" aria-hidden="true" />
             <nav className="flex flex-col p-4 gap-1 max-w-6xl mx-auto">
               {isHome && (
                 <>
@@ -267,7 +269,9 @@ export function Header() {
       </header>
 
       {showLeaveModal && (
-        <div className="modal-backdrop-dark fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-md max-lg:p-3" aria-modal="true" role="dialog">
+        <div className="modal-backdrop-dark fixed inset-0 z-[200] flex items-center justify-center p-4 max-lg:p-3" aria-modal="true" role="dialog">
+          <div className="backdrop-blur-layer" aria-hidden="true" />
+          <div className="backdrop-tint-layer" aria-hidden="true" />
           <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm max-lg:p-4 max-lg:max-w-[calc(100vw-1.5rem)]">
             <p className="text-tagline text-slate-300 text-center text-sm mb-6">
               {isLeaveForDisconnect

@@ -89,11 +89,46 @@ body[data-mix-fullscreen] footer {
   background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-.modal-backdrop-dark {
-  background-color: rgba(0, 0, 0, 0.2) !important;
+/* Couches réelles (blur + teinte) pour que le flou s’applique aussi sur Safari 17 / iOS 17 */
+.backdrop-blur-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  background: transparent;
 }
+.backdrop-tint-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.modal-backdrop-dark .backdrop-tint-layer {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+.modal-backdrop-slate .backdrop-tint-layer {
+  background-color: rgba(15, 23, 42, 0.4);
+}
+.header-burger-overlay .backdrop-tint-layer {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+.header-burger-overlay .backdrop-blur-layer {
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.modal-backdrop-dark,
 .modal-backdrop-slate {
-  background-color: rgba(15, 23, 42, 0.4) !important;
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+.modal-backdrop-dark > *:not(.backdrop-blur-layer):not(.backdrop-tint-layer),
+.modal-backdrop-slate > *:not(.backdrop-blur-layer):not(.backdrop-tint-layer) {
+  position: relative;
+  z-index: 1;
 }
 .modal-panel-dark {
   background-color: rgba(0, 0, 0, 0.1) !important;
@@ -108,47 +143,12 @@ body[data-mix-fullscreen] footer {
   background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Safari only: two-layer trick so blur + tint = same element triggers white bug; separate layers = identical to Windows */
+/* Safari: mix-card sans blur (bug blanc); backdrops utilisent les couches réelles .backdrop-blur-layer / .backdrop-tint-layer comme tout le monde */
 html.safari-webkit .mix-card-glass {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-/* Backdrop: blur and tint on separate pseudo-elements so Safari renders like Windows */
-html.safari-webkit .modal-backdrop-dark,
-html.safari-webkit .modal-backdrop-slate {
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  background: transparent !important;
-}
-html.safari-webkit .modal-backdrop-dark::before,
-html.safari-webkit .modal-backdrop-slate::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  background: transparent;
-  pointer-events: none;
-}
-html.safari-webkit .modal-backdrop-dark::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-color: rgba(0, 0, 0, 0.2);
-  pointer-events: none;
-}
-html.safari-webkit .modal-backdrop-slate::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background-color: rgba(15, 23, 42, 0.4);
-  pointer-events: none;
-}
-html.safari-webkit .modal-backdrop-dark > *,
-html.safari-webkit .modal-backdrop-slate > * {
+.header-burger-overlay > *:not(.backdrop-blur-layer):not(.backdrop-tint-layer) {
   position: relative;
   z-index: 1;
 }
@@ -188,57 +188,7 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 17 et moins / iOS 17 et moins : seul le panneau du modal (la boîte dialogue) en bleu foncé. Le fond (overlay / page) n’est pas touché. */
-html.safari-webkit-old .modal-panel-dark::before,
-html.safari-webkit-old .modal-panel-dark::after {
-  content: none !important;
-  display: none !important;
-}
-html.safari-webkit-old .modal-panel-dark {
-  background-color: #1e293b !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-html.safari-webkit-old .modal-input {
-  background-color: #334155 !important;
-}
-html.safari-webkit-old .modal-btn-subtle {
-  background-color: #475569 !important;
-}
-html.safari-webkit-old .modal-btn-subtle:hover {
-  background-color: #64748b !important;
-}
-html.safari-webkit-old .header-burger-overlay {
-  background-color: #0f172a !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-
-/* iOS 17 et moins : idem — panneau modal + menu burger en plein (pas transparent) */
-html.safari-ios-old .modal-panel-dark::before,
-html.safari-ios-old .modal-panel-dark::after {
-  content: none !important;
-  display: none !important;
-}
-html.safari-ios-old .modal-panel-dark {
-  background-color: #1e293b !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
-html.safari-ios-old .modal-input {
-  background-color: #334155 !important;
-}
-html.safari-ios-old .modal-btn-subtle {
-  background-color: #475569 !important;
-}
-html.safari-ios-old .modal-btn-subtle:hover {
-  background-color: #64748b !important;
-}
-html.safari-ios-old .header-burger-overlay {
-  background-color: #0f172a !important;
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-}
+/* Safari 17 et moins / iOS 17 et moins : même rendu que 18+ grâce aux couches réelles .backdrop-blur-layer / .backdrop-tint-layer (le flou s’applique sur de vrais divs). Aucune surcharge. */
 
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
