@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo, memo, Fragment } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -3447,37 +3446,9 @@ export default function Home() {
     (t) => t.file && (t.rawAudioUrl || (t.mixedAudioUrl && isVocal(t.category)))
   );
 
-  const FullscreenWrapper = useCallback(
-    ({ children }: { children: React.ReactNode }) => {
-      if (isFullscreen && typeof document !== "undefined") {
-        return createPortal(
-          <div
-            className="fixed top-0 left-0 right-0 bottom-0 z-[99999] overflow-y-auto overflow-x-hidden"
-            style={{ width: "100vw", height: "100dvh", minHeight: "100vh" }}
-          >
-            <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black" aria-hidden>
-              <div className="absolute inset-0 origin-center scale-[1.08] blur-[6px]" style={{ overflow: "hidden" }} aria-hidden>
-                <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
-                  <source srcSet="/background-1280.avif 1280w, /background-1920.avif 1920w" type="image/avif" sizes="100vw" />
-                  <source srcSet="/background-1280.webp 1280w, /background-1920.webp 1920w" type="image/webp" sizes="100vw" />
-                  <img src="/background.png" alt="" className="block h-full w-full object-cover object-center" style={{ minHeight: "100%", minWidth: "100%" }} />
-                </picture>
-              </div>
-              <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
-            </div>
-            <div className="relative z-10 min-h-screen">{children}</div>
-          </div>,
-          document.body
-        );
-      }
-      return <div className="min-h-screen w-full">{children}</div>;
-    },
-    [isFullscreen]
-  );
-
   return (
     <main className="relative z-10 min-h-screen font-heading overflow-x-hidden">
-      <FullscreenWrapper>
+      <div className="min-h-screen w-full">
       {appModal && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/20 backdrop-blur-md max-lg:p-3"
@@ -3772,6 +3743,7 @@ export default function Home() {
       )}
 
       <div className="mx-auto max-w-6xl px-4 py-10 max-lg:py-8 max-md:px-3 max-md:py-6">
+        {!isFullscreen && (
         <header className="text-center mb-10 md:mb-12 max-lg:mb-8 max-md:mb-6">
           <nav className="flex flex-col items-center justify-center gap-2 mb-4 mt-6 font-heading text-slate-400 tracking-[0.2em] uppercase text-sm sm:text-base max-lg:text-xs max-md:gap-1.5 max-md:mb-3 max-md:text-[10px] max-md:mt-4">
             <div className="flex flex-nowrap justify-center items-center gap-2 max-md:gap-1">
@@ -3796,8 +3768,9 @@ export default function Home() {
             </div>
           </nav>
         </header>
+        )}
 
-        {heroLoadFailed && (
+        {!isFullscreen && heroLoadFailed && (
           <div className="mx-4 mb-4 max-md:mx-3 max-md:mb-3 rounded-xl border border-amber-500/30 bg-amber-950/30 px-4 py-3 text-center text-sm text-amber-200/90 font-heading">
             Les fichiers n&apos;ont pas pu être récupérés depuis la page d&apos;accueil. Ajoutez vos pistes ci-dessous.
           </div>
@@ -3873,8 +3846,27 @@ export default function Home() {
               </button>
             </div>
         ) : (
-        <div className="mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden">
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3">
+        <div
+          className={`rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden ${
+            isFullscreen
+              ? "fixed inset-0 z-[9999] m-0 rounded-2xl overflow-y-auto"
+              : "mt-8 max-lg:mt-6 max-md:mt-4 overflow-hidden"
+          }`}
+          style={isFullscreen ? { height: "100dvh", minHeight: "100vh" } : undefined}
+        >
+        {isFullscreen && (
+          <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-black" aria-hidden>
+            <div className="absolute inset-0 origin-center scale-[1.08] blur-[6px]" style={{ overflow: "hidden" }} aria-hidden>
+              <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
+                <source srcSet="/background-1280.avif 1280w, /background-1920.avif 1920w" type="image/avif" sizes="100vw" />
+                <source srcSet="/background-1280.webp 1280w, /background-1920.webp 1920w" type="image/webp" sizes="100vw" />
+                <img src="/background.png" alt="" className="block h-full w-full object-cover object-center" style={{ minHeight: "100%", minWidth: "100%" }} />
+              </picture>
+            </div>
+            <div className="absolute inset-0" style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }} />
+          </div>
+        )}
+        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 bg-white/[0.02] max-md:flex-col max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`}>
           <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-md:w-full max-md:order-first max-md:justify-center">
             {(() => {
               const fullTitle = currentProject ? currentProject.name : (draftProjectName || "SANS TITRE");
@@ -5123,7 +5115,7 @@ export default function Home() {
         openWithChangePlanView={openManageWithChangePlanView}
       />
       )}
-      </FullscreenWrapper>
+      </div>
       </main>
   );
 }
