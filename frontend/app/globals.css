@@ -188,7 +188,23 @@ html.safari-webkit .modal-panel-dark > button[class*="absolute"] {
   z-index: 10;
 }
 
-/* Safari 17 et moins / iOS 17 et moins : même rendu que 18+ grâce aux couches réelles .backdrop-blur-layer / .backdrop-tint-layer (le flou s’applique sur de vrais divs). Aucune surcharge. */
+/* Safari 17 et moins / iOS 17 et moins : forcer le rendu du blur (fond minimal + couche GPU) — Windows et 18+ inchangés */
+html.safari-webkit-old .backdrop-blur-layer,
+html.safari-ios-old .backdrop-blur-layer {
+  background-color: rgba(0, 0, 0, 0.01) !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+html.safari-webkit-old .modal-backdrop-dark,
+html.safari-webkit-old .modal-backdrop-slate,
+html.safari-webkit-old .header-burger-overlay,
+html.safari-ios-old .modal-backdrop-dark,
+html.safari-ios-old .modal-backdrop-slate,
+html.safari-ios-old .header-burger-overlay {
+  isolation: isolate;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
 
 /* ----- Landing: scroll & entrance animations ----- */
 @keyframes fade-up {
