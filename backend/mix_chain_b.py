@@ -30,11 +30,29 @@ def _set_process_priority_high(pid: int) -> None:
         pass
 
 
+def _set_current_process_priority_high() -> None:
+    """Windows: met le process Python (courant) en priorité Haute pendant le mix pour temps stables."""
+    if sys.platform != "win32":
+        return
+    try:
+        kernel32 = __import__("ctypes").windll.kernel32
+        h = kernel32.GetCurrentProcess()
+        if h:
+            kernel32.SetPriorityClass(h, 0x80)
+    except Exception:
+        pass
+
+
 def _run_host_high_priority(cmd: list, cwd: Optional[str] = None) -> tuple[int, str, str]:
     """Lance le host VST avec priorité haute (gate, reverb, robot, etc.) pour temps de mix stables."""
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=cwd)
     try:
         _set_process_priority_high(proc.pid)
+        # Retry après 150 ms au cas où le process n'était pas prêt (évite 1m35 au hasard)
+        def _retry_priority():
+            time.sleep(0.15)
+            _set_process_priority_high(proc.pid)
+        threading.Thread(target=_retry_priority, daemon=True).start()
     except Exception:
         pass
     stdout, stderr = proc.communicate()
@@ -123,6 +141,7 @@ def render_chain_b(
     Chaîne B : Tone → Gate (VST3 GATE1/2/2.5/3) → FX phone → Core (MIXCHAIN) → De-esser → Air → Delay → Reverb (REVERB1Point5/2/3) → Doubler → Robot.
     Retourne (True, None) ou (False, message_erreur).
     """
+    _set_current_process_priority_high()
     WEIGHTS = {
         "Tone": 4,
         "Noise gate": 2,
@@ -261,6 +280,10 @@ def render_chain_b(
             proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=cwd)
             try:
                 _set_process_priority_high(proc.pid)
+                def _retry():
+                    time.sleep(0.15)
+                    _set_process_priority_high(proc.pid)
+                threading.Thread(target=_retry, daemon=True).start()
             except Exception:
                 pass
             stdout, stderr = proc.communicate()

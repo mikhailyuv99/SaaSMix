@@ -111,9 +111,23 @@ app.include_router(billing_router)
 mixing_service = MixingService()
 
 
+def _set_backend_process_priority_high():
+    """Windows: priorité Haute pour tout le process backend (mixes stables ~35s, pas 1m35 au hasard)."""
+    if sys.platform != "win32":
+        return
+    try:
+        kernel32 = __import__("ctypes").windll.kernel32
+        h = kernel32.GetCurrentProcess()
+        if h:
+            kernel32.SetPriorityClass(h, 0x80)  # HIGH_PRIORITY_CLASS
+    except Exception:
+        pass
+
+
 @app.on_event("startup")
 def startup_sync_r2():
     """En production (Linux), télécharge les binaires HISE depuis R2 au démarrage."""
+    _set_backend_process_priority_high()
     if sys.platform == "linux" and os.environ.get("R2_BUCKET_NAME"):
         try:
             from r2_assets import ensure_r2_assets
