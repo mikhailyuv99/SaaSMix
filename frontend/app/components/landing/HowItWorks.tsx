@@ -12,7 +12,7 @@ const CIRCLE_BG = "#2C313B";
 const steps = [
   {
     num: 1,
-    title: "Uploadez vos stems et votre instrumental",
+    title: "Uploadez vos stems et votre instrumentale",
     desc: "Glissez-déposez vos pistes vocales et votre instrumentale en WAV. Compatible navigateur sur Mac, PC, tablette et mobile.",
     icon: "upload",
   },
@@ -195,7 +195,7 @@ export function HowItWorks() {
             return (
               <div
                 key={segIndex}
-                className="absolute left-1/2 w-px -translate-x-1/2 pointer-events-none overflow-hidden"
+                className="absolute left-1/2 z-0 w-px -translate-x-1/2 pointer-events-none overflow-hidden"
                 style={{ top: seg.top, height: seg.height }}
               >
                 <div className="absolute inset-0 w-px bg-white/20" />
@@ -217,10 +217,10 @@ export function HowItWorks() {
             return (
               <div
                 key={step.num}
-                className={`relative flex items-center gap-0 max-lg:flex-col max-lg:items-stretch max-lg:gap-4 ${i < steps.length - 1 ? "mb-6 sm:mb-8 max-lg:mb-5 max-md:mb-4" : ""}`}
+                className={`relative z-10 flex items-center gap-0 max-lg:flex-col max-lg:items-stretch max-lg:gap-4 ${i < steps.length - 1 ? "mb-6 sm:mb-8 max-lg:mb-5 max-md:mb-4" : ""}`}
               >
                 {/* Partie gauche */}
-                <div className={`flex-1 max-lg:w-full ${isLeft ? "pr-4 sm:pr-6 max-lg:pr-0" : "sm:pr-6 max-lg:pr-0"}`}>
+                <div className={`relative z-10 flex-1 max-lg:w-full ${isLeft ? "pr-4 sm:pr-6 max-lg:pr-0" : "sm:pr-6 max-lg:pr-0"}`}>
                   {isLeft && (
                     <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
                       <div className="flex items-start gap-4 max-md:gap-3">
@@ -266,7 +266,7 @@ export function HowItWorks() {
                 </div>
 
                 {/* Partie droite */}
-                <div className={`flex-1 max-lg:w-full ${!isLeft ? "pl-4 sm:pl-6 max-lg:pl-0" : "sm:pl-6 max-lg:pl-0"}`}>
+                <div className={`relative z-10 flex-1 max-lg:w-full ${!isLeft ? "pl-4 sm:pl-6 max-lg:pl-0" : "sm:pl-6 max-lg:pl-0"}`}>
                   {!isLeft && (
                     <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
                       <div className="flex items-start gap-4 max-md:gap-3">
