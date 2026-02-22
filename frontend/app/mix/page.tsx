@@ -2758,7 +2758,7 @@ export default function Home() {
       const mixPostTimeoutMs = isOldSafari ? 180000 : 120000;
       const progressTickMs = isOldSafari ? 100 : MIX_PROGRESS_TICK_MS;
       const pollDelayMs = isOldSafari ? 350 : 500;
-      const STATUS_FETCH_TIMEOUT_MS = 15000;
+      const STATUS_FETCH_TIMEOUT_MS = 90000;
 
       // Une seule progression 0→99% basée sur le temps (smooth, pas de backend)
       mixSimulationStartRef.current = Date.now();
