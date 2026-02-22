@@ -6,6 +6,7 @@ Usage : API /api/track/mix (staging) ou CLI run_chain_b.py.
 """
 import os
 import shutil
+import sys
 import numpy as np
 import subprocess
 import tempfile
@@ -13,6 +14,21 @@ import threading
 import time
 from pathlib import Path
 from typing import Optional, Callable
+
+
+def _set_process_priority_high(pid: int) -> None:
+    """Windows: priorité Haute pour le process VST (évite 2m40 quand le service tourne en basse priorité)."""
+    if sys.platform != "win32":
+        return
+    try:
+        kernel32 = __import__("ctypes").windll.kernel32
+        h = kernel32.OpenProcess(0x0200, False, pid)
+        if h:
+            kernel32.SetPriorityClass(h, 0x80)
+            kernel32.CloseHandle(h)
+    except Exception:
+        pass
+
 
 # Réutilisation de toute la logique DSP et des chemins reverb/robot/host depuis la chaîne actuelle
 from test_hise_direct import (
@@ -231,8 +247,13 @@ def render_chain_b(
 
     def _run_vst():
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
-            result_holder.append((r.returncode, r.stdout or "", r.stderr or ""))
+            proc = subprocess.Popen(cmd, capture_output=True, text=True, cwd=cwd)
+            try:
+                _set_process_priority_high(proc.pid)
+            except Exception:
+                pass
+            stdout, stderr = proc.communicate()
+            result_holder.append((proc.returncode, stdout or "", stderr or ""))
         except Exception as e:
             result_holder.append((1, "", str(e)))
 
