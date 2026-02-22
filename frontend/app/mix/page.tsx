@@ -3848,8 +3848,8 @@ export default function Home() {
           }`}
           style={isFullscreen ? { height: "100dvh", minHeight: "100vh" } : undefined}
         >
-        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 border-b border-white/10 max-md:flex-col max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`} style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
-          <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-md:w-full max-md:order-first max-md:justify-center max-md:min-w-0 max-md:relative">
+        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 max-lg:px-3 max-lg:py-2.5 max-lg:flex-nowrap max-lg:gap-2 border-b border-white/10 max-md:flex-col max-md:flex-wrap max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`} style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
+          <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-lg:w-auto max-lg:min-w-0 max-lg:max-w-[14ch] max-md:w-full max-md:order-first max-md:justify-center max-md:min-w-0 max-md:relative max-md:max-w-none">
             {(() => {
               const fullTitle = currentProject ? currentProject.name : (draftProjectName || "SANS TITRE");
               const displayTitle = fullTitle.length > 20 ? fullTitle.slice(0, 20) + "…" : fullTitle;
@@ -3857,7 +3857,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={openProjectTitleModal}
-                  className="w-fit max-w-[20ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0 max-md:min-w-0 max-md:text-center"
+                  className="w-fit max-w-[20ch] max-lg:max-w-[14ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0 max-md:min-w-0 max-md:text-center max-md:max-w-[20ch]"
                   title={fullTitle}
                   aria-label="Modifier le titre du projet"
                 >
@@ -3898,8 +3898,8 @@ export default function Home() {
             </button>
           </div>
           <div className="hidden max-md:block max-md:order-2 h-px bg-white/10 max-md:mx-auto max-md:w-[calc(100%-2rem)] shrink-0" aria-hidden />
-          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-md:gap-3 max-md:w-full max-md:grid max-md:grid-cols-2 max-md:justify-items-stretch max-md:items-center max-md:order-last">
-              <div className="flex flex-row items-center gap-2 lg:gap-8 max-md:w-full max-md:justify-start max-md:pl-0">
+          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-lg:flex-nowrap max-lg:justify-between max-lg:gap-3 max-md:gap-3 max-md:w-full max-md:flex-wrap max-md:justify-center max-md:grid max-md:grid-cols-2 max-md:justify-items-stretch max-md:items-center max-md:order-last">
+              <div className="flex flex-row items-center gap-2 lg:gap-8 max-lg:gap-3 max-md:w-full max-md:justify-start max-md:pl-0">
                 <button
                   type="button"
                   onClick={() => setProjectFolded(!projectFolded)}
