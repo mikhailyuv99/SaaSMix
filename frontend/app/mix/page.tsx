@@ -3848,9 +3848,9 @@ export default function Home() {
           }`}
           style={isFullscreen ? { height: "100dvh", minHeight: "100vh" } : undefined}
         >
-        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 border-b border-white/10 max-lg:px-3 max-lg:py-2 max-lg:flex-col max-lg:items-stretch max-lg:gap-0 max-md:flex-col max-md:flex-wrap max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`} style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
-          {/* Row 1 (desktop: title+save left | tablet md→lg: title+save centered | mobile: title+fullscreen, save in row 2) */}
-          <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-lg:w-full max-lg:flex max-lg:justify-center max-lg:items-center max-lg:gap-2 max-lg:py-2 max-md:justify-start max-md:w-full max-md:order-first max-md:min-w-0 max-md:relative max-md:max-w-none">
+        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 border-b border-white/10 max-xl:px-3 max-xl:py-2 max-xl:flex-col max-xl:items-stretch max-xl:gap-0 max-md:flex-col max-md:flex-wrap max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`} style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
+          {/* Row 1 (desktop xl: title+save left | tablet max-xl: title+save centered, fullscreen right | mobile: title centered + fullscreen right, save in row 2) */}
+          <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center max-xl:gap-2 max-xl:py-2 max-xl:relative max-md:justify-center max-md:items-center max-md:w-full max-md:order-first max-md:min-w-0 max-md:relative max-md:max-w-none">
             {(() => {
               const fullTitle = currentProject ? currentProject.name : (draftProjectName || "SANS TITRE");
               const displayTitle = fullTitle.length > 20 ? fullTitle.slice(0, 20) + "…" : fullTitle;
@@ -3858,7 +3858,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={openProjectTitleModal}
-                  className="w-fit max-w-[20ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0 max-lg:text-center max-md:min-w-0 max-md:text-center"
+                  className="w-fit max-w-[20ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0 max-xl:text-center max-md:min-w-0 max-md:text-center"
                   title={fullTitle}
                   aria-label="Modifier le titre du projet"
                 >
@@ -3869,7 +3869,7 @@ export default function Home() {
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="hidden max-md:flex p-1.5 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0 max-md:absolute max-md:right-0"
+              className="hidden max-xl:flex p-1.5 rounded border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 transition-colors shrink-0 max-md:absolute max-md:right-0 max-xl:absolute max-xl:right-0"
               title={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
               aria-label={isFullscreen ? "Quitter le mode plein écran" : "Mode plein écran"}
             >
@@ -3898,13 +3898,13 @@ export default function Home() {
               )}
             </button>
           </div>
-          {/* Separator under title (tablet only 768–1023px) */}
-          <div className="hidden max-lg:block max-md:hidden h-px bg-white/10 w-full shrink-0" aria-hidden />
+          {/* Separator under title (tablet only: 768px–1279px) */}
+          <div className="hidden max-xl:block max-md:hidden h-px bg-white/10 w-full shrink-0" aria-hidden />
           {/* Separator (mobile only) */}
           <div className="hidden max-md:block max-md:order-2 h-px bg-white/10 max-md:mx-auto max-md:w-[calc(100%-2rem)] shrink-0" aria-hidden />
-          {/* Row 2 (desktop: controls | tablet: replier, play, BPM, télécharger, masteriser, fullscreen | mobile: unchanged) */}
-          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-lg:w-full max-lg:flex-nowrap max-lg:justify-between max-lg:gap-2 max-lg:py-2 max-md:gap-3 max-md:w-full max-md:flex-wrap max-md:justify-center max-md:grid max-md:grid-cols-2 max-md:justify-items-stretch max-md:items-center max-md:order-last">
-              <div className="flex flex-row items-center gap-2 lg:gap-8 max-lg:gap-3 max-md:w-full max-md:justify-start max-md:pl-0">
+          {/* Row 2 (desktop xl: controls | tablet max-xl: buttons spaced across card | mobile: unchanged) */}
+          <div className="flex-1 flex flex-wrap items-center justify-center min-w-0 gap-5 sm:gap-8 max-xl:w-full max-xl:flex-nowrap max-xl:justify-between max-xl:gap-4 max-xl:py-2 max-md:gap-3 max-md:w-full max-md:flex-wrap max-md:justify-center max-md:grid max-md:grid-cols-2 max-md:justify-items-stretch max-md:items-center max-md:order-last">
+              <div className="flex flex-row items-center gap-2 lg:gap-8 max-xl:gap-3 max-md:w-full max-md:justify-start max-md:pl-0">
                 <button
                   type="button"
                   onClick={() => setProjectFolded(!projectFolded)}
@@ -4033,7 +4033,7 @@ export default function Home() {
                   ) : "MASTERISER"}
                 </button>
               </div>
-              <div className="ml-auto flex items-center shrink-0 max-md:hidden max-md:order-3">
+              <div className="ml-auto flex items-center shrink-0 max-md:hidden max-xl:hidden max-md:order-3">
                 <button
                   type="button"
                   onClick={toggleFullscreen}
