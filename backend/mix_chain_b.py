@@ -230,8 +230,11 @@ def render_chain_b(
     result_holder = []
 
     def _run_vst():
-        r = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
-        result_holder.append((r.returncode, r.stdout, r.stderr))
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
+            result_holder.append((r.returncode, r.stdout or "", r.stderr or ""))
+        except Exception as e:
+            result_holder.append((1, "", str(e)))
 
     thr = threading.Thread(target=_run_vst)
     thr.start()
