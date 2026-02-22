@@ -380,6 +380,16 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   transform: translateY(0);
 }
 
+/* HowItWorks timeline: pas d'opacité 0 pour que les cards bloquent la ligne dès le premier frame */
+#comment-ca-marche .observe-step {
+  opacity: 1;
+  transform: translateY(24px);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#comment-ca-marche .observe-step.in-view {
+  transform: translateY(0);
+}
+
 /* Premium landing cards */
 .landing-card {
   @apply rounded-2xl border transition-all duration-300;
