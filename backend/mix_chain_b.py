@@ -30,6 +30,17 @@ def _set_process_priority_high(pid: int) -> None:
         pass
 
 
+def _run_host_high_priority(cmd: list, cwd: Optional[str] = None) -> tuple[int, str, str]:
+    """Lance le host VST avec priorité haute (gate, reverb, robot, etc.) pour temps de mix stables."""
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=cwd)
+    try:
+        _set_process_priority_high(proc.pid)
+    except Exception:
+        pass
+    stdout, stderr = proc.communicate()
+    return (proc.returncode or 0, stdout or "", stderr or "")
+
+
 # Réutilisation de toute la logique DSP et des chemins reverb/robot/host depuis la chaîne actuelle
 from test_hise_direct import (
     HOST_EXE,
@@ -207,9 +218,9 @@ def render_chain_b(
             out_abs = str(Path(temp_gated).resolve())
             gate_abs = str(gate_path.resolve())
             cmd = [str(HOST_EXE), gate_abs, in_abs, out_abs, str(VST_BLOCK_SIZE)]
-            r = subprocess.run(cmd, capture_output=True, text=True)
+            r = _run_host_high_priority(cmd)
             out_file = Path(temp_gated)
-            if r.returncode == 0 and out_file.exists() and out_file.stat().st_size > 0:
+            if r[0] == 0 and out_file.exists() and out_file.stat().st_size > 0:
                 vst_input = str(out_file.resolve())
                 _progress("Noise gate OK", done=True)
             else:
@@ -247,7 +258,7 @@ def render_chain_b(
 
     def _run_vst():
         try:
-            proc = subprocess.Popen(cmd, capture_output=True, text=True, cwd=cwd)
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, cwd=cwd)
             try:
                 _set_process_priority_high(proc.pid)
             except Exception:
@@ -346,8 +357,8 @@ def render_chain_b(
             reverb_result = []
 
             def _run_reverb():
-                r = subprocess.run(cmd, capture_output=True, text=True)
-                reverb_result.append((r.returncode, r.stdout, r.stderr))
+                r = _run_host_high_priority(cmd)
+                reverb_result.append(r)
 
             rvb_thr = threading.Thread(target=_run_reverb)
             rvb_thr.start()
@@ -384,8 +395,8 @@ def render_chain_b(
         _progress("FX robot")
         temp_robot_out = tempfile.NamedTemporaryFile(suffix=".wav", delete=False).name
         cmd = [str(HOST_EXE), str(ROBOT_PATH), output_wav, temp_robot_out, str(VST_BLOCK_SIZE)]
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        if result.returncode == 0 and Path(temp_robot_out).exists():
+        result = _run_host_high_priority(cmd)
+        if result[0] == 0 and Path(temp_robot_out).exists():
             shutil.copy(temp_robot_out, output_wav)
             _progress("FX robot OK", done=True)
         else:
