@@ -185,6 +185,7 @@ export function HowItWorks() {
 
         <div ref={containerRef} className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
           {/* Piste et progression en segments : s’arrêtent en haut de chaque cercle, reprennent en bas */}
+          <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden>
           {segmentRects.map((seg, segIndex) => {
             const segmentStarts = [0, 0.12, 0.52, 0.72, 0.88];
             const segmentEnds = [0.12, 0.52, 0.72, 0.88, 1];
@@ -195,7 +196,7 @@ export function HowItWorks() {
             return (
               <div
                 key={segIndex}
-                className="absolute left-1/2 z-0 w-px -translate-x-1/2 pointer-events-none overflow-hidden"
+                className="absolute left-1/2 w-px -translate-x-1/2 overflow-hidden"
                 style={{ top: seg.top, height: seg.height }}
               >
                 <div className="absolute inset-0 w-px bg-white/20" />
@@ -209,7 +210,10 @@ export function HowItWorks() {
               </div>
             );
           })}
+          </div>
 
+          {/* Calque steps (cards + cercles) */}
+          <div className="relative z-10">
           {steps.map((step, i) => {
             const isLeft = i % 2 === 0;
             const lineReachesCircleAt = [0.12, 0.52, 0.72, 0.88];
@@ -292,6 +296,7 @@ export function HowItWorks() {
               </div>
             );
           })}
+          </div>
         </div>
 
         <div className="w-full max-w-2xl mx-auto mt-8 space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4 box-border overflow-x-hidden pt-2">
