@@ -183,9 +183,9 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div ref={containerRef} className="w-full max-w-4xl mx-auto relative mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
+        <div ref={containerRef} className="w-full max-w-4xl mx-auto relative isolate mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border">
           {/* Piste et progression en segments : s’arrêtent en haut de chaque cercle, reprennent en bas */}
-          <div className="absolute inset-0 -z-[1] pointer-events-none" aria-hidden>
+          <div className="absolute inset-0 pointer-events-none" aria-hidden style={{ zIndex: -1 }}>
           {segmentRects.map((seg, segIndex) => {
             const segmentStarts = [0, 0.12, 0.52, 0.72, 0.88];
             const segmentEnds = [0.12, 0.52, 0.72, 0.88, 1];
@@ -213,7 +213,7 @@ export function HowItWorks() {
           </div>
 
           {/* Calque steps (cards + cercles) — au-dessus de la ligne dès le premier paint */}
-          <div className="relative z-10 isolate" style={{ transform: "translateZ(0)", willChange: "transform" }}>
+          <div className="relative z-10 isolate min-h-0" style={{ transform: "translateZ(0)", willChange: "transform" }}>
           {steps.map((step, i) => {
             const isLeft = i % 2 === 0;
             const lineReachesCircleAt = [0.12, 0.52, 0.72, 0.88];
