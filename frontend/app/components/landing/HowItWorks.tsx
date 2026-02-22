@@ -182,8 +182,9 @@ export function HowItWorks() {
             De la piste brute au morceau fini en quatre étapes — sans plugin, tout dans le navigateur.
           </p>
         </div>
+      </ObserveSection>
 
-        <div ref={containerRef} className="w-full max-w-4xl mx-auto relative isolate mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border" style={{ transformStyle: "preserve-3d" }}>
+      <div ref={containerRef} className="w-full max-w-4xl mx-auto relative isolate mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border" style={{ transformStyle: "preserve-3d" }}>
           {/* Piste et progression en segments : s’arrêtent en haut de chaque cercle, reprennent en bas */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden style={{ zIndex: -1, transform: "translateZ(-1px)" }}>
           {segmentRects.map((seg, segIndex) => {
@@ -297,8 +298,9 @@ export function HowItWorks() {
             );
           })}
           </div>
-        </div>
+      </div>
 
+      <ObserveSection>
         <div className="w-full max-w-2xl mx-auto mt-8 space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4 box-border overflow-x-hidden pt-2">
           <div className="text-center -mt-2 relative z-10">
             <Link
