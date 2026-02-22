@@ -380,7 +380,7 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   transform: translateY(0);
 }
 
-/* HowItWorks timeline: pas d'opacité 0 pour que les cards bloquent la ligne dès le premier frame */
+/* HowItWorks timeline: cards en opacity 1 dès le départ pour bloquer la ligne (garder l’animation translateY) */
 #comment-ca-marche .observe-step {
   opacity: 1;
   transform: translateY(24px);
