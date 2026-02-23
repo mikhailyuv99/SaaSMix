@@ -566,6 +566,8 @@ export default function Home() {
   const masterStartTimeRef = useRef<number>(0);
   const masterResultSectionRef = useRef<HTMLElement | null>(null);
   const downloadAbortRef = useRef<AbortController | null>(null);
+  /** True si l'user a fait un "Render Mix" cette session → au download master on facture 1 mix + 1 master. Sinon master_only. */
+  const userDidRenderMixRef = useRef(false);
 
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
@@ -1034,6 +1036,7 @@ export default function Home() {
     setCategoryModal(null);
     setAppModal(null);
     setMixProgress({});
+    userDidRenderMixRef.current = false;
     setMasterResult(null);
     setIsRenderingMix(false);
     setIsMastering(false);
@@ -1200,6 +1203,7 @@ export default function Home() {
   }, [setHasUnsavedChanges]);
 
   const removeTrack = useCallback((id: string) => {
+    userDidRenderMixRef.current = false;
     downloadAbortRef.current?.abort();
     setHasUnsavedChanges(true);
     deleteFileFromIDB(id);
@@ -1279,6 +1283,7 @@ export default function Home() {
   }, [setHasUnsavedChanges]);
 
   const clearTrackFile = useCallback((id: string) => {
+    userDidRenderMixRef.current = false;
     deleteFileFromIDB(id);
     const nodes = trackPlaybackRef.current.get(id);
     if (nodes) {
@@ -1436,6 +1441,7 @@ export default function Home() {
 
   const applyFileWithCategory = useCallback(
     (id: string, file: File, category: Category) => {
+      userDidRenderMixRef.current = false;
       if (!contextRef.current || contextRef.current.state === "closed") {
         contextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       }
@@ -1500,6 +1506,7 @@ export default function Home() {
   const onFileSelect = useCallback(
     (id: string, file: File | null) => {
       if (file) {
+        userDidRenderMixRef.current = false;
         if (!file.name.toLowerCase().endsWith(".wav")) {
           setAppModal({ type: "alert", message: "Seuls les fichiers .wav sont acceptés pour les pistes.", onClose: () => {} });
           return;
@@ -1507,6 +1514,7 @@ export default function Home() {
         setCategoryModal({ trackId: id, file, fromHero: false });
         return;
       }
+      userDidRenderMixRef.current = false;
       deleteFileFromIDB(id);
       setTracks((prev) => {
         const track = prev.find((t) => t.id === id);
@@ -1703,6 +1711,7 @@ export default function Home() {
       if (!res.ok) throw new Error(data.detail || "Erreur création");
       setCurrentProject({ id: data.id, name: data.name });
       setTracks(defaultTracks);
+      userDidRenderMixRef.current = false;
       setMasterResult(null);
       if (typeof window !== "undefined") {
         try {
@@ -2189,6 +2198,7 @@ export default function Home() {
           setCurrentProject(null);
           const defaultTracks = getDefaultTracks();
           setTracks(defaultTracks);
+          userDidRenderMixRef.current = false;
           setMasterResult(null);
           buffersRef.current.clear();
           if (typeof window !== "undefined") {
@@ -3151,6 +3161,7 @@ export default function Home() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
+      userDidRenderMixRef.current = true;
     } catch (e) {
       const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
       if (isAbort) return;
@@ -3180,6 +3191,7 @@ export default function Home() {
       const form = new FormData();
       form.append("track_specs", JSON.stringify(specs));
       files.forEach((f) => form.append("files", f));
+      form.append("master_only", userDidRenderMixRef.current ? "0" : "1");
       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -4965,7 +4977,7 @@ export default function Home() {
             <div className="mix-card-glass relative rounded-2xl border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
               <button
                 type="button"
-                onClick={() => { stopMasterPlayback(); setMasterResult(null); }}
+                onClick={() => { stopMasterPlayback(); userDidRenderMixRef.current = false; setMasterResult(null); }}
                 className="absolute top-3 right-3 w-8 h-8 max-md:w-7 max-md:h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                 aria-label="Fermer"
               >
