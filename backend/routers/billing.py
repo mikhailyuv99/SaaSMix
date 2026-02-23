@@ -30,6 +30,17 @@ STRIPE_PRICE_MASTER_1 = os.environ.get("STRIPE_PRICE_MASTER_1", "").strip()
 STRIPE_PRICE_MASTER_5 = os.environ.get("STRIPE_PRICE_MASTER_5", "").strip()
 
 
+@router.get("/token-prices-debug")
+def get_token_prices_debug():
+    """Indique si les 4 variables d'env des prix tokens sont lues (true/false). Pas d'auth requise."""
+    return {
+        "STRIPE_PRICE_MIX_1": bool(STRIPE_PRICE_MIX_1),
+        "STRIPE_PRICE_MIX_5": bool(STRIPE_PRICE_MIX_5),
+        "STRIPE_PRICE_MASTER_1": bool(STRIPE_PRICE_MASTER_1),
+        "STRIPE_PRICE_MASTER_5": bool(STRIPE_PRICE_MASTER_5),
+    }
+
+
 @router.get("/plans")
 def get_plans():
     """
