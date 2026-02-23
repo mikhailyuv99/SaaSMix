@@ -4023,6 +4023,17 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     if (!user) { openAuthModal?.("login"); return; }
+                    if (!isPro) {
+                      setAppModal({
+                        type: "confirm_two",
+                        message: "Téléchargement du mix coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre mix.",
+                        primaryLabel: "Choisir un plan",
+                        secondaryLabel: "Acheter un token",
+                        onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
+                        onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
+                      });
+                      return;
+                    }
                     downloadMix();
                   }}
                   disabled={isRenderingMix}
