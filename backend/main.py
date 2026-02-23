@@ -830,11 +830,9 @@ async def master_render(
     db: Session = Depends(get_db),
     track_specs: str = Form(..., description="JSON array of { category, gain, mixedTrackId? }"),
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
-    master_only: Optional[str] = Form(None, description="Si '1', au téléchargement master on ne facture qu'un token master (pas de mix)."),
 ):
     """
-    Assemble les pistes en mix + master. Accessible à tous les utilisateurs connectés. Tokens consommés au téléchargement.
-    Si master_only=1 : au download master on ne facture qu'un token master (user n'a pas demandé le mix).
+    Assemble les pistes en mix + master. Tokens consommés au téléchargement : 1 mix par download mix, 1 master par download master.
     """
     try:
         specs = json.loads(track_specs)
@@ -862,11 +860,6 @@ async def master_render(
             raise HTTPException(status_code=500, detail="Master (master.vst3) a échoué")
         if not os.path.exists(master_path):
             raise HTTPException(status_code=500, detail="Fichier master non créé")
-        if master_only == "1":
-            try:
-                open(os.path.join(RENDER_DIR, f".master_only_{job_id}"), "w").close()
-            except OSError:
-                pass
         db.commit()
         return {
             "status": "success",
@@ -894,7 +887,7 @@ async def download_render(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_row_optional),
 ):
-    """Stream ou téléchargement (type=mix|master). Si download=1 : consomme tokens. Mix = 1 mix. Master = 1 mix+1 master si un mix existe pour ce rendu, sinon 1 master seulement."""
+    """Stream ou téléchargement (type=mix|master). Si download=1 : 1 token mix pour mix, 1 token master pour master."""
     if not re.match(r"^[a-f0-9\-]{36}$", id):
         raise HTTPException(status_code=400, detail="ID invalide")
     if type not in ("mix", "master"):
@@ -902,12 +895,6 @@ async def download_render(
     path = os.path.join(RENDER_DIR, f"{type}_{id}.wav")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Fichier introuvable ou expiré")
-
-    # Pour un download master : on ne charge 1 mix que si l'user a demandé mix+master (pas de .master_only_{id})
-    # et qu'un fichier mix existe. Sinon (master seul) on charge seulement 1 master.
-    master_only_sentinel = os.path.exists(os.path.join(RENDER_DIR, f".master_only_{id}"))
-    mix_exists_for_render = os.path.exists(os.path.join(RENDER_DIR, f"mix_{id}.wav"))
-    charge_mix_on_master_download = mix_exists_for_render and not master_only_sentinel
 
     consume_tokens = download == "1"
     if type in ("mix", "master"):
@@ -932,20 +919,13 @@ async def download_render(
                 else:
                     if available_master < 1:
                         raise HTTPException(status_code=402, detail=no_tokens_msg)
-                    if charge_mix_on_master_download and available_mix < 1:
-                        raise HTTPException(status_code=402, detail=no_tokens_msg)
-                # Consommer : quota d'abord, puis tokens achetés
+                # Consommer : 1 mix pour mix, 1 master pour master (quota d'abord, puis tokens achetés)
                 if type == "mix":
                     if mix_limit is not None and (current_user.mix_downloads_count or 0) < mix_limit:
                         current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
                     else:
                         current_user.mix_tokens_purchased = max(0, (current_user.mix_tokens_purchased or 0) - 1)
                 else:
-                    if charge_mix_on_master_download:
-                        if mix_limit is not None and (current_user.mix_downloads_count or 0) < mix_limit:
-                            current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
-                        else:
-                            current_user.mix_tokens_purchased = max(0, (current_user.mix_tokens_purchased or 0) - 1)
                     if master_limit is not None and (current_user.master_downloads_count or 0) < master_limit:
                         current_user.master_downloads_count = (current_user.master_downloads_count or 0) + 1
                     else:
