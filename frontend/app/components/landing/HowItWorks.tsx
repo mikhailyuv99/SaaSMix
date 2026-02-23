@@ -116,6 +116,26 @@ export function HowItWorks() {
     setSegmentRects(rects);
   }, []);
 
+  const startSmoothing = useCallback(() => {
+    if (smoothRafId.current !== null) return;
+    const tick = () => {
+      const target = targetProgressRef.current;
+      const current = smoothedRef.current;
+      const diff = target - current;
+      if (Math.abs(diff) < 0.0005) {
+        smoothedRef.current = target;
+        setSmoothedProgress(target);
+        smoothRafId.current = null;
+        return;
+      }
+      const next = current + diff * SMOOTH_FACTOR;
+      smoothedRef.current = next;
+      setSmoothedProgress(next);
+      smoothRafId.current = requestAnimationFrame(tick);
+    };
+    smoothRafId.current = requestAnimationFrame(tick);
+  }, []);
+
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -133,24 +153,9 @@ export function HowItWorks() {
         targetProgressRef.current = progress;
         setLineProgress(progress);
         computeSegments();
+        startSmoothing();
       });
     };
-
-    const tick = () => {
-      const target = targetProgressRef.current;
-      const current = smoothedRef.current;
-      const diff = target - current;
-      if (Math.abs(diff) < 0.0005) {
-        smoothedRef.current = target;
-        setSmoothedProgress(target);
-      } else {
-        const next = current + diff * SMOOTH_FACTOR;
-        smoothedRef.current = next;
-        setSmoothedProgress(next);
-      }
-      smoothRafId.current = requestAnimationFrame(tick);
-    };
-    smoothRafId.current = requestAnimationFrame(tick);
 
     const scheduleCompute = () => requestAnimationFrame(computeSegments);
     scheduleCompute();
@@ -166,7 +171,7 @@ export function HowItWorks() {
       if (rafId.current !== null) cancelAnimationFrame(rafId.current);
       if (smoothRafId.current !== null) cancelAnimationFrame(smoothRafId.current);
     };
-  }, [computeSegments]);
+  }, [computeSegments, startSmoothing]);
 
   return (
     <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">

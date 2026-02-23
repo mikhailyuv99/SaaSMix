@@ -5045,6 +5045,34 @@ export default function Home() {
                   type="button"
                   disabled={isDownloadingMaster}
                   onClick={async () => {
+                    try {
+                      const uRes = await fetch(`${API_BASE}/api/billing/usage`, { headers: getAuthHeaders() });
+                      if (uRes.ok) {
+                        const u = await uRes.json();
+                        const masterRem = u.plan === "free"
+                          ? (u.master_tokens_purchased ?? 0)
+                          : (u.master_limit == null ? 999 : Math.max(0, (u.master_limit ?? 0) - u.master_used) + (u.master_tokens_purchased ?? 0));
+                        if (masterRem < 1) {
+                          if (!isPro) {
+                            setAppModal({
+                              type: "confirm_two",
+                              message: "Téléchargement du master coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre master.",
+                              primaryLabel: "Choisir un plan",
+                              secondaryLabel: "Acheter un token",
+                              onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
+                              onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
+                            });
+                          } else {
+                            setAppModal({
+                              type: "alert",
+                              message: "Plus de tokens disponibles. Achetez des tokens pour télécharger le master.",
+                              onClose: () => { window.dispatchEvent(new Event("openTokensModal")); },
+                            });
+                          }
+                          return;
+                        }
+                      }
+                    } catch (_) {}
                     setIsDownloadingMaster(true);
                     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
                     const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
@@ -5109,10 +5137,10 @@ export default function Home() {
                       setIsDownloadingMaster(false);
                     }
                   }}
-                  className={`inline-flex items-center justify-center text-center mt-2 rounded-lg px-4 py-2.5 text-tagline disabled:cursor-not-allowed focus:outline-none focus:ring-0 ${
+                  className={`mt-2 rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline disabled:cursor-not-allowed whitespace-nowrap ${
                     isDownloadingMaster
                       ? "border border-white/30 bg-slate-800 text-white"
-                      : "btn-primary group"
+                      : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors disabled:opacity-50"
                   }`}
                 >
                   {isDownloadingMaster ? (
@@ -5120,20 +5148,16 @@ export default function Home() {
                       TÉLÉCHARGEMENT<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                     </span>
                   ) : (
-                    <span className="text-tagline text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
-                      TÉLÉCHARGER LE MASTER
-                    </span>
+                    "TÉLÉCHARGER LE MASTER"
                   )}
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => { if (!user) { openAuthModal?.("login"); return; } }}
-                  className="btn-primary group inline-flex items-center justify-center text-center mt-2 relative"
+                  className="mt-2 rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors whitespace-nowrap"
                 >
-<span className="text-tagline text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)] transition-colors">
-                      TÉLÉCHARGER LE MASTER
-                    </span>
+                  TÉLÉCHARGER LE MASTER
                 </button>
               )}
             </div>
