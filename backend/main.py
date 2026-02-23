@@ -284,6 +284,17 @@ async def debug_vst_status():
     return get_vst_status()
 
 
+@app.get("/api/debug/token-prices")
+async def debug_token_prices():
+    """Indique si les 4 variables d'env des prix tokens sont lues par le backend (sans afficher les valeurs)."""
+    return {
+        "STRIPE_PRICE_MIX_1": bool(os.environ.get("STRIPE_PRICE_MIX_1", "").strip()),
+        "STRIPE_PRICE_MIX_5": bool(os.environ.get("STRIPE_PRICE_MIX_5", "").strip()),
+        "STRIPE_PRICE_MASTER_1": bool(os.environ.get("STRIPE_PRICE_MASTER_1", "").strip()),
+        "STRIPE_PRICE_MASTER_5": bool(os.environ.get("STRIPE_PRICE_MASTER_5", "").strip()),
+    }
+
+
 @app.get("/api/presets")
 async def get_presets():
     """Get list of available presets"""
@@ -877,7 +888,7 @@ async def download_render(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_row_optional),
 ):
-    """Stream ou téléchargement (type=mix|master). Si download=1 : consomme tokens (1 mix pour mix, 1 mix+1 master pour master). Sinon lecture seule, auth requise, pas de déduction."""
+    """Stream ou téléchargement (type=mix|master). Si download=1 : consomme tokens. Mix = 1 mix. Master = 1 mix+1 master si un mix existe pour ce rendu, sinon 1 master seulement."""
     if not re.match(r"^[a-f0-9\-]{36}$", id):
         raise HTTPException(status_code=400, detail="ID invalide")
     if type not in ("mix", "master"):
@@ -885,6 +896,9 @@ async def download_render(
     path = os.path.join(RENDER_DIR, f"{type}_{id}.wav")
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Fichier introuvable ou expiré")
+
+    # Pour un download master : on ne charge 1 mix que si un fichier mix a été généré pour ce rendu
+    mix_exists_for_render = os.path.exists(os.path.join(RENDER_DIR, f"mix_{id}.wav"))
 
     consume_tokens = download == "1"
     if type in ("mix", "master"):
@@ -907,7 +921,9 @@ async def download_render(
                     if available_mix < 1:
                         raise HTTPException(status_code=402, detail=no_tokens_msg)
                 else:
-                    if available_mix < 1 or available_master < 1:
+                    if available_master < 1:
+                        raise HTTPException(status_code=402, detail=no_tokens_msg)
+                    if mix_exists_for_render and available_mix < 1:
                         raise HTTPException(status_code=402, detail=no_tokens_msg)
                 # Consommer : quota d'abord, puis tokens achetés
                 if type == "mix":
@@ -916,10 +932,11 @@ async def download_render(
                     else:
                         current_user.mix_tokens_purchased = max(0, (current_user.mix_tokens_purchased or 0) - 1)
                 else:
-                    if mix_limit is not None and (current_user.mix_downloads_count or 0) < mix_limit:
-                        current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
-                    else:
-                        current_user.mix_tokens_purchased = max(0, (current_user.mix_tokens_purchased or 0) - 1)
+                    if mix_exists_for_render:
+                        if mix_limit is not None and (current_user.mix_downloads_count or 0) < mix_limit:
+                            current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+                        else:
+                            current_user.mix_tokens_purchased = max(0, (current_user.mix_tokens_purchased or 0) - 1)
                     if master_limit is not None and (current_user.master_downloads_count or 0) < master_limit:
                         current_user.master_downloads_count = (current_user.master_downloads_count or 0) + 1
                     else:
