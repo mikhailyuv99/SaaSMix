@@ -239,9 +239,6 @@ export function TokensModal({
           <div className="space-y-4">
             <p className="text-white font-medium">Accès illimité</p>
             <p className="text-slate-400 text-sm">Votre plan Pro inclut des téléchargements mix et master illimités. Vous n&apos;avez pas besoin d&apos;acheter des tokens.</p>
-            {offers.length > 0 && (
-              <p className="text-slate-500 text-xs mt-4">Vous pouvez tout de même acheter des packs optionnels ci-dessous si vous le souhaitez.</p>
-            )}
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 opacity-75">
                 <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Tokens Mix</p>
@@ -263,31 +260,31 @@ export function TokensModal({
           </div>
         ) : (
           <>
-            {usage && (
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-                  <p className="text-slate-400 text-xs uppercase tracking-wider">Mix ce mois</p>
-                  <p className="text-white font-medium mt-1">
-                    {usage.mix_used}
-                    {usage.mix_limit != null ? ` / ${usage.mix_limit}` : " / ∞"}
-                    {usage.mix_tokens_purchased > 0 && <span className="text-slate-400 text-sm"> + {usage.mix_tokens_purchased} achetés</span>}
-                  </p>
+            {usage && (() => {
+              const mixRemaining = usage.plan === "free"
+                ? usage.mix_tokens_purchased
+                : (usage.mix_limit == null ? null : Math.max(0, usage.mix_limit - usage.mix_used) + usage.mix_tokens_purchased);
+              const masterRemaining = usage.plan === "free"
+                ? usage.master_tokens_purchased
+                : (usage.master_limit == null ? null : Math.max(0, usage.master_limit - usage.master_used) + usage.master_tokens_purchased);
+              return (
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                    <p className="text-slate-400 text-xs uppercase tracking-wider">Tokens mix restants</p>
+                    <p className="text-white font-medium mt-1">{mixRemaining === null ? "Illimité" : mixRemaining}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                    <p className="text-slate-400 text-xs uppercase tracking-wider">Tokens master restants</p>
+                    <p className="text-white font-medium mt-1">{masterRemaining === null ? "Illimité" : masterRemaining}</p>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-                  <p className="text-slate-400 text-xs uppercase tracking-wider">Master ce mois</p>
-                  <p className="text-white font-medium mt-1">
-                    {usage.master_used}
-                    {usage.master_limit != null ? ` / ${usage.master_limit}` : " / ∞"}
-                    {usage.master_tokens_purchased > 0 && <span className="text-slate-400 text-sm"> + {usage.master_tokens_purchased} achetés</span>}
-                  </p>
-                </div>
-              </div>
-            )}
+              );
+            })()}
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
                 <p className="text-slate-400 text-xs uppercase tracking-wider mb-3">Tokens Mix</p>
                 {mixOffers.length === 0 ? (
-                  <p className="text-slate-500 text-sm">Aucune offre configurée.</p>
+                  <p className="text-slate-500 text-sm">Aucune offre configurée. Vérifiez les variables STRIPE_PRICE_MIX_1 / MIX_5 sur le serveur.</p>
                 ) : (
                   mixOffers.map((o) => (
                     <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
@@ -299,7 +296,7 @@ export function TokensModal({
               <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
                 <p className="text-slate-400 text-xs uppercase tracking-wider mb-3">Tokens Master</p>
                 {masterOffers.length === 0 ? (
-                  <p className="text-slate-500 text-sm">Aucune offre configurée.</p>
+                  <p className="text-slate-500 text-sm">Aucune offre configurée. Vérifiez les variables STRIPE_PRICE_MASTER_1 / MASTER_5 sur le serveur.</p>
                 ) : (
                   masterOffers.map((o) => (
                     <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">

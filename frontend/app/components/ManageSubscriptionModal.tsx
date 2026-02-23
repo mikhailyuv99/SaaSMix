@@ -163,7 +163,7 @@ export function ManageSubscriptionModal({
   const [changePlanError, setChangePlanError] = useState<string | null>(null);
   const [proInterval, setProInterval] = useState<"year" | "month">("year");
   const [featuresOpen, setFeaturesOpen] = useState<string | null>(null);
-  type Usage = { plan: string; mix_used: number; master_used: number; projects_used: number; mix_limit: number | null; master_limit: number | null; projects_limit: number | null };
+  type Usage = { plan: string; mix_used: number; master_used: number; mix_tokens_purchased: number; master_tokens_purchased: number; projects_used: number; mix_limit: number | null; master_limit: number | null; projects_limit: number | null };
   const [usage, setUsage] = useState<Usage | null>(null);
 
   useEffect(() => {
@@ -286,25 +286,30 @@ export function ManageSubscriptionModal({
             </button>
             <h2 className="text-xl font-medium text-white mb-1">Changer de plan</h2>
             <p className="text-slate-400 text-[10px] mb-3">Choisissez une formule. Le prorata est appliqué automatiquement.</p>
-            {usage && (
-              <div className="mb-4 rounded-lg border border-white/10 bg-white/[0.02] p-3">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">Votre utilisation</p>
-                <div className="space-y-1.5 text-[13px] text-slate-400">
-                  <div className="flex justify-between">
-                    <span>Téléchargements mix ce mois</span>
-                    <span className="text-white/90">{usage.mix_used}{usage.mix_limit != null ? ` / ${usage.mix_limit}` : " / ∞"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Téléchargements master ce mois</span>
-                    <span className="text-white/90">{usage.master_used}{usage.master_limit != null ? ` / ${usage.master_limit}` : " / ∞"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Projets sauvegardés</span>
-                    <span className="text-white/90">{usage.projects_used}{usage.projects_limit != null ? ` / ${usage.projects_limit}` : " / ∞"}</span>
+            {usage && (() => {
+              const mixRem = usage.plan === "free" ? (usage.mix_tokens_purchased ?? 0) : (usage.mix_limit == null ? null : Math.max(0, usage.mix_limit - usage.mix_used) + (usage.mix_tokens_purchased ?? 0));
+              const masterRem = usage.plan === "free" ? (usage.master_tokens_purchased ?? 0) : (usage.master_limit == null ? null : Math.max(0, usage.master_limit - usage.master_used) + (usage.master_tokens_purchased ?? 0));
+              const projectsRem = usage.projects_limit == null ? null : Math.max(0, usage.projects_limit - usage.projects_used);
+              return (
+                <div className="mb-4 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">Restants</p>
+                  <div className="space-y-1.5 text-[13px] text-slate-400">
+                    <div className="flex justify-between">
+                      <span>Tokens mix restants</span>
+                      <span className="text-white/90">{mixRem === null ? "Illimité" : mixRem}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tokens master restants</span>
+                      <span className="text-white/90">{masterRem === null ? "Illimité" : masterRem}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Sauvegardes de projet restantes</span>
+                      <span className="text-white/90">{projectsRem === null ? "Illimité" : projectsRem}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
             {changePlanError && <p className="text-red-400 text-sm mb-3">{changePlanError}</p>}
             <div className="space-y-3">
               {plansMonthly.map((plan) => {
@@ -426,25 +431,30 @@ export function ManageSubscriptionModal({
           </>
         ) : subscription ? (
           <div className="space-y-4">
-            {usage && (
-              <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">Votre utilisation</p>
-                <div className="space-y-1.5 text-[13px] text-slate-400">
-                  <div className="flex justify-between">
-                    <span>Téléchargements mix ce mois</span>
-                    <span className="text-white/90">{usage.mix_used}{usage.mix_limit != null ? ` / ${usage.mix_limit}` : " / ∞"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Téléchargements master ce mois</span>
-                    <span className="text-white/90">{usage.master_used}{usage.master_limit != null ? ` / ${usage.master_limit}` : " / ∞"}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Projets sauvegardés</span>
-                    <span className="text-white/90">{usage.projects_used}{usage.projects_limit != null ? ` / ${usage.projects_limit}` : " / ∞"}</span>
+            {usage && (() => {
+              const mixRem = usage.plan === "free" ? (usage.mix_tokens_purchased ?? 0) : (usage.mix_limit == null ? null : Math.max(0, usage.mix_limit - usage.mix_used) + (usage.mix_tokens_purchased ?? 0));
+              const masterRem = usage.plan === "free" ? (usage.master_tokens_purchased ?? 0) : (usage.master_limit == null ? null : Math.max(0, usage.master_limit - usage.master_used) + (usage.master_tokens_purchased ?? 0));
+              const projectsRem = usage.projects_limit == null ? null : Math.max(0, usage.projects_limit - usage.projects_used);
+              return (
+                <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">Restants</p>
+                  <div className="space-y-1.5 text-[13px] text-slate-400">
+                    <div className="flex justify-between">
+                      <span>Tokens mix restants</span>
+                      <span className="text-white/90">{mixRem === null ? "Illimité" : mixRem}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tokens master restants</span>
+                      <span className="text-white/90">{masterRem === null ? "Illimité" : masterRem}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Sauvegardes de projet restantes</span>
+                      <span className="text-white/90">{projectsRem === null ? "Illimité" : projectsRem}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
             <p className="text-slate-400 text-sm">
               Plan : <strong>{currentPlanLabel}{planSuffix}</strong>
             </p>

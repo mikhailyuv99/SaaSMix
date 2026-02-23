@@ -183,13 +183,14 @@ export function Header() {
               <>
                 <a href="#tarifs" className="text-sm text-white/90 transition-colors hover:text-white">Tarifs</a>
                 <a href="#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>
-                <button type="button" onClick={() => setTokensModalOpen(true)} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase">Tokens</button>
               </>
             )}
             {!isHome && (
-              <Link href="/" onClick={handleAccueilClick} className="text-sm text-white/90 transition-colors hover:text-white">Accueil</Link>
+              <>
+                <Link href="/" onClick={handleAccueilClick} className="text-sm text-white/90 transition-colors hover:text-white">Accueil</Link>
+                <a href={isMix ? "#faq-contact" : "/#faq-contact"} className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>
+              </>
             )}
-            {!isHome && <a href={isMix ? "#faq-contact" : "/#faq-contact"} className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>}
             <button type="button" onClick={() => setTokensModalOpen(true)} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase">
               Tokens
             </button>
@@ -244,7 +245,6 @@ export function Header() {
                 <>
                   <a href="#tarifs" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Tarifs</a>
                   <a href="#faq-contact" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">FAQ & Contact</a>
-                  <button type="button" onClick={() => { setTokensModalOpen(true); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Tokens</button>
                 </>
               )}
               {!isHome && (
