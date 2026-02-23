@@ -5056,6 +5056,17 @@ export default function Home() {
                   type="button"
                   disabled={isDownloadingMaster}
                   onClick={async () => {
+                    if (!isPro) {
+                      setAppModal({
+                        type: "confirm_two",
+                        message: "Téléchargement du master coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre master.",
+                        primaryLabel: "Choisir un plan",
+                        secondaryLabel: "Acheter un token",
+                        onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
+                        onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
+                      });
+                      return;
+                    }
                     setIsDownloadingMaster(true);
                     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
                     const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
