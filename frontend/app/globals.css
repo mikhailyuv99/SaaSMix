@@ -390,6 +390,25 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   transform: translateY(0);
 }
 
+/* HowItWorks circle glow states (toggled via JS classList, zero React re-renders) */
+.hiw-dim {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.9);
+  background-color: #2C313B;
+}
+.hiw-dim .hiw-glow-ring {
+  box-shadow: none;
+}
+.hiw-glow {
+  border-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
+}
+.hiw-glow .hiw-glow-ring {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
 /* Premium landing cards */
 .landing-card {
   @apply rounded-2xl border transition-all duration-300;

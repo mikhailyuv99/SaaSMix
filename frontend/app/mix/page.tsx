@@ -1636,6 +1636,17 @@ export default function Home() {
     return h;
   }, []);
 
+  const billingUsageRef = useRef<{ plan?: string; mix_used?: number; mix_limit?: number | null; master_used?: number; master_limit?: number | null; mix_tokens_purchased?: number; master_tokens_purchased?: number } | null>(null);
+
+  const refreshBillingUsage = useCallback(async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/billing/usage`, { headers: getAuthHeaders() });
+      if (res.ok) billingUsageRef.current = await res.json();
+    } catch (_) {}
+  }, [getAuthHeaders]);
+
   const fetchBilling = useCallback(async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
     if (!token) return;
@@ -1645,7 +1656,8 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       setIsPro(Boolean(data.isPro));
     } catch (_) {}
-  }, [getAuthHeaders, setIsPro]);
+    refreshBillingUsage();
+  }, [getAuthHeaders, setIsPro, refreshBillingUsage]);
 
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
@@ -3079,6 +3091,31 @@ export default function Home() {
     if (specs.length === 0 || !hasValidTrack) {
       setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
       return;
+    }
+    const u = billingUsageRef.current;
+    if (u) {
+      const mixRem = u.plan === "free"
+        ? (u.mix_tokens_purchased ?? 0)
+        : (u.mix_limit == null ? 999 : Math.max(0, (u.mix_limit ?? 0) - (u.mix_used ?? 0)) + (u.mix_tokens_purchased ?? 0));
+      if (mixRem < 1) {
+        if (!isPro) {
+          setAppModal({
+            type: "confirm_two",
+            message: "Téléchargement du mix coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre mix.",
+            primaryLabel: "Choisir un plan",
+            secondaryLabel: "Acheter un token",
+            onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
+            onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
+          });
+        } else {
+          setAppModal({
+            type: "alert",
+            message: "Plus de tokens disponibles. Achetez des tokens pour télécharger.",
+            onClose: () => { window.dispatchEvent(new Event("openTokensModal")); },
+          });
+        }
+        return;
+      }
     }
     const isOldSafari = typeof document !== "undefined" && document.documentElement.classList.contains("safari-webkit-old");
     const renderPostTimeoutMs = isOldSafari ? 180000 : 120000;
@@ -5045,34 +5082,31 @@ export default function Home() {
                   type="button"
                   disabled={isDownloadingMaster}
                   onClick={async () => {
-                    try {
-                      const uRes = await fetch(`${API_BASE}/api/billing/usage`, { headers: getAuthHeaders() });
-                      if (uRes.ok) {
-                        const u = await uRes.json();
-                        const masterRem = u.plan === "free"
-                          ? (u.master_tokens_purchased ?? 0)
-                          : (u.master_limit == null ? 999 : Math.max(0, (u.master_limit ?? 0) - u.master_used) + (u.master_tokens_purchased ?? 0));
-                        if (masterRem < 1) {
-                          if (!isPro) {
-                            setAppModal({
-                              type: "confirm_two",
-                              message: "Téléchargement du master coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre master.",
-                              primaryLabel: "Choisir un plan",
-                              secondaryLabel: "Acheter un token",
-                              onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
-                              onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
-                            });
-                          } else {
-                            setAppModal({
-                              type: "alert",
-                              message: "Plus de tokens disponibles. Achetez des tokens pour télécharger le master.",
-                              onClose: () => { window.dispatchEvent(new Event("openTokensModal")); },
-                            });
-                          }
-                          return;
+                    const u = billingUsageRef.current;
+                    if (u) {
+                      const masterRem = u.plan === "free"
+                        ? (u.master_tokens_purchased ?? 0)
+                        : (u.master_limit == null ? 999 : Math.max(0, (u.master_limit ?? 0) - (u.master_used ?? 0)) + (u.master_tokens_purchased ?? 0));
+                      if (masterRem < 1) {
+                        if (!isPro) {
+                          setAppModal({
+                            type: "confirm_two",
+                            message: "Téléchargement du master coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre master.",
+                            primaryLabel: "Choisir un plan",
+                            secondaryLabel: "Acheter un token",
+                            onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
+                            onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
+                          });
+                        } else {
+                          setAppModal({
+                            type: "alert",
+                            message: "Plus de tokens disponibles. Achetez des tokens pour télécharger le master.",
+                            onClose: () => { window.dispatchEvent(new Event("openTokensModal")); },
+                          });
                         }
+                        return;
                       }
-                    } catch (_) {}
+                    }
                     setIsDownloadingMaster(true);
                     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
                     const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { ObserveSection } from "../ObserveSection";
 import { ObserveElement } from "../ObserveElement";
 
-/** Play-button blue-gray from landing (Aperçu pleine longueur) */
 const CIRCLE_BG = "#2C313B";
 
 const steps = [
@@ -19,7 +18,7 @@ const steps = [
   {
     num: 2,
     title: "Choisissez la catégorie de chaque piste",
-    desc: "Indiquez pour chaque fichier s’il s’agit d’un lead vocal, d’adlibs/backs ou de l’instrumentale. Le moteur adapte le traitement en conséquence.",
+    desc: "Indiquez pour chaque fichier s'il s'agit d'un lead vocal, d'adlibs/backs ou de l'instrumentale. Le moteur adapte le traitement en conséquence.",
     icon: "category",
   },
   {
@@ -68,7 +67,10 @@ function StepIcon({ icon }: { icon: string }) {
   return null;
 }
 
-type SegmentRect = { top: number; height: number };
+const SEGMENT_STARTS = [0, 0.12, 0.52, 0.72, 0.88];
+const SEGMENT_ENDS = [0.12, 0.52, 0.72, 0.88, 1];
+const CIRCLE_THRESHOLDS = [0.12, 0.52, 0.72, 0.88];
+const SMOOTH_FACTOR = 0.09;
 
 export function HowItWorks() {
   const router = useRouter();
@@ -76,19 +78,44 @@ export function HowItWorks() {
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const circleRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const [lineProgress, setLineProgress] = useState(0);
-  const [smoothedProgress, setSmoothedProgress] = useState(0);
-  const targetProgressRef = useRef(0);
+  const segmentWrapRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const segmentFillRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const targetRef = useRef(0);
   const smoothedRef = useRef(0);
-  const [segmentRects, setSegmentRects] = useState<SegmentRect[]>([]);
   const rafId = useRef<number | null>(null);
   const smoothRafId = useRef<number | null>(null);
+  const prevGlow = useRef<boolean[]>([false, false, false, false]);
 
-  const SMOOTH_FACTOR = 0.09;
+  const applySmoothed = useCallback((val: number) => {
+    for (let s = 0; s < 5; s++) {
+      const start = SEGMENT_STARTS[s];
+      const span = SEGMENT_ENDS[s] - start;
+      const fill = span > 0 ? Math.min(1, Math.max(0, (val - start) / span)) : 0;
+      const el = segmentFillRefs.current[s];
+      if (el) el.style.transform = `scaleY(${fill})`;
+    }
+  }, []);
 
-  const computeSegments = useCallback(() => {
+  const applyGlow = useCallback((progress: number) => {
+    for (let i = 0; i < 4; i++) {
+      const glowing = progress >= CIRCLE_THRESHOLDS[i];
+      if (glowing === prevGlow.current[i]) continue;
+      prevGlow.current[i] = glowing;
+      const el = circleRefs.current[i];
+      if (!el) continue;
+      if (glowing) {
+        el.classList.add("hiw-glow");
+        el.classList.remove("hiw-dim");
+      } else {
+        el.classList.remove("hiw-glow");
+        el.classList.add("hiw-dim");
+      }
+    }
+  }, []);
+
+  const computeLayout = useCallback(() => {
     const container = containerRef.current;
-    const circleEls = circleRefs.current;
     if (!container) return;
     const contRect = container.getBoundingClientRect();
     const contTop = contRect.top;
@@ -97,44 +124,46 @@ export function HowItWorks() {
     const circleTops: number[] = [];
     const circleBottoms: number[] = [];
     for (let i = 0; i < steps.length; i++) {
-      const circleEl = circleEls[i];
+      const circleEl = circleRefs.current[i];
       if (!circleEl) continue;
       const r = circleEl.getBoundingClientRect();
-      const ct = r.top - contTop;
-      circleTops.push(ct);
-      circleBottoms.push(ct + r.height);
+      circleTops.push(r.top - contTop);
+      circleBottoms.push(r.top - contTop + r.height);
     }
-
     if (circleTops.length < 4) return;
-    const rects: SegmentRect[] = [
+
+    const positions = [
       { top: 0, height: Math.max(0, circleTops[0]) },
       { top: circleBottoms[0], height: Math.max(0, circleTops[1] - circleBottoms[0]) },
       { top: circleBottoms[1], height: Math.max(0, circleTops[2] - circleBottoms[1]) },
       { top: circleBottoms[2], height: Math.max(0, circleTops[3] - circleBottoms[2]) },
       { top: circleBottoms[3], height: Math.max(0, contH - circleBottoms[3]) },
     ];
-    setSegmentRects(rects);
+    for (let s = 0; s < 5; s++) {
+      const el = segmentWrapRefs.current[s];
+      if (el) {
+        el.style.top = `${positions[s].top}px`;
+        el.style.height = `${positions[s].height}px`;
+      }
+    }
   }, []);
 
   const startSmoothing = useCallback(() => {
     if (smoothRafId.current !== null) return;
     const tick = () => {
-      const target = targetProgressRef.current;
-      const current = smoothedRef.current;
-      const diff = target - current;
+      const diff = targetRef.current - smoothedRef.current;
       if (Math.abs(diff) < 0.0005) {
-        smoothedRef.current = target;
-        setSmoothedProgress(target);
+        smoothedRef.current = targetRef.current;
+        applySmoothed(targetRef.current);
         smoothRafId.current = null;
         return;
       }
-      const next = current + diff * SMOOTH_FACTOR;
-      smoothedRef.current = next;
-      setSmoothedProgress(next);
+      smoothedRef.current += diff * SMOOTH_FACTOR;
+      applySmoothed(smoothedRef.current);
       smoothRafId.current = requestAnimationFrame(tick);
     };
     smoothRafId.current = requestAnimationFrame(tick);
-  }, []);
+  }, [applySmoothed]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -145,36 +174,34 @@ export function HowItWorks() {
       rafId.current = requestAnimationFrame(() => {
         rafId.current = null;
         const rect = section.getBoundingClientRect();
-        const viewportH = window.innerHeight;
-        const sectionH = rect.height;
-        const sectionTop = rect.top;
-        const effectiveHeight = viewportH + sectionH * 0.35;
-        const progress = Math.min(1, Math.max(0, (viewportH - sectionTop) / effectiveHeight));
-        targetProgressRef.current = progress;
-        setLineProgress(progress);
-        computeSegments();
+        const vh = window.innerHeight;
+        const effectiveH = vh + rect.height * 0.35;
+        const progress = Math.min(1, Math.max(0, (vh - rect.top) / effectiveH));
+        targetRef.current = progress;
+        applyGlow(progress);
+        computeLayout();
         startSmoothing();
       });
     };
 
-    const scheduleCompute = () => requestAnimationFrame(computeSegments);
-    scheduleCompute();
+    const onResize = () => requestAnimationFrame(computeLayout);
+    computeLayout();
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", scheduleCompute);
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(scheduleCompute) : null;
+    window.addEventListener("resize", onResize);
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(onResize) : null;
     if (ro && containerRef.current) ro.observe(containerRef.current);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", scheduleCompute);
+      window.removeEventListener("resize", onResize);
       ro?.disconnect();
       if (rafId.current !== null) cancelAnimationFrame(rafId.current);
       if (smoothRafId.current !== null) cancelAnimationFrame(smoothRafId.current);
     };
-  }, [computeSegments, startSmoothing]);
+  }, [applyGlow, computeLayout, startSmoothing]);
 
   return (
-    <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
+    <section ref={sectionRef} id="comment-ca-marche" className="scroll-mt-20 w-full max-w-full px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5">
       <ObserveSection>
         <div className="w-full max-w-3xl mx-auto text-center box-border">
           <p className="font-heading text-sm font-medium uppercase tracking-[0.2em] text-slate-400 observe-stagger-1 max-md:text-xs">
@@ -190,46 +217,34 @@ export function HowItWorks() {
       </ObserveSection>
 
       <div ref={containerRef} className="w-full max-w-4xl mx-auto relative isolate mt-8 sm:mt-10 max-lg:mt-6 max-md:mt-5 box-border" style={{ transformStyle: "preserve-3d" }}>
-          {/* Piste et progression en segments : s’arrêtent en haut de chaque cercle, reprennent en bas */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden style={{ zIndex: -1, transform: "translateZ(-1px)" }}>
-          {segmentRects.map((seg, segIndex) => {
-            const segmentStarts = [0, 0.12, 0.52, 0.72, 0.88];
-            const segmentEnds = [0.12, 0.52, 0.72, 0.88, 1];
-            const start = segmentStarts[segIndex] ?? segIndex / 5;
-            const end = segmentEnds[segIndex] ?? (segIndex + 1) / 5;
-            const span = end - start;
-            const fillRatio = span > 0 ? Math.min(1, Math.max(0, (smoothedProgress - start) / span)) : 0;
-            return (
+          {[0, 1, 2, 3, 4].map((segIndex) => (
+            <div
+              key={segIndex}
+              ref={(el) => { segmentWrapRefs.current[segIndex] = el; }}
+              className="absolute left-1/2 w-px -translate-x-1/2 overflow-hidden"
+            >
+              <div className="absolute inset-0 w-px bg-white/20" />
               <div
-                key={segIndex}
-                className="absolute left-1/2 w-px -translate-x-1/2 overflow-hidden"
-                style={{ top: seg.top, height: seg.height }}
-              >
-                <div className="absolute inset-0 w-px bg-white/20" />
-                <div
-                  className="absolute left-0 top-0 h-full w-px origin-top bg-white will-change-transform"
-                  style={{
-                    transform: `scaleY(${fillRatio})`,
-                    boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
-                  }}
-                />
-              </div>
-            );
-          })}
+                ref={(el) => { segmentFillRefs.current[segIndex] = el; }}
+                className="absolute left-0 top-0 h-full w-px origin-top bg-white will-change-transform"
+                style={{
+                  transform: "scaleY(0)",
+                  boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
+                }}
+              />
+            </div>
+          ))}
           </div>
 
-          {/* Steps (cards + cercles) en translateZ(0) = toujours devant la ligne dès le 1er paint */}
           <div className="relative z-10 min-h-0" style={{ transform: "translateZ(0)" }}>
           {steps.map((step, i) => {
             const isLeft = i % 2 === 0;
-            const lineReachesCircleAt = [0.12, 0.52, 0.72, 0.88];
-            const isGlowing = lineProgress >= (lineReachesCircleAt[i] ?? 1);
             return (
               <div
                 key={step.num}
                 className={`relative z-10 flex items-center gap-0 max-lg:flex-col max-lg:items-stretch max-lg:gap-4 ${i < steps.length - 1 ? "mb-6 sm:mb-8 max-lg:mb-5 max-md:mb-4" : ""}`}
               >
-                {/* Partie gauche */}
                 <div className={`relative z-10 flex-1 max-lg:w-full ${isLeft ? "pr-4 sm:pr-6 max-lg:pr-0" : "sm:pr-6 max-lg:pr-0"}`}>
                   {isLeft && (
                     <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
@@ -254,28 +269,14 @@ export function HowItWorks() {
                   )}
                 </div>
 
-                {/* Centre : cercle sur la ligne (couleur play button + glow au scroll) */}
                 <div
                   ref={(el) => { circleRefs.current[i] = el; }}
-                  className={`relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 font-heading text-sm font-bold shadow-lg transition-all duration-500 sm:h-12 sm:w-12 max-lg:self-center max-lg:order-first max-lg:-order-1 ${
-                    isGlowing
-                      ? "border-white/80 bg-white/15 text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]"
-                      : "border-white/25 text-white/90"
-                  }`}
-                  style={{ backgroundColor: isGlowing ? undefined : CIRCLE_BG }}
+                  className="hiw-dim relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 font-heading text-sm font-bold shadow-lg transition-all duration-500 sm:h-12 sm:w-12 max-lg:self-center max-lg:order-first max-lg:-order-1"
                 >
-                  {isGlowing && (
-                    <span
-                      className="pointer-events-none absolute inset-0 rounded-full"
-                      style={{
-                        boxShadow: "0 0 20px rgba(255,255,255,0.4), inset 0 0 20px rgba(255,255,255,0.1)",
-                      }}
-                    />
-                  )}
+                  <span className="hiw-glow-ring pointer-events-none absolute inset-0 rounded-full" />
                   <span className="relative z-[1]">{step.num}</span>
                 </div>
 
-                {/* Partie droite */}
                 <div className={`relative z-10 flex-1 max-lg:w-full ${!isLeft ? "pl-4 sm:pl-6 max-lg:pl-0" : "sm:pl-6 max-lg:pl-0"}`}>
                   {!isLeft && (
                     <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
@@ -306,7 +307,7 @@ export function HowItWorks() {
       </div>
 
       <ObserveSection>
-        <div className="w-full max-w-2xl mx-auto mt-8 space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4 box-border overflow-x-hidden pt-2">
+        <div className="w-full max-w-2xl mx-auto mt-8 space-y-5 sm:mt-10 observe-stagger-4 max-lg:mt-6 max-md:mt-5 max-md:space-y-4 box-border pt-2">
           <div className="text-center -mt-2 relative z-10">
             <Link
               href="/mix"
