@@ -178,7 +178,8 @@ export function TokensModal({
   }, [isOpen, getAuthHeaders]);
 
   const hasToken = !!getAuthHeaders().Authorization;
-  const isPro = usage?.plan === "pro";
+  const hasUnlimitedTokens = usage?.plan === "pro" || usage?.plan === "pro_annual";
+  const isPro = hasUnlimitedTokens;
   const mixOffers = offers.filter((o) => o.type === "mix");
   const masterOffers = offers.filter((o) => o.type === "master");
 
@@ -240,18 +241,18 @@ export function TokensModal({
             <p className="text-white font-medium">Accès illimité</p>
             <p className="text-slate-400 text-sm">Votre plan Pro inclut des téléchargements mix et master illimités. Vous n&apos;avez pas besoin d&apos;acheter des tokens.</p>
             <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 opacity-75">
-                <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Tokens Mix</p>
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-slate-400 text-xs uppercase tracking-wider mb-3">Tokens Mix</p>
                 {mixOffers.map((o) => (
-                  <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-400 hover:bg-white/5 text-left">
+                  <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
                     {o.quantity} token{o.quantity > 1 ? "s" : ""} — {o.priceDisplay}
                   </button>
                 ))}
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 opacity-75">
-                <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Tokens Master</p>
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                <p className="text-slate-400 text-xs uppercase tracking-wider mb-3">Tokens Master</p>
                 {masterOffers.map((o) => (
-                  <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-400 hover:bg-white/5 text-left">
+                  <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
                     {o.quantity} token{o.quantity > 1 ? "s" : ""} — {o.priceDisplay}
                   </button>
                 ))}
@@ -261,9 +262,9 @@ export function TokensModal({
         ) : (
           <>
             {usage && (() => {
-              const isPro = usage.plan !== "free";
-              const mixRemaining = isPro ? null : usage.mix_tokens_purchased;
-              const masterRemaining = isPro ? null : usage.master_tokens_purchased;
+              const unlimited = usage.plan === "pro" || usage.plan === "pro_annual";
+              const mixRemaining = unlimited ? null : (usage.plan === "free" ? usage.mix_tokens_purchased : Math.max(0, (usage.mix_limit ?? 0) - usage.mix_used) + usage.mix_tokens_purchased);
+              const masterRemaining = unlimited ? null : (usage.plan === "free" ? usage.master_tokens_purchased : Math.max(0, (usage.master_limit ?? 0) - usage.master_used) + usage.master_tokens_purchased);
               return (
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
