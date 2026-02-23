@@ -5044,9 +5044,7 @@ export default function Home() {
                     const dlController = new AbortController();
                     downloadAbortRef.current = dlController;
                     try {
-                      const res = await fetchWithTimeoutAndRetry(masterDownloadUrl, {
-                        timeoutMs: 120000,
-                        retries: 2,
+                      const res = await fetch(masterDownloadUrl, {
                         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                         signal: dlController.signal,
                       });
