@@ -261,12 +261,9 @@ export function TokensModal({
         ) : (
           <>
             {usage && (() => {
-              const mixRemaining = usage.plan === "free"
-                ? usage.mix_tokens_purchased
-                : (usage.mix_limit == null ? null : Math.max(0, usage.mix_limit - usage.mix_used) + usage.mix_tokens_purchased);
-              const masterRemaining = usage.plan === "free"
-                ? usage.master_tokens_purchased
-                : (usage.master_limit == null ? null : Math.max(0, usage.master_limit - usage.master_used) + usage.master_tokens_purchased);
+              const isPro = usage.plan !== "free";
+              const mixRemaining = isPro ? null : usage.mix_tokens_purchased;
+              const masterRemaining = isPro ? null : usage.master_tokens_purchased;
               return (
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
