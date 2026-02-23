@@ -1665,6 +1665,12 @@ export default function Home() {
   }, [user?.id, fetchBilling]);
 
   useEffect(() => {
+    const onBillingChanged = () => { refreshBillingUsage(); };
+    window.addEventListener("billingChanged", onBillingChanged);
+    return () => window.removeEventListener("billingChanged", onBillingChanged);
+  }, [refreshBillingUsage]);
+
+  useEffect(() => {
     setOpenManageSubscription(() => setManageSubscriptionModalOpen(true));
     return () => setOpenManageSubscription(null);
   }, [setOpenManageSubscription]);

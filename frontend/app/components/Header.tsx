@@ -325,14 +325,14 @@ export function Header() {
 
       <TokensModal
         isOpen={tokensModalOpen}
-        onClose={() => setTokensModalOpen(false)}
+        onClose={() => { setTokensModalOpen(false); window.dispatchEvent(new Event("billingChanged")); }}
         getAuthHeaders={getAuthHeaders}
         onNeedLogin={() => { setTokensModalOpen(false); openAuthModal?.("login"); }}
       />
       {user && manageSubscriptionOpen && (
         <ManageSubscriptionModal
           isOpen={manageSubscriptionOpen}
-          onClose={() => setManageSubscriptionOpen(false)}
+          onClose={() => { setManageSubscriptionOpen(false); window.dispatchEvent(new Event("billingChanged")); }}
           getAuthHeaders={getAuthHeaders}
           onSubscriptionUpdated={async () => {
             try {
@@ -343,6 +343,7 @@ export function Header() {
             } catch {
               setIsPro(true);
             }
+            window.dispatchEvent(new Event("billingChanged"));
           }}
           onRequestCheckout={(priceId, planName) => {
             setManageSubscriptionOpen(false);
