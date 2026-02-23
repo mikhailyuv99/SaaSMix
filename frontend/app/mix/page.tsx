@@ -3123,9 +3123,7 @@ export default function Home() {
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       const downloadUrl = mixUrl + (mixUrl.includes("?") ? "&" : "?") + "download=1";
-      const dlRes = await fetchWithTimeoutAndRetry(downloadUrl, {
-        timeoutMs: 120000,
-        retries: 2,
+      const dlRes = await fetch(downloadUrl, {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         signal: mixAbortController.signal,
       });
@@ -3133,11 +3131,22 @@ export default function Home() {
         const dlData = await dlRes.json().catch(() => ({}));
         const dlMsg = (dlData.detail as string) || "Limite atteinte.";
         const isNoTokens = typeof dlMsg === "string" && dlMsg.includes("NO_TOKENS");
-        setAppModal({
-          type: "alert",
-          message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger." : dlMsg,
-          onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
-        });
+        if (!isPro && isNoTokens) {
+          setAppModal({
+            type: "confirm_two",
+            message: "Téléchargement du mix coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre mix.",
+            primaryLabel: "Choisir un plan",
+            secondaryLabel: "Acheter un token",
+            onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
+            onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
+          });
+        } else {
+          setAppModal({
+            type: "alert",
+            message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger." : dlMsg,
+            onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
+          });
+        }
         return;
       }
       if (!dlRes.ok) throw new Error("Téléchargement mix échoué");
@@ -3161,7 +3170,7 @@ export default function Home() {
       downloadAbortRef.current = null;
       setIsRenderingMix(false);
     }
-  }, [buildTrackSpecsAndFiles, tracks]);
+  }, [buildTrackSpecsAndFiles, tracks, isPro]);
 
   const runMaster = useCallback(async () => {
     const { specs, files } = buildTrackSpecsAndFiles();
@@ -4014,7 +4023,6 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     if (!user) { openAuthModal?.("login"); return; }
-                    if (!isPro) { showSubscriptionRequired("Téléchargement du mix réservé aux abonnés. Choisissez une formule pour télécharger vos mixes."); return; }
                     downloadMix();
                   }}
                   disabled={isRenderingMix}
@@ -4038,7 +4046,6 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     if (!user) { openAuthModal?.("login"); return; }
-                    if (!isPro) { showSubscriptionRequired("Mastering réservé aux abonnés. Choisissez une formule pour accéder au mastering."); return; }
                     runMaster();
                   }}
                   disabled={isMastering}
@@ -5060,11 +5067,22 @@ export default function Home() {
                         const errData = await res.json().catch(() => ({}));
                         const errMsg = (errData.detail as string) || "Limite atteinte.";
                         const isNoTokens = typeof errMsg === "string" && errMsg.includes("NO_TOKENS");
-                        setAppModal({
-                          type: "alert",
-                          message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger le master." : errMsg,
-                          onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
-                        });
+                        if (!isPro && isNoTokens) {
+                          setAppModal({
+                            type: "confirm_two",
+                            message: "Téléchargement du master coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre master.",
+                            primaryLabel: "Choisir un plan",
+                            secondaryLabel: "Acheter un token",
+                            onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
+                            onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
+                          });
+                        } else {
+                          setAppModal({
+                            type: "alert",
+                            message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger le master." : errMsg,
+                            onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
+                          });
+                        }
                         return;
                       }
                       if (!res.ok) throw new Error("Téléchargement master échoué");
