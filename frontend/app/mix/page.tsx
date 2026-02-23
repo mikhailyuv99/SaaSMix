@@ -4023,17 +4023,6 @@ export default function Home() {
                   type="button"
                   onClick={() => {
                     if (!user) { openAuthModal?.("login"); return; }
-                    if (!isPro) {
-                      setAppModal({
-                        type: "confirm_two",
-                        message: "Téléchargement du mix coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre mix.",
-                        primaryLabel: "Choisir un plan",
-                        secondaryLabel: "Acheter un token",
-                        onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
-                        onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
-                      });
-                      return;
-                    }
                     downloadMix();
                   }}
                   disabled={isRenderingMix}
@@ -5056,17 +5045,6 @@ export default function Home() {
                   type="button"
                   disabled={isDownloadingMaster}
                   onClick={async () => {
-                    if (!isPro) {
-                      setAppModal({
-                        type: "confirm_two",
-                        message: "Téléchargement du master coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre master.",
-                        primaryLabel: "Choisir un plan",
-                        secondaryLabel: "Acheter un token",
-                        onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
-                        onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
-                      });
-                      return;
-                    }
                     setIsDownloadingMaster(true);
                     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
                     const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
@@ -5131,7 +5109,7 @@ export default function Home() {
                       setIsDownloadingMaster(false);
                     }
                   }}
-                  className={`inline-flex items-center justify-center text-center mt-2 rounded-lg px-4 py-2.5 text-tagline disabled:cursor-not-allowed ${
+                  className={`inline-flex items-center justify-center text-center mt-2 rounded-lg px-4 py-2.5 text-tagline disabled:cursor-not-allowed focus:outline-none focus:ring-0 ${
                     isDownloadingMaster
                       ? "border border-white/30 bg-slate-800 text-white"
                       : "btn-primary group"
