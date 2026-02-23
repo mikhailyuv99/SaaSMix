@@ -5050,6 +5050,14 @@ export default function Home() {
                         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                         signal: dlController.signal,
                       });
+                      if (res.status === 401) {
+                        setAppModal({
+                          type: "alert",
+                          message: "La session a peut-être expiré ou le téléchargement n’a pas pu être authentifié. Reconnectez-vous puis réessayez le téléchargement.",
+                          onClose: () => { openAuthModal?.("login"); },
+                        });
+                        return;
+                      }
                       if (res.status === 402) {
                         const errData = await res.json().catch(() => ({}));
                         const errMsg = (errData.detail as string) || "Limite atteinte.";
@@ -5075,8 +5083,11 @@ export default function Home() {
                       const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
                       if (isAbort) return;
                       console.error("[mix] master download failed", e);
-                      const fallbackUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
-                      window.open(fallbackUrl, "_blank");
+                      setAppModal({
+                        type: "alert",
+                        message: "Le téléchargement a échoué. Vérifiez votre connexion et réessayez.",
+                        onClose: () => {},
+                      });
                     } finally {
                       downloadAbortRef.current = null;
                       setIsDownloadingMaster(false);

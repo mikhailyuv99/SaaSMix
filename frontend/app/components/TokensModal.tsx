@@ -214,11 +214,11 @@ export function TokensModal({
         {!hasToken ? (
           <div className="space-y-4">
             <p className="text-slate-400 text-sm">Connectez-vous pour acheter des tokens (mix ou master).</p>
-            <div className="flex gap-2">
-              <button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+            <div className="flex justify-center gap-3">
+              <button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors shrink-0">
                 Fermer
               </button>
-              <button type="button" onClick={() => { onNeedLogin?.(); onClose(); }} className="flex-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 text-sm">
+              <button type="button" onClick={() => { onNeedLogin?.(); onClose(); }} className="rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 text-sm shrink-0">
                 Se connecter
               </button>
             </div>
