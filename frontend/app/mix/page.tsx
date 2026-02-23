@@ -3112,7 +3112,12 @@ export default function Home() {
       }
       if (res.status === 402) {
         const msg = (data.detail as string) || "Vous avez atteint votre limite de téléchargements ou votre plan ne le permet pas. Passez au plan supérieur pour en obtenir plus.";
-        setAppModal({ type: "alert", message: msg, onClose: () => { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } });
+        const isNoTokens = typeof msg === "string" && msg.includes("NO_TOKENS");
+        setAppModal({
+          type: "alert",
+          message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger." : msg,
+          onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
+        });
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Render mix échoué");
@@ -3124,6 +3129,18 @@ export default function Home() {
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         signal: mixAbortController.signal,
       });
+      if (dlRes.status === 402) {
+        const dlData = await dlRes.json().catch(() => ({}));
+        const dlMsg = (dlData.detail as string) || "Limite atteinte.";
+        const isNoTokens = typeof dlMsg === "string" && dlMsg.includes("NO_TOKENS");
+        setAppModal({
+          type: "alert",
+          message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger." : dlMsg,
+          onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
+        });
+        return;
+      }
+      if (!dlRes.ok) throw new Error("Téléchargement mix échoué");
       const blob = await dlRes.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -3186,7 +3203,12 @@ export default function Home() {
       }
       if (res.status === 402) {
         const msg = (data.detail as string) || "Vous avez atteint votre limite de téléchargements ou votre plan ne le permet pas. Passez au plan supérieur pour en obtenir plus.";
-        setAppModal({ type: "alert", message: msg, onClose: () => { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } });
+        const isNoTokens = typeof msg === "string" && msg.includes("NO_TOKENS");
+        setAppModal({
+          type: "alert",
+          message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger." : msg,
+          onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
+        });
         return;
       }
       if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
@@ -5028,6 +5050,18 @@ export default function Home() {
                         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                         signal: dlController.signal,
                       });
+                      if (res.status === 402) {
+                        const errData = await res.json().catch(() => ({}));
+                        const errMsg = (errData.detail as string) || "Limite atteinte.";
+                        const isNoTokens = typeof errMsg === "string" && errMsg.includes("NO_TOKENS");
+                        setAppModal({
+                          type: "alert",
+                          message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger le master." : errMsg,
+                          onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
+                        });
+                        return;
+                      }
+                      if (!res.ok) throw new Error("Téléchargement master échoué");
                       const blob = await res.blob();
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");

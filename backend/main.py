@@ -38,7 +38,7 @@ from test_hise_direct import master_only as hise_master_only, get_vst_status
 from mix_chain_b import render_chain_b
 from test_hise_direct import read_wav, write_wav
 from database import engine, Base, DATABASE_URL, get_db
-from models import Project, User, PLAN_LIMITS  # noqa: F401 - Project enregistre la table avec Base
+from models import Project, User, PLAN_LIMITS, TokenPurchaseProcessed  # noqa: F401 - tables enregistrées avec Base
 from routers.auth import router as auth_router
 from routers.projects import router as projects_router
 from routers.billing import router as billing_router
@@ -98,7 +98,18 @@ def _migrate_users_billing_columns():
                 conn.execute(text("ALTER TABLE users ADD COLUMN mix_downloads_count INTEGER NOT NULL DEFAULT 0"))
             if "master_downloads_count" not in names:
                 conn.execute(text("ALTER TABLE users ADD COLUMN master_downloads_count INTEGER NOT NULL DEFAULT 0"))
+            if "mix_tokens_purchased" not in names:
+                conn.execute(text("ALTER TABLE users ADD COLUMN mix_tokens_purchased INTEGER NOT NULL DEFAULT 0"))
+            if "master_tokens_purchased" not in names:
+                conn.execute(text("ALTER TABLE users ADD COLUMN master_tokens_purchased INTEGER NOT NULL DEFAULT 0"))
             conn.commit()
+        else:
+            for col in ("mix_tokens_purchased", "master_tokens_purchased"):
+                try:
+                    conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} INTEGER NOT NULL DEFAULT 0"))
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
 
 
 _migrate_users_billing_columns()
@@ -754,14 +765,8 @@ async def render_mix(
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
     """
-    Assemble toutes les pistes en un seul WAV. Réservé aux abonnés. Les tokens sont consommés au téléchargement, pas à l'action MIXER.
+    Assemble toutes les pistes en un seul WAV. Accessible à tous les utilisateurs connectés (free peut mixer ; tokens consommés au téléchargement).
     """
-    plan = (current_user.plan or "free").lower()
-    if plan not in ("starter", "artiste", "pro"):
-        raise HTTPException(
-            status_code=402,
-            detail="Mix réservé aux abonnés. Choisissez une formule pour débloquer.",
-        )
     try:
         specs = json.loads(track_specs)
     except json.JSONDecodeError:
@@ -816,15 +821,8 @@ async def master_render(
     files: List[UploadFile] = File(default=[], description="WAV files for tracks without mixedTrackId"),
 ):
     """
-    Assemble les pistes en mix + master. Réservé aux abonnés. Limites mensuelles (mix + master) selon le plan. 402 si limite atteinte.
+    Assemble les pistes en mix + master. Accessible à tous les utilisateurs connectés. Tokens consommés au téléchargement.
     """
-    plan = (current_user.plan or "free").lower()
-    if plan not in ("starter", "artiste", "pro"):
-        raise HTTPException(
-            status_code=402,
-            detail="Master réservé aux abonnés. Choisissez une formule pour débloquer.",
-        )
-    # Tokens are consumed only on download; MIXER and MASTERISER use no tokens.
     try:
         specs = json.loads(track_specs)
     except json.JSONDecodeError:
@@ -893,32 +891,41 @@ async def download_render(
         if not current_user:
             raise HTTPException(status_code=401, detail="Connexion requise pour accéder au fichier.")
         plan = (current_user.plan or "free").lower()
-        if plan not in ("starter", "artiste", "pro"):
-            raise HTTPException(status_code=402, detail="Accès réservé aux abonnés.")
         if consume_tokens:
             _ensure_usage_month(current_user, db)
             mix_limit, master_limit = PLAN_LIMITS.get(plan, (None, None))
-            if type == "mix":
-                if mix_limit is not None and (current_user.mix_downloads_count or 0) >= mix_limit:
-                    raise HTTPException(
-                        status_code=402,
-                        detail=f"Limite de téléchargements mix atteinte ce mois-ci ({mix_limit}/{mix_limit}). Passez au plan supérieur.",
-                    )
-                current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+            # Pro = illimité ; free/starter/artiste = quota inclus + tokens achetés
+            if plan == "pro":
+                pass  # pas de vérification
             else:
-                if mix_limit is not None and (current_user.mix_downloads_count or 0) >= mix_limit:
-                    raise HTTPException(
-                        status_code=402,
-                        detail=f"Limite mix atteinte ce mois-ci ({mix_limit}/{mix_limit}). Un téléchargement master consomme 1 mix + 1 master.",
-                    )
-                if master_limit is not None and (current_user.master_downloads_count or 0) >= master_limit:
-                    raise HTTPException(
-                        status_code=402,
-                        detail=f"Limite de téléchargements master atteinte ce mois-ci ({master_limit}/{master_limit}). Passez au plan supérieur.",
-                    )
-                current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
-                current_user.master_downloads_count = (current_user.master_downloads_count or 0) + 1
+                included_mix = max(0, (mix_limit or 0) - (current_user.mix_downloads_count or 0))
+                included_master = max(0, (master_limit or 0) - (current_user.master_downloads_count or 0))
+                available_mix = included_mix + (current_user.mix_tokens_purchased or 0)
+                available_master = included_master + (current_user.master_tokens_purchased or 0)
+                no_tokens_msg = "NO_TOKENS: Besoin de plus ? Achetez des tokens pour télécharger."
+                if type == "mix":
+                    if available_mix < 1:
+                        raise HTTPException(status_code=402, detail=no_tokens_msg)
+                else:
+                    if available_mix < 1 or available_master < 1:
+                        raise HTTPException(status_code=402, detail=no_tokens_msg)
+                # Consommer : quota d'abord, puis tokens achetés
+                if type == "mix":
+                    if mix_limit is not None and (current_user.mix_downloads_count or 0) < mix_limit:
+                        current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+                    else:
+                        current_user.mix_tokens_purchased = max(0, (current_user.mix_tokens_purchased or 0) - 1)
+                else:
+                    if mix_limit is not None and (current_user.mix_downloads_count or 0) < mix_limit:
+                        current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
+                    else:
+                        current_user.mix_tokens_purchased = max(0, (current_user.mix_tokens_purchased or 0) - 1)
+                    if master_limit is not None and (current_user.master_downloads_count or 0) < master_limit:
+                        current_user.master_downloads_count = (current_user.master_downloads_count or 0) + 1
+                    else:
+                        current_user.master_tokens_purchased = max(0, (current_user.master_tokens_purchased or 0) - 1)
             db.commit()
+        # Stream (sans download=1) : tout utilisateur connecté peut écouter
 
     size = os.path.getsize(path)
     range_header = request.headers.get("range")
@@ -1002,6 +1009,24 @@ async def stripe_webhook(request: Request):
                 user.stripe_subscription_id = None
                 user.plan = "free"
                 db.commit()
+        elif event["type"] == "payment_intent.succeeded":
+            pi = event["data"]["object"]
+            meta = pi.get("metadata") or {}
+            if meta.get("saas_mix_user_id") and meta.get("saas_mix_token_type"):
+                pi_id = pi.get("id")
+                if pi_id and not db.query(TokenPurchaseProcessed).filter(TokenPurchaseProcessed.payment_intent_id == pi_id).first():
+                    user = db.query(User).filter(User.id == meta["saas_mix_user_id"]).first()
+                    if user:
+                        try:
+                            qty = int(meta.get("saas_mix_token_quantity") or "1")
+                        except (TypeError, ValueError):
+                            qty = 1
+                        if meta["saas_mix_token_type"] == "mix":
+                            user.mix_tokens_purchased = (user.mix_tokens_purchased or 0) + qty
+                        else:
+                            user.master_tokens_purchased = (user.master_tokens_purchased or 0) + qty
+                        db.add(TokenPurchaseProcessed(payment_intent_id=pi_id))
+                        db.commit()
     finally:
         db.close()
 

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 import stripe
 from database import get_db
-from models import User, Project, PLAN_LIMITS, PLAN_PROJECT_LIMIT
+from models import User, Project, PLAN_LIMITS, PLAN_PROJECT_LIMIT, TokenPurchaseProcessed
 from dependencies import get_current_user_row
 
 router = APIRouter(prefix="/api/billing", tags=["billing"])
@@ -23,6 +23,11 @@ STRIPE_PRICE_PRO = os.environ.get("STRIPE_PRICE_PRO", "").strip()
 STRIPE_PRICE_PRO_ANNUAL = os.environ.get("STRIPE_PRICE_PRO_ANNUAL", "").strip()
 # Rétrocompat: ancien nom d'env
 STRIPE_PRICE_ANNUAL = os.environ.get("STRIPE_PRICE_ANNUAL", "").strip() or STRIPE_PRICE_PRO_ANNUAL
+# Packs tokens (achat one-shot) : 1 ou 5 mix, 1 ou 5 master
+STRIPE_PRICE_MIX_1 = os.environ.get("STRIPE_PRICE_MIX_1", "").strip()
+STRIPE_PRICE_MIX_5 = os.environ.get("STRIPE_PRICE_MIX_5", "").strip()
+STRIPE_PRICE_MASTER_1 = os.environ.get("STRIPE_PRICE_MASTER_1", "").strip()
+STRIPE_PRICE_MASTER_5 = os.environ.get("STRIPE_PRICE_MASTER_5", "").strip()
 
 
 @router.get("/plans")
@@ -264,6 +269,8 @@ def get_usage(user: User = Depends(get_current_user_row), db: Session = Depends(
         db.refresh(user)
     mix_used = user.mix_downloads_count or 0
     master_used = user.master_downloads_count or 0
+    mix_tokens_purchased = user.mix_tokens_purchased or 0
+    master_tokens_purchased = user.master_tokens_purchased or 0
     projects_used = db.query(Project).filter(Project.user_id == user.id).count()
     limits = PLAN_LIMITS.get(plan, (None, None))
     project_limit = PLAN_PROJECT_LIMIT.get(plan)
@@ -271,11 +278,133 @@ def get_usage(user: User = Depends(get_current_user_row), db: Session = Depends(
         "plan": plan,
         "mix_used": mix_used,
         "master_used": master_used,
+        "mix_tokens_purchased": mix_tokens_purchased,
+        "master_tokens_purchased": master_tokens_purchased,
         "projects_used": projects_used,
         "mix_limit": limits[0],
         "master_limit": limits[1],
         "projects_limit": project_limit,
     }
+
+
+@router.get("/token-offers")
+def get_token_offers(user: User = Depends(get_current_user_row)):
+    """Offres d'achat de tokens (mix / master). 1 token = 2,99 €, 5 tokens = 9,99 €."""
+    offers = []
+    if STRIPE_PRICE_MIX_1:
+        offers.append({"type": "mix", "quantity": 1, "priceDisplay": "2,99 €", "priceId": STRIPE_PRICE_MIX_1})
+    if STRIPE_PRICE_MIX_5:
+        offers.append({"type": "mix", "quantity": 5, "priceDisplay": "9,99 €", "priceId": STRIPE_PRICE_MIX_5})
+    if STRIPE_PRICE_MASTER_1:
+        offers.append({"type": "master", "quantity": 1, "priceDisplay": "2,99 €", "priceId": STRIPE_PRICE_MASTER_1})
+    if STRIPE_PRICE_MASTER_5:
+        offers.append({"type": "master", "quantity": 5, "priceDisplay": "9,99 €", "priceId": STRIPE_PRICE_MASTER_5})
+    return {"offers": offers}
+
+
+class PurchaseTokensBody(BaseModel):
+    price_id: str
+
+
+@router.post("/create-payment-intent-tokens")
+def create_payment_intent_tokens(
+    body: PurchaseTokensBody,
+    user: User = Depends(get_current_user_row),
+    db: Session = Depends(get_db),
+):
+    """Crée un PaymentIntent pour l'achat de tokens (one-shot). Retourne client_secret pour Stripe Elements."""
+    if not STRIPE_SECRET:
+        raise HTTPException(status_code=500, detail="Stripe non configuré.")
+    price_id = (body.price_id or "").strip()
+    allowed = [STRIPE_PRICE_MIX_1, STRIPE_PRICE_MIX_5, STRIPE_PRICE_MASTER_1, STRIPE_PRICE_MASTER_5]
+    if not price_id or price_id not in allowed:
+        raise HTTPException(status_code=400, detail="Offre de tokens invalide.")
+    stripe.api_key = STRIPE_SECRET
+    token_type = "mix"
+    quantity = 1
+    if price_id == STRIPE_PRICE_MIX_5:
+        quantity = 5
+    elif price_id == STRIPE_PRICE_MASTER_1:
+        token_type = "master"
+    elif price_id == STRIPE_PRICE_MASTER_5:
+        token_type = "master"
+        quantity = 5
+    try:
+        price = stripe.Price.retrieve(price_id)
+        amount = (price.get("unit_amount") or 0) * quantity
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="Prix Stripe invalide.")
+        customer_id = user.stripe_customer_id
+        if not customer_id:
+            customer = stripe.Customer.create(
+                email=user.email,
+                metadata={"saas_mix_user_id": user.id},
+            )
+            customer_id = customer.id
+            user.stripe_customer_id = customer_id
+            db.commit()
+        pi = stripe.PaymentIntent.create(
+            amount=amount,
+            currency=price.get("currency") or "eur",
+            customer=customer_id,
+            metadata={
+                "saas_mix_user_id": user.id,
+                "saas_mix_token_type": token_type,
+                "saas_mix_token_quantity": str(quantity),
+            },
+            automatic_payment_methods={"enabled": True},
+        )
+        return {"client_secret": pi.client_secret}
+    except stripe.StripeError as e:
+        raise HTTPException(status_code=400, detail=getattr(e, "user_message", None) or str(e))
+
+
+class ConfirmTokenPurchaseBody(BaseModel):
+    payment_intent_id: str
+
+
+@router.post("/confirm-token-purchase")
+def confirm_token_purchase(
+    body: ConfirmTokenPurchaseBody,
+    user: User = Depends(get_current_user_row),
+    db: Session = Depends(get_db),
+):
+    """Après confirmation du paiement côté frontend : vérifie le PaymentIntent et crédite les tokens (idempotent avec webhook)."""
+    if not STRIPE_SECRET:
+        raise HTTPException(status_code=500, detail="Stripe non configuré.")
+    stripe.api_key = STRIPE_SECRET
+    try:
+        existing = db.query(TokenPurchaseProcessed).filter(TokenPurchaseProcessed.payment_intent_id == body.payment_intent_id).first()
+        if existing:
+            db.refresh(user)
+            return {"status": "ok", "mix_tokens_purchased": user.mix_tokens_purchased or 0, "master_tokens_purchased": user.master_tokens_purchased or 0}
+        pi = stripe.PaymentIntent.retrieve(body.payment_intent_id)
+        if pi.status != "succeeded":
+            raise HTTPException(status_code=400, detail="Paiement non finalisé.")
+        meta = pi.get("metadata") or {}
+        if str(meta.get("saas_mix_user_id")) != str(user.id):
+            raise HTTPException(status_code=403, detail="Ce paiement ne vous appartient pas.")
+        token_type = meta.get("saas_mix_token_type")
+        if not token_type:
+            raise HTTPException(status_code=400, detail="Paiement invalide (metadata).")
+        try:
+            qty = int(meta.get("saas_mix_token_quantity") or "1")
+        except (TypeError, ValueError):
+            qty = 1
+        if token_type == "mix":
+            user.mix_tokens_purchased = (user.mix_tokens_purchased or 0) + qty
+        else:
+            user.master_tokens_purchased = (user.master_tokens_purchased or 0) + qty
+        db.add(TokenPurchaseProcessed(payment_intent_id=body.payment_intent_id))
+        db.commit()
+        db.refresh(user)
+        return {
+            "status": "ok",
+            "mix_tokens_purchased": user.mix_tokens_purchased or 0,
+            "master_tokens_purchased": user.master_tokens_purchased or 0,
+        }
+    except stripe.StripeError as e:
+        raise HTTPException(status_code=400, detail=getattr(e, "user_message", None) or str(e))
 
 
 @router.post("/change-plan")

@@ -18,6 +18,10 @@ const SubscriptionModal = dynamic(
   () => import("./SubscriptionModal").then((m) => ({ default: m.SubscriptionModal })),
   { ssr: false }
 );
+const TokensModal = dynamic(
+  () => import("./TokensModal").then((m) => ({ default: m.TokensModal })),
+  { ssr: false }
+);
 
 export function Header() {
   const pathname = usePathname();
@@ -33,6 +37,7 @@ export function Header() {
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const [checkoutLabel, setCheckoutLabel] = useState<string | null>(null);
   const [pendingPlanAfterLogin, setPendingPlanAfterLogin] = useState<{ priceId: string; label: string } | null>(null);
+  const [tokensModalOpen, setTokensModalOpen] = useState(false);
 
   const getAuthHeaders = (): Record<string, string> => {
     if (typeof window === "undefined") return {};
@@ -117,8 +122,13 @@ export function Header() {
         setPricingModalOpen(true);
       }
     };
+    const openTokens = () => setTokensModalOpen(true);
     window.addEventListener("openPlanModal", open);
-    return () => window.removeEventListener("openPlanModal", open);
+    window.addEventListener("openTokensModal", openTokens);
+    return () => {
+      window.removeEventListener("openPlanModal", open);
+      window.removeEventListener("openTokensModal", openTokens);
+    };
   }, [user, isPro, handlePricingSelectPlan]);
 
   const handleLogoutClick = () => {
@@ -173,12 +183,16 @@ export function Header() {
               <>
                 <a href="#tarifs" className="text-sm text-white/90 transition-colors hover:text-white">Tarifs</a>
                 <a href="#faq-contact" className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>
+                <button type="button" onClick={() => setTokensModalOpen(true)} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase">Tokens</button>
               </>
             )}
             {!isHome && (
               <Link href="/" onClick={handleAccueilClick} className="text-sm text-white/90 transition-colors hover:text-white">Accueil</Link>
             )}
             {!isHome && <a href={isMix ? "#faq-contact" : "/#faq-contact"} className="text-sm text-white/90 transition-colors hover:text-white">FAQ & Contact</a>}
+            <button type="button" onClick={() => setTokensModalOpen(true)} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase">
+              Tokens
+            </button>
             <button type="button" onClick={handlePlanClick} className="text-sm text-white/90 transition-colors hover:text-white shrink-0 bg-transparent border-none cursor-pointer font-inherit p-0 uppercase">
               {user && isPro ? "GÉRER MON ABONNEMENT" : "CHOISIR UN PLAN"}
             </button>
@@ -230,6 +244,7 @@ export function Header() {
                 <>
                   <a href="#tarifs" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Tarifs</a>
                   <a href="#faq-contact" onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">FAQ & Contact</a>
+                  <button type="button" onClick={() => { setTokensModalOpen(true); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Tokens</button>
                 </>
               )}
               {!isHome && (
@@ -251,6 +266,7 @@ export function Header() {
                 </Link>
               )}
               {!isHome && <a href={isMix ? "#faq-contact" : "/#faq-contact"} onClick={closeBurger} className="py-3 px-4 text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">FAQ & Contact</a>}
+              <button type="button" onClick={() => { setTokensModalOpen(true); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">Tokens</button>
               <button type="button" onClick={() => { handlePlanClick(); closeBurger(); }} className="py-3 px-4 text-left text-white/90 hover:text-white hover:bg-white/10 rounded-xl text-sm uppercase">
                 {user && isPro ? "Gérer mon abonnement" : "Choisir un plan"}
               </button>
@@ -307,6 +323,12 @@ export function Header() {
           document.body
         )}
 
+      <TokensModal
+        isOpen={tokensModalOpen}
+        onClose={() => setTokensModalOpen(false)}
+        getAuthHeaders={getAuthHeaders}
+        onNeedLogin={() => { setTokensModalOpen(false); openAuthModal?.("login"); }}
+      />
       {user && manageSubscriptionOpen && (
         <ManageSubscriptionModal
           isOpen={manageSubscriptionOpen}

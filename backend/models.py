@@ -34,6 +34,9 @@ class User(Base):
     usage_month = Column(String(7), nullable=True)  # "YYYY-MM"
     mix_downloads_count = Column(Integer, nullable=False, default=0)
     master_downloads_count = Column(Integer, nullable=False, default=0)
+    # Tokens achetés (packs) : consommés après le quota mensuel du plan
+    mix_tokens_purchased = Column(Integer, nullable=False, default=0)
+    master_tokens_purchased = Column(Integer, nullable=False, default=0)
 
 
 class Project(Base):
@@ -45,3 +48,9 @@ class Project(Base):
     name = Column(String(255), nullable=False)
     data = Column(Text, nullable=False)  # JSON: array of track metadata (id, category, gain, mixParams, mixedAudioUrl, rawFileName)
     created_at = Column(DateTime(), server_default=func.now())
+
+
+class TokenPurchaseProcessed(Base):
+    """PaymentIntent déjà crédité (évite double crédit webhook + confirm)."""
+    __tablename__ = "token_purchase_processed"
+    payment_intent_id = Column(String(255), primary_key=True)
