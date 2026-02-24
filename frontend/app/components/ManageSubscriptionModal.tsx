@@ -411,7 +411,7 @@ export function ManageSubscriptionModal({
             {plansMonthly.length === 0 && !loading && <p className="text-slate-400 text-sm">Aucune formule disponible.</p>}
           </>
         ) : (
-          <>
+          <div className="relative">
             <h2 className="text-xl font-medium text-white mb-1">Gérer mon abonnement</h2>
             <p className="text-tagline text-slate-400 text-[10px] mb-6">Modifier votre carte, consulter votre utilisation, changer de plan ou annuler l&apos;abonnement.</p>
 
@@ -462,7 +462,7 @@ export function ManageSubscriptionModal({
             </p>
             <p className="text-slate-400 text-sm">
               {subscription.cancel_at_period_end ? (
-                <>Annulé. Accès Pro jusqu'au <strong>{formatPeriodEnd(subscription.current_period_end)}</strong>.</>
+                <>Annulé. Accès {(currentPlanId === "pro" || currentPlanId === "pro_annual") ? "Pro" : `${currentPlanLabel}${planSuffix}`} jusqu&apos;au <strong>{formatPeriodEnd(subscription.current_period_end)}</strong>.</>
               ) : (
                 <>Prochaine facturation le <strong>{formatPeriodEnd(subscription.current_period_end)}</strong>.</>
               )}
@@ -498,10 +498,14 @@ export function ManageSubscriptionModal({
                 </button>
               )}
             </div>
+          </div>
+        ) : (
+          <p className="text-slate-400 text-sm">Aucun abonnement actif.</p>
+        )}
             {showCancelConfirm && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-[#0f0f0f]/95 border border-white/10 p-4">
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#0f0f0f]/98 p-4">
                 <div className="text-center max-w-sm">
-                  <p className="text-slate-400 text-sm mb-4">Annuler l&apos;abonnement ? Vous garderez l&apos;accès Pro jusqu&apos;à la fin de la période en cours.</p>
+                  <p className="text-slate-400 text-sm mb-4">Annuler l&apos;abonnement ? Vous garderez l&apos;accès {(currentPlanId === "pro" || currentPlanId === "pro_annual") ? "Pro" : `${currentPlanLabel}${planSuffix}`} jusqu&apos;à la fin de la période en cours.</p>
                   <div className="flex gap-3 justify-center">
                     <button
                       type="button"
@@ -522,10 +526,6 @@ export function ManageSubscriptionModal({
               </div>
             )}
           </div>
-        ) : (
-          <p className="text-slate-400 text-sm">Aucun abonnement actif.</p>
-        )}
-          </>
         )}
       </div>
     </div>
