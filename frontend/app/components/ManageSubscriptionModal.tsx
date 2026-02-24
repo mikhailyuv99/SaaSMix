@@ -175,6 +175,7 @@ export function ManageSubscriptionModal({
     setPlanAnnual(null);
     setUsage(null);
     setShowUpdateCard(false);
+    setShowCancelConfirm(false);
     setChangePlanView(false);
     setChangePlanError(null);
     setProInterval("year");
@@ -534,34 +535,46 @@ export function ManageSubscriptionModal({
         ) : (
           <p className="text-slate-400 text-sm">Aucun abonnement actif.</p>
         )}
-            {showCancelConfirm && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#0f0f0f]/98 p-4">
-                <div className="text-center max-w-sm">
-                  <p className="text-slate-400 text-sm mb-4">Annuler l&apos;abonnement ? Vous garderez l&apos;accès {(currentPlanId === "pro" || currentPlanId === "pro_annual") ? "Pro" : `${currentPlanLabel}${planSuffix}`} jusqu&apos;à la fin de la période en cours.</p>
-                  <div className="flex gap-3 justify-center">
-                    <button
-                      type="button"
-                      onClick={() => setShowCancelConfirm(false)}
-                      className="px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-slate-400 text-sm hover:bg-white/10"
-                    >
-                      Non
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCancelConfirm}
-                      className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm hover:bg-red-500/30"
-                    >
-                      Oui, annuler
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
     </div>
   );
-  if (typeof document !== "undefined") return createPortal(content, document.body);
+
+  const cancelConfirmModal = (
+    <div className="modal-backdrop-slate fixed inset-0 z-[10000] flex items-center justify-center p-4" onClick={() => setShowCancelConfirm(false)}>
+      <div className="backdrop-blur-layer" aria-hidden="true" />
+      <div className="backdrop-tint-layer" aria-hidden="true" />
+      <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+        <p className="text-slate-400 text-sm mb-4">En annulant votre abonnement, vous garderez l&apos;accès à votre plan {(currentPlanId === "pro" || currentPlanId === "pro_annual") ? "Pro" : `${currentPlanLabel}${planSuffix}`} jusqu&apos;à la fin de la période en cours.</p>
+        <div className="flex gap-3 justify-center">
+          <button
+            type="button"
+            onClick={() => setShowCancelConfirm(false)}
+            className="px-4 py-2 rounded-lg border border-white/20 bg-white/5 text-slate-400 text-sm hover:bg-white/10"
+          >
+            Non
+          </button>
+          <button
+            type="button"
+            onClick={handleCancelConfirm}
+            className="px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm hover:bg-red-500/30"
+          >
+            Oui, annuler
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!isOpen) return null;
+  if (typeof document !== "undefined") {
+    return (
+      <>
+        {createPortal(content, document.body)}
+        {showCancelConfirm && !changePlanView && createPortal(cancelConfirmModal, document.body)}
+      </>
+    );
+  }
   return content;
 }
