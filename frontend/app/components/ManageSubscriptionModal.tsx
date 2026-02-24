@@ -158,6 +158,7 @@ export function ManageSubscriptionModal({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [restoreLoading, setRestoreLoading] = useState(false);
   const [changePlanView, setChangePlanView] = useState(false);
   const [changePlanLoading, setChangePlanLoading] = useState<string | null>(null);
   const [changePlanError, setChangePlanError] = useState<string | null>(null);
@@ -223,6 +224,28 @@ export function ManageSubscriptionModal({
       setCancelError("Erreur réseau.");
     } finally {
       setCancelLoading(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    setCancelError(null);
+    setRestoreLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/billing/reactivate-subscription`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        onSubscriptionUpdated();
+        setSubscription((s) => (s ? { ...s, cancel_at_period_end: false } : null));
+      } else {
+        setCancelError(data.detail || "Erreur lors de la restauration.");
+      }
+    } catch {
+      setCancelError("Erreur réseau.");
+    } finally {
+      setRestoreLoading(false);
     }
   };
 
@@ -487,7 +510,16 @@ export function ManageSubscriptionModal({
               >
                 Mettre à jour ma carte
               </button>
-              {!subscription.cancel_at_period_end && (
+              {subscription.cancel_at_period_end ? (
+                <button
+                  type="button"
+                  onClick={handleReactivate}
+                  disabled={restoreLoading}
+                  className="w-full rounded-lg border border-emerald-500/50 text-emerald-400 px-4 py-2.5 text-sm hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+                >
+                  {restoreLoading ? "En cours…" : "Restaurer l'abonnement"}
+                </button>
+              ) : (
                 <button
                   type="button"
                   onClick={handleCancelClick}

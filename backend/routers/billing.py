@@ -478,6 +478,21 @@ def cancel_subscription(
         raise HTTPException(status_code=400, detail=str(getattr(e, "user_message", e)))
 
 
+@router.post("/reactivate-subscription")
+def reactivate_subscription(
+    user: User = Depends(get_current_user_row),
+):
+    """Reactive l'abonnement annule (annule la resiliation prevue a la fin de la periode)."""
+    if not user.stripe_subscription_id or not STRIPE_SECRET:
+        raise HTTPException(status_code=400, detail="Aucun abonnement actif.")
+    stripe.api_key = STRIPE_SECRET
+    try:
+        stripe.Subscription.modify(user.stripe_subscription_id, cancel_at_period_end=False)
+        return {"status": "ok", "message": "Abonnement restaure."}
+    except stripe.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(getattr(e, "user_message", e)))
+
+
 @router.post("/update-payment-method")
 def update_payment_method(
     body: UpdatePaymentMethodBody,
