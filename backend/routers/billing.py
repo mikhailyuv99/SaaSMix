@@ -96,10 +96,11 @@ def billing_me(
 ):
     """
     Retourne le plan. Si la BDD dit free mais Stripe a un abo actif (DB réinit, webhook raté),
-    on restaure plan + ids depuis Stripe pour que l'abonnement soit toujours reconnu.
+    on restaure plan + ids depuis Stripe. On resync aussi le plan depuis Stripe quand l'utilisateur
+    a un abo actif (corrige les cas où le webhook a écrasé starter/artiste en "pro").
     """
     plan = (user.plan or "free").lower()
-    if plan == "free" and STRIPE_SECRET:
+    if STRIPE_SECRET and user.stripe_subscription_id:
         stripe.api_key = STRIPE_SECRET
         try:
             if user.stripe_subscription_id:

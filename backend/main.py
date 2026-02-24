@@ -41,7 +41,7 @@ from database import engine, Base, DATABASE_URL, get_db
 from models import Project, User, PLAN_LIMITS, TokenPurchaseProcessed  # noqa: F401 - tables enregistrées avec Base
 from routers.auth import router as auth_router
 from routers.projects import router as projects_router
-from routers.billing import router as billing_router
+from routers.billing import router as billing_router, _plan_from_price_id
 from dependencies import get_current_user, get_current_user_row, get_current_user_row_optional
 
 # Create the FastAPI app
@@ -1005,7 +1005,19 @@ async def stripe_webhook(request: Request):
             user = db.query(User).filter(User.stripe_customer_id == customer_id).first()
             if user:
                 user.stripe_subscription_id = sub_id
-                user.plan = "pro" if status in ("active", "trialing") else "free"
+                if status in ("active", "trialing"):
+                    price_id = None
+                    try:
+                        items = sub.get("items") or {}
+                        data = (items.get("data") or []) if hasattr(items, "get") else []
+                        if data:
+                            price = (data[0].get("price") or {}) if hasattr(data[0], "get") else {}
+                            price_id = price.get("id") if hasattr(price, "get") else None
+                    except (AttributeError, KeyError, TypeError, IndexError):
+                        pass
+                    user.plan = _plan_from_price_id(price_id or "")
+                else:
+                    user.plan = "free"
                 db.commit()
         elif event["type"] == "customer.subscription.deleted":
             sub = event["data"]["object"]
