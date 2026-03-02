@@ -20,7 +20,7 @@ import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { getHeroPendingFiles } from "../lib/heroPendingFiles";
-import lamejs from "lamejs";
+import * as lamejsModule from "lamejs";
 
 const SubscriptionModal = dynamic(
   () => import("../components/SubscriptionModal").then((m) => ({ default: m.SubscriptionModal })),
@@ -614,7 +614,8 @@ export default function Home() {
   const preuploadByFileRef = useRef<Map<File, PreuploadEntry>>(new Map());
 
   const convertWavToMp3 = useCallback(async (file: File): Promise<Blob | null> => {
-    const encodePcm = (left: Int16Array, right: Int16Array, channels: number, sampleRate: number, Mp3Encoder: new (ch: number, sr: number, kbps: number) => { encodeBuffer(l: Int16Array, r?: Int16Array): Int8Array; flush(): Int8Array }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const encodePcm = (left: Int16Array, right: Int16Array, channels: number, sampleRate: number, Mp3Encoder: any) => {
       const encoder = new Mp3Encoder(channels, sampleRate, 192);
       const parts: Uint8Array[] = [];
       const bs = 1152;
@@ -629,8 +630,11 @@ export default function Home() {
       return new Blob(parts as BlobPart[], { type: "audio/mpeg" });
     };
     try {
-      const Mp3Encoder = lamejs.Mp3Encoder ?? (lamejs as unknown as { default: { Mp3Encoder: typeof lamejs.Mp3Encoder } }).default?.Mp3Encoder;
-      if (!Mp3Encoder) { console.warn("[mp3-convert] lamejs.Mp3Encoder not found, module:", lamejs); return null; }
+      const mod = lamejsModule as Record<string, unknown>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Mp3Encoder = (mod.Mp3Encoder ?? (mod.default as any)?.Mp3Encoder ?? mod.default) as any;
+      if (!Mp3Encoder) { console.error("[mp3-convert] lamejs.Mp3Encoder not found. Keys:", Object.keys(mod), "module:", mod); return null; }
+      console.log("[mp3-convert] Mp3Encoder found, starting conversion...");
       const buf = await file.arrayBuffer();
       const view = new DataView(buf);
       const channels = view.getUint16(22, true);
@@ -702,7 +706,9 @@ export default function Home() {
       .then((d) => { const pid = d?.preupload_id ?? null; entry.wavId = pid; console.log("[preupload-wav] done, id=", pid); return pid; })
       .catch((e) => { console.warn("[preupload-wav] error", e); return null; });
 
+    console.log("[preupload] starting MP3 conversion for", file.name, file.size, "bytes");
     entry.mp3Promise = convertWavToMp3(file).then(async (mp3Blob) => {
+      console.log("[preupload] MP3 conversion result:", mp3Blob ? `${mp3Blob.size} bytes` : "null (failed)");
       if (!mp3Blob) return null;
       const mp3Form = new FormData();
       mp3Form.append("file", new File([mp3Blob], file.name.replace(/\.wav$/i, ".mp3"), { type: "audio/mpeg" }));
