@@ -637,16 +637,33 @@ export default function Home() {
       console.log("[mp3-convert] Mp3Encoder found, starting conversion...");
       const buf = await file.arrayBuffer();
       const view = new DataView(buf);
-      const channels = view.getUint16(22, true);
-      const sampleRate = view.getUint32(24, true);
-      const bitsPerSample = view.getUint16(34, true);
-      let dataOffset = 44;
-      for (let i = 12; i < Math.min(buf.byteLength - 8, 10000); i++) {
-        if (view.getUint8(i) === 0x64 && view.getUint8(i+1) === 0x61 && view.getUint8(i+2) === 0x74 && view.getUint8(i+3) === 0x61) {
-          dataOffset = i + 8; break;
+
+      const findChunk = (id: string) => {
+        const c0 = id.charCodeAt(0), c1 = id.charCodeAt(1), c2 = id.charCodeAt(2), c3 = id.charCodeAt(3);
+        let pos = 12;
+        while (pos < buf.byteLength - 8) {
+          if (view.getUint8(pos) === c0 && view.getUint8(pos+1) === c1 && view.getUint8(pos+2) === c2 && view.getUint8(pos+3) === c3) {
+            const size = view.getUint32(pos + 4, true);
+            return { offset: pos + 8, size };
+          }
+          const chunkSize = view.getUint32(pos + 4, true);
+          pos += 8 + chunkSize + (chunkSize % 2);
         }
-      }
-      const dataLen = buf.byteLength - dataOffset;
+        return null;
+      };
+
+      const fmtChunk = findChunk("fmt ");
+      if (!fmtChunk) { console.warn("[mp3-convert] fmt chunk not found"); return null; }
+      const fmt = fmtChunk.offset;
+      const channels = view.getUint16(fmt + 2, true);
+      const sampleRate = view.getUint32(fmt + 4, true);
+      const bitsPerSample = view.getUint16(fmt + 14, true);
+      console.log("[mp3-convert] fmt chunk at", fmt, "channels:", channels, "sr:", sampleRate, "bps:", bitsPerSample);
+
+      const dataChunk = findChunk("data");
+      if (!dataChunk) { console.warn("[mp3-convert] data chunk not found"); return null; }
+      const dataOffset = dataChunk.offset;
+      const dataLen = dataChunk.size;
       let left: Int16Array;
       let right: Int16Array;
       if (bitsPerSample === 16) {
