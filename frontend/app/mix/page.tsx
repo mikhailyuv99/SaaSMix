@@ -2810,7 +2810,6 @@ export default function Home() {
       }
       if (preuploadId) {
         form.append("preupload_id", preuploadId);
-        preuploadRef.current.delete(id);
       } else {
         form.append("file", track.file);
       }

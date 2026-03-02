@@ -16,6 +16,7 @@ except ImportError:
 import json
 import logging
 import re
+import shutil
 import subprocess as _subprocess
 import sys
 import tempfile
@@ -610,7 +611,7 @@ async def track_mix(
             preupload_path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.wav")
             if not os.path.exists(preupload_path):
                 raise HTTPException(status_code=404, detail="Fichier pré-uploadé introuvable ou expiré")
-            os.rename(preupload_path, input_path)
+            shutil.copy2(preupload_path, input_path)
         elif file and file.filename and file.filename.lower().endswith(".wav"):
             content = await file.read()
             if len(content) > MAX_MIX_FILE_SIZE_BYTES:
