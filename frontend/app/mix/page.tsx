@@ -616,9 +616,15 @@ export default function Home() {
     try {
       const { Mp3Encoder } = await import("lamejs");
       const arrBuf = await file.arrayBuffer();
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)({ sampleRate: 44100 });
+      const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      let ctx = contextRef.current;
+      let ownCtx = false;
+      if (!ctx || ctx.state === "closed") {
+        ctx = new Ctor();
+        ownCtx = true;
+      }
       let decoded: AudioBuffer;
-      try { decoded = await ctx.decodeAudioData(arrBuf.slice(0)); } finally { ctx.close(); }
+      try { decoded = await ctx.decodeAudioData(arrBuf.slice(0)); } finally { if (ownCtx) ctx.close(); }
       const channels = decoded.numberOfChannels;
       const sampleRate = decoded.sampleRate;
       const floatToInt16 = (f: Float32Array) => {
