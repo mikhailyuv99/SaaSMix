@@ -1501,9 +1501,9 @@ export default function Home() {
         uploadForm.append("file", file);
         const entry = { promise: null as unknown as Promise<string | null>, id: null as string | null };
         entry.promise = fetch(`${API_BASE}/api/track/preupload`, { method: "POST", body: uploadForm })
-          .then((r) => (r.ok ? r.json() : null))
-          .then((d) => { const pid = d?.preupload_id ?? null; entry.id = pid; return pid; })
-          .catch(() => null);
+          .then((r) => { if (!r.ok) { console.warn("[preupload] failed status", r.status); return null; } return r.json(); })
+          .then((d) => { const pid = d?.preupload_id ?? null; entry.id = pid; console.log("[preupload] done, id=", pid); return pid; })
+          .catch((e) => { console.warn("[preupload] error", e); return null; });
         preuploadRef.current.set(id, entry);
       }
     },
@@ -2808,6 +2808,7 @@ export default function Home() {
       if (preuploadEntry) {
         preuploadId = preuploadEntry.id ?? await preuploadEntry.promise;
       }
+      console.log("[mix] preupload entry?", !!preuploadEntry, "preuploadId=", preuploadId);
       if (preuploadId) {
         form.append("preupload_id", preuploadId);
       } else {
