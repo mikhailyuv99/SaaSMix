@@ -1261,6 +1261,9 @@ export default function Home() {
   const removeTrack = useCallback((id: string) => {
     downloadAbortRef.current?.abort();
     invalidatePreMaster();
+    const oldPreload = preloadMixedRef.current.get(id);
+    if (oldPreload) { oldPreload.pause(); oldPreload.src = ""; oldPreload.load(); }
+    preloadMixedRef.current.delete(id);
     setHasUnsavedChanges(true);
     deleteFileFromIDB(id);
     const nodes = trackPlaybackRef.current.get(id);
@@ -1569,6 +1572,9 @@ export default function Home() {
         return;
       }
       invalidatePreMaster();
+      const oldPreload = preloadMixedRef.current.get(id);
+      if (oldPreload) { oldPreload.pause(); oldPreload.src = ""; oldPreload.load(); }
+      preloadMixedRef.current.delete(id);
       deleteFileFromIDB(id);
       setTracks((prev) => {
         const track = prev.find((t) => t.id === id);
@@ -2856,6 +2862,9 @@ export default function Home() {
       setMixProgress((prev) => ({ ...prev, [id]: 0 }));
       updateTrack(id, { isMixing: true });
       invalidatePreMaster();
+      const oldPreload = preloadMixedRef.current.get(id);
+      if (oldPreload) { oldPreload.pause(); oldPreload.src = ""; oldPreload.load(); }
+      preloadMixedRef.current.delete(id);
 
       // Resume AudioContext on user gesture (Run mix click) so it's running when mix completes for autoplay
       if (typeof window !== "undefined") {
@@ -3096,7 +3105,7 @@ export default function Home() {
           const preload = new Audio();
           preload.crossOrigin = "anonymous";
           preload.preload = "auto";
-          preload.src = fullUrl;
+          preload.src = mp3Url;
           preload.load();
           preloadMixedRef.current.set(id, preload);
           setMixProgress((prev) => ({ ...prev, [id]: 100 }));
@@ -3146,8 +3155,8 @@ export default function Home() {
             setHasPausedPosition(false);
           }
           const prev = preloadMixedRef.current.get(id);
-          if (prev) prev.src = "";
-          const preload = new Audio(fullUrl);
+          if (prev) { prev.pause(); prev.src = ""; prev.load(); }
+          const preload = new Audio(mp3Url);
           preload.preload = "auto";
           preload.load();
           preload.addEventListener("canplay", () => setMixedPreloadReady((p) => ({ ...p, [id]: true })), { once: true });
