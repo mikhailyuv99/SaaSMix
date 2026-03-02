@@ -596,6 +596,7 @@ export default function Home() {
   const bpmBoxRef = useRef<HTMLDivElement | null>(null);
   const bpmInputFocusedRef = useRef(false);
   bpmInputFocusedRef.current = bpmInputFocused;
+  const preuploadRef = useRef<Map<string, { promise: Promise<string | null>; id: string | null }>>(new Map());
   // File côté client : max 2 POST /api/track/mix en même temps pour éviter timeouts (6 clics = 2 en vol, 4 en attente)
   const mixRequestCountRef = useRef(0);
   const mixRequestQueueRef = useRef<Array<() => void>>([]);
@@ -1495,6 +1496,16 @@ export default function Home() {
           } catch (_) {}
         })();
       }
+      if (category !== "instrumental") {
+        const uploadForm = new FormData();
+        uploadForm.append("file", file);
+        const entry = { promise: null as unknown as Promise<string | null>, id: null as string | null };
+        entry.promise = fetch(`${API_BASE}/api/track/preupload`, { method: "POST", body: uploadForm })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => { const pid = d?.preupload_id ?? null; entry.id = pid; return pid; })
+          .catch(() => null);
+        preuploadRef.current.set(id, entry);
+      }
     },
     [updateTrack]
   );
@@ -1510,6 +1521,7 @@ export default function Home() {
         return;
       }
       deleteFileFromIDB(id);
+      preuploadRef.current.delete(id);
       setTracks((prev) => {
         const track = prev.find((t) => t.id === id);
         if (!track) return prev;
@@ -2791,7 +2803,17 @@ export default function Home() {
       mixSimulationIntervalRef.current = setInterval(tickSmooth, progressTickMs);
 
       const form = new FormData();
-      form.append("file", track.file);
+      const preuploadEntry = preuploadRef.current.get(id);
+      let preuploadId: string | null = null;
+      if (preuploadEntry) {
+        preuploadId = preuploadEntry.id ?? await preuploadEntry.promise;
+      }
+      if (preuploadId) {
+        form.append("preupload_id", preuploadId);
+        preuploadRef.current.delete(id);
+      } else {
+        form.append("file", track.file);
+      }
       form.append("category", track.category);
       const p = track.mixParams;
       form.append("noise_gate", String(p.noise_gate ?? true));

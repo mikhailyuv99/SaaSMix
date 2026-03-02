@@ -158,6 +158,8 @@ def startup_sync_r2():
 MIXED_TRACKS_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_mixed")
 # Dossier pour le mix complet et le master (render)
 RENDER_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_render")
+# Dossier pour les pré-uploads (fichiers envoyés avant le clic MIXER)
+PREUPLOAD_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_preupload")
 TARGET_SR = 44100
 
 # --- MP3 conversion (préécoute légère) ---
@@ -209,7 +211,7 @@ def _cleanup_old_audio_dirs() -> None:
     """Supprime les WAV/MP3 dans MIXED_TRACKS_DIR et RENDER_DIR plus vieux que AUDIO_FILE_MAX_AGE_SECONDS."""
     now = time.time()
     cutoff = now - AUDIO_FILE_MAX_AGE_SECONDS
-    for dir_path in (MIXED_TRACKS_DIR, RENDER_DIR):
+    for dir_path in (MIXED_TRACKS_DIR, RENDER_DIR, PREUPLOAD_DIR):
         if not os.path.isdir(dir_path):
             continue
         try:
@@ -532,6 +534,29 @@ def _run_mix_job(
 MAX_MIX_FILE_SIZE_BYTES = int(os.environ.get("MAX_MIX_FILE_SIZE_BYTES", "104857600"))  # 100 MiB par défaut
 
 
+@app.post("/api/track/preupload")
+@limiter.limit("30/minute")
+async def track_preupload(
+    request: Request,
+    file: UploadFile = File(..., description="WAV à pré-uploader"),
+):
+    """Pré-upload d'un WAV avant le clic MIXER. Retourne un preupload_id réutilisable dans POST /api/track/mix."""
+    if not file.filename or not file.filename.lower().endswith(".wav"):
+        raise HTTPException(status_code=400, detail="Le fichier doit être un WAV")
+    content = await file.read()
+    if len(content) > MAX_MIX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Fichier trop volumineux (max {MAX_MIX_FILE_SIZE_BYTES // (1024 * 1024)} Mo).",
+        )
+    os.makedirs(PREUPLOAD_DIR, exist_ok=True)
+    preupload_id = str(uuid.uuid4())
+    path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.wav")
+    with open(path, "wb") as f:
+        f.write(content)
+    return {"preupload_id": preupload_id}
+
+
 @app.get("/api/track/mix")
 @app.get("/api/track/mix/")
 async def track_mix_get():
@@ -547,8 +572,8 @@ async def track_mix_get():
 @limiter.limit("30/minute")
 async def track_mix(
     request: Request,
-    file: UploadFile = File(..., description="WAV de la piste vocale"),
-    # Paramètres optionnels (défauts = comme le CLI)
+    file: UploadFile = File(None, description="WAV de la piste vocale"),
+    preupload_id: Optional[str] = Form(None, description="ID retourné par /api/track/preupload"),
     deesser: bool = Form(True, description="Activer le de-esser"),
     deesser_mode: int = Form(2, ge=1, le=3, description="De-esser: 1=leger, 2=moyen, 3=fort"),
     noise_gate: bool = Form(True, description="Activer le noise gate"),
@@ -569,29 +594,34 @@ async def track_mix(
 ):
     """
     Démarre le mix d'une piste vocale (chaîne HISE). Retourne immédiatement un jobId.
+    Accepte soit un fichier WAV, soit un preupload_id obtenu via POST /api/track/preupload.
     Suivre la progression via GET /api/track/mix/status?job_id=...
     """
     input_path = None
     normalized_path = None
     try:
-        if not file.filename or not file.filename.lower().endswith(".wav"):
-            raise HTTPException(status_code=400, detail="Le fichier doit être un WAV")
-
-        content = await file.read()
-        if len(content) > MAX_MIX_FILE_SIZE_BYTES:
-            raise HTTPException(
-                status_code=413,
-                detail=f"Fichier trop volumineux (max {MAX_MIX_FILE_SIZE_BYTES // (1024 * 1024)} Mo). Réduisez la durée ou la résolution.",
-            )
-
         os.makedirs(MIXED_TRACKS_DIR, exist_ok=True)
         mixed_id = str(uuid.uuid4())
         job_id = str(uuid.uuid4())
         input_path = os.path.join(tempfile.gettempdir(), f"mix_input_{os.getpid()}_{mixed_id[:8]}.wav")
         output_path = os.path.join(MIXED_TRACKS_DIR, f"{mixed_id}.wav")
 
-        with open(input_path, "wb") as f:
-            f.write(content)
+        if preupload_id and re.match(r"^[a-f0-9\-]{36}$", preupload_id):
+            preupload_path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.wav")
+            if not os.path.exists(preupload_path):
+                raise HTTPException(status_code=404, detail="Fichier pré-uploadé introuvable ou expiré")
+            os.rename(preupload_path, input_path)
+        elif file and file.filename and file.filename.lower().endswith(".wav"):
+            content = await file.read()
+            if len(content) > MAX_MIX_FILE_SIZE_BYTES:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Fichier trop volumineux (max {MAX_MIX_FILE_SIZE_BYTES // (1024 * 1024)} Mo). Réduisez la durée ou la résolution.",
+                )
+            with open(input_path, "wb") as f:
+                f.write(content)
+        else:
+            raise HTTPException(status_code=400, detail="Fournissez un fichier WAV ou un preupload_id valide")
 
         # Normaliser en PCM 16-bit (format 65534 / float non supporté par hise_vst3_host)
         normalized_path = os.path.join(tempfile.gettempdir(), f"mix_norm_{os.getpid()}_{mixed_id[:8]}.wav")
