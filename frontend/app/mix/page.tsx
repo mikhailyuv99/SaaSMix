@@ -20,6 +20,7 @@ import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { getHeroPendingFiles } from "../lib/heroPendingFiles";
+import lamejs from "lamejs";
 
 const SubscriptionModal = dynamic(
   () => import("../components/SubscriptionModal").then((m) => ({ default: m.SubscriptionModal })),
@@ -613,7 +614,7 @@ export default function Home() {
   const preuploadByFileRef = useRef<Map<File, PreuploadEntry>>(new Map());
 
   const convertWavToMp3 = useCallback(async (file: File): Promise<Blob | null> => {
-    const encodePcm = (left: Int16Array, right: Int16Array, channels: number, sampleRate: number, Mp3Encoder: typeof import("lamejs").Mp3Encoder) => {
+    const encodePcm = (left: Int16Array, right: Int16Array, channels: number, sampleRate: number, Mp3Encoder: new (ch: number, sr: number, kbps: number) => { encodeBuffer(l: Int16Array, r?: Int16Array): Int8Array; flush(): Int8Array }) => {
       const encoder = new Mp3Encoder(channels, sampleRate, 192);
       const parts: Uint8Array[] = [];
       const bs = 1152;
@@ -628,7 +629,8 @@ export default function Home() {
       return new Blob(parts as BlobPart[], { type: "audio/mpeg" });
     };
     try {
-      const { Mp3Encoder } = await import("lamejs");
+      const Mp3Encoder = lamejs.Mp3Encoder ?? (lamejs as unknown as { default: { Mp3Encoder: typeof lamejs.Mp3Encoder } }).default?.Mp3Encoder;
+      if (!Mp3Encoder) { console.warn("[mp3-convert] lamejs.Mp3Encoder not found, module:", lamejs); return null; }
       const buf = await file.arrayBuffer();
       const view = new DataView(buf);
       const channels = view.getUint16(22, true);
