@@ -634,7 +634,7 @@ export default function Home() {
       if (!w.lamejs) {
         await new Promise<void>((resolve, reject) => {
           const s = document.createElement("script");
-          s.src = "https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js";
+          s.src = "/js/lame.min.js";
           s.onload = () => resolve();
           s.onerror = () => reject(new Error("Failed to load lamejs from CDN"));
           document.head.appendChild(s);
