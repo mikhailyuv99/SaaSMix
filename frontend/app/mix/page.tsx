@@ -2860,16 +2860,15 @@ export default function Home() {
       const preuploadEntry = track.file ? preuploadByFileRef.current.get(track.file) : null;
       let preuploadId: string | null = preuploadEntry?.wavId ?? null;
       if (!preuploadId && preuploadEntry) {
-        preuploadId = await Promise.race([
-          preuploadEntry.wavPromise,
-          new Promise<null>((r) => setTimeout(() => r(null), 30000)),
-        ]);
+        preuploadId = await preuploadEntry.wavPromise;
       }
       console.log("[mix] preuploadId=", preuploadId);
       if (preuploadId) {
         form.append("preupload_id", preuploadId);
-      } else {
+      } else if (!preuploadEntry && track.file) {
         form.append("file", track.file);
+      } else {
+        throw new Error("Upload en cours échoué. Réessayez.");
       }
       form.append("category", track.category);
       const p = track.mixParams;
