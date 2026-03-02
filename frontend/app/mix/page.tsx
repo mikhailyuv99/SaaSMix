@@ -615,33 +615,27 @@ export default function Home() {
   const convertWavToMp3 = useCallback(async (file: File): Promise<Blob | null> => {
     try {
       const { Mp3Encoder } = await import("lamejs");
-      const buf = await file.arrayBuffer();
-      const view = new DataView(buf);
-      const channels = view.getUint16(22, true);
-      const sampleRate = view.getUint32(24, true);
-      const bitsPerSample = view.getUint16(34, true);
-      let dataOffset = 44;
-      for (let i = 36; i < buf.byteLength - 8; i++) {
-        if (view.getUint32(i, false) === 0x64617461) { dataOffset = i + 8; break; }
-      }
-      const encoder = new Mp3Encoder(channels, sampleRate, 192);
-      const samples = bitsPerSample === 16
-        ? new Int16Array(buf, dataOffset)
-        : new Int16Array(Array.from(new Float32Array(buf, dataOffset), (v) => Math.max(-1, Math.min(1, v)) * 32767));
+      const arrBuf = await file.arrayBuffer();
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)({ sampleRate: 44100 });
+      let decoded: AudioBuffer;
+      try { decoded = await ctx.decodeAudioData(arrBuf.slice(0)); } finally { ctx.close(); }
+      const channels = decoded.numberOfChannels;
+      const sampleRate = decoded.sampleRate;
+      const floatToInt16 = (f: Float32Array) => {
+        const out = new Int16Array(f.length);
+        for (let i = 0; i < f.length; i++) out[i] = Math.max(-32768, Math.min(32767, Math.round(f[i] * 32767)));
+        return out;
+      };
+      const left = floatToInt16(decoded.getChannelData(0));
+      const right = channels > 1 ? floatToInt16(decoded.getChannelData(1)) : left;
+      const encoder = new Mp3Encoder(channels > 1 ? 2 : 1, sampleRate, 192);
       const mp3Parts: Uint8Array[] = [];
       const blockSize = 1152;
-      for (let i = 0; i < samples.length; i += blockSize * channels) {
-        const end = Math.min(i + blockSize * channels, samples.length);
-        if (channels === 2) {
-          const left = new Int16Array(Math.ceil((end - i) / 2));
-          const right = new Int16Array(Math.ceil((end - i) / 2));
-          for (let j = i, k = 0; j < end; j += 2, k++) { left[k] = samples[j]; right[k] = samples[j + 1]; }
-          const chunk = encoder.encodeBuffer(left, right);
-          if (chunk.length > 0) mp3Parts.push(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
-        } else {
-          const chunk = encoder.encodeBuffer(samples.subarray(i, end));
-          if (chunk.length > 0) mp3Parts.push(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
-        }
+      for (let i = 0; i < left.length; i += blockSize) {
+        const l = left.subarray(i, i + blockSize);
+        const r = right.subarray(i, i + blockSize);
+        const chunk = channels > 1 ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l);
+        if (chunk.length > 0) mp3Parts.push(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
       }
       const tail = encoder.flush();
       if (tail.length > 0) mp3Parts.push(new Uint8Array(tail.buffer, tail.byteOffset, tail.byteLength));
@@ -2926,12 +2920,16 @@ export default function Home() {
       if (preuploadEntry) {
         if (preuploadEntry.wavId) {
           preuploadId = preuploadEntry.wavId;
+        } else if (preuploadEntry.mp3Id) {
+          preuploadId = preuploadEntry.mp3Id;
+          usedMp3Input = true;
         } else {
-          preuploadId = preuploadEntry.mp3Id ?? await preuploadEntry.mp3Promise;
+          const mp3WithTimeout = Promise.race([
+            preuploadEntry.mp3Promise,
+            new Promise<null>((r) => setTimeout(() => r(null), 8000)),
+          ]);
+          preuploadId = await mp3WithTimeout;
           if (preuploadId) usedMp3Input = true;
-        }
-        if (!preuploadId) {
-          preuploadId = await preuploadEntry.wavPromise;
         }
       }
       console.log("[mix] preuploadId=", preuploadId, "usedMp3=", usedMp3Input);
