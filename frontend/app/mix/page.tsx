@@ -613,39 +613,73 @@ export default function Home() {
   const preuploadByFileRef = useRef<Map<File, PreuploadEntry>>(new Map());
 
   const convertWavToMp3 = useCallback(async (file: File): Promise<Blob | null> => {
-    try {
-      const { Mp3Encoder } = await import("lamejs");
-      const arrBuf = await file.arrayBuffer();
-      const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      let ctx = contextRef.current;
-      let ownCtx = false;
-      if (!ctx || ctx.state === "closed") {
-        ctx = new Ctor();
-        ownCtx = true;
-      }
-      let decoded: AudioBuffer;
-      try { decoded = await ctx.decodeAudioData(arrBuf.slice(0)); } finally { if (ownCtx) ctx.close(); }
-      const channels = decoded.numberOfChannels;
-      const sampleRate = decoded.sampleRate;
-      const floatToInt16 = (f: Float32Array) => {
-        const out = new Int16Array(f.length);
-        for (let i = 0; i < f.length; i++) out[i] = Math.max(-32768, Math.min(32767, Math.round(f[i] * 32767)));
-        return out;
-      };
-      const left = floatToInt16(decoded.getChannelData(0));
-      const right = channels > 1 ? floatToInt16(decoded.getChannelData(1)) : left;
-      const encoder = new Mp3Encoder(channels > 1 ? 2 : 1, sampleRate, 192);
-      const mp3Parts: Uint8Array[] = [];
-      const blockSize = 1152;
-      for (let i = 0; i < left.length; i += blockSize) {
-        const l = left.subarray(i, i + blockSize);
-        const r = right.subarray(i, i + blockSize);
-        const chunk = channels > 1 ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l);
-        if (chunk.length > 0) mp3Parts.push(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+    const encodePcm = (left: Int16Array, right: Int16Array, channels: number, sampleRate: number, Mp3Encoder: typeof import("lamejs").Mp3Encoder) => {
+      const encoder = new Mp3Encoder(channels, sampleRate, 192);
+      const parts: Uint8Array[] = [];
+      const bs = 1152;
+      for (let i = 0; i < left.length; i += bs) {
+        const l = left.subarray(i, i + bs);
+        const r = right.subarray(i, i + bs);
+        const c = channels > 1 ? encoder.encodeBuffer(l, r) : encoder.encodeBuffer(l);
+        if (c.length > 0) parts.push(new Uint8Array(c.buffer, c.byteOffset, c.byteLength));
       }
       const tail = encoder.flush();
-      if (tail.length > 0) mp3Parts.push(new Uint8Array(tail.buffer, tail.byteOffset, tail.byteLength));
-      return new Blob(mp3Parts as BlobPart[], { type: "audio/mpeg" });
+      if (tail.length > 0) parts.push(new Uint8Array(tail.buffer, tail.byteOffset, tail.byteLength));
+      return new Blob(parts as BlobPart[], { type: "audio/mpeg" });
+    };
+    try {
+      const { Mp3Encoder } = await import("lamejs");
+      const buf = await file.arrayBuffer();
+      const view = new DataView(buf);
+      const channels = view.getUint16(22, true);
+      const sampleRate = view.getUint32(24, true);
+      const bitsPerSample = view.getUint16(34, true);
+      let dataOffset = 44;
+      for (let i = 12; i < Math.min(buf.byteLength - 8, 10000); i++) {
+        if (view.getUint8(i) === 0x64 && view.getUint8(i+1) === 0x61 && view.getUint8(i+2) === 0x74 && view.getUint8(i+3) === 0x61) {
+          dataOffset = i + 8; break;
+        }
+      }
+      const dataLen = buf.byteLength - dataOffset;
+      let left: Int16Array;
+      let right: Int16Array;
+      if (bitsPerSample === 16) {
+        const aligned = (dataOffset % 2 !== 0) ? dataOffset + 1 : dataOffset;
+        const samples = new Int16Array(buf, aligned, Math.floor((buf.byteLength - aligned) / 2));
+        if (channels >= 2) {
+          const n = Math.floor(samples.length / 2);
+          left = new Int16Array(n); right = new Int16Array(n);
+          for (let j = 0, k = 0; k < n; j += 2, k++) { left[k] = samples[j]; right[k] = samples[j+1]; }
+        } else { left = samples; right = samples; }
+      } else if (bitsPerSample === 24) {
+        const n = Math.floor(dataLen / (3 * channels));
+        left = new Int16Array(n); right = new Int16Array(n);
+        for (let i = 0; i < n; i++) {
+          const base = dataOffset + i * 3 * channels;
+          left[i] = (view.getInt8(base + 2) << 8) | view.getUint8(base + 1);
+          if (channels >= 2) right[i] = (view.getInt8(base + 5) << 8) | view.getUint8(base + 4);
+          else right[i] = left[i];
+        }
+      } else if (bitsPerSample === 32) {
+        const aligned = dataOffset + ((4 - (dataOffset % 4)) % 4);
+        const floats = new Float32Array(buf, aligned, Math.floor((buf.byteLength - aligned) / 4));
+        const toI16 = (v: number) => Math.max(-32768, Math.min(32767, Math.round(v * 32767)));
+        if (channels >= 2) {
+          const n = Math.floor(floats.length / 2);
+          left = new Int16Array(n); right = new Int16Array(n);
+          for (let j = 0, k = 0; k < n; j += 2, k++) { left[k] = toI16(floats[j]); right[k] = toI16(floats[j+1]); }
+        } else {
+          left = new Int16Array(floats.length);
+          for (let i = 0; i < floats.length; i++) left[i] = toI16(floats[i]);
+          right = left;
+        }
+      } else {
+        console.warn("[mp3-convert] unsupported bitsPerSample:", bitsPerSample);
+        return null;
+      }
+      if (left.length === 0) { console.warn("[mp3-convert] no samples"); return null; }
+      console.log("[mp3-convert] raw parse OK:", channels, "ch,", sampleRate, "Hz,", bitsPerSample, "bit,", left.length, "samples");
+      return encodePcm(left, right, channels >= 2 ? 2 : 1, sampleRate, Mp3Encoder);
     } catch (e) {
       console.warn("[mp3-convert] failed", e);
       return null;
