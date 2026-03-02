@@ -473,7 +473,7 @@ export default function Home() {
     nextHeroFiles?: { blob: Blob; fileName: string }[];
     nextFiles?: File[];
   } | null>(null);
-  const [preparingTrack, setPreparingTrack] = useState(false);
+  const [preparingTrack, setPreparingTrack] = useState<string | null>(null);
   const mixDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [mixDropzoneDragging, setMixDropzoneDragging] = useState(false);
   const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
@@ -1614,6 +1614,18 @@ export default function Home() {
     }
   }, []);
 
+  const waitForAllPreuploads = useCallback(async (files: File[]) => {
+    const pending = files
+      .map((f) => preuploadByFileRef.current.get(f))
+      .filter((e): e is { promise: Promise<string | null>; id: string | null } => !!e && !e.id);
+    if (!pending.length) return;
+    const label = files.length > 1 ? "Préparation des pistes..." : "Préparation de la piste...";
+    setPreparingTrack(label);
+    const minWait = new Promise((r) => setTimeout(r, 3000));
+    await Promise.all([...pending.map((e) => e.promise), minWait]);
+    setPreparingTrack(null);
+  }, []);
+
   const applyCategoryChoice = useCallback(
     async (category: Category) => {
       if (!categoryModal) return;
@@ -1621,19 +1633,8 @@ export default function Home() {
       const { trackId, file, fromHero, nextHeroFiles, nextFiles } = categoryModal;
       setCategoryModal(null);
 
-      const waitForPreupload = async (f: File) => {
-        const entry = preuploadByFileRef.current.get(f);
-        if (!entry) return;
-        if (entry.id) return;
-        setPreparingTrack(true);
-        const minWait = new Promise((r) => setTimeout(r, 3000));
-        await Promise.all([entry.promise, minWait]);
-        setPreparingTrack(false);
-      };
-
       if (fromHero) {
         createTrackFromFile(file, category);
-        await waitForPreupload(file);
         if (nextHeroFiles?.length) {
           const next = nextHeroFiles[0];
           if (!next.fileName.toLowerCase().endsWith(".wav")) {
@@ -1642,20 +1643,25 @@ export default function Home() {
           }
           const nextFile = new File([next.blob], next.fileName, { type: next.blob.type || "audio/wav" });
           setTimeout(() => setCategoryModal({ file: nextFile, fromHero: true, nextHeroFiles: nextHeroFiles.slice(1) }), 0);
+        } else {
+          const allFiles = Array.from(preuploadByFileRef.current.keys());
+          await waitForAllPreuploads(allFiles.length ? allFiles : [file]);
         }
         return;
       }
       if (nextFiles !== undefined) {
         createTrackFromFile(file, category);
-        await waitForPreupload(file);
         if (nextFiles.length) {
           setTimeout(() => setCategoryModal({ file: nextFiles[0], nextFiles: nextFiles.slice(1) }), 0);
+        } else {
+          const allFiles = Array.from(preuploadByFileRef.current.keys());
+          await waitForAllPreuploads(allFiles.length ? allFiles : [file]);
         }
         return;
       }
       if (trackId) {
         applyFileWithCategory(trackId, file, category);
-        await waitForPreupload(file);
+        await waitForAllPreuploads([file]);
         if (typeof document !== "undefined") {
           const input = document.getElementById(`file-${trackId}`) as HTMLInputElement | null;
           if (input) input.value = "";
@@ -1664,7 +1670,7 @@ export default function Home() {
         }
       }
     },
-    [categoryModal, applyFileWithCategory, createTrackFromFile, setHasUnsavedChanges]
+    [categoryModal, applyFileWithCategory, createTrackFromFile, setHasUnsavedChanges, waitForAllPreuploads]
   );
 
   const getAuthHeaders = useCallback((): Record<string, string> => {
@@ -3796,7 +3802,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div className="relative flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              <p className="text-white text-sm font-medium tracking-wide animate-pulse">Préparation de la piste...</p>
+              <p className="text-white text-sm font-medium tracking-wide animate-pulse">{preparingTrack}</p>
             </div>
           </div>,
           document.body
