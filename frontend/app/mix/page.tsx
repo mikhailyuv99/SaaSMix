@@ -568,6 +568,7 @@ export default function Home() {
   const downloadAbortRef = useRef<AbortController | null>(null);
   const preMasterAbortRef = useRef<AbortController | null>(null);
   const preMasterResultRef = useRef<{ mixUrl: string; masterUrl: string } | null>(null);
+  const preMasterPromiseRef = useRef<Promise<{ mixUrl: string; masterUrl: string } | null> | null>(null);
 
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
@@ -3130,7 +3131,7 @@ export default function Home() {
     preMasterResultRef.current = null;
     const { specs, files } = buildTrackSpecsAndFiles();
     const hasValidTrack = tracksRef.current.some((t) => !t.muted && (t.file || t.mixedAudioUrl));
-    if (specs.length === 0 || !hasValidTrack) return;
+    if (specs.length === 0 || !hasValidTrack) { preMasterPromiseRef.current = null; return; }
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
     const controller = new AbortController();
     preMasterAbortRef.current = controller;
@@ -3139,22 +3140,26 @@ export default function Home() {
     files.forEach((f) => form.append("files", f));
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
-    fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form, signal: controller.signal })
+    const p = fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form, signal: controller.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!d) return;
+        if (!d) return null;
         const mixUrl = (d.mixUrl as string).startsWith("http") ? d.mixUrl : `${API_BASE}${d.mixUrl}`;
         const masterUrl = (d.masterUrl as string).startsWith("http") ? d.masterUrl : `${API_BASE}${d.masterUrl}`;
-        preMasterResultRef.current = { mixUrl, masterUrl };
-        console.log("[pre-master] done", preMasterResultRef.current);
+        const result = { mixUrl, masterUrl };
+        preMasterResultRef.current = result;
+        console.log("[pre-master] done", result);
+        return result;
       })
-      .catch(() => {});
+      .catch(() => null);
+    preMasterPromiseRef.current = p;
   }, [buildTrackSpecsAndFiles]);
 
   const invalidatePreMaster = useCallback(() => {
     preMasterAbortRef.current?.abort();
     preMasterAbortRef.current = null;
     preMasterResultRef.current = null;
+    preMasterPromiseRef.current = null;
   }, []);
 
   const downloadMix = useCallback(async () => {
@@ -3303,12 +3308,17 @@ export default function Home() {
       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
       let mixUrl: string;
       let masterUrl: string;
-      const cached = preMasterResultRef.current;
+      let cached = preMasterResultRef.current;
+      if (!cached && preMasterPromiseRef.current) {
+        console.log("[master] pre-master in progress, waiting...");
+        cached = await preMasterPromiseRef.current;
+      }
       if (cached) {
         console.log("[master] using pre-master result");
         mixUrl = cached.mixUrl;
         masterUrl = cached.masterUrl;
         preMasterResultRef.current = null;
+        preMasterPromiseRef.current = null;
       } else {
         console.log("[master] no pre-master, calling API");
         const form = new FormData();
