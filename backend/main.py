@@ -575,6 +575,26 @@ async def track_preupload(
     return {"preupload_id": preupload_id}
 
 
+@app.post("/api/track/preupload-bin")
+@limiter.limit("30/minute")
+async def track_preupload_bin(request: Request, filename: str = "upload.wav"):
+    """Raw binary preupload (no multipart). Avoids browser FormData stalling on large files."""
+    content = await request.body()
+    if not content:
+        raise HTTPException(status_code=400, detail="Body vide")
+    if len(content) > MAX_MIX_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Fichier trop volumineux (max {MAX_MIX_FILE_SIZE_BYTES // (1024 * 1024)} Mo).",
+        )
+    os.makedirs(PREUPLOAD_DIR, exist_ok=True)
+    preupload_id = str(uuid.uuid4())
+    wav_path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.wav")
+    with open(wav_path, "wb") as f:
+        f.write(content)
+    return {"preupload_id": preupload_id}
+
+
 @app.get("/api/track/mix")
 @app.get("/api/track/mix/")
 async def track_mix_get():
