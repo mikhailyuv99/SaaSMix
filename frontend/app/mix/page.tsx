@@ -626,30 +626,37 @@ export default function Home() {
       wavPromise: null as unknown as Promise<string | null>, wavId: null,
     };
 
-    entry.wavPromise = ensureApiConnection().then(() => new Promise<string | null>((resolve) => {
-      console.log("[preupload-wav] connection ready, starting upload for", file.name, `${(file.size / 1048576).toFixed(1)}MB`);
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${API_BASE}/api/track/preupload`);
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const d = JSON.parse(xhr.responseText);
-            const pid = d?.preupload_id ?? null;
-            entry.wavId = pid;
-            console.log("[preupload-wav] done, id=", pid);
-            resolve(pid);
-          } catch { resolve(null); }
-        } else {
-          console.warn("[preupload-wav] failed status", xhr.status);
-          resolve(null);
-        }
-      };
-      xhr.onerror = () => { console.warn("[preupload-wav] network error"); resolve(null); };
-      xhr.ontimeout = () => { console.warn("[preupload-wav] timeout"); resolve(null); };
+    entry.wavPromise = (async () => {
+      const [buffer] = await Promise.all([
+        file.arrayBuffer(),
+        ensureApiConnection(),
+      ]);
+      console.log("[preupload-wav] file in memory + connection ready, sending", file.name, `${(file.size / 1048576).toFixed(1)}MB`);
+      const blob = new Blob([buffer], { type: file.type || "audio/wav" });
       const wavForm = new FormData();
-      wavForm.append("file", file);
-      xhr.send(wavForm);
-    }));
+      wavForm.append("file", blob, file.name);
+      return new Promise<string | null>((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `${API_BASE}/api/track/preupload`);
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const d = JSON.parse(xhr.responseText);
+              const pid = d?.preupload_id ?? null;
+              entry.wavId = pid;
+              console.log("[preupload-wav] done, id=", pid);
+              resolve(pid);
+            } catch { resolve(null); }
+          } else {
+            console.warn("[preupload-wav] failed status", xhr.status);
+            resolve(null);
+          }
+        };
+        xhr.onerror = () => { console.warn("[preupload-wav] network error"); resolve(null); };
+        xhr.ontimeout = () => { console.warn("[preupload-wav] timeout"); resolve(null); };
+        xhr.send(wavForm);
+      });
+    })();
 
     preuploadByFileRef.current.set(file, entry);
   }, [ensureApiConnection]);
