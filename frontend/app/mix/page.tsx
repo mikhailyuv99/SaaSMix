@@ -596,7 +596,22 @@ export default function Home() {
   const bpmBoxRef = useRef<HTMLDivElement | null>(null);
   const bpmInputFocusedRef = useRef(false);
   bpmInputFocusedRef.current = bpmInputFocused;
-  const preuploadRef = useRef<Map<string, { promise: Promise<string | null>; id: string | null }>>(new Map());
+  const preuploadByFileRef = useRef<Map<File, { promise: Promise<string | null>; id: string | null }>>(new Map());
+  const startPreupload = useCallback((file: File) => {
+    if (preuploadByFileRef.current.has(file)) return;
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+    const entry = { promise: null as unknown as Promise<string | null>, id: null as string | null };
+    entry.promise = fetch(`${API_BASE}/api/track/preupload`, { method: "POST", body: uploadForm })
+      .then((r) => { if (!r.ok) { console.warn("[preupload] failed status", r.status); return null; } return r.json(); })
+      .then((d) => { const pid = d?.preupload_id ?? null; entry.id = pid; console.log("[preupload] done, id=", pid); return pid; })
+      .catch((e) => { console.warn("[preupload] error", e); return null; });
+    preuploadByFileRef.current.set(file, entry);
+  }, []);
+  useEffect(() => {
+    if (categoryModal?.file) startPreupload(categoryModal.file);
+    if (categoryModal?.nextFiles) categoryModal.nextFiles.forEach((f) => startPreupload(f));
+  }, [categoryModal, startPreupload]);
   // File côté client : max 2 POST /api/track/mix en même temps pour éviter timeouts (6 clics = 2 en vol, 4 en attente)
   const mixRequestCountRef = useRef(0);
   const mixRequestQueueRef = useRef<Array<() => void>>([]);
@@ -1497,14 +1512,7 @@ export default function Home() {
         })();
       }
       if (category !== "instrumental") {
-        const uploadForm = new FormData();
-        uploadForm.append("file", file);
-        const entry = { promise: null as unknown as Promise<string | null>, id: null as string | null };
-        entry.promise = fetch(`${API_BASE}/api/track/preupload`, { method: "POST", body: uploadForm })
-          .then((r) => { if (!r.ok) { console.warn("[preupload] failed status", r.status); return null; } return r.json(); })
-          .then((d) => { const pid = d?.preupload_id ?? null; entry.id = pid; console.log("[preupload] done, id=", pid); return pid; })
-          .catch((e) => { console.warn("[preupload] error", e); return null; });
-        preuploadRef.current.set(id, entry);
+        startPreupload(file);
       }
     },
     [updateTrack]
@@ -1521,7 +1529,6 @@ export default function Home() {
         return;
       }
       deleteFileFromIDB(id);
-      preuploadRef.current.delete(id);
       setTracks((prev) => {
         const track = prev.find((t) => t.id === id);
         if (!track) return prev;
@@ -2803,7 +2810,7 @@ export default function Home() {
       mixSimulationIntervalRef.current = setInterval(tickSmooth, progressTickMs);
 
       const form = new FormData();
-      const preuploadEntry = preuploadRef.current.get(id);
+      const preuploadEntry = track.file ? preuploadByFileRef.current.get(track.file) : null;
       let preuploadId: string | null = null;
       if (preuploadEntry) {
         preuploadId = preuploadEntry.id ?? await preuploadEntry.promise;
