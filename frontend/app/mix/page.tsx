@@ -615,7 +615,7 @@ export default function Home() {
   const convertWavToMp3 = useCallback(async (file: File): Promise<Blob | null> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const encodePcm = (left: Int16Array, right: Int16Array, channels: number, sampleRate: number, Mp3Encoder: any) => {
-      const encoder = new Mp3Encoder(channels, sampleRate, 192);
+      const encoder = new Mp3Encoder(channels, sampleRate, 320);
       const parts: Uint8Array[] = [];
       const bs = 1152;
       for (let i = 0; i < left.length; i += bs) {
@@ -3429,11 +3429,30 @@ export default function Home() {
       const fullUrl = mixedUrl.startsWith("http") ? mixedUrl : `${API_BASE}${mixedUrl}`;
       bgWavRemixResultRef.current.set(trackId, fullUrl);
       console.log("[bg-wav-remix] done for track", trackId, fullUrl);
+
+      try {
+        const mp3Url = fullUrl + (fullUrl.includes("?") ? "&" : "?") + "format=mp3";
+        const resp = await fetch(mp3Url, { signal: controller.signal });
+        if (resp.ok) {
+          const ab = await resp.arrayBuffer();
+          const ctx = contextRef.current ?? new AudioContext();
+          const decoded = await ctx.decodeAudioData(ab);
+          const bufEntry = buffersRef.current.get(trackId) ?? { raw: null, mixed: null };
+          bufEntry.mixed = decoded;
+          buffersRef.current.set(trackId, bufEntry);
+          updateTrack(trackId, { mixedAudioUrl: fullUrl });
+          console.log("[bg-wav-remix] preview auto-swapped to WAV-quality for", trackId);
+        }
+      } catch (swapErr) {
+        if ((swapErr as { name?: string })?.name !== "AbortError")
+          console.warn("[bg-wav-remix] preview swap failed", swapErr);
+      }
+
       return fullUrl;
     })().catch((e) => { if (e?.name !== "AbortError") console.warn("[bg-wav-remix] error", e); return null; });
 
     bgWavRemixPromiseRef.current.set(trackId, p);
-  }, []);
+  }, [updateTrack]);
 
   const downloadMix = useCallback(async () => {
     const pendingBgRemixes = Array.from(bgWavRemixPromiseRef.current.values());

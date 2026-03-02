@@ -10,7 +10,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "media-src 'self' blob:",
+      "media-src 'self' blob: https://api.siberiamix.com https://api-staging.siberiamix.com",
       "base-uri 'self'",
       "form-action 'self'",
     ].join("; ");

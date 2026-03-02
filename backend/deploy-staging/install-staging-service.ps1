@@ -38,6 +38,7 @@ $EnvExtra = "PATH=$BackendStagingPath\venv\Scripts;%PATH%`nHISE_VST3_HOST_EXE=$H
 & $NssmPath set $ServiceName AppDirectory $BackendStagingPath
 & $NssmPath set $ServiceName AppEnvironmentExtra $EnvExtra
 & $NssmPath set $ServiceName Description "SaaS Mix Backend - Staging (port $PortStaging)"
+& $NssmPath set $ServiceName AppPriority HIGH_PRIORITY_CLASS
 & $NssmPath set $ServiceName Start SERVICE_AUTO_START
 
 Write-Host "Service $ServiceName installé. Démarrage..."
