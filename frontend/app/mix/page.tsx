@@ -1615,14 +1615,26 @@ export default function Home() {
   }, []);
 
   const waitForAllPreuploads = useCallback(async (files: File[]) => {
-    const pending = files
-      .map((f) => preuploadByFileRef.current.get(f))
-      .filter((e): e is { promise: Promise<string | null>; id: string | null } => !!e && !e.id);
-    if (!pending.length) return;
+    const instrumentalFiles = new Set(
+      tracksRef.current.filter((t) => t.category === "instrumental" && t.file).map((t) => t.file!)
+    );
+    const cappedPromises = files
+      .map((f) => {
+        const entry = preuploadByFileRef.current.get(f);
+        if (!entry || entry.id) return null;
+        const cap = instrumentalFiles.has(f) ? 5000 : 30000;
+        return Promise.race([entry.promise, new Promise((r) => setTimeout(r, cap))]);
+      })
+      .filter(Boolean);
+    if (!cappedPromises.length) return;
     const label = files.length > 1 ? "Préparation des pistes..." : "Préparation de la piste...";
     setPreparingTrack(label);
     const minWait = new Promise((r) => setTimeout(r, 3000));
-    await Promise.all([...pending.map((e) => e.promise), minWait]);
+    const globalCap = new Promise((r) => setTimeout(r, 30000));
+    await Promise.race([
+      Promise.all([...cappedPromises, minWait]),
+      globalCap,
+    ]);
     setPreparingTrack(null);
   }, []);
 
