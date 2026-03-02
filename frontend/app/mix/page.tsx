@@ -571,6 +571,10 @@ export default function Home() {
   const preMasterResultRef = useRef<{ mixUrl: string; masterUrl: string } | null>(null);
   const preMasterPromiseRef = useRef<Promise<{ mixUrl: string; masterUrl: string } | null> | null>(null);
 
+  const bgWavRemixAbortRef = useRef<AbortController | null>(null);
+  const bgWavRemixResultRef = useRef<Map<string, string>>(new Map());
+  const bgWavRemixPromiseRef = useRef<Map<string, Promise<string | null>>>(new Map());
+
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
   const buffersRef = useRef(getBufCache());
@@ -600,18 +604,83 @@ export default function Home() {
   const bpmBoxRef = useRef<HTMLDivElement | null>(null);
   const bpmInputFocusedRef = useRef(false);
   bpmInputFocusedRef.current = bpmInputFocused;
-  const preuploadByFileRef = useRef<Map<File, { promise: Promise<string | null>; id: string | null }>>(new Map());
+  interface PreuploadEntry {
+    wavPromise: Promise<string | null>;
+    wavId: string | null;
+    mp3Promise: Promise<string | null>;
+    mp3Id: string | null;
+  }
+  const preuploadByFileRef = useRef<Map<File, PreuploadEntry>>(new Map());
+
+  const convertWavToMp3 = useCallback(async (file: File): Promise<Blob | null> => {
+    try {
+      const { Mp3Encoder } = await import("lamejs");
+      const buf = await file.arrayBuffer();
+      const view = new DataView(buf);
+      const channels = view.getUint16(22, true);
+      const sampleRate = view.getUint32(24, true);
+      const bitsPerSample = view.getUint16(34, true);
+      let dataOffset = 44;
+      for (let i = 36; i < buf.byteLength - 8; i++) {
+        if (view.getUint32(i, false) === 0x64617461) { dataOffset = i + 8; break; }
+      }
+      const encoder = new Mp3Encoder(channels, sampleRate, 192);
+      const samples = bitsPerSample === 16
+        ? new Int16Array(buf, dataOffset)
+        : new Int16Array(Array.from(new Float32Array(buf, dataOffset), (v) => Math.max(-1, Math.min(1, v)) * 32767));
+      const mp3Parts: Uint8Array[] = [];
+      const blockSize = 1152;
+      for (let i = 0; i < samples.length; i += blockSize * channels) {
+        const end = Math.min(i + blockSize * channels, samples.length);
+        if (channels === 2) {
+          const left = new Int16Array(Math.ceil((end - i) / 2));
+          const right = new Int16Array(Math.ceil((end - i) / 2));
+          for (let j = i, k = 0; j < end; j += 2, k++) { left[k] = samples[j]; right[k] = samples[j + 1]; }
+          const chunk = encoder.encodeBuffer(left, right);
+          if (chunk.length > 0) mp3Parts.push(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+        } else {
+          const chunk = encoder.encodeBuffer(samples.subarray(i, end));
+          if (chunk.length > 0) mp3Parts.push(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+        }
+      }
+      const tail = encoder.flush();
+      if (tail.length > 0) mp3Parts.push(new Uint8Array(tail.buffer, tail.byteOffset, tail.byteLength));
+      return new Blob(mp3Parts as BlobPart[], { type: "audio/mpeg" });
+    } catch (e) {
+      console.warn("[mp3-convert] failed", e);
+      return null;
+    }
+  }, []);
+
   const startPreupload = useCallback((file: File) => {
     if (preuploadByFileRef.current.has(file)) return;
-    const uploadForm = new FormData();
-    uploadForm.append("file", file);
-    const entry = { promise: null as unknown as Promise<string | null>, id: null as string | null };
-    entry.promise = fetch(`${API_BASE}/api/track/preupload`, { method: "POST", body: uploadForm })
-      .then((r) => { if (!r.ok) { console.warn("[preupload] failed status", r.status); return null; } return r.json(); })
-      .then((d) => { const pid = d?.preupload_id ?? null; entry.id = pid; console.log("[preupload] done, id=", pid); return pid; })
-      .catch((e) => { console.warn("[preupload] error", e); return null; });
+    const entry: PreuploadEntry = {
+      wavPromise: null as unknown as Promise<string | null>, wavId: null,
+      mp3Promise: null as unknown as Promise<string | null>, mp3Id: null,
+    };
+
+    const wavForm = new FormData();
+    wavForm.append("file", file);
+    entry.wavPromise = fetch(`${API_BASE}/api/track/preupload`, { method: "POST", body: wavForm })
+      .then((r) => { if (!r.ok) return null; return r.json(); })
+      .then((d) => { const pid = d?.preupload_id ?? null; entry.wavId = pid; console.log("[preupload-wav] done, id=", pid); return pid; })
+      .catch((e) => { console.warn("[preupload-wav] error", e); return null; });
+
+    entry.mp3Promise = convertWavToMp3(file).then(async (mp3Blob) => {
+      if (!mp3Blob) return null;
+      const mp3Form = new FormData();
+      mp3Form.append("file", new File([mp3Blob], file.name.replace(/\.wav$/i, ".mp3"), { type: "audio/mpeg" }));
+      const r = await fetch(`${API_BASE}/api/track/preupload`, { method: "POST", body: mp3Form });
+      if (!r.ok) return null;
+      const d = await r.json();
+      const pid = d?.preupload_id ?? null;
+      entry.mp3Id = pid;
+      console.log("[preupload-mp3] done, id=", pid);
+      return pid;
+    }).catch((e) => { console.warn("[preupload-mp3] error", e); return null; });
+
     preuploadByFileRef.current.set(file, entry);
-  }, []);
+  }, [convertWavToMp3]);
   useEffect(() => {
     if (categoryModal?.file) startPreupload(categoryModal.file);
     if (categoryModal?.nextFiles) categoryModal.nextFiles.forEach((f) => startPreupload(f));
@@ -1224,6 +1293,7 @@ export default function Home() {
   const removeTrack = useCallback((id: string) => {
     downloadAbortRef.current?.abort();
     invalidatePreMaster();
+    invalidateBgWavRemix(id);
     setHasUnsavedChanges(true);
     deleteFileFromIDB(id);
     const nodes = trackPlaybackRef.current.get(id);
@@ -1532,6 +1602,7 @@ export default function Home() {
         return;
       }
       invalidatePreMaster();
+      invalidateBgWavRemix(id);
       deleteFileFromIDB(id);
       setTracks((prev) => {
         const track = prev.find((t) => t.id === id);
@@ -1621,9 +1692,10 @@ export default function Home() {
     const cappedPromises = files
       .map((f) => {
         const entry = preuploadByFileRef.current.get(f);
-        if (!entry || entry.id) return null;
+        if (!entry) return null;
+        if (entry.mp3Id || entry.wavId) return null;
         const cap = instrumentalFiles.has(f) ? 5000 : 30000;
-        return Promise.race([entry.promise, new Promise((r) => setTimeout(r, cap))]);
+        return Promise.race([entry.mp3Promise, new Promise((r) => setTimeout(r, cap))]);
       })
       .filter(Boolean);
     if (!cappedPromises.length) return;
@@ -2818,6 +2890,7 @@ export default function Home() {
       setMixProgress((prev) => ({ ...prev, [id]: 0 }));
       updateTrack(id, { isMixing: true });
       invalidatePreMaster();
+      invalidateBgWavRemix(id);
 
       // Resume AudioContext on user gesture (Run mix click) so it's running when mix completes for autoplay
       if (typeof window !== "undefined") {
@@ -2849,10 +2922,19 @@ export default function Home() {
       const form = new FormData();
       const preuploadEntry = track.file ? preuploadByFileRef.current.get(track.file) : null;
       let preuploadId: string | null = null;
+      let usedMp3Input = false;
       if (preuploadEntry) {
-        preuploadId = preuploadEntry.id ?? await preuploadEntry.promise;
+        if (preuploadEntry.wavId) {
+          preuploadId = preuploadEntry.wavId;
+        } else {
+          preuploadId = preuploadEntry.mp3Id ?? await preuploadEntry.mp3Promise;
+          if (preuploadId) usedMp3Input = true;
+        }
+        if (!preuploadId) {
+          preuploadId = await preuploadEntry.wavPromise;
+        }
       }
-      console.log("[mix] preupload entry?", !!preuploadEntry, "preuploadId=", preuploadId);
+      console.log("[mix] preuploadId=", preuploadId, "usedMp3=", usedMp3Input);
       if (preuploadId) {
         form.append("preupload_id", preuploadId);
       } else {
@@ -3092,6 +3174,10 @@ export default function Home() {
           setHasPausedPosition(false);
           setTimeout(clearProgress, 500);
           setTimeout(triggerPreMaster, 100);
+          if (usedMp3Input) {
+            const snapTrack = { ...track, mixedAudioUrl, mixParams: { ...track.mixParams } };
+            setTimeout(() => triggerBgWavRemix(id, snapTrack, projectBpm), 200);
+          }
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
             clearInterval(mixFinishIntervalRef.current);
@@ -3146,15 +3232,21 @@ export default function Home() {
   const isVocal = (c: Category) =>
     c === "lead_vocal" || c === "adlibs_backs";
 
-  const buildTrackSpecsAndFiles = useCallback(() => {
+  const buildTrackSpecsAndFiles = useCallback((preferWavRemix = false) => {
     const active = tracks.filter((t) => !t.muted);
     const specs = active.map((t) => {
-      const mixedTrackId = extractMixedTrackId(t.mixedAudioUrl) ?? undefined;
-      const preuploadId = !mixedTrackId && t.file ? (preuploadByFileRef.current.get(t.file)?.id ?? undefined) : undefined;
+      const wavRemixUrl = preferWavRemix ? bgWavRemixResultRef.current.get(t.id) : undefined;
+      const mixedTrackId = extractMixedTrackId(wavRemixUrl ?? t.mixedAudioUrl) ?? undefined;
+      const entry = !mixedTrackId && t.file ? preuploadByFileRef.current.get(t.file) : undefined;
+      const preuploadId = entry ? (entry.wavId ?? entry.mp3Id ?? undefined) : undefined;
       return { category: t.category, gain: t.gain, mixedTrackId, preuploadId };
     });
     const files = active
-      .filter((t) => !t.mixedAudioUrl && t.file && !preuploadByFileRef.current.get(t.file)?.id)
+      .filter((t) => {
+        if (t.mixedAudioUrl || !t.file) return false;
+        const e = preuploadByFileRef.current.get(t.file);
+        return !e || (!e.wavId && !e.mp3Id);
+      })
       .map((t) => t.file!);
     return { specs, files };
   }, [tracks]);
@@ -3195,8 +3287,89 @@ export default function Home() {
     preMasterPromiseRef.current = null;
   }, []);
 
+  const invalidateBgWavRemix = useCallback((trackId?: string) => {
+    if (trackId) {
+      bgWavRemixResultRef.current.delete(trackId);
+      bgWavRemixPromiseRef.current.delete(trackId);
+    } else {
+      bgWavRemixAbortRef.current?.abort();
+      bgWavRemixAbortRef.current = null;
+      bgWavRemixResultRef.current.clear();
+      bgWavRemixPromiseRef.current.clear();
+    }
+  }, []);
+
+  const triggerBgWavRemix = useCallback((trackId: string, track: Track, projectBpmVal: number) => {
+    if (!track.file) return;
+    const entry = preuploadByFileRef.current.get(track.file);
+    if (!entry) return;
+
+    const controller = new AbortController();
+    bgWavRemixAbortRef.current = controller;
+
+    const p = (async (): Promise<string | null> => {
+      let wavId = entry.wavId;
+      if (!wavId) wavId = await entry.wavPromise;
+      if (!wavId || controller.signal.aborted) return null;
+
+      const form = new FormData();
+      form.append("preupload_id", wavId);
+      form.append("category", track.category);
+      const mp = track.mixParams;
+      form.append("noise_gate", String(mp.noise_gate ?? true));
+      form.append("noise_gate_mode", String(mp.noise_gate_mode ?? 2));
+      form.append("deesser", String(mp.deesser));
+      form.append("deesser_mode", String(mp.deesser_mode));
+      form.append("delay", String(mp.delay));
+      form.append("delay_intensity", String(mp.delay_intensity));
+      form.append("reverb", String(mp.reverb));
+      form.append("reverb_mode", String(mp.reverb_mode));
+      form.append("bpm", String(projectBpmVal));
+      form.append("delay_division", mp.delay_division);
+      form.append("tone_low", String(mp.tone_low));
+      form.append("tone_mid", String(mp.tone_mid));
+      form.append("tone_high", String(mp.tone_high));
+      form.append("air", String(mp.air));
+      form.append("phone_fx", String(mp.phone_fx));
+      form.append("doubler", String(mp.doubler));
+      form.append("robot", String(mp.robot));
+
+      const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/api/track/mix`, { method: "POST", headers, body: form, signal: controller.signal });
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => ({}));
+      const jobId = data.jobId as string | undefined;
+      let mixedUrl = data.mixedTrackUrl as string | undefined;
+      if (jobId) {
+        let status = "running";
+        while (status === "running" || status === "queued") {
+          if (controller.signal.aborted) return null;
+          await new Promise((r) => setTimeout(r, 1000));
+          const sRes = await fetch(`${API_BASE}/api/track/mix/status?job_id=${jobId}`, { headers, signal: controller.signal });
+          const sData = await sRes.json().catch(() => ({ status: "error" }));
+          status = sData.status;
+          if (status === "done") mixedUrl = sData.mixedTrackUrl;
+          if (status === "error") return null;
+        }
+      }
+      if (!mixedUrl) return null;
+      const fullUrl = mixedUrl.startsWith("http") ? mixedUrl : `${API_BASE}${mixedUrl}`;
+      bgWavRemixResultRef.current.set(trackId, fullUrl);
+      console.log("[bg-wav-remix] done for track", trackId, fullUrl);
+      return fullUrl;
+    })().catch((e) => { if (e?.name !== "AbortError") console.warn("[bg-wav-remix] error", e); return null; });
+
+    bgWavRemixPromiseRef.current.set(trackId, p);
+  }, []);
+
   const downloadMix = useCallback(async () => {
-    const { specs, files } = buildTrackSpecsAndFiles();
+    const pendingBgRemixes = Array.from(bgWavRemixPromiseRef.current.values());
+    if (pendingBgRemixes.length) {
+      await Promise.all(pendingBgRemixes).catch(() => {});
+    }
+    const { specs, files } = buildTrackSpecsAndFiles(true);
     const hasValidTrack = tracks.some((t) => !t.muted && (t.file || t.mixedAudioUrl));
     if (specs.length === 0 || !hasValidTrack) {
       setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });

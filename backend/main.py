@@ -539,11 +539,14 @@ MAX_MIX_FILE_SIZE_BYTES = int(os.environ.get("MAX_MIX_FILE_SIZE_BYTES", "1048576
 @limiter.limit("30/minute")
 async def track_preupload(
     request: Request,
-    file: UploadFile = File(..., description="WAV à pré-uploader"),
+    file: UploadFile = File(..., description="WAV ou MP3 à pré-uploader"),
 ):
-    """Pré-upload d'un WAV avant le clic MIXER. Retourne un preupload_id réutilisable dans POST /api/track/mix."""
-    if not file.filename or not file.filename.lower().endswith(".wav"):
-        raise HTTPException(status_code=400, detail="Le fichier doit être un WAV")
+    """Pré-upload d'un WAV ou MP3 avant le clic MIXER. Retourne un preupload_id réutilisable dans POST /api/track/mix."""
+    fname = (file.filename or "").lower()
+    is_mp3 = fname.endswith(".mp3")
+    is_wav = fname.endswith(".wav")
+    if not is_mp3 and not is_wav:
+        raise HTTPException(status_code=400, detail="Le fichier doit être un WAV ou MP3")
     content = await file.read()
     if len(content) > MAX_MIX_FILE_SIZE_BYTES:
         raise HTTPException(
@@ -552,9 +555,23 @@ async def track_preupload(
         )
     os.makedirs(PREUPLOAD_DIR, exist_ok=True)
     preupload_id = str(uuid.uuid4())
-    path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.wav")
-    with open(path, "wb") as f:
-        f.write(content)
+    wav_path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.wav")
+    if is_mp3:
+        mp3_path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.mp3")
+        with open(mp3_path, "wb") as f:
+            f.write(content)
+        try:
+            _subprocess.run(
+                [FFMPEG_PATH, "-y", "-i", mp3_path, "-ar", "44100", "-ac", "2", "-sample_fmt", "s16", "-loglevel", "error", wav_path],
+                check=True, capture_output=True, timeout=30,
+            )
+        except Exception as exc:
+            if os.path.exists(mp3_path):
+                os.remove(mp3_path)
+            raise HTTPException(status_code=500, detail=f"Conversion MP3→WAV échouée: {exc}")
+    else:
+        with open(wav_path, "wb") as f:
+            f.write(content)
     return {"preupload_id": preupload_id}
 
 
