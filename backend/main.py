@@ -14,7 +14,9 @@ except ImportError:
     pass
 
 import json
+import logging
 import re
+import subprocess as _subprocess
 import sys
 import tempfile
 import threading
@@ -158,6 +160,27 @@ MIXED_TRACKS_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_mixed")
 RENDER_DIR = os.path.join(tempfile.gettempdir(), "saas_mix_render")
 TARGET_SR = 44100
 
+# --- MP3 conversion (préécoute légère) ---
+FFMPEG_PATH = os.environ.get("FFMPEG_PATH", "ffmpeg")
+_mp3_log = logging.getLogger("mp3")
+
+
+def _wav_to_mp3(wav_path: str, bitrate: str = "192k") -> Optional[str]:
+    """Convertit un WAV en MP3 (cache à côté du WAV). Retourne le chemin MP3 ou None."""
+    mp3_path = wav_path.rsplit(".", 1)[0] + ".mp3"
+    if os.path.exists(mp3_path):
+        return mp3_path
+    try:
+        _subprocess.run(
+            [FFMPEG_PATH, "-y", "-i", wav_path, "-b:a", bitrate, "-loglevel", "error", mp3_path],
+            check=True, capture_output=True, timeout=30,
+        )
+        return mp3_path if os.path.exists(mp3_path) else None
+    except Exception as exc:
+        _mp3_log.warning("MP3 conversion failed for %s: %s", wav_path, exc)
+        return None
+
+
 # Jobs de mix (progression réelle) : job_id -> { status, percent, step, mixedTrackUrl?, error?, created_at }
 _mix_jobs: dict = {}
 _mix_jobs_lock = threading.Lock()
@@ -183,7 +206,7 @@ def _evict_old_mix_jobs() -> None:
 
 
 def _cleanup_old_audio_dirs() -> None:
-    """Supprime les WAV dans MIXED_TRACKS_DIR et RENDER_DIR plus vieux que AUDIO_FILE_MAX_AGE_SECONDS."""
+    """Supprime les WAV/MP3 dans MIXED_TRACKS_DIR et RENDER_DIR plus vieux que AUDIO_FILE_MAX_AGE_SECONDS."""
     now = time.time()
     cutoff = now - AUDIO_FILE_MAX_AGE_SECONDS
     for dir_path in (MIXED_TRACKS_DIR, RENDER_DIR):
@@ -191,7 +214,7 @@ def _cleanup_old_audio_dirs() -> None:
             continue
         try:
             for name in os.listdir(dir_path):
-                if not name.endswith(".wav"):
+                if not (name.endswith(".wav") or name.endswith(".mp3")):
                     continue
                 path = os.path.join(dir_path, name)
                 try:
@@ -674,13 +697,21 @@ async def track_mix_status(job_id: str):
 
 
 @app.get("/api/download/mixed-track")
-async def download_mixed_track(request: Request, id: str):
-    """Télécharge ou lit la piste mixée. Supporte Range pour lecture streaming (play instantané)."""
+async def download_mixed_track(request: Request, id: str, format: Optional[str] = None):
+    """Télécharge ou lit la piste mixée. ?format=mp3 pour préécoute légère. Supporte Range."""
     if not re.match(r"^[a-f0-9\-]{36}$", id):
         raise HTTPException(status_code=400, detail="ID invalide")
-    path = os.path.join(MIXED_TRACKS_DIR, f"{id}.wav")
-    if not os.path.exists(path):
+    wav_path = os.path.join(MIXED_TRACKS_DIR, f"{id}.wav")
+    if not os.path.exists(wav_path):
         raise HTTPException(status_code=404, detail="Piste mixée introuvable ou expirée")
+
+    if format == "mp3":
+        mp3_path = _wav_to_mp3(wav_path)
+        if mp3_path:
+            return FileResponse(mp3_path, media_type="audio/mpeg", filename="mixed_track.mp3")
+        # Fallback WAV si conversion échoue
+
+    path = wav_path
     size = os.path.getsize(path)
     range_header = request.headers.get("range")
     if not range_header or not range_header.strip().lower().startswith("bytes="):
@@ -884,19 +915,21 @@ async def download_render(
     id: str,
     type: str = "mix",
     download: Optional[str] = None,
+    consume_only: Optional[str] = None,
+    format: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_row_optional),
 ):
-    """Stream ou téléchargement (type=mix|master). Si download=1 : 1 token mix pour mix, 1 token master pour master."""
+    """Stream ou téléchargement. ?format=mp3 pour préécoute. ?download=1 consomme 1 token. ?consume_only=1 consomme le token sans envoyer le fichier."""
     if not re.match(r"^[a-f0-9\-]{36}$", id):
         raise HTTPException(status_code=400, detail="ID invalide")
     if type not in ("mix", "master"):
         raise HTTPException(status_code=400, detail="type doit être mix ou master")
-    path = os.path.join(RENDER_DIR, f"{type}_{id}.wav")
-    if not os.path.exists(path):
+    wav_path = os.path.join(RENDER_DIR, f"{type}_{id}.wav")
+    if not os.path.exists(wav_path):
         raise HTTPException(status_code=404, detail="Fichier introuvable ou expiré")
 
-    consume_tokens = download == "1"
+    consume_tokens = download == "1" or consume_only == "1"
     if type in ("mix", "master"):
         if not current_user:
             raise HTTPException(status_code=401, detail="Connexion requise pour accéder au fichier.")
@@ -904,9 +937,8 @@ async def download_render(
         if consume_tokens:
             _ensure_usage_month(current_user, db)
             mix_limit, master_limit = PLAN_LIMITS.get(plan, (None, None))
-            # Pro = illimité ; free/starter/artiste = quota inclus + tokens achetés
             if plan == "pro":
-                pass  # pas de vérification
+                pass
             else:
                 included_mix = max(0, (mix_limit or 0) - (current_user.mix_downloads_count or 0))
                 included_master = max(0, (master_limit or 0) - (current_user.master_downloads_count or 0))
@@ -919,7 +951,6 @@ async def download_render(
                 else:
                     if available_master < 1:
                         raise HTTPException(status_code=402, detail=no_tokens_msg)
-                # Consommer : 1 mix pour mix, 1 master pour master (quota d'abord, puis tokens achetés)
                 if type == "mix":
                     if mix_limit is not None and (current_user.mix_downloads_count or 0) < mix_limit:
                         current_user.mix_downloads_count = (current_user.mix_downloads_count or 0) + 1
@@ -931,8 +962,16 @@ async def download_render(
                     else:
                         current_user.master_tokens_purchased = max(0, (current_user.master_tokens_purchased or 0) - 1)
             db.commit()
-        # Stream (sans download=1) : tout utilisateur connecté peut écouter
 
+    if consume_only == "1":
+        return Response(status_code=204)
+
+    if format == "mp3":
+        mp3_path = _wav_to_mp3(wav_path)
+        if mp3_path:
+            return FileResponse(mp3_path, media_type="audio/mpeg", filename=f"{type}_render.mp3")
+
+    path = wav_path
     size = os.path.getsize(path)
     range_header = request.headers.get("range")
     if not range_header or not range_header.strip().lower().startswith("bytes="):

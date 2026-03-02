@@ -588,6 +588,7 @@ export default function Home() {
   const isPlayingRef = useRef(false);
   isPlayingRef.current = isPlaying;
   const preloadMixedRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const masterWavBlobRef = useRef<{ mix: Blob | null; master: Blob | null }>({ mix: null, master: null });
   const isFirstSaveRef = useRef(true);
   const playAllRef = useRef<(override?: { playable?: Track[]; startOffset?: number }) => void>(() => {});
   const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
@@ -2960,6 +2961,7 @@ export default function Home() {
         const mixedAudioUrl = path.startsWith("http") ? path : `${API_BASE}${path}`;
         mixedAudioUrlToSet = mixedAudioUrl; // pour le catch : afficher toggle même si fetch/decode échoue
         const fullUrl = mixedAudioUrl.startsWith("http") ? mixedAudioUrl : `${API_BASE}${mixedAudioUrl}`;
+        const mp3Url = fullUrl + (fullUrl.includes("?") ? "&" : "?") + "format=mp3";
         const entry = buffersRef.current.get(id) ?? { raw: null, mixed: null };
         entry.mixed = null;
         buffersRef.current.set(id, entry);
@@ -2967,14 +2969,12 @@ export default function Home() {
         try {
           const ctx = contextRef.current ?? new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
           if (!contextRef.current) contextRef.current = ctx;
-          const audioRes = await fetchWithTimeoutAndRetry(fullUrl, {
+          const audioRes = await fetchWithTimeoutAndRetry(mp3Url, {
             timeoutMs: 90000,
             retries: 2,
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           });
           const ab = await audioRes.arrayBuffer();
-          // Cache the ArrayBuffer for mobile re-decode (playAll creates fresh context and clears decoded buffers).
-          // Must clone BEFORE decodeAudioData which detaches the original.
           abCacheRef.current.set(`mixed:${fullUrl}`, ab.slice(0));
           const decoded = await ctx.decodeAudioData(ab);
           const e = buffersRef.current.get(id);
@@ -3271,12 +3271,18 @@ export default function Home() {
       if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
       const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
       const masterUrl = (data.masterUrl as string).startsWith("http") ? data.masterUrl : `${API_BASE}${data.masterUrl}`;
-      // Decode waveforms BEFORE ending the mastering animation so everything is ready to play
+      const mixMp3Url = mixUrl + (mixUrl.includes("?") ? "&" : "?") + "format=mp3";
+      const masterMp3Url = masterUrl + (masterUrl.includes("?") ? "&" : "?") + "format=mp3";
+      // Background WAV download for instant master download later
+      masterWavBlobRef.current = { mix: null, master: null };
+      const hdrs = token ? { Authorization: `Bearer ${token}` } : undefined;
+      fetch(masterUrl, { headers: hdrs }).then((r) => r.blob()).then((b) => { masterWavBlobRef.current.master = b; }).catch(() => {});
+      // Decode MP3 waveforms for preview (much faster than WAV)
       try {
         const decodeCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         const [mixBufRes, masterBufRes] = await Promise.all([
-          fetchWithTimeoutAndRetry(mixUrl, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: masterAbortController.signal }),
-          fetchWithTimeoutAndRetry(masterUrl, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: masterAbortController.signal }),
+          fetchWithTimeoutAndRetry(mixMp3Url, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: masterAbortController.signal }),
+          fetchWithTimeoutAndRetry(masterMp3Url, { timeoutMs: 120000, retries: 2, headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: masterAbortController.signal }),
         ]);
         const [mixBuf, masterBuf] = await Promise.all([
           mixBufRes.arrayBuffer().then((b) => decodeCtx.decodeAudioData(b)),
@@ -5125,54 +5131,41 @@ export default function Home() {
                     }
                     setIsDownloadingMaster(true);
                     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
-                    const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
                     const dlController = new AbortController();
                     downloadAbortRef.current = dlController;
                     try {
-                      const res = await fetch(masterDownloadUrl, {
-                        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-                        signal: dlController.signal,
-                      });
-                      if (res.status === 401) {
-                        setAppModal({
-                          type: "alert",
-                          message: "La session a peut-être expiré ou le téléchargement n’a pas pu être authentifié. Reconnectez-vous puis réessayez le téléchargement.",
-                          onClose: () => { openAuthModal?.("login"); },
-                        });
-                        return;
-                      }
-                      if (res.status === 402) {
-                        const errData = await res.json().catch(() => ({}));
-                        const errMsg = (errData.detail as string) || "Limite atteinte.";
-                        const isNoTokens = typeof errMsg === "string" && errMsg.includes("NO_TOKENS");
-                        if (!isPro && isNoTokens) {
-                          setAppModal({
-                            type: "confirm_two",
-                            message: "Téléchargement du master coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre master.",
-                            primaryLabel: "Choisir un plan",
-                            secondaryLabel: "Acheter un token",
-                            onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); },
-                            onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); },
-                          });
-                        } else {
-                          setAppModal({
-                            type: "alert",
-                            message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger le master." : errMsg,
-                            onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
-                          });
+                      const cachedBlob = masterWavBlobRef.current.master;
+                      if (cachedBlob) {
+                        const consumeUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "consume_only=1";
+                        const consumeRes = await fetch(consumeUrl, { headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: dlController.signal });
+                        if (consumeRes.status === 401) { setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => { openAuthModal?.("login"); } }); return; }
+                        if (consumeRes.status === 402) {
+                          const errData = await consumeRes.json().catch(() => ({}));
+                          const errMsg = (errData.detail as string) || "Limite atteinte.";
+                          const isNoTokens = typeof errMsg === "string" && errMsg.includes("NO_TOKENS");
+                          if (!isPro && isNoTokens) { setAppModal({ type: "confirm_two", message: "Téléchargement du master coûte 1 token.", primaryLabel: "Choisir un plan", secondaryLabel: "Acheter un token", onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); }, onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); } }); }
+                          else { setAppModal({ type: "alert", message: isNoTokens ? "Plus de tokens disponibles." : errMsg, onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } } }); }
+                          return;
                         }
-                        return;
+                        const url = URL.createObjectURL(cachedBlob);
+                        const a = document.createElement("a"); a.href = url; a.download = "master.wav"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                      } else {
+                        const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
+                        const res = await fetch(masterDownloadUrl, { headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: dlController.signal });
+                        if (res.status === 401) { setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => { openAuthModal?.("login"); } }); return; }
+                        if (res.status === 402) {
+                          const errData = await res.json().catch(() => ({}));
+                          const errMsg = (errData.detail as string) || "Limite atteinte.";
+                          const isNoTokens = typeof errMsg === "string" && errMsg.includes("NO_TOKENS");
+                          if (!isPro && isNoTokens) { setAppModal({ type: "confirm_two", message: "Téléchargement du master coûte 1 token.", primaryLabel: "Choisir un plan", secondaryLabel: "Acheter un token", onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); }, onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); } }); }
+                          else { setAppModal({ type: "alert", message: isNoTokens ? "Plus de tokens disponibles." : errMsg, onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } } }); }
+                          return;
+                        }
+                        if (!res.ok) throw new Error("Téléchargement master échoué");
+                        const blob = await res.blob();
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a"); a.href = url; a.download = "master.wav"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
                       }
-                      if (!res.ok) throw new Error("Téléchargement master échoué");
-                      const blob = await res.blob();
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = "master.wav";
-                      document.body.appendChild(a);
-                      a.click();
-                      a.remove();
-                      URL.revokeObjectURL(url);
                     } catch (e) {
                       const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
                       if (isAbort) return;
