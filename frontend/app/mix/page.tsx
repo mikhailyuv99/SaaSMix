@@ -566,6 +566,8 @@ export default function Home() {
   const masterStartTimeRef = useRef<number>(0);
   const masterResultSectionRef = useRef<HTMLElement | null>(null);
   const downloadAbortRef = useRef<AbortController | null>(null);
+  const preMasterAbortRef = useRef<AbortController | null>(null);
+  const preMasterResultRef = useRef<{ mixUrl: string; masterUrl: string } | null>(null);
 
   const contextRef = useRef<AudioContext | null>(null);
   const audioUnlockedRef = useRef(false);
@@ -1219,6 +1221,7 @@ export default function Home() {
 
   const removeTrack = useCallback((id: string) => {
     downloadAbortRef.current?.abort();
+    invalidatePreMaster();
     setHasUnsavedChanges(true);
     deleteFileFromIDB(id);
     const nodes = trackPlaybackRef.current.get(id);
@@ -1511,9 +1514,7 @@ export default function Home() {
           } catch (_) {}
         })();
       }
-      if (category !== "instrumental") {
-        startPreupload(file);
-      }
+      startPreupload(file);
     },
     [updateTrack]
   );
@@ -1528,6 +1529,7 @@ export default function Home() {
         setCategoryModal({ trackId: id, file, fromHero: false });
         return;
       }
+      invalidatePreMaster();
       deleteFileFromIDB(id);
       setTracks((prev) => {
         const track = prev.find((t) => t.id === id);
@@ -2781,6 +2783,7 @@ export default function Home() {
 
       setMixProgress((prev) => ({ ...prev, [id]: 0 }));
       updateTrack(id, { isMixing: true });
+      invalidatePreMaster();
 
       // Resume AudioContext on user gesture (Run mix click) so it's running when mix completes for autoplay
       if (typeof window !== "undefined") {
@@ -3054,6 +3057,7 @@ export default function Home() {
           setPausedAtSeconds(0);
           setHasPausedPosition(false);
           setTimeout(clearProgress, 500);
+          setTimeout(triggerPreMaster, 100);
         } catch (decodeErr) {
           if (mixFinishIntervalRef.current) {
             clearInterval(mixFinishIntervalRef.current);
@@ -3110,16 +3114,48 @@ export default function Home() {
 
   const buildTrackSpecsAndFiles = useCallback(() => {
     const active = tracks.filter((t) => !t.muted);
-    const specs = active.map((t) => ({
-      category: t.category,
-      gain: t.gain,
-      mixedTrackId: extractMixedTrackId(t.mixedAudioUrl) ?? undefined,
-    }));
+    const specs = active.map((t) => {
+      const mixedTrackId = extractMixedTrackId(t.mixedAudioUrl) ?? undefined;
+      const preuploadId = !mixedTrackId && t.file ? (preuploadByFileRef.current.get(t.file)?.id ?? undefined) : undefined;
+      return { category: t.category, gain: t.gain, mixedTrackId, preuploadId };
+    });
     const files = active
-      .filter((t) => !t.mixedAudioUrl && t.file)
+      .filter((t) => !t.mixedAudioUrl && t.file && !preuploadByFileRef.current.get(t.file)?.id)
       .map((t) => t.file!);
     return { specs, files };
   }, [tracks]);
+
+  const triggerPreMaster = useCallback(() => {
+    preMasterAbortRef.current?.abort();
+    preMasterResultRef.current = null;
+    const { specs, files } = buildTrackSpecsAndFiles();
+    const hasValidTrack = tracksRef.current.some((t) => !t.muted && (t.file || t.mixedAudioUrl));
+    if (specs.length === 0 || !hasValidTrack) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+    const controller = new AbortController();
+    preMasterAbortRef.current = controller;
+    const form = new FormData();
+    form.append("track_specs", JSON.stringify(specs));
+    files.forEach((f) => form.append("files", f));
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form, signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        const mixUrl = (d.mixUrl as string).startsWith("http") ? d.mixUrl : `${API_BASE}${d.mixUrl}`;
+        const masterUrl = (d.masterUrl as string).startsWith("http") ? d.masterUrl : `${API_BASE}${d.masterUrl}`;
+        preMasterResultRef.current = { mixUrl, masterUrl };
+        console.log("[pre-master] done", preMasterResultRef.current);
+      })
+      .catch(() => {});
+  }, [buildTrackSpecsAndFiles]);
+
+  const invalidatePreMaster = useCallback(() => {
+    preMasterAbortRef.current?.abort();
+    preMasterAbortRef.current = null;
+    preMasterResultRef.current = null;
+  }, []);
 
   const downloadMix = useCallback(async () => {
     const { specs, files } = buildTrackSpecsAndFiles();
@@ -3264,43 +3300,41 @@ export default function Home() {
     const masterAbortController = new AbortController();
     downloadAbortRef.current = masterAbortController;
     try {
-      const form = new FormData();
-      form.append("track_specs", JSON.stringify(specs));
-      files.forEach((f) => form.append("files", f));
       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      const postTimeoutId = setTimeout(() => masterAbortController.abort(), masterPostTimeoutMs);
-      let res: Response;
-      try {
-        res = await fetch(`${API_BASE}/api/master`, {
-          method: "POST",
-          headers,
-          body: form,
-          signal: masterAbortController.signal,
-        });
-      } finally {
-        clearTimeout(postTimeoutId);
+      let mixUrl: string;
+      let masterUrl: string;
+      const cached = preMasterResultRef.current;
+      if (cached) {
+        console.log("[master] using pre-master result");
+        mixUrl = cached.mixUrl;
+        masterUrl = cached.masterUrl;
+        preMasterResultRef.current = null;
+      } else {
+        console.log("[master] no pre-master, calling API");
+        const form = new FormData();
+        form.append("track_specs", JSON.stringify(specs));
+        files.forEach((f) => form.append("files", f));
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const postTimeoutId = setTimeout(() => masterAbortController.abort(), masterPostTimeoutMs);
+        let res: Response;
+        try {
+          res = await fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form, signal: masterAbortController.signal });
+        } finally {
+          clearTimeout(postTimeoutId);
+        }
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401) { logout(); setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} }); return; }
+        if (res.status === 402) {
+          const msg = (data.detail as string) || "Limite atteinte.";
+          const isNoTokens = typeof msg === "string" && msg.includes("NO_TOKENS");
+          setAppModal({ type: "alert", message: isNoTokens ? "Plus de tokens disponibles." : msg, onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } } });
+          return;
+        }
+        if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
+        mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
+        masterUrl = (data.masterUrl as string).startsWith("http") ? data.masterUrl : `${API_BASE}${data.masterUrl}`;
       }
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 401) {
-        logout();
-        setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} });
-        return;
-      }
-      if (res.status === 402) {
-        const msg = (data.detail as string) || "Vous avez atteint votre limite de téléchargements ou votre plan ne le permet pas. Passez au plan supérieur pour en obtenir plus.";
-        const isNoTokens = typeof msg === "string" && msg.includes("NO_TOKENS");
-        setAppModal({
-          type: "alert",
-          message: isNoTokens ? "Plus de tokens disponibles. Achetez des tokens pour télécharger." : msg,
-          onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } },
-        });
-        return;
-      }
-      if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
-      const mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
-      const masterUrl = (data.masterUrl as string).startsWith("http") ? data.masterUrl : `${API_BASE}${data.masterUrl}`;
       const mixMp3Url = mixUrl + (mixUrl.includes("?") ? "&" : "?") + "format=mp3";
       const masterMp3Url = masterUrl + (masterUrl.includes("?") ? "&" : "?") + "format=mp3";
       // Background WAV download for instant master download later

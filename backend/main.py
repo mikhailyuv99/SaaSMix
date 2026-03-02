@@ -787,8 +787,8 @@ async def download_mixed_track(request: Request, id: str, format: Optional[str] 
 
 async def _build_track_paths_and_gains(track_specs: list, files: List[UploadFile]) -> tuple:
     """
-    track_specs: [ { "category", "gain", "mixedTrackId"?: string }, ... ]
-    files: liste de fichiers pour les pistes sans mixedTrackId (même ordre).
+    track_specs: [ { "category", "gain", "mixedTrackId"?: string, "preuploadId"?: string }, ... ]
+    files: liste de fichiers pour les pistes sans mixedTrackId ni preuploadId (même ordre).
     Retourne ( [ (path, gain), ... ], temp_paths ).
     """
     os.makedirs(MIXED_TRACKS_DIR, exist_ok=True)
@@ -800,6 +800,12 @@ async def _build_track_paths_and_gains(track_specs: list, files: List[UploadFile
         mixed_id = spec.get("mixedTrackId")
         if mixed_id and re.match(r"^[a-f0-9\-]{36}$", mixed_id):
             path = os.path.join(MIXED_TRACKS_DIR, f"{mixed_id}.wav")
+            if os.path.exists(path):
+                paths_gains.append((path, gain))
+                continue
+        preupload_id = spec.get("preuploadId")
+        if preupload_id and re.match(r"^[a-f0-9\-]{36}$", preupload_id):
+            path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.wav")
             if os.path.exists(path):
                 paths_gains.append((path, gain))
                 continue
