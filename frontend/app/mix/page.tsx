@@ -473,6 +473,7 @@ export default function Home() {
     nextHeroFiles?: { blob: Blob; fileName: string }[];
     nextFiles?: File[];
   } | null>(null);
+  const [preparingTrack, setPreparingTrack] = useState(false);
   const mixDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [mixDropzoneDragging, setMixDropzoneDragging] = useState(false);
   const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
@@ -1614,13 +1615,25 @@ export default function Home() {
   }, []);
 
   const applyCategoryChoice = useCallback(
-    (category: Category) => {
+    async (category: Category) => {
       if (!categoryModal) return;
       setHasUnsavedChanges(true);
       const { trackId, file, fromHero, nextHeroFiles, nextFiles } = categoryModal;
       setCategoryModal(null);
+
+      const waitForPreupload = async (f: File) => {
+        const entry = preuploadByFileRef.current.get(f);
+        if (!entry) return;
+        if (entry.id) return;
+        setPreparingTrack(true);
+        const minWait = new Promise((r) => setTimeout(r, 3000));
+        await Promise.all([entry.promise, minWait]);
+        setPreparingTrack(false);
+      };
+
       if (fromHero) {
         createTrackFromFile(file, category);
+        await waitForPreupload(file);
         if (nextHeroFiles?.length) {
           const next = nextHeroFiles[0];
           if (!next.fileName.toLowerCase().endsWith(".wav")) {
@@ -1634,6 +1647,7 @@ export default function Home() {
       }
       if (nextFiles !== undefined) {
         createTrackFromFile(file, category);
+        await waitForPreupload(file);
         if (nextFiles.length) {
           setTimeout(() => setCategoryModal({ file: nextFiles[0], nextFiles: nextFiles.slice(1) }), 0);
         }
@@ -1641,6 +1655,7 @@ export default function Home() {
       }
       if (trackId) {
         applyFileWithCategory(trackId, file, category);
+        await waitForPreupload(file);
         if (typeof document !== "undefined") {
           const input = document.getElementById(`file-${trackId}`) as HTMLInputElement | null;
           if (input) input.value = "";
@@ -3771,6 +3786,19 @@ export default function Home() {
             </div>
           </div>
         </div>,
+          document.body
+        )}
+
+      {preparingTrack &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className={`fixed inset-0 flex items-center justify-center p-4 ${isFullscreen ? "z-[100020]" : "z-[110]"}`}>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="relative flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <p className="text-white text-sm font-medium tracking-wide animate-pulse">Préparation de la piste...</p>
+            </div>
+          </div>,
           document.body
         )}
 
