@@ -389,6 +389,10 @@ export default function Home() {
   const [bpmInputFocused, setBpmInputFocused] = useState(false);
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    fetch(`${API_BASE}/health`, { method: "HEAD", mode: "cors" }).catch(() => {});
+  }, []);
+
   // BPM box : wheel ne bloque le scroll que si l'utilisateur a focalisé le BPM (évite blocage en scrollant vers la FAQ)
   useEffect(() => {
     if (tracks.length === 0) return;
