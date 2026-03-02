@@ -389,10 +389,6 @@ export default function Home() {
   const [bpmInputFocused, setBpmInputFocused] = useState(false);
   const [mixedPreloadReady, setMixedPreloadReady] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    fetch(`${API_BASE}/health`, { method: "HEAD", mode: "cors" }).catch(() => {});
-  }, []);
-
   // BPM box : wheel ne bloque le scroll que si l'utilisateur a focalisé le BPM (évite blocage en scrollant vers la FAQ)
   useEffect(() => {
     if (tracks.length === 0) return;
@@ -607,21 +603,50 @@ export default function Home() {
   interface PreuploadEntry {
     wavPromise: Promise<string | null>;
     wavId: string | null;
+    progress: number;
   }
   const preuploadByFileRef = useRef<Map<File, PreuploadEntry>>(new Map());
+  const [preuploadProgress, setPreuploadProgress] = useState<number | null>(null);
 
   const startPreupload = useCallback((file: File) => {
     if (preuploadByFileRef.current.has(file)) return;
     const entry: PreuploadEntry = {
-      wavPromise: null as unknown as Promise<string | null>, wavId: null,
+      wavPromise: null as unknown as Promise<string | null>, wavId: null, progress: 0,
     };
 
-    const wavForm = new FormData();
-    wavForm.append("file", file);
-    entry.wavPromise = fetch(`${API_BASE}/api/track/preupload`, { method: "POST", body: wavForm })
-      .then((r) => { if (!r.ok) return null; return r.json(); })
-      .then((d) => { const pid = d?.preupload_id ?? null; entry.wavId = pid; console.log("[preupload-wav] done, id=", pid); return pid; })
-      .catch((e) => { console.warn("[preupload-wav] error", e); return null; });
+    entry.wavPromise = new Promise<string | null>((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${API_BASE}/api/track/preupload`);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const pct = Math.round((e.loaded / e.total) * 100);
+          entry.progress = pct;
+          setPreuploadProgress(pct);
+          if (pct % 20 === 0) console.log(`[preupload-wav] ${pct}% (${(e.loaded / 1048576).toFixed(1)}MB / ${(e.total / 1048576).toFixed(1)}MB)`);
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const d = JSON.parse(xhr.responseText);
+            const pid = d?.preupload_id ?? null;
+            entry.wavId = pid;
+            entry.progress = 100;
+            setPreuploadProgress(100);
+            console.log("[preupload-wav] done, id=", pid);
+            resolve(pid);
+          } catch { resolve(null); }
+        } else {
+          console.warn("[preupload-wav] failed status", xhr.status);
+          resolve(null);
+        }
+      };
+      xhr.onerror = () => { console.warn("[preupload-wav] network error"); resolve(null); };
+      xhr.ontimeout = () => { console.warn("[preupload-wav] timeout"); resolve(null); };
+      const wavForm = new FormData();
+      wavForm.append("file", file);
+      xhr.send(wavForm);
+    });
 
     preuploadByFileRef.current.set(file, entry);
   }, []);
@@ -1650,6 +1675,7 @@ export default function Home() {
       globalCap,
     ]);
     setPreparingTrack(null);
+    setPreuploadProgress(null);
   }, []);
 
   const applyCategoryChoice = useCallback(
@@ -3837,7 +3863,16 @@ export default function Home() {
           <div className={`fixed inset-0 flex items-center justify-center p-4 ${isFullscreen ? "z-[100020]" : "z-[110]"}`}>
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <div className="relative flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              {preuploadProgress !== null && preuploadProgress < 100 ? (
+                <div className="w-48 flex flex-col items-center gap-2">
+                  <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-white rounded-full transition-all duration-300" style={{ width: `${preuploadProgress}%` }} />
+                  </div>
+                  <p className="text-white/60 text-xs tabular-nums">{preuploadProgress}%</p>
+                </div>
+              ) : (
+                <div className="w-12 h-12 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              )}
               <p className="text-white text-sm font-medium tracking-wide animate-pulse">{preparingTrack}</p>
             </div>
           </div>,
