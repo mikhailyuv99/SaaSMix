@@ -20,7 +20,6 @@ import { useAuth } from "../context";
 import { useLeaveWarning } from "../context/LeaveWarningContext";
 import { useSubscription } from "../context/SubscriptionContext";
 import { getHeroPendingFiles } from "../lib/heroPendingFiles";
-import * as lamejsModule from "lamejs";
 
 const SubscriptionModal = dynamic(
   () => import("../components/SubscriptionModal").then((m) => ({ default: m.SubscriptionModal })),
@@ -630,11 +629,20 @@ export default function Home() {
       return new Blob(parts as BlobPart[], { type: "audio/mpeg" });
     };
     try {
-      const mod = lamejsModule as Record<string, unknown>;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const Mp3Encoder = (mod.Mp3Encoder ?? (mod.default as any)?.Mp3Encoder ?? mod.default) as any;
-      if (!Mp3Encoder) { console.error("[mp3-convert] lamejs.Mp3Encoder not found. Keys:", Object.keys(mod), "module:", mod); return null; }
-      console.log("[mp3-convert] Mp3Encoder found, starting conversion...");
+      const w = window as any;
+      if (!w.lamejs) {
+        await new Promise<void>((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js";
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error("Failed to load lamejs from CDN"));
+          document.head.appendChild(s);
+        });
+      }
+      const Mp3Encoder = w.lamejs?.Mp3Encoder ?? w.Mp3Encoder;
+      if (!Mp3Encoder) { console.error("[mp3-convert] Mp3Encoder not found after CDN load. window.lamejs:", w.lamejs); return null; }
+      console.log("[mp3-convert] Mp3Encoder loaded via CDN, starting conversion...");
       const buf = await file.arrayBuffer();
       const view = new DataView(buf);
 
