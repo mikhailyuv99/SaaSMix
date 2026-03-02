@@ -589,6 +589,7 @@ export default function Home() {
   isPlayingRef.current = isPlaying;
   const preloadMixedRef = useRef<Map<string, HTMLAudioElement>>(new Map());
   const masterWavBlobRef = useRef<{ mix: Blob | null; master: Blob | null }>({ mix: null, master: null });
+  const masterWavPromiseRef = useRef<Promise<Blob | null> | null>(null);
   const isFirstSaveRef = useRef(true);
   const playAllRef = useRef<(override?: { playable?: Track[]; startOffset?: number }) => void>(() => {});
   const pendingPlayableAfterMixRef = useRef<Track[] | null>(null);
@@ -3276,7 +3277,8 @@ export default function Home() {
       // Background WAV download for instant master download later
       masterWavBlobRef.current = { mix: null, master: null };
       const hdrs = token ? { Authorization: `Bearer ${token}` } : undefined;
-      fetch(masterUrl, { headers: hdrs }).then((r) => r.blob()).then((b) => { masterWavBlobRef.current.master = b; }).catch(() => {});
+      const wavPromise = fetch(masterUrl, { headers: hdrs }).then((r) => r.blob()).then((b) => { masterWavBlobRef.current.master = b; return b; }).catch(() => null);
+      masterWavPromiseRef.current = wavPromise;
       // Decode MP3 waveforms for preview (much faster than WAV)
       try {
         const decodeCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -5134,7 +5136,10 @@ export default function Home() {
                     const dlController = new AbortController();
                     downloadAbortRef.current = dlController;
                     try {
-                      const cachedBlob = masterWavBlobRef.current.master;
+                      let cachedBlob = masterWavBlobRef.current.master;
+                      if (!cachedBlob && masterWavPromiseRef.current) {
+                        cachedBlob = await masterWavPromiseRef.current;
+                      }
                       if (cachedBlob) {
                         const consumeUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "consume_only=1";
                         const consumeRes = await fetch(consumeUrl, { headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: dlController.signal });
