@@ -3335,6 +3335,7 @@ export default function Home() {
     const masterPostTimeoutMs = isOldSafari ? 180000 : 120000;
     setIsMastering(true);
     setMasterResult(null);
+    const masterStartTime = Date.now();
     const masterAbortController = new AbortController();
     downloadAbortRef.current = masterAbortController;
     try {
@@ -3407,6 +3408,8 @@ export default function Home() {
         const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e)));
         if (!isAbort) console.error("[mix] master waveform decode failed", e);
       }
+      const elapsed = Date.now() - masterStartTime;
+      if (elapsed < 10000) await new Promise((r) => setTimeout(r, 10000 - elapsed));
       stopAll();
       setMasterResult({ mixUrl, masterUrl });
       setMasterPlaybackMode("master");
