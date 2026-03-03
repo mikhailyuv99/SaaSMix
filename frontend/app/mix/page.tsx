@@ -1671,7 +1671,7 @@ export default function Home() {
       })
       .filter(Boolean);
     if (!cappedPromises.length) return;
-    const label = files.length > 1 ? "Préparation des pistes..." : "Préparation de la piste...";
+    const label = cappedPromises.length > 1 ? "Préparation des pistes..." : "Préparation de la piste...";
     setPreparingTrack(label);
     const minWait = new Promise((r) => setTimeout(r, 3000));
     const globalCap = new Promise((r) => setTimeout(r, 30000));
