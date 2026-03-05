@@ -22,5 +22,16 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/"],
+  matcher: [
+    {
+      source: "/",
+      has: [
+        {
+          type: "header",
+          key: "user-agent",
+          value: ".*(facebookexternalhit|Facebot).*",
+        },
+      ],
+    },
+  ],
 };

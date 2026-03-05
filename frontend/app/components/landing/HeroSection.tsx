@@ -111,8 +111,7 @@ export function HeroSection() {
       <div className="w-full max-w-6xl mx-auto grid items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12 max-lg:gap-6 max-md:gap-5 box-border">
         <div className="max-w-xl max-lg:max-w-none">
           <h1
-            className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-hero-tagline max-lg:text-3xl max-md:text-2xl"
-            style={{ animationFillMode: "both" }}
+            className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl max-lg:text-3xl max-md:text-2xl"
           >
             <span className="text-white inline-block">Le site n°1</span>
             <br />
@@ -121,20 +120,17 @@ export function HeroSection() {
             <span className="text-white inline-block whitespace-nowrap">en ligne</span>
           </h1>
           <p
-            className="mt-4 text-lg text-slate-400 sm:text-xl animate-fade-up max-lg:text-base max-md:mt-3 max-md:text-sm font-sans"
-            style={{ animationDelay: "0.25s", animationFillMode: "both" }}
+            className="mt-4 text-lg text-slate-400 sm:text-xl max-lg:text-base max-md:mt-3 max-md:text-sm font-sans"
           >
             Mixez vos pistes en moins de 60 secondes.
           </p>
           <p
-            className="mt-3 text-sm text-slate-400 sm:text-base animate-fade-up max-lg:text-sm max-md:text-xs font-sans"
-            style={{ animationDelay: "0.3s", animationFillMode: "both" }}
+            className="mt-3 text-sm text-slate-400 sm:text-base max-lg:text-sm max-md:text-xs font-sans"
           >
             Zéro ingé son, zéro plugin — tout se fait en ligne.
           </p>
           <ul
-            className="mt-4 space-y-2 animate-fade-up max-lg:mt-3 max-lg:space-y-1.5 max-md:mt-2 font-sans"
-            style={{ animationDelay: "0.4s", animationFillMode: "both" }}
+            className="mt-4 space-y-2 max-lg:mt-3 max-lg:space-y-1.5 max-md:mt-2 font-sans"
           >
             {[
               "Mix en quelques secondes",
@@ -151,10 +147,7 @@ export function HeroSection() {
           </ul>
         </div>
 
-        <div
-          className="animate-fade-up"
-          style={{ animationDelay: "0.35s", animationFillMode: "both" }}
-        >
+        <div>
           <input
             ref={inputRef}
             type="file"
