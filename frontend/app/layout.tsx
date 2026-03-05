@@ -61,7 +61,6 @@ export const metadata = {
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
     ],
     apple: '/icon.svg',
   },
@@ -93,7 +92,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://api-staging.siberiamix.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api-staging.siberiamix.com" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-        <link rel="alternate icon" href="/favicon.ico" />
         {process.env.NEXT_PUBLIC_FB_APP_ID ? (
           <meta property="fb:app_id" content={process.env.NEXT_PUBLIC_FB_APP_ID} />
         ) : null}
