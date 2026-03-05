@@ -228,7 +228,7 @@ export function SubscriptionModal({
       <div className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3" onClick={onClose}>
         <div className="backdrop-blur-layer" aria-hidden="true" />
         <div className="backdrop-tint-layer" aria-hidden="true" />
-        <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-sm w-full relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-sm w-full relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
           <p className="text-slate-400 text-sm">Stripe non configuré (clé publique manquante).</p>
           <button type="button" onClick={onClose} className="mt-4 text-white text-sm underline">Fermer</button>
         </div>
@@ -241,9 +241,9 @@ export function SubscriptionModal({
     <div className="modal-backdrop-slate fixed inset-0 z-[9999] flex items-center justify-center p-4 max-lg:p-3" onClick={onClose}>
       <div className="backdrop-blur-layer" aria-hidden="true" />
       <div className="backdrop-tint-layer" aria-hidden="true" />
-      <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-md w-full relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-md w-full relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl" onClick={(e) => e.stopPropagation()}>
         <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">&times;</button>
-        <h2 className="text-xl font-medium text-white mb-1">{initialPriceId ? "Finaliser l'abonnement" : "Choisir une formule"}</h2>
+        <h2 className="font-heading text-xl font-medium text-white mb-1">{initialPriceId ? "Finaliser l'abonnement" : "Choisir une formule"}</h2>
         <p className="text-tagline text-slate-400 text-[10px] mb-6">Abonnement lié à votre compte. Paiement sécurisé Stripe.</p>
         {stripePromise && (
           <Elements stripe={stripePromise}>

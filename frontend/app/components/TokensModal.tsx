@@ -202,13 +202,13 @@ export function TokensModal({
       <div className="backdrop-blur-layer" aria-hidden="true" />
       <div className="backdrop-tint-layer" aria-hidden="true" />
       <div
-        className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-lg w-full relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl my-8"
+        className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 max-w-lg w-full relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl my-8"
         onClick={(e) => e.stopPropagation()}
       >
         <button type="button" onClick={onClose} className="absolute top-3 right-3 text-slate-400 hover:text-white text-lg leading-none">
           &times;
         </button>
-        <h2 className="text-xl font-medium text-white mb-1">Tokens</h2>
+        <h2 className="font-heading text-xl font-medium text-white mb-1">Tokens</h2>
         <p className="text-tagline text-slate-400 text-[10px] mb-6">Besoin de plus ? Refaites le plein.</p>
 
         {!hasToken ? (

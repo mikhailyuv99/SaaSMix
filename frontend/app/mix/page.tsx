@@ -3663,14 +3663,14 @@ export default function Home() {
           style={{ width: "100vw", height: "100dvh", minHeight: "100vh" }}
           aria-hidden
         >
-          <div className="absolute inset-0 origin-center scale-[1.08] blur-[6px]" style={{ overflow: "hidden" }}>
+          <div className="absolute inset-0 origin-center scale-[1.08]" style={{ overflow: "hidden" }}>
             <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
-              <source srcSet="/background-1280.avif 1280w, /background-1920.avif 1920w" type="image/avif" sizes="100vw" />
-              <source srcSet="/background-1280.webp 1280w, /background-1920.webp 1920w" type="image/webp" sizes="100vw" />
-              <img src="/background.png" alt="" className="block h-full w-full object-cover object-center" style={{ minHeight: "100%", minWidth: "100%" }} />
+              <source srcSet="/background-new.avif" type="image/avif" />
+              <source srcSet="/background-new.webp" type="image/webp" />
+              <img src="/background-new.png" alt="" className="block h-full w-full object-cover object-center blur-[24px]" style={{ minHeight: "100%", minWidth: "100%" }} />
             </picture>
           </div>
-          <div className="absolute inset-0" style={{ backgroundColor: "rgba(20, 21, 28, 0.7)" }} />
+          <div className="absolute inset-0" style={{ backgroundColor: "rgba(20, 21, 28, 0.45)" }} />
         </div>
       )}
       {appModal &&
@@ -3683,7 +3683,7 @@ export default function Home() {
           >
             <div className="backdrop-blur-layer" aria-hidden="true" />
             <div className="backdrop-tint-layer" aria-hidden="true" />
-          <div className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl">
+          <div className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 max-w-sm w-full overflow-hidden max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl">
             {appModal.type === "prompt" && (
               <>
                 <div className="p-4 border-b border-white/10">
@@ -4085,7 +4085,7 @@ export default function Home() {
                 }}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setMixDropzoneDragging(false); }}
-                className={`mix-card-glass font-sans uppercase flex flex-1 min-h-0 w-full flex-col items-center justify-center gap-3 px-4 py-8 max-md:py-6 text-center transition-all duration-200 ${
+                className={`mix-card-glass mix-dropzone font-sans uppercase flex flex-1 min-h-0 w-full flex-col items-center justify-center gap-3 px-4 py-8 max-md:py-6 text-center transition-all duration-200 ${
                   mixDropzoneDragging ? "mix-card-dragging" : ""
                 }`}
               >

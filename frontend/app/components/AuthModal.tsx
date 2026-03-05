@@ -75,7 +75,7 @@ export function AuthModal() {
       <div className="backdrop-tint-layer" aria-hidden="true" />
       <div
         ref={trapRef}
-        className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl"
+        className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:p-4 max-lg:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -89,7 +89,7 @@ export function AuthModal() {
 
         {mode === "login" ? (
           <>
-            <h2 id="auth-modal-title" className="text-xl font-medium text-white mb-1 text-center">Connexion</h2>
+            <h2 id="auth-modal-title" className="font-heading text-xl font-medium text-white mb-1 text-center">Connexion</h2>
             <p className="text-tagline text-slate-400 text-center text-xs mb-6">Accéder à votre compte</p>
             {registerSuccess && (
               <p className="text-center text-green-400 text-sm mb-4">Compte créé. Connectez-vous.</p>
@@ -184,7 +184,7 @@ export function AuthModal() {
           </>
         ) : (
           <>
-            <h2 id="auth-modal-title" className="text-xl font-medium text-white mb-1 text-center">Inscription</h2>
+            <h2 id="auth-modal-title" className="font-heading text-xl font-medium text-white mb-1 text-center">Inscription</h2>
             <p className="text-tagline text-slate-400 text-center text-xs mb-6">Créer un compte</p>
             <form
               onSubmit={async (e) => {

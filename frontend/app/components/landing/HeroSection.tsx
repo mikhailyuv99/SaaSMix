@@ -4,9 +4,6 @@ import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { setHeroPendingFiles } from "../../lib/heroPendingFiles";
 
-const HEADING_FONT = "'Space Grotesk', ui-sans-serif, system-ui, sans-serif";
-const BODY_FONT = "'Questrial', ui-sans-serif, system-ui, sans-serif";
-
 const FILES_DB_NAME = "saas_mix_files";
 const FILES_STORE_NAME = "files";
 const HERO_UPLOAD_ID = "hero_upload";
@@ -115,7 +112,7 @@ export function HeroSection() {
         <div className="max-w-xl max-lg:max-w-none">
           <h1
             className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-hero-tagline max-lg:text-3xl max-md:text-2xl"
-            style={{ animationFillMode: "both", fontFamily: HEADING_FONT }}
+            style={{ animationFillMode: "both" }}
           >
             <span className="text-white inline-block animate-hero-line-1">Le site n°1</span>
             <br />
@@ -124,20 +121,20 @@ export function HeroSection() {
             <span className="text-white inline-block animate-hero-line-3 whitespace-nowrap">en ligne</span>
           </h1>
           <p
-            className="mt-4 text-lg text-slate-400 sm:text-xl animate-fade-up max-lg:text-base max-md:mt-3 max-md:text-sm"
-            style={{ animationDelay: "0.25s", animationFillMode: "both", fontFamily: BODY_FONT }}
+            className="mt-4 text-lg text-slate-400 sm:text-xl animate-fade-up max-lg:text-base max-md:mt-3 max-md:text-sm font-sans"
+            style={{ animationDelay: "0.25s", animationFillMode: "both" }}
           >
             Transformez vos pistes brutes en un morceau fini en quelques minutes.
           </p>
           <p
-            className="mt-3 text-sm text-slate-400 sm:text-base animate-fade-up max-lg:text-sm max-md:text-xs"
-            style={{ animationDelay: "0.3s", animationFillMode: "both", fontFamily: BODY_FONT }}
+            className="mt-3 text-sm text-slate-400 sm:text-base animate-fade-up max-lg:text-sm max-md:text-xs font-sans"
+            style={{ animationDelay: "0.3s", animationFillMode: "both" }}
           >
             Zéro ingé son, zéro plugin — tout se fait en ligne.
           </p>
           <ul
-            className="mt-4 space-y-2 animate-fade-up max-lg:mt-3 max-lg:space-y-1.5 max-md:mt-2"
-            style={{ animationDelay: "0.4s", animationFillMode: "both", fontFamily: BODY_FONT }}
+            className="mt-4 space-y-2 animate-fade-up max-lg:mt-3 max-lg:space-y-1.5 max-md:mt-2 font-sans"
+            style={{ animationDelay: "0.4s", animationFillMode: "both" }}
           >
             {[
               "Mix en quelques minutes",

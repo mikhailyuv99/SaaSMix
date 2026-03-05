@@ -286,6 +286,61 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   100% { background-position: 200% 0; }
 }
 
+/* Glowing bar running around pricing card border (Artiste / Pro annuel) */
+@keyframes border-glow-spin {
+  to { transform: rotate(360deg); }
+}
+.pricing-card-glow-border {
+  position: relative;
+  border-radius: 1rem; /* match rounded-2xl */
+  overflow: hidden;
+}
+.pricing-card-glow-border::before {
+  content: "";
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  left: -50%;
+  top: -50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.12) 60deg,
+    rgba(255, 255, 255, 0.45) 90deg,
+    rgba(255, 255, 255, 0.12) 120deg,
+    transparent 180deg,
+    transparent 240deg,
+    rgba(255, 255, 255, 0.12) 300deg,
+    rgba(255, 255, 255, 0.45) 330deg,
+    rgba(255, 255, 255, 0.12) 360deg
+  );
+  animation: border-glow-spin 4s linear infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+.pricing-card-glow-border .pricing-card-inner {
+  position: relative;
+  z-index: 1;
+  margin: 2px;
+  border-radius: calc(1rem - 2px);
+}
+
+/* Badge shimmer loop (POPULAIRE, −25%) — no hover */
+.badge-shimmer-loop {
+  position: relative;
+  overflow: hidden;
+}
+.badge-shimmer-loop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2.5s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
 @keyframes gradient-shift {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 0.7; }
@@ -767,6 +822,27 @@ input, textarea, select, button {
   z-index: 1;
 }
 .hero-dropzone:hover::after {
+  opacity: 1;
+  animation: shimmer 1.5s ease-in-out;
+}
+
+/* Mix page dropzone: same shimmer as hero */
+.mix-dropzone {
+  position: relative;
+  overflow: hidden;
+}
+.mix-dropzone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  z-index: 1;
+}
+.mix-dropzone:hover::after {
   opacity: 1;
   animation: shimmer 1.5s ease-in-out;
 }

@@ -66,7 +66,7 @@ export function PricingModal({
       <div className="backdrop-blur-layer" aria-hidden="true" />
       <div className="backdrop-tint-layer" aria-hidden="true" />
       <div
-        className="modal-panel-dark rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-5xl max-h-[90vh] overflow-y-auto my-auto relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl"
+        className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-5xl max-h-[90vh] overflow-y-auto my-auto relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -104,7 +104,7 @@ export function PricingModal({
                 }`}
               >
                 Annuel
-                <span className="rounded-full bg-white/25 px-2 py-0.5 text-xs font-bold text-white ring-1 ring-white/30 max-md:text-[10px] max-md:px-1.5">−25%</span>
+                <span className="badge-shimmer-loop rounded-full border border-white/20 bg-white/10 px-2 py-0.5 text-xs font-bold text-white max-md:text-[10px] max-md:px-1.5">−25%</span>
               </button>
             </div>
           </div>
@@ -127,7 +127,7 @@ export function PricingModal({
                   <div className="flex items-center justify-between gap-1 min-h-[2rem] min-w-0 shrink-0 max-sm:min-h-[1.5rem]">
                     <h3 className="font-heading text-lg font-semibold text-white max-md:text-sm max-sm:text-[11px] truncate">{plan.name}</h3>
                     {badgeLabel && (
-                      <span className="shrink-0 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 max-md:text-[9px] max-md:px-1.5 max-sm:text-[8px] max-sm:px-1">
+                      <span className="badge-shimmer-loop shrink-0 rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 max-md:text-[9px] max-md:px-1.5 max-sm:text-[8px] max-sm:px-1">
                         {badgeLabel}
                       </span>
                     )}
