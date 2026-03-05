@@ -293,7 +293,7 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   100% { transform: translateX(150%); }
 }
 
-/* Badge shimmer loop (POPULAIRE, −25%) — no hover */
+/* Badge shimmer loop (POPULAIRE, −25%) — same style as pricing-plan-btn, always on */
 .badge-shimmer-loop {
   position: relative;
   overflow: hidden;
@@ -301,12 +301,21 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 .badge-shimmer-loop::after {
   content: "";
   position: absolute;
-  top: -20%;
-  bottom: -20%;
-  width: 45%;
+  top: -35%;
+  bottom: -35%;
+  width: 72%;
   left: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
-  animation: shimmer-slide 2.4s linear infinite;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 18%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0.06) 82%,
+    transparent 100%
+  );
+  transform: translateX(-190%);
+  opacity: 0.95;
+  animation: shimmer-slide 1.25s linear infinite;
   pointer-events: none;
   border-radius: inherit;
   will-change: transform;
