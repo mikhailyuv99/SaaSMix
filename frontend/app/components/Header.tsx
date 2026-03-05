@@ -154,6 +154,7 @@ export function Header() {
           <>
             <Link
               href="/"
+              aria-label="Accueil Siberia Mix"
               className="font-heading max-lg:hidden flex items-center shrink-0 transition-opacity hover:opacity-90"
             >
               <svg className="h-8 sm:h-9 w-auto shrink-0" viewBox="18 64 124 28" fill="none" aria-hidden>
@@ -177,6 +178,7 @@ export function Header() {
             <Link
               href="/"
               onClick={handleAccueilClick}
+              aria-label="Accueil Siberia Mix"
               className="font-heading lg:hidden flex items-center shrink-0 transition-opacity hover:opacity-90"
             >
               <svg className="h-7 sm:h-8 w-auto shrink-0" viewBox="18 64 124 28" fill="none" aria-hidden>

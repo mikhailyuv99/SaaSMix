@@ -145,13 +145,13 @@ export function FooterWithLegalModals() {
       <footer className="relative z-20 mt-auto py-6 px-4 max-lg:py-5 max-lg:px-3 max-md:py-4 max-md:px-3">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-[11px] sm:text-xs text-slate-400 max-md:gap-2 max-md:text-[10px]">
           <span className="font-heading font-medium">© 2026 Siberia Mix</span>
-          <button type="button" onClick={openMentions} className="uppercase transition-colors hover:text-white">
+          <button type="button" onClick={openMentions} className="uppercase transition-colors hover:text-white min-h-6 px-1">
             Mentions légales
           </button>
-          <button type="button" onClick={openPolitique} className="uppercase transition-colors hover:text-white">
+          <button type="button" onClick={openPolitique} className="uppercase transition-colors hover:text-white min-h-6 px-1">
             Politique de confidentialité
           </button>
-          <button type="button" onClick={openCGU} className="transition-colors hover:text-white">
+          <button type="button" onClick={openCGU} className="transition-colors hover:text-white min-h-6 px-1">
             CGU
           </button>
         </div>
