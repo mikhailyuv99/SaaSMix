@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ObserveSection } from "../ObserveSection";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 const plansMensuel = [
   {
@@ -43,22 +41,6 @@ const planAnnuel = {
 
 export function PricingSection() {
   const [billingPeriod, setBillingPeriod] = useState<"mensuel" | "annuel">("mensuel");
-  const [nameToPriceId, setNameToPriceId] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/billing/plans`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!d) return;
-        const map: Record<string, string> = {};
-        (d.plansMonthly || []).forEach((p: { name: string; priceId: string }) => {
-          map[p.name] = p.priceId;
-        });
-        if (d.planAnnual) map[d.planAnnual.name] = d.planAnnual.priceId;
-        setNameToPriceId(map);
-      })
-      .catch(() => {});
-  }, []);
 
   return (
     <section id="tarifs" className="scroll-mt-20 w-full max-w-full overflow-x-hidden px-4 py-6 sm:py-8 max-lg:px-3 max-md:py-5 max-sm:px-2">
@@ -142,12 +124,7 @@ export function PricingSection() {
                     type="button"
                     onClick={() => {
                       if (invisible) return;
-                      const priceId = nameToPriceId[plan.name];
-                      if (priceId) {
-                        window.dispatchEvent(new CustomEvent("openPlanModal", { detail: { priceId, planName: plan.name } }));
-                      } else {
-                        window.dispatchEvent(new CustomEvent("openPlanModal"));
-                      }
+                      window.dispatchEvent(new CustomEvent("openPlanModal"));
                     }}
                     className={`pricing-plan-btn w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px] max-sm:py-1 max-sm:text-[10px] max-sm:px-2 ${
                       plan.featured ? "border-white/20 bg-transparent text-white hover:bg-white/[0.06]" : "border-white/15 bg-transparent text-white hover:bg-white/[0.06]"

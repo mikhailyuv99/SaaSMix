@@ -482,13 +482,13 @@ export function ManageSubscriptionModal({
               );
             })()}
             <p className="text-slate-400 text-sm">
-              Plan : <strong>{currentPlanLabel}{planSuffix}</strong>
+              Plan : <strong className="text-white">{currentPlanLabel}{planSuffix}</strong>
             </p>
             <p className="text-slate-400 text-sm">
               {subscription.cancel_at_period_end ? (
-                <>Annulé. Accès {(currentPlanId === "pro" || currentPlanId === "pro_annual") ? "Pro" : `${currentPlanLabel}${planSuffix}`} jusqu&apos;au <strong>{formatPeriodEnd(subscription.current_period_end)}</strong>.</>
+                <>Annulé. Accès {(currentPlanId === "pro" || currentPlanId === "pro_annual") ? "Pro" : `${currentPlanLabel}${planSuffix}`} jusqu&apos;au <strong className="text-white">{formatPeriodEnd(subscription.current_period_end)}</strong>.</>
               ) : (
-                <>Prochaine facturation le <strong>{formatPeriodEnd(subscription.current_period_end)}</strong>.</>
+                <>Prochaine facturation le <strong className="text-white">{formatPeriodEnd(subscription.current_period_end)}</strong>.</>
               )}
             </p>
             {cancelError && (
