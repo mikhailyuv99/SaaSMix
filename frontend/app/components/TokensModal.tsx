@@ -140,6 +140,7 @@ export function TokensModal({
   const [loading, setLoading] = useState(true);
   const [selectedOffer, setSelectedOffer] = useState<TokenOffer | null>(null);
   const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
+  const [authExpired, setAuthExpired] = useState(false);
 
   useEffect(() => {
     if (isOpen && PUBLISHABLE_KEY && !stripePromise) {
@@ -151,6 +152,7 @@ export function TokensModal({
     if (!isOpen) return;
     setLoading(true);
     setSelectedOffer(null);
+    setAuthExpired(false);
     const headers = getAuthHeaders();
     if (!headers.Authorization) {
       setUsage(null);
@@ -159,10 +161,18 @@ export function TokensModal({
       return;
     }
     Promise.all([
-      fetch(`${API_BASE}/api/billing/usage`, { headers }).then((r) => (r.ok ? r.json() : null)),
-      fetch(`${API_BASE}/api/billing/token-offers`, { headers }).then((r) => (r.ok ? r.json() : null)),
+      fetch(`${API_BASE}/api/billing/usage`, { headers }),
+      fetch(`${API_BASE}/api/billing/token-offers`, { headers }),
     ])
-      .then(([usageData, offersData]) => {
+      .then(async ([usageRes, offersRes]) => {
+        if (usageRes.status === 401 || offersRes.status === 401) {
+          setUsage(null);
+          setOffers([]);
+          setAuthExpired(true);
+          return;
+        }
+        const usageData = usageRes.ok ? await usageRes.json().catch(() => null) : null;
+        const offersData = offersRes.ok ? await offersRes.json().catch(() => null) : null;
         if (usageData && typeof usageData.mix_used === "number") {
           setUsage(usageData as Usage);
         } else {
@@ -211,9 +221,13 @@ export function TokensModal({
         <h2 className="font-heading text-xl font-medium text-white mb-1">Tokens</h2>
         <p className="text-tagline text-slate-400 text-[10px] mb-6">Besoin de plus ? Refaites le plein.</p>
 
-        {!hasToken ? (
+        {!hasToken || authExpired ? (
           <div className="space-y-4">
-            <p className="text-slate-400 text-sm">Connectez-vous pour acheter des tokens (mix ou master).</p>
+            <p className="text-slate-400 text-sm">
+              {authExpired
+                ? "Session expirée. Reconnectez-vous pour voir et acheter des tokens."
+                : "Connectez-vous pour acheter des tokens (mix ou master)."}
+            </p>
             <div className="flex justify-center gap-3">
               <button type="button" onClick={onClose} className="pricing-plan-btn rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors shrink-0">
                 Fermer

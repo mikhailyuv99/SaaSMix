@@ -168,13 +168,24 @@ function generateId() {
 
 function extractMixedTrackId(mixedAudioUrl: string | null): string | undefined {
   if (!mixedAudioUrl) return undefined;
+  const uuidRegex = /([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i;
   try {
     const url = mixedAudioUrl.startsWith("http") ? mixedAudioUrl : `${API_BASE}${mixedAudioUrl}`;
-    const params = new URL(url).searchParams;
-    return params.get("id") ?? undefined;
+    const parsed = new URL(url);
+    const params = parsed.searchParams;
+    const fromQuery =
+      params.get("id") ||
+      params.get("track_id") ||
+      params.get("mixedTrackId");
+    if (fromQuery && uuidRegex.test(fromQuery)) return fromQuery;
+    const fromPath = parsed.pathname.match(uuidRegex)?.[1];
+    if (fromPath) return fromPath;
+    return undefined;
   } catch {
-    const m = mixedAudioUrl.match(/[?&]id=([a-f0-9\-]{36})/i);
-    return m ? m[1] : undefined;
+    const fromQuery = mixedAudioUrl.match(/[?&](?:id|track_id|mixedTrackId)=([a-f0-9\-]{36})/i)?.[1];
+    if (fromQuery) return fromQuery;
+    const fromAnywhere = mixedAudioUrl.match(uuidRegex)?.[1];
+    return fromAnywhere;
   }
 }
 
