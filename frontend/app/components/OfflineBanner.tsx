@@ -24,7 +24,7 @@ export function OfflineBanner() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed top-0 left-0 right-0 z-[9998] bg-amber-600/95 text-black text-center py-2 px-4 text-sm font-medium"
+      className="fixed top-0 left-0 right-0 z-[9998] bg-brand-blue/95 text-brand-dark text-center py-2 px-4 text-sm font-medium"
     >
       Pas de connexion. Vérifiez votre réseau.
     </div>

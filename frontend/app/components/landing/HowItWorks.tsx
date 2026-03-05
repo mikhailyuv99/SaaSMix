@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ObserveSection } from "../ObserveSection";
 import { ObserveElement } from "../ObserveElement";
 
-const CIRCLE_BG = "#2C313B";
+const CIRCLE_BG = "#1e1d2c";
 
 const steps = [
   {
@@ -230,7 +230,7 @@ export function HowItWorks() {
                 className="absolute left-0 top-0 h-full w-px origin-top bg-white will-change-transform"
                 style={{
                   transform: "scaleY(0)",
-                  boxShadow: "0 0 12px rgba(255,255,255,0.8), 0 0 24px rgba(255,255,255,0.4)",
+                  boxShadow: "0 0 12px rgba(105,163,255,0.7), 0 0 24px rgba(105,163,255,0.35)",
                 }}
               />
             </div>

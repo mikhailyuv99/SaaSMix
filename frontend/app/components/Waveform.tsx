@@ -55,7 +55,7 @@ export const Waveform = memo(function Waveform({
     const cx = h / 2;
     const n = peaks.length;
     const barW = Math.max(1, w / n);
-    ctx.fillStyle = "rgba(148, 163, 184, 0.4)";
+    ctx.fillStyle = "rgba(105, 163, 255, 0.35)";
     for (let i = 0; i < n; i++) {
       const halfH = (peaks[i]! / maxPeak) * (cx - 1);
       const x = (i / (n - 1 || 1)) * w;
@@ -100,7 +100,7 @@ export const Waveform = memo(function Waveform({
         }
       }}
       className={`relative h-12 w-full cursor-pointer rounded-lg border border-white/[0.06] overflow-hidden transition-opacity hover:opacity-90 ${className}`}
-      style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
+      style={{ backgroundColor: "rgba(105,163,255,0.03)" }}
       title="Cliquer pour aller à ce moment"
     >
       <canvas

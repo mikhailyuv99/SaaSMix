@@ -19,7 +19,7 @@ const CARD_OPTIONS = {
   style: {
     base: {
       fontSize: "14px",
-      color: "#e2e8f0",
+      color: "#f2f4f7",
       "::placeholder": { color: "#94a3b8" },
       iconColor: "#94a3b8",
     },

@@ -3,14 +3,18 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  --accent: 248 250 252;
-  --accent-dim: 148 163 184;
-  --glow: 255 255 255;
-  --glow-intensity: 0.06;
-  --section-bg: rgba(255, 255, 255, 0.02);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-hover-border: rgba(255, 255, 255, 0.15);
+  font-family: var(--font-questrial), Questrial, sans-serif;
+  --accent: 105 163 255;
+  --accent-dim: 83 137 230;
+  --glow: 105 163 255;
+  --glow-intensity: 0.08;
+  --section-bg: rgba(105, 163, 255, 0.02);
+  --card-border: rgba(105, 163, 255, 0.08);
+  --card-hover-border: rgba(105, 163, 255, 0.18);
+  --brand-dark: #14151c;
+  --brand-blue: #69a3ff;
+  --brand-gray: #f2f4f7;
+  --brand-anthracite: #1e1d2c;
 }
 
 @layer base {
@@ -21,12 +25,12 @@
   }
   body {
     margin: 0;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: var(--font-questrial), Questrial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
-    background-color: #000000;
-    color: #e2e8f0;
+    background-color: #14151c;
+    color: #f2f4f7;
     background-attachment: fixed;
     overflow-y: auto;
     overflow-x: hidden;
@@ -44,7 +48,7 @@
 html,
 body {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.04);
+  scrollbar-color: rgba(105, 163, 255, 0.25) rgba(105, 163, 255, 0.04);
 }
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
@@ -54,18 +58,18 @@ body::-webkit-scrollbar {
 }
 html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(105, 163, 255, 0.04);
   border-radius: 5px;
 }
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(105, 163, 255, 0.2);
   border-radius: 5px;
-  border: 2px solid rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(105, 163, 255, 0.04);
 }
 html::-webkit-scrollbar-thumb:hover,
 body::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(105, 163, 255, 0.35);
 }
 
 /* Mix fullscreen: hide layout header and footer for immersion */
@@ -77,16 +81,16 @@ body[data-mix-fullscreen] footer {
 /* Mix cards + modals: Safari 18 / macOS 15 fix — rgba + backdrop-filter = opaque white bug */
 /* Force rgba background. On Safari, disable backdrop-filter (workaround for regression). */
 .mix-card-glass {
-  background-color: rgba(255, 255, 255, 0.04) !important;
+  background-color: rgba(105, 163, 255, 0.03) !important;
 }
 .mix-card-glass:hover {
-  background-color: rgba(255, 255, 255, 0.06) !important;
+  background-color: rgba(105, 163, 255, 0.05) !important;
 }
 .mix-card-glass.mix-card-dragging {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(105, 163, 255, 0.07) !important;
 }
 .mix-card-glass.mix-card-drop-over {
-  background-color: rgba(255, 255, 255, 0.12) !important;
+  background-color: rgba(105, 163, 255, 0.10) !important;
 }
 
 /* Couches réelles (blur + teinte) pour que le flou s’applique aussi sur Safari 17 / iOS 17 */
@@ -106,13 +110,13 @@ body[data-mix-fullscreen] footer {
   pointer-events: none;
 }
 .modal-backdrop-dark .backdrop-tint-layer {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(20, 21, 28, 0.3);
 }
 .modal-backdrop-slate .backdrop-tint-layer {
   background-color: rgba(15, 23, 42, 0.4);
 }
 .header-burger-overlay .backdrop-tint-layer {
-  background-color: rgba(0, 0, 0, 0.4);
+  background-color: rgba(20, 21, 28, 0.5);
 }
 .header-burger-overlay .backdrop-blur-layer {
   -webkit-backdrop-filter: blur(20px);
@@ -131,16 +135,16 @@ body[data-mix-fullscreen] footer {
   z-index: 1;
 }
 .modal-panel-dark {
-  background-color: rgba(0, 0, 0, 0.1) !important;
+  background-color: rgba(20, 21, 28, 0.15) !important;
 }
 .modal-btn-subtle {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(105, 163, 255, 0.04) !important;
 }
 .modal-btn-subtle:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(105, 163, 255, 0.08) !important;
 }
 .modal-input {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(105, 163, 255, 0.04) !important;
 }
 
 /* Safari: mix-card sans blur (bug blanc); backdrops utilisent les couches réelles .backdrop-blur-layer / .backdrop-tint-layer comme tout le monde */
@@ -175,7 +179,7 @@ html.safari-webkit .modal-panel-dark::after {
   inset: 0;
   z-index: 0;
   border-radius: inherit;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(20, 21, 28, 0.15);
   pointer-events: none;
 }
 html.safari-webkit .modal-panel-dark > * {
@@ -193,7 +197,7 @@ html.safari-webkit-old .modal-backdrop-dark,
 html.safari-ios-old .modal-backdrop-dark {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  background-color: rgba(0, 0, 0, 0.92) !important;
+  background-color: rgba(20, 21, 28, 0.95) !important;
 }
 html.safari-webkit-old .modal-backdrop-slate,
 html.safari-ios-old .modal-backdrop-slate {
@@ -205,7 +209,7 @@ html.safari-webkit-old .header-burger-overlay,
 html.safari-ios-old .header-burger-overlay {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  background-color: rgba(0, 0, 0, 0.92) !important;
+  background-color: rgba(20, 21, 28, 0.95) !important;
   overflow: visible;
 }
 html.safari-webkit-old .modal-backdrop-dark .backdrop-blur-layer,
@@ -285,8 +289,8 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.03); }
-  50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.06); }
+  0%, 100% { box-shadow: 0 0 20px rgba(105, 163, 255, 0.03); }
+  50% { box-shadow: 0 0 40px rgba(105, 163, 255, 0.06); }
 }
 
 @keyframes hero-zoom-in-out {
@@ -392,21 +396,21 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 
 /* HowItWorks circle glow states (toggled via JS classList, zero React re-renders) */
 .hiw-dim {
-  border-color: rgba(255, 255, 255, 0.25);
-  color: rgba(255, 255, 255, 0.9);
-  background-color: #2C313B;
+  border-color: rgba(105, 163, 255, 0.25);
+  color: rgba(242, 244, 247, 0.9);
+  background-color: #1e1d2c;
 }
 .hiw-dim .hiw-glow-ring {
   box-shadow: none;
 }
 .hiw-glow {
-  border-color: rgba(255, 255, 255, 0.8);
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(105, 163, 255, 0.8);
+  background-color: rgba(105, 163, 255, 0.15) !important;
   color: #fff;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 12px rgba(105, 163, 255, 0.9);
 }
 .hiw-glow .hiw-glow-ring {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(105, 163, 255, 0.4), inset 0 0 20px rgba(105, 163, 255, 0.1);
 }
 
 /* Premium landing cards */
@@ -423,7 +427,7 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.85) 50%, rgba(226, 232, 240, 0.9) 100%);
+  background: linear-gradient(135deg, #fff 0%, rgba(157, 207, 253, 0.9) 50%, rgba(105, 163, 255, 0.85) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -440,22 +444,23 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 .btn-cta-primary {
-  @apply relative overflow-hidden rounded-xl px-8 py-4 text-base font-semibold text-black transition-all duration-300;
-  background: #fff;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+  @apply relative overflow-hidden rounded-xl px-8 py-4 text-base font-semibold transition-all duration-300;
+  background: #69a3ff;
+  color: #14151c;
+  box-shadow: 0 0 0 1px rgba(105, 163, 255, 0.2);
 }
 
 .btn-cta-primary:hover {
-  background: #f8fafc;
+  background: #85b5ff;
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 24px -4px rgba(105, 163, 255, 0.3), 0 0 0 1px rgba(105, 163, 255, 0.3);
 }
 
 .btn-cta-primary::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
+  background: linear-gradient(105deg, transparent 0%, rgba(105, 163, 255, 0.15) 50%, transparent 100%);
   background-size: 200% 100%;
   opacity: 0;
   transition: opacity 0.4s;
@@ -467,11 +472,13 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 .btn-cta-secondary {
-  @apply rounded-xl border border-white/20 bg-white/5 px-8 py-4 text-base font-medium text-white transition-all duration-300 hover:bg-white/10;
+  @apply rounded-xl border px-8 py-4 text-base font-medium text-white transition-all duration-300;
+  border-color: rgba(105, 163, 255, 0.25);
+  background: rgba(105, 163, 255, 0.05);
 }
-
 .btn-cta-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(105, 163, 255, 0.4);
+  background: rgba(105, 163, 255, 0.1);
 }
 
 @layer components {
@@ -482,13 +489,29 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
     @apply font-medium uppercase tracking-[0.2em] text-[11px] sm:text-xs text-slate-400;
   }
   .btn-primary {
-    @apply rounded-lg px-4 py-2.5 text-sm font-medium text-white border border-white/10 bg-white/5 transition-colors focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608] hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply rounded-lg px-4 py-2.5 text-sm font-medium text-white border transition-colors focus:outline-none focus:ring-1 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    border-color: rgba(105, 163, 255, 0.15);
+    background: rgba(105, 163, 255, 0.05);
+  }
+  .btn-primary:hover {
+    background: rgba(105, 163, 255, 0.12);
   }
   .btn-primary-accent {
-    @apply btn-primary border-white/20 bg-white text-[#060608] hover:bg-white/90;
+    @apply btn-primary text-[#14151c];
+    border-color: rgba(105, 163, 255, 0.3);
+    background: #69a3ff;
+  }
+  .btn-primary-accent:hover {
+    background: rgba(105, 163, 255, 0.9);
   }
   .btn-secondary {
-    @apply rounded-lg px-4 py-2 text-sm font-medium border border-white/10 bg-transparent text-slate-400 transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-1 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#060608];
+    @apply rounded-lg px-4 py-2 text-sm font-medium border bg-transparent transition-colors focus:outline-none focus:ring-1 focus:ring-offset-2;
+    border-color: rgba(105, 163, 255, 0.12);
+    color: #f2f4f7;
+  }
+  .btn-secondary:hover {
+    background: rgba(105, 163, 255, 0.06);
+    color: #fff;
   }
   /* Menus déroulants : même style que le site (fond sombre, bordure, texte clair) */
   select {
@@ -500,13 +523,13 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
     background-size: 1rem;
   }
   select option {
-    background: #111;
-    color: #e2e8f0;
+    background: #1e1d2c;
+    color: #f2f4f7;
   }
   select option:hover,
   select option:focus,
   select option:checked {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(105, 163, 255, 0.15);
     color: #fff;
   }
   /* Menu déroulant catégorie : texte centré, ellipsis si trop long */
@@ -517,14 +540,14 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
     text-overflow: ellipsis;
   }
   select.select-category option {
-    background: #111;
-    color: #e2e8f0;
+    background: #1e1d2c;
+    color: #f2f4f7;
     text-align: center;
   }
   select.select-category option:hover,
   select.select-category option:focus,
   select.select-category option:checked {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(105, 163, 255, 0.15);
     color: #fff;
   }
   /* BPM : pas de flèches (spinners), saisie manuelle uniquement */
@@ -543,14 +566,14 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
     width: 1rem;
     height: 1rem;
     border-radius: 0.25rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(105, 163, 255, 0.25);
+    background: rgba(105, 163, 255, 0.05);
     cursor: pointer;
   }
   input.checkbox-reglages:checked {
-    background: #fff;
-    border-color: #fff;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background: #69a3ff;
+    border-color: #69a3ff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314151c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
     background-size: 0.75rem 0.75rem;
     background-position: center;
     background-repeat: no-repeat;
@@ -558,12 +581,12 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   /* Fichier WAV : clignotement lent du glow quand aucun fichier choisi */
   @keyframes glow-blink-slow {
     0%, 100% {
-      color: rgb(100 116 139);
-      text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+      color: rgb(100 130 180);
+      text-shadow: 0 0 6px rgba(105, 163, 255, 0.4);
     }
     50% {
-      color: #fff;
-      text-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
+      color: #69a3ff;
+      text-shadow: 0 0 14px rgba(105, 163, 255, 0.85);
     }
   }
   .glow-blink-slow {
@@ -606,48 +629,51 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 @keyframes track-moved-flash {
-  0%   { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5); }
-  70%  { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2); }
+  0%   { box-shadow: 0 0 0 2px rgba(105, 163, 255, 0.5); }
+  70%  { box-shadow: 0 0 0 2px rgba(105, 163, 255, 0.2); }
   100% { box-shadow: none; }
 }
 .animate-track-moved {
   animation: track-moved-flash 0.4s ease-out forwards;
 }
 
-/* Force Plus Jakarta Sans partout */
+/* Force Questrial (body) + Space Grotesk (headings) partout */
 html, body, html *, body * {
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), Questrial, ui-sans-serif, system-ui, sans-serif !important;
+}
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Formulaires et boutons (n’héritent pas toujours) */
 input, textarea, select, button {
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Cartes landing (FAQ, contact) */
 .landing-card,
 .landing-card * {
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Placeholders formulaire contact (Votre nom, vous@exemple.com, Votre message...) */
 .landing-card input::placeholder,
 .landing-card textarea::placeholder,
 .landing-card input::-webkit-input-placeholder,
 .landing-card textarea::-webkit-input-placeholder {
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Bouton Envoyer et texte des questions FAQ */
 .landing-card button,
 .landing-card .btn-cta-primary {
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-space-grotesk), 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Champs contact (Votre nom, vous@exemple.com, Votre message...) */
 .contact-input,
 .contact-input::placeholder,
 .contact-input::-webkit-input-placeholder {
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 .faq-question,
 .faq-question * {
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-space-grotesk), 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
 }
 /* FAQ + Contact : tout en majuscules comme le reste du site */
 .landing-card,
@@ -664,9 +690,9 @@ input, textarea, select, button {
 .contact-input::placeholder {
   text-transform: uppercase !important;
 }
-/* Zone glissez-déposez : Plus Jakarta + tout en caps */
+/* Zone glissez-déposez : tout en caps */
 .hero-dropzone,
 .hero-dropzone * {
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), Questrial, ui-sans-serif, system-ui, sans-serif !important;
   text-transform: uppercase !important;
 }

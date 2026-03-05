@@ -4,15 +4,21 @@ import { Header } from './components/Header'
 import { PageBackground } from './components/PageBackground'
 import { LandingTheme } from './components/LandingTheme'
 import { FooterWithLegalModals } from './components/FooterWithLegalModals'
-import { Plus_Jakarta_Sans } from 'next/font/google'
+import localFont from 'next/font/local'
 import { OfflineBanner } from './components/OfflineBanner'
 import { SafariDetect } from './components/SafariDetect'
 
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+const spaceGrotesk = localFont({
+  src: './fonts/SpaceGrotesk-Variable.ttf',
   display: 'swap',
-  variable: '--font-plus-jakarta',
+  variable: '--font-space-grotesk',
+})
+
+const questrial = localFont({
+  src: './fonts/Questrial-Regular.ttf',
+  display: 'swap',
+  variable: '--font-questrial',
+  weight: '400',
 })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
@@ -54,6 +60,7 @@ export const metadata = {
   },
   icons: {
     icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/icon.png', type: 'image/png', sizes: '32x32' },
       { url: '/favicon.ico', sizes: 'any' },
     ],
@@ -73,7 +80,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" className={plusJakarta.variable}>
+    <html lang="fr" className={`${spaceGrotesk.variable} ${questrial.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -86,13 +93,14 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://api.siberiamix.com" />
         <link rel="preconnect" href="https://api-staging.siberiamix.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api-staging.siberiamix.com" />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <link rel="icon" type="image/png" href="/icon.png" />
         <link rel="alternate icon" href="/favicon.ico" />
         {process.env.NEXT_PUBLIC_FB_APP_ID ? (
           <meta property="fb:app_id" content={process.env.NEXT_PUBLIC_FB_APP_ID} />
         ) : null}
       </head>
-      <body className={`${plusJakarta.className} antialiased text-slate-400 uppercase`}>
+        <body className={`${questrial.className} antialiased text-brand-gray uppercase`}>
         <SafariDetect />
         <JsonLd />
         <OfflineBanner />

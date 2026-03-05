@@ -5,12 +5,12 @@
   <title>Background export - liquid metal</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #14151c; }
     #root {
       position: fixed;
       inset: 0;
       overflow: hidden;
-      background: #000;
+      background: #14151c;
     }
     #root > div {
       position: absolute;
@@ -33,43 +33,43 @@
     <div>
       <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <!-- Amber-gold glow (warm reflection) -->
+          <!-- Blue glow (brand accent reflection) -->
           <radialGradient id="amber-glow" cx="75%" cy="25%" r="70%" fx="72%" fy="22%" colorInterpolation="sRGB">
-            <stop offset="0%" stop-color="rgba(212,165,80,0.22)" />
-            <stop offset="30%" stop-color="rgba(180,140,60,0.12)" />
-            <stop offset="55%" stop-color="rgba(120,95,45,0.05)" />
-            <stop offset="100%" stop-color="rgba(20,18,14,0)" />
+            <stop offset="0%" stop-color="rgba(105,163,255,0.18)" />
+            <stop offset="30%" stop-color="rgba(83,137,230,0.10)" />
+            <stop offset="55%" stop-color="rgba(60,100,180,0.04)" />
+            <stop offset="100%" stop-color="rgba(20,21,28,0)" />
           </radialGradient>
-          <!-- Silver sheen (cool highlight) -->
+          <!-- Cool silver-blue sheen -->
           <radialGradient id="silver-sheen" cx="20%" cy="30%" r="85%" fx="18%" fy="25%" colorInterpolation="sRGB">
-            <stop offset="0%" stop-color="rgba(255,252,250,0.08)" />
-            <stop offset="40%" stop-color="rgba(220,218,215,0.04)" />
-            <stop offset="70%" stop-color="rgba(120,118,115,0.02)" />
-            <stop offset="100%" stop-color="rgba(15,15,14,0)" />
+            <stop offset="0%" stop-color="rgba(157,207,253,0.07)" />
+            <stop offset="40%" stop-color="rgba(105,163,255,0.03)" />
+            <stop offset="70%" stop-color="rgba(60,100,180,0.015)" />
+            <stop offset="100%" stop-color="rgba(20,21,28,0)" />
           </radialGradient>
-          <!-- Second amber accent (subtle) -->
+          <!-- Second blue accent (subtle bottom-left) -->
           <radialGradient id="amber-accent" cx="15%" cy="70%" r="50%" colorInterpolation="sRGB">
-            <stop offset="0%" stop-color="rgba(200,155,70,0.08)" />
-            <stop offset="50%" stop-color="rgba(100,80,40,0.02)" />
-            <stop offset="100%" stop-color="rgba(10,10,8,0)" />
+            <stop offset="0%" stop-color="rgba(83,137,230,0.07)" />
+            <stop offset="50%" stop-color="rgba(60,100,180,0.02)" />
+            <stop offset="100%" stop-color="rgba(20,21,28,0)" />
           </radialGradient>
-          <!-- Dark metallic base gradient -->
+          <!-- Dark anthracite base gradient -->
           <linearGradient id="metal-base" x1="0%" y1="0%" x2="100%" y2="100%" colorInterpolation="sRGB">
-            <stop offset="0%" stop-color="#0c0c0e" />
-            <stop offset="50%" stop-color="#0e0e12" />
-            <stop offset="100%" stop-color="#08080a" />
+            <stop offset="0%" stop-color="#14151c" />
+            <stop offset="50%" stop-color="#181924" />
+            <stop offset="100%" stop-color="#111219" />
           </linearGradient>
-          <!-- Soft wave highlight (liquid fold) -->
+          <!-- Soft wave highlight (liquid fold, blue tones) -->
           <linearGradient id="wave-highlight" x1="0%" y1="100%" x2="0%" y2="0%" colorInterpolation="sRGB">
-            <stop offset="0%" stop-color="rgba(12,12,14,0.9)" />
-            <stop offset="35%" stop-color="rgba(55,54,58,0.4)" />
-            <stop offset="65%" stop-color="rgba(100,98,102,0.12)" />
-            <stop offset="100%" stop-color="rgba(200,198,202,0.04)" />
+            <stop offset="0%" stop-color="rgba(20,21,28,0.9)" />
+            <stop offset="35%" stop-color="rgba(40,50,75,0.35)" />
+            <stop offset="65%" stop-color="rgba(83,137,230,0.10)" />
+            <stop offset="100%" stop-color="rgba(157,207,253,0.03)" />
           </linearGradient>
           <linearGradient id="wave-highlight-2" x1="100%" y1="0%" x2="0%" y2="100%" colorInterpolation="sRGB">
-            <stop offset="0%" stop-color="rgba(18,17,20,0.85)" />
-            <stop offset="50%" stop-color="rgba(70,68,72,0.25)" />
-            <stop offset="100%" stop-color="rgba(140,138,142,0.06)" />
+            <stop offset="0%" stop-color="rgba(30,29,44,0.85)" />
+            <stop offset="50%" stop-color="rgba(60,80,120,0.20)" />
+            <stop offset="100%" stop-color="rgba(105,163,255,0.05)" />
           </linearGradient>
           <filter id="blur-soft" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
             <feGaussianBlur in="SourceGraphic" stdDeviation="35" result="blur" />

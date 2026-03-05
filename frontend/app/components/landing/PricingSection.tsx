@@ -126,7 +126,7 @@ export function PricingSection() {
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"
                 } ${
                   plan.featured
-                    ? "border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.22)] ring-1 ring-white/10 hover:border-white/30"
+                    ? "border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(105,163,255,0.18)] ring-1 ring-white/10 hover:border-white/30"
                     : "landing-card border-white/10"
                 }`}
               >
