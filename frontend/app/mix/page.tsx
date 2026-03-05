@@ -3208,11 +3208,19 @@ export default function Home() {
   const isVocal = (c: Category) =>
     c === "lead_vocal" || c === "adlibs_backs";
 
-  const buildTrackSpecsAndFiles = useCallback(() => {
+  const buildTrackSpecsAndFiles = useCallback((options?: { strictMixedForVocal?: boolean }) => {
+    const strictMixedForVocal = Boolean(options?.strictMixedForVocal);
     const active = tracks.filter((t) => !t.muted);
+    let hasUnresolvedMixedTrack = false;
     const specs = active.map((t) => {
+      const isVocalTrack = t.category === "lead_vocal" || t.category === "adlibs_backs";
+      const hasMixedUrl = Boolean(t.mixedAudioUrl);
       const mixedTrackId = extractMixedTrackId(t.mixedAudioUrl) ?? undefined;
-      const entry = !mixedTrackId && t.file ? preuploadByFileRef.current.get(t.file) : undefined;
+      const mustUseMixedSource = strictMixedForVocal && isVocalTrack && hasMixedUrl;
+      if (mustUseMixedSource && !mixedTrackId) {
+        hasUnresolvedMixedTrack = true;
+      }
+      const entry = !mixedTrackId && !mustUseMixedSource && t.file ? preuploadByFileRef.current.get(t.file) : undefined;
       const preuploadId = entry?.wavId ?? undefined;
       return { category: t.category, gain: t.gain, mixedTrackId, preuploadId };
     });
@@ -3223,13 +3231,17 @@ export default function Home() {
         return !e || !e.wavId;
       })
       .map((t) => t.file!);
-    return { specs, files };
+    return { specs, files, hasUnresolvedMixedTrack };
   }, [tracks]);
 
   const triggerPreMaster = useCallback(() => {
     preMasterAbortRef.current?.abort();
     preMasterResultRef.current = null;
-    const { specs, files } = buildTrackSpecsAndFiles();
+    const { specs, files, hasUnresolvedMixedTrack } = buildTrackSpecsAndFiles({ strictMixedForVocal: true });
+    if (hasUnresolvedMixedTrack) {
+      preMasterPromiseRef.current = null;
+      return;
+    }
     const hasValidTrack = tracksRef.current.some((t) => !t.muted && (t.file || t.mixedAudioUrl));
     if (specs.length === 0 || !hasValidTrack) { preMasterPromiseRef.current = null; return; }
     const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
@@ -3392,8 +3404,16 @@ export default function Home() {
   }, [buildTrackSpecsAndFiles, tracks, isPro]);
 
   const runMaster = useCallback(async () => {
-    const { specs, files } = buildTrackSpecsAndFiles();
+    const { specs, files, hasUnresolvedMixedTrack } = buildTrackSpecsAndFiles({ strictMixedForVocal: true });
     const hasValidTrack = tracks.some((t) => !t.muted && (t.file || t.mixedAudioUrl));
+    if (hasUnresolvedMixedTrack) {
+      setAppModal({
+        type: "alert",
+        message: "Une piste mixée n'a pas pu être résolue côté serveur. Relancez le mix de la piste avant de masteriser.",
+        onClose: () => {},
+      });
+      return;
+    }
     if (specs.length === 0 || !hasValidTrack) {
       setAppModal({ type: "alert", message: NO_VALID_TRACK_MSG, onClose: () => {} });
       return;
