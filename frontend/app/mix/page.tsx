@@ -1448,16 +1448,18 @@ export default function Home() {
 
   const updateTrack = useCallback(
     (id: string, updates: Partial<Omit<Track, "id">>) => {
+      const normalizedUpdates =
+        updates.folded === true ? { ...updates, paramsOpen: false } : updates;
       setHasUnsavedChanges(true);
       setTracks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
+        prev.map((t) => (t.id === id ? { ...t, ...normalizedUpdates } : t))
       );
-      if ("gain" in updates && updates.gain !== undefined) {
-        applyGainToNodes(id, updates.gain);
+      if ("gain" in normalizedUpdates && normalizedUpdates.gain !== undefined) {
+        applyGainToNodes(id, normalizedUpdates.gain);
       }
-      if ("muted" in updates && updates.muted !== undefined) {
+      if ("muted" in normalizedUpdates && normalizedUpdates.muted !== undefined) {
         const t = tracksRef.current.find((tr) => tr.id === id);
-        applyGainToNodes(id, t?.gain ?? 100, t?.playMode, Boolean(t?.mixedAudioUrl), updates.muted);
+        applyGainToNodes(id, t?.gain ?? 100, t?.playMode, Boolean(t?.mixedAudioUrl), normalizedUpdates.muted);
       }
     },
     [applyGainToNodes, setHasUnsavedChanges]
