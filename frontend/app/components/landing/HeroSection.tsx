@@ -177,7 +177,7 @@ export function HeroSection() {
                 <line x1={12} y1={3} x2={12} y2={15} />
               </svg>
             </span>
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-slate-400 max-lg:max-w-[15rem] max-lg:text-xs">
               ou cliquez pour choisir un ou plusieurs fichiers
             </span>
             {error && (

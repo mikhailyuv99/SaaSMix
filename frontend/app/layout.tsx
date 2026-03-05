@@ -10,13 +10,13 @@ import { SafariDetect } from './components/SafariDetect'
 
 const spaceGrotesk = localFont({
   src: './fonts/SpaceGrotesk-Variable.ttf',
-  display: 'swap',
+  display: 'optional',
   variable: '--font-space-grotesk',
 })
 
 const questrial = localFont({
   src: './fonts/Questrial-Regular.ttf',
-  display: 'swap',
+  display: 'optional',
   variable: '--font-questrial',
   weight: '400',
 })
@@ -85,8 +85,6 @@ export default function RootLayout({
             __html: `(function(){var u=navigator.userAgent,v=navigator.vendor;var isSafari=v&&v.indexOf("Apple")>=0||(u.indexOf("Safari")>=0&&u.indexOf("Chrome")<0&&u.indexOf("CriOS")<0);if(isSafari){document.documentElement.classList.add("safari-webkit");var m=u.match(/Version\\/(\\d+)/);var ver=m?parseInt(m[1],10):0;var isIOS=/iPhone|iPad|iPod/.test(u);var isOldSafari=(ver>0&&ver<18)||(isIOS&&(ver<18||ver===0));if(isOldSafari){document.documentElement.classList.add("safari-webkit-old");if(isIOS)document.documentElement.classList.add("safari-ios-old");}}})();`,
           }}
         />
-        <link rel="preload" href="/fonts/Questrial-Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/SpaceGrotesk-Variable.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="preload" href="/background-new.avif" as="image" type="image/avif" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         {process.env.NEXT_PUBLIC_FB_APP_ID ? (
