@@ -3429,43 +3429,33 @@ export default function Home() {
       const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
       let mixUrl: string;
       let masterUrl: string;
-      let cached = preMasterResultRef.current;
-      if (!cached && preMasterPromiseRef.current) {
-        console.log("[master] pre-master in progress, waiting...");
-        cached = await preMasterPromiseRef.current;
+      // Always use current specs at click-time for correctness (no stale pre-master cache).
+      preMasterResultRef.current = null;
+      preMasterPromiseRef.current = null;
+      console.log("[master] calling API with fresh track specs");
+      const form = new FormData();
+      form.append("track_specs", JSON.stringify(specs));
+      files.forEach((f) => form.append("files", f));
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const postTimeoutId = setTimeout(() => masterAbortController.abort(), masterPostTimeoutMs);
+      let res: Response;
+      try {
+        res = await fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form, signal: masterAbortController.signal });
+      } finally {
+        clearTimeout(postTimeoutId);
       }
-      if (cached) {
-        console.log("[master] using pre-master result");
-        mixUrl = cached.mixUrl;
-        masterUrl = cached.masterUrl;
-        preMasterResultRef.current = null;
-        preMasterPromiseRef.current = null;
-      } else {
-        console.log("[master] no pre-master, calling API");
-        const form = new FormData();
-        form.append("track_specs", JSON.stringify(specs));
-        files.forEach((f) => form.append("files", f));
-        const headers: Record<string, string> = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const postTimeoutId = setTimeout(() => masterAbortController.abort(), masterPostTimeoutMs);
-        let res: Response;
-        try {
-          res = await fetch(`${API_BASE}/api/master`, { method: "POST", headers, body: form, signal: masterAbortController.signal });
-        } finally {
-          clearTimeout(postTimeoutId);
-        }
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 401) { logout(); setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} }); return; }
-        if (res.status === 402) {
-          const msg = (data.detail as string) || "Limite atteinte.";
-          const isNoTokens = typeof msg === "string" && msg.includes("NO_TOKENS");
-          setAppModal({ type: "alert", message: isNoTokens ? "Plus de tokens disponibles." : msg, onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } } });
-          return;
-        }
-        if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
-        mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
-        masterUrl = (data.masterUrl as string).startsWith("http") ? data.masterUrl : `${API_BASE}${data.masterUrl}`;
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) { logout(); setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => {} }); return; }
+      if (res.status === 402) {
+        const msg = (data.detail as string) || "Limite atteinte.";
+        const isNoTokens = typeof msg === "string" && msg.includes("NO_TOKENS");
+        setAppModal({ type: "alert", message: isNoTokens ? "Plus de tokens disponibles." : msg, onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } } });
+        return;
       }
+      if (!res.ok) throw new Error((data.detail as string) || "Masterisation échouée");
+      mixUrl = (data.mixUrl as string).startsWith("http") ? data.mixUrl : `${API_BASE}${data.mixUrl}`;
+      masterUrl = (data.masterUrl as string).startsWith("http") ? data.masterUrl : `${API_BASE}${data.masterUrl}`;
       const mixMp3Url = mixUrl + (mixUrl.includes("?") ? "&" : "?") + "format=mp3";
       const masterMp3Url = masterUrl + (masterUrl.includes("?") ? "&" : "?") + "format=mp3";
       // Background WAV download for instant master download later
