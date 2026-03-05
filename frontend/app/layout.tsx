@@ -62,7 +62,9 @@ export const metadata = {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
     ],
-    apple: '/icon.svg',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
   robots: {
     index: true,
@@ -87,6 +89,7 @@ export default function RootLayout({
         />
         <link rel="preload" href="/background-new.avif" as="image" type="image/avif" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         {process.env.NEXT_PUBLIC_FB_APP_ID ? (
           <meta property="fb:app_id" content={process.env.NEXT_PUBLIC_FB_APP_ID} />
         ) : null}
