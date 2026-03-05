@@ -394,6 +394,31 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 .observe-section.in-view .observe-stagger-5 { opacity: 1; transform: translateY(0); transition-delay: 0.25s; }
 .observe-section.in-view .observe-stagger-6 { opacity: 1; transform: translateY(0); transition-delay: 0.3s; }
 
+/* Mobile/tablet perf mode: keep desktop visuals unchanged. */
+@media (max-width: 1024px) {
+  .bg-fade-in {
+    animation: none !important;
+  }
+
+  .observe-section,
+  .observe-section.in-view,
+  .observe-section .observe-stagger-1,
+  .observe-section .observe-stagger-2,
+  .observe-section .observe-stagger-3,
+  .observe-section .observe-stagger-4,
+  .observe-section .observe-stagger-5,
+  .observe-section .observe-stagger-6,
+  .observe-step,
+  .observe-step.in-view,
+  #comment-ca-marche .observe-step,
+  #comment-ca-marche .observe-step.in-view {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
 /* Per-element AOS (e.g. timeline steps) */
 .observe-step {
   opacity: 0;
