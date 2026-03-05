@@ -22,7 +22,7 @@ const questrial = localFont({
 })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
-const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, '')}/logo-og.png?v=3`
+const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, '')}/logo-og.png?v=4`
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
