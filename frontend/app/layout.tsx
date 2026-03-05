@@ -23,6 +23,13 @@ const questrial = localFont({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://siberiamix.com'
 const OG_IMAGE_URL = `${SITE_URL.replace(/\/$/, '')}/logo-og.png`
+const API_ORIGIN = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_API_URL || 'https://api.siberiamix.com').origin
+  } catch {
+    return 'https://api.siberiamix.com'
+  }
+})()
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -85,6 +92,8 @@ export default function RootLayout({
             __html: `(function(){var u=navigator.userAgent,v=navigator.vendor;var isSafari=v&&v.indexOf("Apple")>=0||(u.indexOf("Safari")>=0&&u.indexOf("Chrome")<0&&u.indexOf("CriOS")<0);if(isSafari){document.documentElement.classList.add("safari-webkit");var m=u.match(/Version\\/(\\d+)/);var ver=m?parseInt(m[1],10):0;var isIOS=/iPhone|iPad|iPod/.test(u);var isOldSafari=(ver>0&&ver<18)||(isIOS&&(ver<18||ver===0));if(isOldSafari){document.documentElement.classList.add("safari-webkit-old");if(isIOS)document.documentElement.classList.add("safari-ios-old");}}})();`,
           }}
         />
+        <link rel="preconnect" href={API_ORIGIN} crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href={API_ORIGIN} />
         <link rel="preload" href="/fonts/Questrial-Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/SpaceGrotesk-Variable.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
