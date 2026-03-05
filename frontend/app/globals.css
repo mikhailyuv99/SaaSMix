@@ -543,23 +543,28 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 .pricing-plan-btn::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
-  background-size: 200% 100%;
+  top: -20%;
+  bottom: -20%;
+  width: 45%;
+  left: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.14) 50%, transparent 100%);
+  transform: translateX(-170%);
   opacity: 0;
-  transition: opacity 0.4s;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  will-change: transform;
 }
 .pricing-plan-btn:hover::after {
   opacity: 1;
-  animation: shimmer 1.2s ease-in-out;
+  animation: shimmer-slide 1.2s linear infinite;
 }
 
 /* All modal action buttons get hover shimmer */
-.modal-panel-dark button:not([aria-label="Fermer"]) {
+.modal-panel-dark button:not([aria-label="Fermer"]):not([class*="absolute"]) {
   position: relative;
   overflow: hidden;
 }
-.modal-panel-dark button:not([aria-label="Fermer"])::after {
+.modal-panel-dark button:not([aria-label="Fermer"]):not([class*="absolute"])::after {
   content: "";
   position: absolute;
   top: -20%;
@@ -568,10 +573,14 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   left: 0;
   background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.16) 50%, transparent 100%);
   transform: translateX(-160%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
   pointer-events: none;
+  will-change: transform;
 }
-.modal-panel-dark button:not([aria-label="Fermer"]):not(:disabled):hover::after {
-  animation: shimmer-slide 0.9s ease-out;
+.modal-panel-dark button:not([aria-label="Fermer"]):not([class*="absolute"]):not(:disabled):hover::after {
+  opacity: 1;
+  animation: shimmer-slide 1.2s linear infinite;
 }
 
 /* Remove glow from contact submit button */

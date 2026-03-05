@@ -85,28 +85,6 @@ export default function RootLayout({
             __html: `(function(){var u=navigator.userAgent,v=navigator.vendor;var isSafari=v&&v.indexOf("Apple")>=0||(u.indexOf("Safari")>=0&&u.indexOf("Chrome")<0&&u.indexOf("CriOS")<0);if(isSafari){document.documentElement.classList.add("safari-webkit");var m=u.match(/Version\\/(\\d+)/);var ver=m?parseInt(m[1],10):0;var isIOS=/iPhone|iPad|iPod/.test(u);var isOldSafari=(ver>0&&ver<18)||(isIOS&&(ver<18||ver===0));if(isOldSafari){document.documentElement.classList.add("safari-webkit-old");if(isIOS)document.documentElement.classList.add("safari-ios-old");}}})();`,
           }}
         />
-        <link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://js.stripe.com" />
-        <link rel="preconnect" href="https://api.stripe.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://api.stripe.com" />
-        <link rel="preconnect" href="https://m.stripe.network" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://m.stripe.network" />
-        <link rel="preconnect" href="https://r.stripe.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://r.stripe.com" />
-        <link rel="preconnect" href="https://q.stripe.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://q.stripe.com" />
-        <link rel="preconnect" href="https://b.stripecdn.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://b.stripecdn.com" />
-        <link rel="preconnect" href="https://hooks.stripe.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://hooks.stripe.com" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-        <link rel="preconnect" href="https://api.siberiamix.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://api.siberiamix.com" />
-        <link rel="preconnect" href="https://api-staging.siberiamix.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://api-staging.siberiamix.com" />
         <link rel="preload" href="/fonts/Questrial-Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/SpaceGrotesk-Variable.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
