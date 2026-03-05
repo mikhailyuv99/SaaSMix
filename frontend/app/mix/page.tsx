@@ -3222,7 +3222,7 @@ export default function Home() {
       }
       const entry = !mixedTrackId && !mustUseMixedSource && t.file ? preuploadByFileRef.current.get(t.file) : undefined;
       const preuploadId = entry?.wavId ?? undefined;
-      return { category: t.category, gain: t.gain, mixedTrackId, preuploadId };
+      return { category: t.category, gain: t.gain, mixedTrackId, preuploadId, requireMixed: mustUseMixedSource };
     });
     const files = active
       .filter((t) => {

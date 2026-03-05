@@ -824,7 +824,7 @@ async def download_mixed_track(request: Request, id: str, format: Optional[str] 
 
 async def _build_track_paths_and_gains(track_specs: list, files: List[UploadFile]) -> tuple:
     """
-    track_specs: [ { "category", "gain", "mixedTrackId"?: string, "preuploadId"?: string }, ... ]
+    track_specs: [ { "category", "gain", "mixedTrackId"?: string, "preuploadId"?: string, "requireMixed"?: bool }, ... ]
     files: liste de fichiers pour les pistes sans mixedTrackId ni preuploadId (même ordre).
     Retourne ( [ (path, gain), ... ], temp_paths ).
     """
@@ -834,12 +834,15 @@ async def _build_track_paths_and_gains(track_specs: list, files: List[UploadFile
     file_index = 0
     for spec in track_specs:
         gain = max(0, min(200, int(spec.get("gain", 100))))
+        require_mixed = bool(spec.get("requireMixed", False))
         mixed_id = spec.get("mixedTrackId")
         if mixed_id and re.match(r"^[a-f0-9\-]{36}$", mixed_id):
             path = os.path.join(MIXED_TRACKS_DIR, f"{mixed_id}.wav")
             if os.path.exists(path):
                 paths_gains.append((path, gain))
                 continue
+        if require_mixed:
+            raise HTTPException(status_code=400, detail="SOURCE_MIXED_REQUIRED: Mixed source introuvable pour au moins une piste vocale.")
         preupload_id = spec.get("preuploadId")
         if preupload_id and re.match(r"^[a-f0-9\-]{36}$", preupload_id):
             path = os.path.join(PREUPLOAD_DIR, f"{preupload_id}.wav")
