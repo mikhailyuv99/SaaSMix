@@ -5202,7 +5202,17 @@ export default function Home() {
         )}
 
         {masterResult && (
-          <section ref={masterResultSectionRef} className={tracks.length === 0 ? "mt-8 max-lg:mt-6 max-md:mt-4 max-w-xl mx-auto" : "mt-10 max-w-xl mx-auto"} aria-label="Résultat du master">
+          <section
+            ref={masterResultSectionRef}
+            className={
+              isFullscreen
+                ? "fixed bottom-4 left-1/2 z-[10000] w-[min(42rem,calc(100vw-1.5rem))] -translate-x-1/2"
+                : tracks.length === 0
+                  ? "mt-8 max-lg:mt-6 max-md:mt-4 max-w-xl mx-auto"
+                  : "mt-10 max-w-xl mx-auto"
+            }
+            aria-label="Résultat du master"
+          >
             <div className="mix-card-glass relative rounded-2xl border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
               <button
                 type="button"
@@ -5365,7 +5375,7 @@ export default function Home() {
                   }}
                   className={`mt-2 rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline disabled:cursor-not-allowed whitespace-nowrap ${
                     isDownloadingMaster
-                      ? "border border-white/30 bg-slate-800 text-white"
+                      ? "border border-white/30 bg-[#14151c] text-white"
                       : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors disabled:opacity-50"
                   }`}
                 >
