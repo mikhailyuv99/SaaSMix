@@ -4262,7 +4262,7 @@ export default function Home() {
                   disabled={isRenderingMix}
                   className={`h-10 max-md:h-9 max-md:w-full rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
                     isRenderingMix
-                      ? "border border-white/30 bg-slate-800 text-white"
+                      ? "border border-white/30 bg-[#14151c] text-white"
                       : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors disabled:opacity-50"
                   }`}
                 >
@@ -4285,7 +4285,7 @@ export default function Home() {
                   disabled={isMastering}
                   className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap min-w-[7.5rem] ${
                     isMastering
-                      ? "border border-white/30 bg-slate-800 text-white"
+                      ? "border border-white/30 bg-[#14151c] text-white"
                       : "border border-white/20 bg-white text-brand-dark hover:bg-white/90 disabled:opacity-50"
                   }`}
                 >
@@ -4668,7 +4668,7 @@ export default function Home() {
                         disabled={track.isMixing}
                         className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
                           track.isMixing
-                            ? "border border-white/30 bg-slate-800 text-white"
+                            ? "border border-white/30 bg-[#14151c] text-white"
                             : "border-white/20 bg-white text-brand-dark hover:bg-white/90 disabled:opacity-50"
                         }`}
                       >
@@ -4886,7 +4886,7 @@ export default function Home() {
                           disabled={track.isMixing}
                           className={`py-2.5 rounded-lg border text-tagline text-sm max-md:text-xs ${
                             track.isMixing
-                              ? "border border-white/30 bg-slate-800 text-white"
+                              ? "border border-white/30 bg-[#14151c] text-white"
                               : "border-white/20 bg-white text-brand-dark hover:bg-white/90 disabled:opacity-50"
                           }`}
                         >
