@@ -8,13 +8,17 @@ export function PageBackground() {
         style={{ overflow: "hidden" }}
         aria-hidden
       >
-        <img
-          src="/background-new.png"
-          alt=""
-          className="block h-full w-full object-cover object-center blur-[24px]"
-          style={{ minHeight: "100%", minWidth: "100%" }}
-          fetchPriority="high"
-        />
+        <picture className="absolute inset-0 block h-full w-full" style={{ margin: 0 }}>
+          <source srcSet="/background-new.avif" type="image/avif" />
+          <source srcSet="/background-new.webp" type="image/webp" />
+          <img
+            src="/background-new.png"
+            alt=""
+            className="block h-full w-full object-cover object-center blur-[24px]"
+            style={{ minHeight: "100%", minWidth: "100%" }}
+            fetchPriority="high"
+          />
+        </picture>
       </div>
       <div
         className="absolute inset-0"

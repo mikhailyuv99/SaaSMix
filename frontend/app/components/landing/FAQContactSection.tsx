@@ -130,7 +130,7 @@ export function FAQContactSection() {
           </ul>
 
           <div className="observe-stagger-2 flex flex-col w-full min-h-0 lg:w-[380px] lg:shrink-0 lg:min-h-0">
-            <div className="font-sans pt-5 px-6 pb-6 sm:pt-6 sm:px-7 sm:pb-7 rounded-xl border border-white/[0.06] bg-white/[0.02] flex flex-col flex-1 min-h-0 lg:min-h-full max-lg:pt-5 max-lg:px-5 max-lg:pb-5 max-md:pt-4 max-md:px-4 max-md:pb-4">
+            <div className="font-sans pt-5 px-6 pb-6 sm:pt-6 sm:px-7 sm:pb-7 rounded-xl border border-white/[0.06] bg-transparent flex flex-col flex-1 min-h-0 lg:min-h-full max-lg:pt-5 max-lg:px-5 max-lg:pb-5 max-md:pt-4 max-md:px-4 max-md:pb-4">
               <h3 className="font-heading font-semibold text-white max-md:text-sm">Nous contacter</h3>
               <p className="mt-1 text-sm text-slate-400 max-md:text-xs">
                 Un message ou une question ? Envoyez-nous un mail.
@@ -146,7 +146,7 @@ export function FAQContactSection() {
                     value={formState.name}
                     onChange={(e) => setFormState((s) => ({ ...s, name: e.target.value }))}
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    className="contact-input w-full rounded-xl border border-white/10 bg-transparent px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="Votre nom"
                   />
                 </div>
@@ -161,7 +161,7 @@ export function FAQContactSection() {
                     onChange={(e) => setFormState((s) => ({ ...s, email: e.target.value }))}
                     required
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    className="contact-input w-full rounded-xl border border-white/10 bg-transparent px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20"
                     placeholder="vous@exemple.com"
                   />
                 </div>
@@ -174,7 +174,7 @@ export function FAQContactSection() {
                     value={formState.message}
                     onChange={(e) => setFormState((s) => ({ ...s, message: e.target.value }))}
                     style={{ fontFamily: FONT }}
-                    className="contact-input w-full min-h-[100px] flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none"
+                    className="contact-input w-full min-h-[100px] flex-1 rounded-xl border border-white/10 bg-transparent px-3 py-2.5 text-sm text-white placeholder-slate-400 transition-colors focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 resize-none"
                     placeholder="Votre message..."
                   />
                 </div>
@@ -192,7 +192,7 @@ export function FAQContactSection() {
                   href={INSTAGRAM_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/5 text-white transition-all hover:border-white/30 hover:bg-white/10 hover:-translate-y-0.5"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-transparent text-white transition-all hover:border-white/30 hover:bg-white/[0.06] hover:-translate-y-0.5"
                   aria-label="Instagram @siberiamix"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

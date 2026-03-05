@@ -2,8 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Questrial';
+  src: url('/fonts/Questrial-Regular.ttf') format('truetype');
+  font-display: swap;
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-Variable.ttf') format('truetype');
+  font-display: swap;
+  font-weight: 100 900;
+}
+
 :root {
-  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif;
+  font-family: Questrial, ui-sans-serif, system-ui, sans-serif;
   --accent: 255 255 255;
   --accent-dim: 200 200 210;
   --glow: 255 255 255;
@@ -25,7 +38,7 @@
   }
   body {
     margin: 0;
-    font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif;
+    font-family: Questrial, ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
@@ -473,13 +486,27 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 .btn-cta-secondary {
-  @apply rounded-xl border px-8 py-4 text-base font-medium text-white transition-all duration-300;
+  @apply relative overflow-hidden rounded-xl border px-8 py-4 text-base font-medium text-white transition-all duration-300;
   border-color: rgba(255, 255, 255, 0.2);
   background: transparent;
+}
+.btn-cta-secondary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.4s;
 }
 .btn-cta-secondary:hover {
   border-color: rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-1px);
+}
+.btn-cta-secondary:hover::after {
+  opacity: 1;
+  animation: shimmer 1.2s ease-in-out;
 }
 
 @layer components {
@@ -640,41 +667,41 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 
 /* Force Questrial (body) + Space Grotesk (headings) partout */
 html, body, html *, body * {
-  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 h1, h2, h3, h4, h5, h6, .font-heading {
-  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Formulaires et boutons (n’héritent pas toujours) */
 input, textarea, select, button {
-  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Cartes landing (FAQ, contact) */
 .landing-card,
 .landing-card * {
-  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Placeholders formulaire contact (Votre nom, vous@exemple.com, Votre message...) */
 .landing-card input::placeholder,
 .landing-card textarea::placeholder,
 .landing-card input::-webkit-input-placeholder,
 .landing-card textarea::-webkit-input-placeholder {
-  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Bouton Envoyer et texte des questions FAQ */
 .landing-card button,
 .landing-card .btn-cta-primary {
-  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Champs contact (Votre nom, vous@exemple.com, Votre message...) */
 .contact-input,
 .contact-input::placeholder,
 .contact-input::-webkit-input-placeholder {
-  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 .faq-question,
 .faq-question * {
-  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
 }
 /* FAQ + Contact : tout en majuscules comme le reste du site */
 .landing-card,
@@ -691,9 +718,28 @@ input, textarea, select, button {
 .contact-input::placeholder {
   text-transform: uppercase !important;
 }
-/* Zone glissez-déposez : tout en caps */
+/* Zone glissez-déposez : tout en caps + shimmer */
 .hero-dropzone,
 .hero-dropzone * {
-  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
+  font-family: 'Questrial', var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
   text-transform: uppercase !important;
+}
+.hero-dropzone {
+  position: relative;
+  overflow: hidden;
+}
+.hero-dropzone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  z-index: 1;
+}
+.hero-dropzone:hover::after {
+  opacity: 1;
+  animation: shimmer 1.5s ease-in-out;
 }

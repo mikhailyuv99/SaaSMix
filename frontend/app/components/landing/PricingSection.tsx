@@ -77,7 +77,7 @@ export function PricingSection() {
 
         {/* Toggle Mensuel / Annuel */}
         <div className="w-full max-w-5xl mx-auto mt-6 flex justify-center observe-stagger-4 max-lg:mt-5 max-md:mt-4 box-border">
-          <div className="inline-flex items-center rounded-xl border border-white/10 bg-white/5 p-1 max-lg:flex-wrap max-lg:justify-center max-md:p-0.5">
+          <div className="inline-flex items-center rounded-xl border border-white/10 bg-transparent p-1 max-lg:flex-wrap max-lg:justify-center max-md:p-0.5">
             <button
               type="button"
               onClick={() => setBillingPeriod("mensuel")}
@@ -161,7 +161,7 @@ export function PricingSection() {
                       }
                     }}
                     className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px] max-sm:py-1 max-sm:text-[10px] max-sm:px-2 ${
-                      plan.featured ? "border-white/20 bg-white/5 text-white hover:bg-white/10" : "border-white/15 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
+                      plan.featured ? "border-white/20 bg-transparent text-white hover:bg-white/[0.06]" : "border-white/15 bg-transparent text-slate-400 hover:bg-white/[0.06] hover:text-white"
                     }`}
                   >
                     {plan.cta}
