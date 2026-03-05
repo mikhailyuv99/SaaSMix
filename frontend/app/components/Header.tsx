@@ -149,7 +149,7 @@ export function Header() {
 
   return (
     <>
-      <header className="relative z-50 w-full bg-transparent">
+      <header className="relative z-50 w-full bg-transparent font-sans">
         <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:h-16 sm:px-6 max-lg:flex-nowrap max-lg:py-3 max-lg:min-h-14">
           <>
             <Link

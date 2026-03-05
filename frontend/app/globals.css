@@ -286,7 +286,7 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   100% { background-position: 200% 0; }
 }
 
-/* Glowing bar running around pricing card border (Artiste / Pro annuel) */
+/* Glowing trail running around pricing card border (Artiste / Pro annuel) */
 @keyframes border-glow-spin {
   to { transform: rotate(360deg); }
 }
@@ -305,14 +305,10 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    rgba(255, 255, 255, 0.12) 60deg,
-    rgba(255, 255, 255, 0.45) 90deg,
-    rgba(255, 255, 255, 0.12) 120deg,
-    transparent 180deg,
-    transparent 240deg,
-    rgba(255, 255, 255, 0.12) 300deg,
-    rgba(255, 255, 255, 0.45) 330deg,
-    rgba(255, 255, 255, 0.12) 360deg
+    transparent 340deg,
+    rgba(255, 255, 255, 0.5) 350deg,
+    rgba(255, 255, 255, 0.7) 355deg,
+    rgba(255, 255, 255, 0.5) 360deg
   );
   animation: border-glow-spin 4s linear infinite;
   z-index: 0;
@@ -321,8 +317,9 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 .pricing-card-glow-border .pricing-card-inner {
   position: relative;
   z-index: 1;
-  margin: 2px;
-  border-radius: calc(1rem - 2px);
+  margin: 1px;
+  border-radius: calc(1rem - 1px);
+  background-color: rgba(20, 21, 28, 0.95);
 }
 
 /* Badge shimmer loop (POPULAIRE, −25%) — no hover */
@@ -800,6 +797,15 @@ input, textarea, select, button {
 .contact-input::placeholder {
   text-transform: uppercase !important;
 }
+/* Dropzone: remove focus outline artifacts */
+.hero-dropzone:focus,
+.hero-dropzone:focus-visible,
+.mix-dropzone:focus,
+.mix-dropzone:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Zone glissez-déposez : tout en caps + shimmer */
 .hero-dropzone,
 .hero-dropzone * {

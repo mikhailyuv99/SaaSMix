@@ -90,7 +90,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://api.stripe.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.stripe.com" />
         <link rel="preconnect" href="https://m.stripe.network" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://m.stripe.network" />
         <link rel="preconnect" href="https://r.stripe.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://r.stripe.com" />
+        <link rel="preconnect" href="https://q.stripe.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://q.stripe.com" />
+        <link rel="preconnect" href="https://b.stripecdn.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://b.stripecdn.com" />
         <link rel="preconnect" href="https://api.siberiamix.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.siberiamix.com" />
         <link rel="preconnect" href="https://api-staging.siberiamix.com" crossOrigin="anonymous" />
