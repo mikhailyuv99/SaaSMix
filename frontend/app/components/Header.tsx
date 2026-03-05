@@ -154,48 +154,74 @@ export function Header() {
           <>
             <Link
               href="/"
-              className="font-heading max-lg:hidden flex items-center gap-2 shrink-0 transition-opacity hover:opacity-90"
+              className="font-heading max-lg:hidden flex items-center shrink-0 transition-opacity hover:opacity-90"
             >
-              <svg className="h-7 sm:h-8 w-auto shrink-0" viewBox="0 0 160 160" fill="none" aria-hidden>
+              <svg className="h-8 sm:h-9 w-auto shrink-0" viewBox="18 64 124 28" fill="none" aria-hidden>
                 <defs>
-                  <linearGradient id="diam-d1" x1="69.24" y1="105.65" x2="124.82" y2="50.07" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="hld1" x1="28.84" y1="85.2" x2="40.47" y2="73.57" gradientUnits="userSpaceOnUse">
                     <stop offset=".09" stopColor="#1e1d2c"/><stop offset=".5" stopColor="#5389e6"/><stop offset=".81" stopColor="#9dcffd"/><stop offset=".96" stopColor="#fff"/>
                   </linearGradient>
-                  <linearGradient id="diam-d2" x1="56.5" y1="104.68" x2="104.64" y2="56.54" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="hld2" x1="26.17" y1="85" x2="36.25" y2="74.92" gradientUnits="userSpaceOnUse">
                     <stop offset=".09" stopColor="#1e1d2c"/><stop offset=".5" stopColor="#5389e6"/><stop offset=".81" stopColor="#9dcffd"/><stop offset=".96" stopColor="#fff"/>
                   </linearGradient>
-                  <linearGradient id="diam-d3" x1="38.39" y1="103.95" x2="90.47" y2="51.87" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="hld3" x1="22.38" y1="84.85" x2="33.28" y2="73.94" gradientUnits="userSpaceOnUse">
                     <stop offset=".09" stopColor="#1e1d2c"/><stop offset=".5" stopColor="#5389e6"/><stop offset=".81" stopColor="#9dcffd"/><stop offset=".96" stopColor="#fff"/>
                   </linearGradient>
                 </defs>
-                <path fill="url(#diam-d1)" d="M127.99,62.12l-31.92-26.38c-.77-.66-1.73-.53-2.36.29-.63.78-.67,1.93-.07,2.75l15.83,22.19c.3.42.39.95.25,1.44l-16.7,59.18c-.37,1.1,0,2.25.87,2.82.27.2.6.29.87.29.6,0,1.17-.37,1.53-1.02l32.11-59.44c.38-.71.21-1.6-.41-2.11Z"/>
-                <path fill="url(#diam-d2)" d="M80.75,40.46c-.25-.49-.65-.78-1.08-.78h-.03c-.43.04-.83.33-1.08.78l-11.23,21.89c-.23.48-.28,1.01-.2,1.53l11.79,57.67c.15.79.66,1.31,1.25,1.31.6-.04,1.11-.56,1.25-1.31l11.46-57.49c.07-.51-.06-1.1-.29-1.55l-11.85-22.06Z"/>
-                <path fill="url(#diam-d3)" d="M50.28,62.41c-.14-.49-.05-1.03.25-1.44l15.83-22.19c.6-.82.56-1.97-.07-2.75-.63-.82-1.58-.94-2.36-.29l-31.92,26.38c-.62.52-.8,1.4-.41,2.11l32.11,59.44c.37.65.93,1.02,1.53,1.02.27,0,.6-.08.87-.29.87-.57,1.23-1.71.87-2.82l-16.7-59.18Z"/>
+                <path fill="url(#hld1)" d="M41.14,76.09l-6.68-5.52c-.16-.14-.36-.11-.49.06-.13.16-.14.4-.01.58l3.31,4.65c.06.09.08.2.05.3l-3.5,12.39c-.08.23,0,.47.18.59.06.04.13.06.18.06.13,0,.24-.08.32-.21l6.72-12.44c.08-.15.04-.33-.09-.44Z"/>
+                <path fill="url(#hld2)" d="M33.73,76.17l-2.48-4.62c-.05-.1-.14-.16-.23-.16h0c-.09,0-.17.07-.23.16l-2.35,4.58c-.05.1-.06.21-.04.32l2.47,12.07c.03.17.14.27.26.27.12,0,.23-.12.26-.27l2.4-12.04c.01-.11-.01-.23-.06-.32Z"/>
+                <path fill="url(#hld3)" d="M24.87,76.15c-.03-.1,0-.21.05-.3l3.31-4.65c.13-.17.12-.41-.01-.58-.13-.17-.33-.2-.49-.06l-6.68,5.52c-.13.11-.17.29-.09.44l6.72,12.44c.08.14.2.21.32.21.06,0,.13-.02.18-.06.18-.12.26-.36.18-.59l-3.5-12.39Z"/>
+                <g fill="#f2f4f7">
+                  <path d="M51.39,78.37h-1.51c-1.25,0-1.93-.66-1.93-1.86s.65-1.76,1.93-1.76h4.89v-1.89h-4.63c-2.73,0-4.01,1.14-4.01,3.61s1.36,3.79,4.03,3.79h1.48c1.63,0,2.45.71,2.45,2.11s-.85,2.17-2.45,2.17h-5.38v1.89h5.13c3.02,0,4.49-1.32,4.49-4.02s-1.48-4.04-4.51-4.04Z"/>
+                  <path d="M58.58,72.86v.33l1.85,1.86v-2.18h-1.85ZM58.58,75.11v11.32h1.85v-9.47l-1.85-1.85Z"/>
+                  <path d="M72.18,78.14l-.36-.09.34-.16c.73-.34,1.1-1.02,1.1-2.08,0-1.95-1.23-2.95-3.67-2.95h-6.2v13.57h6.62c3.06,0,4.55-1.44,4.55-4.4,0-2.18-.8-3.48-2.37-3.89ZM65.24,74.74h4.69c1.21,0,1.46.73,1.46,1.34s-.25,1.3-1.46,1.3h-4.69v-2.64ZM70.14,84.53h-4.9v-5.26h4.86c1.72,0,2.58.88,2.58,2.61s-.86,2.64-2.55,2.64Z"/>
+                  <path d="M85.34,74.75v-1.89h-8.16v13.57h8.04v-1.89h-6.17v-4.2l5.55.02v-1.89h-5.55v-3.71h6.3Z"/>
+                  <path d="M94.9,82.07c2.73-.26,4.05-1.77,4.05-4.63,0-3.08-1.58-4.58-4.81-4.58h-6.38v13.57h1.87v-4.34h3.1l3.92,7.05h2.05l-4.01-7.05.2-.02ZM89.64,80.19v-5.45h4.77c1.83,0,2.75.92,2.75,2.72s-.92,2.73-2.75,2.73h-4.77Z"/>
+                  <path d="M101.71,75.08v11.35h1.85v-9.5l-1.85-1.85ZM101.71,72.86v.3l1.85,1.85v-2.15h-1.85Z"/>
+                  <path d="M112.63,73.01l-7.06,13.41h2.11l1.03-2.17h7.98l2.45,4.89,1.89.05-8.39-16.17ZM109.57,82.35l3.14-5.53,3.11,5.53h-6.25Z"/>
+                </g>
+                <g fill="#f2f4f7">
+                  <path d="M124.09,84.25v-5.86h.77l2.1,2.78,2.06-2.78h.77v5.86h-.66v-4.85l-2.17,2.79-2.2-2.79v4.85h-.66Z"/>
+                  <path d="M131.23,84.25v-5.86h.66v5.86h-.66Z"/>
+                  <path d="M132.58,84.25l2.34-3.03-2.18-2.83h.84l1.73,2.3,1.74-2.3h.84l-2.18,2.83,2.34,3.03h-.84l-1.9-2.51-1.89,2.51h-.84Z"/>
+                </g>
               </svg>
-              <span className="text-xl sm:text-2xl font-semibold tracking-tight" style={{ color: "#f2f4f7" }}>SIBERIA <span style={{ color: "#69a3ff" }}>MIX</span></span>
             </Link>
             <Link
               href="/"
               onClick={handleAccueilClick}
-              className="font-heading lg:hidden flex items-center gap-2 shrink-0 transition-opacity hover:opacity-90"
+              className="font-heading lg:hidden flex items-center shrink-0 transition-opacity hover:opacity-90"
             >
-              <svg className="h-7 sm:h-8 w-auto shrink-0" viewBox="0 0 160 160" fill="none" aria-hidden>
+              <svg className="h-7 sm:h-8 w-auto shrink-0" viewBox="18 64 124 28" fill="none" aria-hidden>
                 <defs>
-                  <linearGradient id="diam-m1" x1="69.24" y1="105.65" x2="124.82" y2="50.07" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="hlm1" x1="28.84" y1="85.2" x2="40.47" y2="73.57" gradientUnits="userSpaceOnUse">
                     <stop offset=".09" stopColor="#1e1d2c"/><stop offset=".5" stopColor="#5389e6"/><stop offset=".81" stopColor="#9dcffd"/><stop offset=".96" stopColor="#fff"/>
                   </linearGradient>
-                  <linearGradient id="diam-m2" x1="56.5" y1="104.68" x2="104.64" y2="56.54" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="hlm2" x1="26.17" y1="85" x2="36.25" y2="74.92" gradientUnits="userSpaceOnUse">
                     <stop offset=".09" stopColor="#1e1d2c"/><stop offset=".5" stopColor="#5389e6"/><stop offset=".81" stopColor="#9dcffd"/><stop offset=".96" stopColor="#fff"/>
                   </linearGradient>
-                  <linearGradient id="diam-m3" x1="38.39" y1="103.95" x2="90.47" y2="51.87" gradientUnits="userSpaceOnUse">
+                  <linearGradient id="hlm3" x1="22.38" y1="84.85" x2="33.28" y2="73.94" gradientUnits="userSpaceOnUse">
                     <stop offset=".09" stopColor="#1e1d2c"/><stop offset=".5" stopColor="#5389e6"/><stop offset=".81" stopColor="#9dcffd"/><stop offset=".96" stopColor="#fff"/>
                   </linearGradient>
                 </defs>
-                <path fill="url(#diam-m1)" d="M127.99,62.12l-31.92-26.38c-.77-.66-1.73-.53-2.36.29-.63.78-.67,1.93-.07,2.75l15.83,22.19c.3.42.39.95.25,1.44l-16.7,59.18c-.37,1.1,0,2.25.87,2.82.27.2.6.29.87.29.6,0,1.17-.37,1.53-1.02l32.11-59.44c.38-.71.21-1.6-.41-2.11Z"/>
-                <path fill="url(#diam-m2)" d="M80.75,40.46c-.25-.49-.65-.78-1.08-.78h-.03c-.43.04-.83.33-1.08.78l-11.23,21.89c-.23.48-.28,1.01-.2,1.53l11.79,57.67c.15.79.66,1.31,1.25,1.31.6-.04,1.11-.56,1.25-1.31l11.46-57.49c.07-.51-.06-1.1-.29-1.55l-11.85-22.06Z"/>
-                <path fill="url(#diam-m3)" d="M50.28,62.41c-.14-.49-.05-1.03.25-1.44l15.83-22.19c.6-.82.56-1.97-.07-2.75-.63-.82-1.58-.94-2.36-.29l-31.92,26.38c-.62.52-.8,1.4-.41,2.11l32.11,59.44c.37.65.93,1.02,1.53,1.02.27,0,.6-.08.87-.29.87-.57,1.23-1.71.87-2.82l-16.7-59.18Z"/>
+                <path fill="url(#hlm1)" d="M41.14,76.09l-6.68-5.52c-.16-.14-.36-.11-.49.06-.13.16-.14.4-.01.58l3.31,4.65c.06.09.08.2.05.3l-3.5,12.39c-.08.23,0,.47.18.59.06.04.13.06.18.06.13,0,.24-.08.32-.21l6.72-12.44c.08-.15.04-.33-.09-.44Z"/>
+                <path fill="url(#hlm2)" d="M33.73,76.17l-2.48-4.62c-.05-.1-.14-.16-.23-.16h0c-.09,0-.17.07-.23.16l-2.35,4.58c-.05.1-.06.21-.04.32l2.47,12.07c.03.17.14.27.26.27.12,0,.23-.12.26-.27l2.4-12.04c.01-.11-.01-.23-.06-.32Z"/>
+                <path fill="url(#hlm3)" d="M24.87,76.15c-.03-.1,0-.21.05-.3l3.31-4.65c.13-.17.12-.41-.01-.58-.13-.17-.33-.2-.49-.06l-6.68,5.52c-.13.11-.17.29-.09.44l6.72,12.44c.08.14.2.21.32.21.06,0,.13-.02.18-.06.18-.12.26-.36.18-.59l-3.5-12.39Z"/>
+                <g fill="#f2f4f7">
+                  <path d="M51.39,78.37h-1.51c-1.25,0-1.93-.66-1.93-1.86s.65-1.76,1.93-1.76h4.89v-1.89h-4.63c-2.73,0-4.01,1.14-4.01,3.61s1.36,3.79,4.03,3.79h1.48c1.63,0,2.45.71,2.45,2.11s-.85,2.17-2.45,2.17h-5.38v1.89h5.13c3.02,0,4.49-1.32,4.49-4.02s-1.48-4.04-4.51-4.04Z"/>
+                  <path d="M58.58,72.86v.33l1.85,1.86v-2.18h-1.85ZM58.58,75.11v11.32h1.85v-9.47l-1.85-1.85Z"/>
+                  <path d="M72.18,78.14l-.36-.09.34-.16c.73-.34,1.1-1.02,1.1-2.08,0-1.95-1.23-2.95-3.67-2.95h-6.2v13.57h6.62c3.06,0,4.55-1.44,4.55-4.4,0-2.18-.8-3.48-2.37-3.89ZM65.24,74.74h4.69c1.21,0,1.46.73,1.46,1.34s-.25,1.3-1.46,1.3h-4.69v-2.64ZM70.14,84.53h-4.9v-5.26h4.86c1.72,0,2.58.88,2.58,2.61s-.86,2.64-2.55,2.64Z"/>
+                  <path d="M85.34,74.75v-1.89h-8.16v13.57h8.04v-1.89h-6.17v-4.2l5.55.02v-1.89h-5.55v-3.71h6.3Z"/>
+                  <path d="M94.9,82.07c2.73-.26,4.05-1.77,4.05-4.63,0-3.08-1.58-4.58-4.81-4.58h-6.38v13.57h1.87v-4.34h3.1l3.92,7.05h2.05l-4.01-7.05.2-.02ZM89.64,80.19v-5.45h4.77c1.83,0,2.75.92,2.75,2.72s-.92,2.73-2.75,2.73h-4.77Z"/>
+                  <path d="M101.71,75.08v11.35h1.85v-9.5l-1.85-1.85ZM101.71,72.86v.3l1.85,1.85v-2.15h-1.85Z"/>
+                  <path d="M112.63,73.01l-7.06,13.41h2.11l1.03-2.17h7.98l2.45,4.89,1.89.05-8.39-16.17ZM109.57,82.35l3.14-5.53,3.11,5.53h-6.25Z"/>
+                </g>
+                <g fill="#f2f4f7">
+                  <path d="M124.09,84.25v-5.86h.77l2.1,2.78,2.06-2.78h.77v5.86h-.66v-4.85l-2.17,2.79-2.2-2.79v4.85h-.66Z"/>
+                  <path d="M131.23,84.25v-5.86h.66v5.86h-.66Z"/>
+                  <path d="M132.58,84.25l2.34-3.03-2.18-2.83h.84l1.73,2.3,1.74-2.3h.84l-2.18,2.83,2.34,3.03h-.84l-1.9-2.51-1.89,2.51h-.84Z"/>
+                </g>
               </svg>
-              <span className="text-xl sm:text-2xl font-semibold tracking-tight" style={{ color: "#f2f4f7" }}>SIBERIA <span style={{ color: "#69a3ff" }}>MIX</span></span>
             </Link>
           </>
 

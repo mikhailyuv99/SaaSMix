@@ -4,7 +4,7 @@ export function PageBackground() {
   return (
     <div className="bg-fade-in fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#14151c]" aria-hidden>
       <div
-        className="absolute inset-0 origin-center scale-[1.08] blur-[6px]"
+        className="absolute inset-0 origin-center scale-[1.08] blur-[18px]"
         style={{ overflow: "hidden", filter: "saturate(0.3) brightness(0.85)" }}
         aria-hidden
       >

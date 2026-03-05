@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: Questrial, ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif;
   --accent: 105 163 255;
   --accent-dim: 83 137 230;
   --glow: 105 163 255;
@@ -25,7 +25,7 @@
   }
   body {
     margin: 0;
-    font-family: Questrial, ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
@@ -81,16 +81,16 @@ body[data-mix-fullscreen] footer {
 /* Mix cards + modals: Safari 18 / macOS 15 fix — rgba + backdrop-filter = opaque white bug */
 /* Force rgba background. On Safari, disable backdrop-filter (workaround for regression). */
 .mix-card-glass {
-  background-color: rgba(105, 163, 255, 0.03) !important;
+  background-color: rgba(180, 185, 195, 0.05) !important;
 }
 .mix-card-glass:hover {
-  background-color: rgba(105, 163, 255, 0.05) !important;
+  background-color: rgba(180, 185, 195, 0.08) !important;
 }
 .mix-card-glass.mix-card-dragging {
-  background-color: rgba(105, 163, 255, 0.07) !important;
+  background-color: rgba(180, 185, 195, 0.10) !important;
 }
 .mix-card-glass.mix-card-drop-over {
-  background-color: rgba(105, 163, 255, 0.10) !important;
+  background-color: rgba(180, 185, 195, 0.13) !important;
 }
 
 /* Couches réelles (blur + teinte) pour que le flou s’applique aussi sur Safari 17 / iOS 17 */
@@ -396,21 +396,21 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 
 /* HowItWorks circle glow states (toggled via JS classList, zero React re-renders) */
 .hiw-dim {
-  border-color: rgba(105, 163, 255, 0.25);
-  color: rgba(242, 244, 247, 0.9);
-  background-color: #1e1d2c;
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.7);
+  background-color: transparent;
 }
 .hiw-dim .hiw-glow-ring {
   box-shadow: none;
 }
 .hiw-glow {
-  border-color: rgba(105, 163, 255, 0.8);
-  background-color: rgba(105, 163, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.8);
+  background-color: rgba(255, 255, 255, 0.1) !important;
   color: #fff;
-  text-shadow: 0 0 12px rgba(105, 163, 255, 0.9);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
 }
 .hiw-glow .hiw-glow-ring {
-  box-shadow: 0 0 20px rgba(105, 163, 255, 0.4), inset 0 0 20px rgba(105, 163, 255, 0.1);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
 /* Premium landing cards */
@@ -445,22 +445,23 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 .btn-cta-primary {
   @apply relative overflow-hidden rounded-xl px-8 py-4 text-base font-semibold transition-all duration-300;
-  background: #69a3ff;
-  color: #14151c;
-  box-shadow: 0 0 0 1px rgba(105, 163, 255, 0.2);
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
 }
 
 .btn-cta-primary:hover {
-  background: #85b5ff;
+  background: rgba(255, 255, 255, 0.08);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px -4px rgba(105, 163, 255, 0.3), 0 0 0 1px rgba(105, 163, 255, 0.3);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
 .btn-cta-primary::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(105deg, transparent 0%, rgba(105, 163, 255, 0.15) 50%, transparent 100%);
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
   background-size: 200% 100%;
   opacity: 0;
   transition: opacity 0.4s;
@@ -473,12 +474,12 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 
 .btn-cta-secondary {
   @apply rounded-xl border px-8 py-4 text-base font-medium text-white transition-all duration-300;
-  border-color: rgba(105, 163, 255, 0.25);
-  background: rgba(105, 163, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: transparent;
 }
 .btn-cta-secondary:hover {
-  border-color: rgba(105, 163, 255, 0.4);
-  background: rgba(105, 163, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 @layer components {
@@ -490,27 +491,27 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   }
   .btn-primary {
     @apply rounded-lg px-4 py-2.5 text-sm font-medium text-white border transition-colors focus:outline-none focus:ring-1 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-    border-color: rgba(105, 163, 255, 0.15);
-    background: rgba(105, 163, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    background: transparent;
   }
   .btn-primary:hover {
-    background: rgba(105, 163, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
   }
   .btn-primary-accent {
-    @apply btn-primary text-[#14151c];
-    border-color: rgba(105, 163, 255, 0.3);
-    background: #69a3ff;
+    @apply btn-primary text-white;
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
   }
   .btn-primary-accent:hover {
-    background: rgba(105, 163, 255, 0.9);
+    background: rgba(255, 255, 255, 0.18);
   }
   .btn-secondary {
     @apply rounded-lg px-4 py-2 text-sm font-medium border bg-transparent transition-colors focus:outline-none focus:ring-1 focus:ring-offset-2;
-    border-color: rgba(105, 163, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.12);
     color: #f2f4f7;
   }
   .btn-secondary:hover {
-    background: rgba(105, 163, 255, 0.06);
+    background: rgba(255, 255, 255, 0.06);
     color: #fff;
   }
   /* Menus déroulants : même style que le site (fond sombre, bordure, texte clair) */
@@ -639,41 +640,41 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 
 /* Force Questrial (body) + Space Grotesk (headings) partout */
 html, body, html *, body * {
-  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
 }
 h1, h2, h3, h4, h5, h6, .font-heading {
-  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Formulaires et boutons (n’héritent pas toujours) */
 input, textarea, select, button {
-  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Cartes landing (FAQ, contact) */
 .landing-card,
 .landing-card * {
-  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Placeholders formulaire contact (Votre nom, vous@exemple.com, Votre message...) */
 .landing-card input::placeholder,
 .landing-card textarea::placeholder,
 .landing-card input::-webkit-input-placeholder,
 .landing-card textarea::-webkit-input-placeholder {
-  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Bouton Envoyer et texte des questions FAQ */
 .landing-card button,
 .landing-card .btn-cta-primary {
-  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Champs contact (Votre nom, vous@exemple.com, Votre message...) */
 .contact-input,
 .contact-input::placeholder,
 .contact-input::-webkit-input-placeholder {
-  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
 }
 .faq-question,
 .faq-question * {
-  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif !important;
 }
 /* FAQ + Contact : tout en majuscules comme le reste du site */
 .landing-card,
@@ -693,6 +694,6 @@ input, textarea, select, button {
 /* Zone glissez-déposez : tout en caps */
 .hero-dropzone,
 .hero-dropzone * {
-  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
+  font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif !important;
   text-transform: uppercase !important;
 }

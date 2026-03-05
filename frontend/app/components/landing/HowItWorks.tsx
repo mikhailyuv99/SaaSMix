@@ -230,7 +230,7 @@ export function HowItWorks() {
                 className="absolute left-0 top-0 h-full w-px origin-top bg-white will-change-transform"
                 style={{
                   transform: "scaleY(0)",
-                  boxShadow: "0 0 12px rgba(105,163,255,0.7), 0 0 24px rgba(105,163,255,0.35)",
+                  boxShadow: "0 0 12px rgba(255,255,255,0.7), 0 0 24px rgba(255,255,255,0.35)",
                 }}
               />
             </div>
