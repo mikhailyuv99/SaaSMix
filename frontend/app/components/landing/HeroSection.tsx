@@ -113,11 +113,26 @@ export function HeroSection() {
           <h1
             className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl max-lg:text-3xl max-md:text-2xl"
           >
-            <span className="text-white inline-block">Le site n°1</span>
+            <span
+              className="text-white inline-block opacity-0 animate-fade-up"
+              style={{ animationDelay: "0.08s" }}
+            >
+              Le site n°1
+            </span>
             <br />
-            <span className="text-white inline-block">de mix vocal</span>
+            <span
+              className="text-white inline-block opacity-0 animate-fade-up"
+              style={{ animationDelay: "0.2s" }}
+            >
+              de mix vocal
+            </span>
             <br />
-            <span className="text-white inline-block whitespace-nowrap">en ligne</span>
+            <span
+              className="text-white inline-block whitespace-nowrap opacity-0 animate-fade-up"
+              style={{ animationDelay: "0.32s" }}
+            >
+              en ligne
+            </span>
           </h1>
           <p
             className="mt-4 text-lg text-slate-400 sm:text-xl max-lg:text-base max-md:mt-3 max-md:text-sm font-sans"
