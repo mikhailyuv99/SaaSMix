@@ -509,6 +509,33 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   animation: shimmer 1.2s ease-in-out;
 }
 
+/* Pricing plan buttons shimmer */
+.pricing-plan-btn {
+  position: relative;
+  overflow: hidden;
+}
+.pricing-plan-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.pricing-plan-btn:hover::after {
+  opacity: 1;
+  animation: shimmer 1.2s ease-in-out;
+}
+
+/* Remove glow from contact submit button */
+.contact-submit.btn-cta-primary {
+  box-shadow: none;
+}
+.contact-submit.btn-cta-primary:hover {
+  box-shadow: none;
+}
+
 @layer components {
   .card {
     @apply rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm;

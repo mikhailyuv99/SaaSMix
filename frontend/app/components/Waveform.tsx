@@ -55,10 +55,12 @@ export const Waveform = memo(function Waveform({
     const cx = h / 2;
     const n = peaks.length;
     const barW = Math.max(1, w / n);
-    ctx.fillStyle = "#ffffff";
     for (let i = 0; i < n; i++) {
-      const halfH = (peaks[i]! / maxPeak) * (cx - 1);
+      const ratio = peaks[i]! / maxPeak;
+      const halfH = ratio * (cx - 1);
       const x = (i / (n - 1 || 1)) * w;
+      const alpha = 0.35 + ratio * 0.65;
+      ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
       ctx.fillRect(Math.max(0, Math.floor(x - barW / 2)), Math.floor(cx - halfH), Math.ceil(barW) + 1, Math.ceil(halfH * 2));
     }
   }, [peaks, maxPeak]);

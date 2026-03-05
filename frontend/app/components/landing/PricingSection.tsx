@@ -126,7 +126,7 @@ export function PricingSection() {
                   i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6"
                 } ${
                   plan.featured
-                    ? "border-white/25 bg-white/[0.06] shadow-[0_10px_15px_-3px_rgba(0,0,0,0.2),0_0_40px_rgba(255,255,255,0.06)] ring-1 ring-white/10 hover:border-white/30"
+                    ? "border-white/15 bg-white/[0.04] shadow-[0_0_80px_20px_rgba(255,255,255,0.03)] hover:shadow-[0_0_80px_20px_rgba(255,255,255,0.05)] hover:border-white/20"
                     : "landing-card border-white/10"
                 }`}
               >
@@ -160,7 +160,7 @@ export function PricingSection() {
                         window.dispatchEvent(new CustomEvent("openPlanModal"));
                       }
                     }}
-                    className={`w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px] max-sm:py-1 max-sm:text-[10px] max-sm:px-2 ${
+                    className={`pricing-plan-btn w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px] max-sm:py-1 max-sm:text-[10px] max-sm:px-2 ${
                       plan.featured ? "border-white/20 bg-transparent text-white hover:bg-white/[0.06]" : "border-white/15 bg-transparent text-slate-400 hover:bg-white/[0.06] hover:text-white"
                     }`}
                   >
