@@ -181,9 +181,9 @@ export function FAQContactSection() {
                 <button
                   type="submit"
                   style={{ fontFamily: FONT }}
-                  className="contact-submit btn-cta-primary w-full py-3 text-sm font-semibold font-sans shrink-0"
+                  className="contact-submit btn-cta-primary w-full py-3 text-sm font-semibold font-sans uppercase shrink-0"
                 >
-                  Envoyer
+                  ENVOYER
                 </button>
               </form>
               <div className="mt-5 flex items-center gap-3 border-t border-white/[0.06] pt-5 shrink-0">

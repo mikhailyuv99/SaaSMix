@@ -150,7 +150,7 @@ export function PricingSection() {
                       }
                     }}
                     className={`pricing-plan-btn w-full rounded-xl border px-4 py-2.5 text-center text-sm transition-colors uppercase max-lg:py-2 max-lg:text-xs max-md:py-1.5 max-md:text-[10px] max-sm:py-1 max-sm:text-[10px] max-sm:px-2 ${
-                      plan.featured ? "border-white/20 bg-transparent text-white hover:bg-white/[0.06]" : "border-white/15 bg-transparent text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                      plan.featured ? "border-white/20 bg-transparent text-white hover:bg-white/[0.06]" : "border-white/15 bg-transparent text-white hover:bg-white/[0.06]"
                     }`}
                   >
                     {plan.cta}

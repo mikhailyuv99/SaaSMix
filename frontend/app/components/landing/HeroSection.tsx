@@ -137,7 +137,7 @@ export function HeroSection() {
             style={{ animationDelay: "0.4s", animationFillMode: "both" }}
           >
             {[
-              "Mix en quelques minutes",
+              "Mix en quelques secondes",
               "Voix qui s'intègrent à l'instrumentale",
               "Export WAV prêt à sortir",
             ].map((item, i) => (

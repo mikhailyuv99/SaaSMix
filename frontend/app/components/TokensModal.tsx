@@ -111,10 +111,10 @@ function TokenPaymentForm({
       </div>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       <div className="flex gap-2">
-        <button type="button" onClick={onCancel} className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+        <button type="button" onClick={onCancel} className="pricing-plan-btn rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-400 hover:text-white transition-colors">
           Annuler
         </button>
-        <button type="submit" disabled={!stripe || loading} className="flex-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 transition-colors">
+        <button type="submit" disabled={!stripe || loading} className="pricing-plan-btn flex-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 transition-colors">
           {loading ? "Paiement en cours…" : "Payer"}
         </button>
       </div>
@@ -215,10 +215,10 @@ export function TokensModal({
           <div className="space-y-4">
             <p className="text-slate-400 text-sm">Connectez-vous pour acheter des tokens (mix ou master).</p>
             <div className="flex justify-center gap-3">
-              <button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors shrink-0">
+              <button type="button" onClick={onClose} className="pricing-plan-btn rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors shrink-0">
                 Fermer
               </button>
-              <button type="button" onClick={() => { onNeedLogin?.(); onClose(); }} className="rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 text-sm shrink-0">
+              <button type="button" onClick={() => { onNeedLogin?.(); onClose(); }} className="pricing-plan-btn rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium px-4 py-2 text-sm shrink-0">
                 Se connecter
               </button>
             </div>
@@ -244,7 +244,7 @@ export function TokensModal({
               <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
                 <p className="text-slate-400 text-xs uppercase tracking-wider mb-3">Tokens Mix</p>
                 {mixOffers.map((o) => (
-                  <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
+                  <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="pricing-plan-btn w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
                     {o.quantity} token{o.quantity > 1 ? "s" : ""} — {o.priceDisplay}
                   </button>
                 ))}
@@ -252,7 +252,7 @@ export function TokensModal({
               <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
                 <p className="text-slate-400 text-xs uppercase tracking-wider mb-3">Tokens Master</p>
                 {masterOffers.map((o) => (
-                  <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
+                  <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="pricing-plan-btn w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
                     {o.quantity} token{o.quantity > 1 ? "s" : ""} — {o.priceDisplay}
                   </button>
                 ))}
@@ -285,7 +285,7 @@ export function TokensModal({
                   <p className="text-slate-500 text-sm">Aucune offre configurée. Vérifiez les variables STRIPE_PRICE_MIX_1 / MIX_5 sur le serveur.</p>
                 ) : (
                   mixOffers.map((o) => (
-                    <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
+                    <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="pricing-plan-btn w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
                       {o.quantity} token{o.quantity > 1 ? "s" : ""} — {o.priceDisplay}
                     </button>
                   ))
@@ -297,7 +297,7 @@ export function TokensModal({
                   <p className="text-slate-500 text-sm">Aucune offre configurée. Vérifiez les variables STRIPE_PRICE_MASTER_1 / MASTER_5 sur le serveur.</p>
                 ) : (
                   masterOffers.map((o) => (
-                    <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
+                    <button key={o.priceId} type="button" onClick={() => setSelectedOffer(o)} className="pricing-plan-btn w-full mt-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white hover:bg-white/10 transition-colors text-left">
                       {o.quantity} token{o.quantity > 1 ? "s" : ""} — {o.priceDisplay}
                     </button>
                   ))
