@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react'
 
-const BODY_FONT = 'var(--font-questrial), Questrial, ui-sans-serif, system-ui, sans-serif'
-const HEADING_FONT = 'var(--font-space-grotesk), "Space Grotesk", ui-sans-serif, system-ui, sans-serif'
+const BODY_FONT = 'Questrial, ui-sans-serif, system-ui, sans-serif'
+const HEADING_FONT = '"Space Grotesk", ui-sans-serif, system-ui, sans-serif'
 
 export function ForceFont() {
   useEffect(() => {

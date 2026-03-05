@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ObserveSection } from "../ObserveSection";
 
 const INSTAGRAM_URL = "https://instagram.com/siberiamix";
-const FONT = "'Plus Jakarta Sans', sans-serif";
+const FONT = "Questrial, ui-sans-serif, system-ui, sans-serif";
 const CONTACT_EMAIL = "99siberia@gmail.com";
 
 const faqs = [
