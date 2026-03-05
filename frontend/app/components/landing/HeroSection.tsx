@@ -111,28 +111,14 @@ export function HeroSection() {
       <div className="w-full max-w-6xl mx-auto grid items-center gap-6 sm:gap-8 lg:grid-cols-[1fr,380px] lg:gap-12 max-lg:gap-6 max-md:gap-5 box-border">
         <div className="max-w-xl max-lg:max-w-none">
           <h1
-            className="animate-hero-tagline font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl max-lg:text-3xl max-md:text-2xl"
+            className="font-heading text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl animate-hero-tagline max-lg:text-3xl max-md:text-2xl"
+            style={{ animationFillMode: "both" }}
           >
-            <span
-              className="text-white inline-block animate-fade-up"
-              style={{ animationDelay: "0.08s" }}
-            >
-              Le site n°1
-            </span>
+            <span className="text-white inline-block animate-hero-line-1">Le site n°1</span>
             <br />
-            <span
-              className="text-white inline-block animate-fade-up"
-              style={{ animationDelay: "0.2s" }}
-            >
-              de mix vocal
-            </span>
+            <span className="text-white inline-block animate-hero-line-2">de mix vocal</span>
             <br />
-            <span
-              className="text-white inline-block whitespace-nowrap animate-fade-up"
-              style={{ animationDelay: "0.32s" }}
-            >
-              en ligne
-            </span>
+            <span className="text-white inline-block animate-hero-line-3 whitespace-nowrap">en ligne</span>
           </h1>
           <p
             className="mt-4 text-lg text-slate-400 sm:text-xl max-lg:text-base max-md:mt-3 max-md:text-sm font-sans"
