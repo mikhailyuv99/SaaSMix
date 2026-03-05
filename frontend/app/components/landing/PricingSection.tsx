@@ -117,7 +117,6 @@ export function PricingSection() {
               ]
           ).map(({ plan, invisible, index: i }) => {
             const badgeLabel = plan.name === "Pro annuel" ? "−25%" : (plan.featured ? "Populaire" : null);
-            const isFeaturedCard = plan.featured;
             const cardContent = (
               <>
                 <div className="flex items-center justify-between gap-1 min-h-[2rem] min-w-0 shrink-0 max-sm:min-h-[1.5rem]">
@@ -160,24 +159,17 @@ export function PricingSection() {
               </>
             );
             const observeClass = i === 0 ? "observe-stagger-4" : i === 1 ? "observe-stagger-5" : "observe-stagger-6";
-            if (invisible) {
-              return (
-                <div key={plan.name + "-ghost"} className="invisible rounded-2xl border p-6 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-sm:p-1.5 min-w-0 overflow-hidden" aria-hidden>
-                  {cardContent}
-                </div>
-              );
-            }
-            if (isFeaturedCard) {
-              return (
-                <div key={plan.name} className={`pricing-card-glow-border rounded-2xl ${observeClass}`}>
-                  <div className="pricing-card-inner rounded-2xl border border-white/15 bg-white/[0.04] p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-sm:p-1.5 min-w-0 overflow-hidden hover:border-white/20">
-                    {cardContent}
-                  </div>
-                </div>
-              );
-            }
             return (
-              <div key={plan.name} className={`landing-card rounded-2xl border border-white/10 p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-sm:p-1.5 min-w-0 overflow-hidden ${observeClass}`}>
+              <div
+                key={plan.name + (invisible ? "-ghost" : "")}
+                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-sm:p-1.5 min-w-0 overflow-hidden ${
+                  invisible ? "invisible" : ""
+                } ${observeClass} ${
+                  plan.featured
+                    ? "border-white/15 bg-white/[0.04] hover:border-white/20"
+                    : "landing-card border-white/10"
+                }`}
+              >
                 {cardContent}
               </div>
             );

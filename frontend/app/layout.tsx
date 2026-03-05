@@ -97,6 +97,12 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://q.stripe.com" />
         <link rel="preconnect" href="https://b.stripecdn.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://b.stripecdn.com" />
+        <link rel="preconnect" href="https://hooks.stripe.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://hooks.stripe.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
         <link rel="preconnect" href="https://api.siberiamix.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.siberiamix.com" />
         <link rel="preconnect" href="https://api-staging.siberiamix.com" crossOrigin="anonymous" />
