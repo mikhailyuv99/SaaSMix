@@ -4,15 +4,15 @@
 
 :root {
   font-family: var(--font-questrial), ui-sans-serif, system-ui, sans-serif;
-  --accent: 105 163 255;
-  --accent-dim: 83 137 230;
-  --glow: 105 163 255;
+  --accent: 255 255 255;
+  --accent-dim: 200 200 210;
+  --glow: 255 255 255;
   --glow-intensity: 0.08;
-  --section-bg: rgba(105, 163, 255, 0.02);
-  --card-border: rgba(105, 163, 255, 0.08);
-  --card-hover-border: rgba(105, 163, 255, 0.18);
+  --section-bg: rgba(255, 255, 255, 0.02);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-hover-border: rgba(255, 255, 255, 0.18);
   --brand-dark: #14151c;
-  --brand-blue: #69a3ff;
+  --brand-white: #ffffff;
   --brand-gray: #f2f4f7;
   --brand-anthracite: #1e1d2c;
 }
@@ -48,7 +48,7 @@
 html,
 body {
   scrollbar-width: thin;
-  scrollbar-color: rgba(105, 163, 255, 0.25) rgba(105, 163, 255, 0.04);
+  scrollbar-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.04);
 }
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
@@ -58,18 +58,18 @@ body::-webkit-scrollbar {
 }
 html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track {
-  background: rgba(105, 163, 255, 0.04);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 5px;
 }
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb {
-  background: rgba(105, 163, 255, 0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 5px;
-  border: 2px solid rgba(105, 163, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.04);
 }
 html::-webkit-scrollbar-thumb:hover,
 body::-webkit-scrollbar-thumb:hover {
-  background: rgba(105, 163, 255, 0.35);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 /* Mix fullscreen: hide layout header and footer for immersion */
@@ -138,13 +138,13 @@ body[data-mix-fullscreen] footer {
   background-color: rgba(20, 21, 28, 0.15) !important;
 }
 .modal-btn-subtle {
-  background-color: rgba(105, 163, 255, 0.04) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
 }
 .modal-btn-subtle:hover {
-  background-color: rgba(105, 163, 255, 0.08) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 .modal-input {
-  background-color: rgba(105, 163, 255, 0.04) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 /* Safari: mix-card sans blur (bug blanc); backdrops utilisent les couches réelles .backdrop-blur-layer / .backdrop-tint-layer comme tout le monde */
@@ -289,8 +289,8 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(105, 163, 255, 0.03); }
-  50% { box-shadow: 0 0 40px rgba(105, 163, 255, 0.06); }
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.03); }
+  50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.06); }
 }
 
 @keyframes hero-zoom-in-out {
@@ -427,7 +427,7 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #fff 0%, rgba(157, 207, 253, 0.9) 50%, rgba(105, 163, 255, 0.85) 100%);
+  background: linear-gradient(135deg, #fff 0%, rgba(220, 225, 235, 0.9) 50%, rgba(180, 185, 195, 0.85) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -530,7 +530,7 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   select option:hover,
   select option:focus,
   select option:checked {
-    background: rgba(105, 163, 255, 0.15);
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
   }
   /* Menu déroulant catégorie : texte centré, ellipsis si trop long */
@@ -548,7 +548,7 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   select.select-category option:hover,
   select.select-category option:focus,
   select.select-category option:checked {
-    background: rgba(105, 163, 255, 0.15);
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
   }
   /* BPM : pas de flèches (spinners), saisie manuelle uniquement */
@@ -567,13 +567,13 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
     width: 1rem;
     height: 1rem;
     border-radius: 0.25rem;
-    border: 1px solid rgba(105, 163, 255, 0.25);
-    background: rgba(105, 163, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.05);
     cursor: pointer;
   }
   input.checkbox-reglages:checked {
-    background: #69a3ff;
-    border-color: #69a3ff;
+    background: #fff;
+    border-color: #fff;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314151c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
     background-size: 0.75rem 0.75rem;
     background-position: center;
@@ -582,12 +582,12 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   /* Fichier WAV : clignotement lent du glow quand aucun fichier choisi */
   @keyframes glow-blink-slow {
     0%, 100% {
-      color: rgb(100 130 180);
-      text-shadow: 0 0 6px rgba(105, 163, 255, 0.4);
+      color: rgb(180 185 195);
+      text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
     }
     50% {
-      color: #69a3ff;
-      text-shadow: 0 0 14px rgba(105, 163, 255, 0.85);
+      color: #fff;
+      text-shadow: 0 0 14px rgba(255, 255, 255, 0.85);
     }
   }
   .glow-blink-slow {
@@ -630,8 +630,8 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 @keyframes track-moved-flash {
-  0%   { box-shadow: 0 0 0 2px rgba(105, 163, 255, 0.5); }
-  70%  { box-shadow: 0 0 0 2px rgba(105, 163, 255, 0.2); }
+  0%   { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5); }
+  70%  { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2); }
   100% { box-shadow: none; }
 }
 .animate-track-moved {

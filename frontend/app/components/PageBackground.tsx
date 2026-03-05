@@ -28,11 +28,11 @@ export function PageBackground() {
         className="absolute inset-0"
         style={{ backgroundColor: "rgba(20, 21, 28, 0.55)" }}
       />
-      {/* Subtle blue radial glow top-right */}
+      {/* Subtle white radial glow top-right */}
       <div
         className="absolute inset-0"
         style={{
-          background: "radial-gradient(ellipse 70% 50% at 75% 20%, rgba(105,163,255,0.08) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse 70% 50% at 75% 20%, rgba(255,255,255,0.06) 0%, transparent 70%)",
         }}
       />
     </div>

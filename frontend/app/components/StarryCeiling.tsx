@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 
 const STAR_COLORS = [
-  "rgba(200, 220, 255, 0.75)",
-  "rgba(157, 207, 253, 0.7)",
-  "rgba(105, 163, 255, 0.65)",
+  "rgba(255, 255, 255, 0.9)",
+  "rgba(255, 255, 255, 0.75)",
+  "rgba(255, 255, 255, 0.65)",
 ] as const;
 
 function generateDots() {

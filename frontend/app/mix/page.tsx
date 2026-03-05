@@ -3898,21 +3898,21 @@ export default function Home() {
                 onClick={() => applyCategoryChoice("lead_vocal")}
                 className="modal-btn-subtle group w-full py-3 rounded-xl border border-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
-                <span className="group-hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] group-hover:text-white transition-all duration-200">Lead vocal</span>
+                <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] group-hover:text-white transition-all duration-200">Lead vocal</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("adlibs_backs")}
                 className="modal-btn-subtle group w-full py-3 rounded-xl border border-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
-                <span className="group-hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] group-hover:text-white transition-all duration-200">Adlibs / Backs</span>
+                <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] group-hover:text-white transition-all duration-200">Adlibs / Backs</span>
               </button>
               <button
                 type="button"
                 onClick={() => applyCategoryChoice("instrumental")}
                 className="modal-btn-subtle group w-full py-3 rounded-xl border border-white/10 text-tagline text-slate-300 text-sm font-medium transition-all duration-200"
               >
-                <span className="group-hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] group-hover:text-white transition-all duration-200">Instrumentale</span>
+                <span className="group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] group-hover:text-white transition-all duration-200">Instrumentale</span>
               </button>
             </div>
           </div>
@@ -4007,7 +4007,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => { if (!user) { openAuthModal?.("login"); return; } setShowProjectsModal(true); fetchProjectsList(); }}
-                    className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     MES PROJETS
                   </button>
@@ -4017,7 +4017,7 @@ export default function Home() {
                     type="button"
                     disabled={user ? (isSavingProject || isCreatingProject) : false}
                     onClick={() => { if (!user) { openAuthModal?.("login"); return; } saveProject(); }}
-                    className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                    className="text-slate-400 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
                     {user && isSavingProject ? <span className="animate-dots">SAUVEGARDE</span> : "SAUVEGARDER"}
                   </button>
@@ -4028,7 +4028,7 @@ export default function Home() {
         )}
 
         {!isFullscreen && heroLoadFailed && (
-          <div className="mx-4 mb-4 max-md:mx-3 max-md:mb-3 rounded-xl border border-brand-blue/30 bg-brand-anthracite/50 px-4 py-3 text-center text-sm text-brand-blue/90 font-heading">
+          <div className="mx-4 mb-4 max-md:mx-3 max-md:mb-3 rounded-xl border border-white/30 bg-brand-anthracite/50 px-4 py-3 text-center text-sm text-white/90 font-heading">
             Les fichiers n&apos;ont pas pu être récupérés depuis la page d&apos;accueil. Ajoutez vos pistes ci-dessous.
           </div>
         )}
@@ -4121,7 +4121,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={openProjectTitleModal}
-                  className="w-fit max-w-[20ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0 max-xl:text-center max-md:min-w-0 max-md:text-center"
+                  className="w-fit max-w-[20ch] text-slate-200 text-sm font-heading tracking-wide text-left hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors cursor-pointer rounded focus:outline-none focus:ring-1 focus:ring-white/30 truncate shrink-0 max-xl:text-center max-md:min-w-0 max-md:text-center"
                   title={fullTitle}
                   aria-label="Modifier le titre du projet"
                 >
@@ -4221,7 +4221,7 @@ export default function Home() {
                 >
                   <span className="uppercase tracking-wider text-slate-400">BPM</span>
                   <div className="relative inline-flex items-center justify-center min-w-[2.5rem] h-full cursor-text" onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}>
-                    <span className={`tabular-nums text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)] select-none transition-opacity ${bpmInputFocused ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
+                    <span className={`tabular-nums text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)] select-none transition-opacity ${bpmInputFocused ? "opacity-0 pointer-events-none" : "pointer-events-none"}`} aria-hidden>
                       {bpmInput}
                     </span>
                     <input
@@ -4261,11 +4261,11 @@ export default function Home() {
                   className={`h-10 max-md:h-9 max-md:w-full rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap ${
                     isRenderingMix
                       ? "border border-white/30 bg-slate-800 text-white"
-                      : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors disabled:opacity-50"
+                      : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors disabled:opacity-50"
                   }`}
                 >
                   {isRenderingMix ? (
-                    <span className="text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.7)]">
+                    <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]">
                       RENDU<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                     </span>
                   ) : (
@@ -4288,7 +4288,7 @@ export default function Home() {
                   }`}
                 >
                   {isMastering ? (
-                    <span className="text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.7)]">
+                    <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]">
                       MASTERING<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                     </span>
                   ) : "MASTERISER"}
@@ -4328,7 +4328,7 @@ export default function Home() {
                 dragState?.trackId === track.id
                   ? "mix-card-dragging border-white/30 shadow-lg shadow-black/30 scale-[1.02] z-20"
                   : dragState && dragState.offset !== 0 && dragState.startIndex + dragState.offset === trackIndex
-                    ? "mix-card-drop-over border-white/25 shadow-[inset_0_0_0_2px_rgba(105,163,255,0.2),0_4px_20px_rgba(20,21,28,0.3)]"
+                    ? "mix-card-drop-over border-white/25 shadow-[inset_0_0_0_2px_rgba(255,255,255,0.2),0_4px_20px_rgba(20,21,28,0.3)]"
                     : "border-white/10 hover:border-white/15"
               }`}
             >
@@ -4526,10 +4526,10 @@ export default function Home() {
                       <span className="text-tagline text-center whitespace-nowrap block min-w-0">{track.file ? "REMPLACER" : "FICHIER WAV"}</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
-                      <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-tagline"}>Catégorie</span>
+                      <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-tagline"}>Catégorie</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
-                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-tagline"}>
+                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-tagline"}>
                         Gain {track.gain ?? 100}%
                       </span>
                     </div>
@@ -4540,7 +4540,7 @@ export default function Home() {
                         onClick={() => setFileChooserActiveTrackId(track.id)}
                         aria-label={track.file ? "Changer le fichier" : "Choisir un fichier WAV"}
                       >
-                        <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors"}`} aria-hidden>
+                        <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors"}`} aria-hidden>
                           <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         </span>
                       </label>
@@ -4608,24 +4608,24 @@ export default function Home() {
                 ) : (
                   <>
                     <div className="flex items-center justify-center min-h-[32px] min-w-0">
-                      <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : ""}`}>
+                      <span className={`text-tagline text-center whitespace-nowrap block min-w-0 ${fileChooserActiveTrackId === track.id ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : ""}`}>
                         {track.file ? "REMPLACER" : "FICHIER WAV"}
                       </span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
-                      <span className={track.isMixing ? "text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-tagline"}>MIXER</span>
+                      <span className={track.isMixing ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-tagline"}>MIXER</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
-                      <span className={track.paramsOpen ? "text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-tagline"}>RÉGLAGES</span>
+                      <span className={track.paramsOpen ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-tagline"}>RÉGLAGES</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
                       <span className="text-tagline text-center whitespace-nowrap">AVANT / APRÈS</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
-                      <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-tagline"}>Catégorie</span>
+                      <span className={focusedCategoryTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-tagline"}>Catégorie</span>
                     </div>
                     <div className="flex items-center justify-center min-h-[32px]">
-                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-tagline"}>
+                      <span className={gainSliderHoveredTrackId === track.id ? "text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-tagline"}>
                         Gain {track.gain ?? 100}%
                       </span>
                     </div>
@@ -4636,7 +4636,7 @@ export default function Home() {
                         onClick={() => setFileChooserActiveTrackId(track.id)}
                         aria-label="Choisir un fichier WAV"
                       >
-                        <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors"}`} aria-hidden>
+                        <span className={`inline-flex items-center justify-center ${!track.file ? "glow-blink-slow transition-colors" : "text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors"}`} aria-hidden>
                           <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         </span>
                       </label>
@@ -4671,7 +4671,7 @@ export default function Home() {
                         }`}
                       >
                         {track.isMixing ? (
-                          <span className="text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.7)]">
+                          <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]">
                             MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                           </span>
                         ) : (
@@ -4689,7 +4689,7 @@ export default function Home() {
                         }
                         className="group w-full h-9 flex items-center justify-center rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline"
                       >
-                        <span className="text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors">
+                        <span className="text-slate-400 group-hover:text-white group-hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors">
                           {track.paramsOpen ? "Masquer" : "Réglages"}
                         </span>
                       </button>
@@ -4710,7 +4710,7 @@ export default function Home() {
                         <span
                           className={
                             track.mixedAudioUrl && track.playMode === "raw"
-                              ? "text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.5)]"
+                              ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
                               : "text-slate-400"
                           }
                         >
@@ -4720,7 +4720,7 @@ export default function Home() {
                         <span
                           className={
                             track.mixedAudioUrl && track.playMode === "mixed"
-                              ? "text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.5)]"
+                              ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
                               : "text-slate-400"
                           }
                         >
@@ -4889,7 +4889,7 @@ export default function Home() {
                           }`}
                         >
                           {track.isMixing ? (
-                            <span className="text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.7)]">
+                            <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]">
                               MIXAGE<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                             </span>
                           ) : (
@@ -4901,7 +4901,7 @@ export default function Home() {
                           onClick={() => updateTrack(track.id, { paramsOpen: !track.paramsOpen })}
                           className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-sm max-md:text-xs hover:bg-white/10"
                         >
-                          <span className={track.paramsOpen ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}>{track.paramsOpen ? "Masquer" : "Réglages"}</span>
+                          <span className={track.paramsOpen ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}>{track.paramsOpen ? "Masquer" : "Réglages"}</span>
                         </button>
                         <button
                           type="button"
@@ -4909,9 +4909,9 @@ export default function Home() {
                           disabled={!track.mixedAudioUrl}
                           className="py-2.5 rounded-lg border border-white/10 bg-white/5 text-tagline text-sm max-md:text-xs hover:bg-white/10 disabled:opacity-50 col-span-2 flex items-center justify-center gap-1"
                         >
-                          <span className={track.mixedAudioUrl && track.playMode === "raw" ? "text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.5)]" : "text-slate-400"}>AVANT</span>
+                          <span className={track.mixedAudioUrl && track.playMode === "raw" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "text-slate-400"}>AVANT</span>
                           <span className="text-slate-400">/</span>
-                          <span className={track.mixedAudioUrl && track.playMode === "mixed" ? "text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.5)]" : "text-slate-400"}>APRÈS</span>
+                          <span className={track.mixedAudioUrl && track.playMode === "mixed" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "text-slate-400"}>APRÈS</span>
                         </button>
                       </div>
                       <div>
@@ -4984,15 +4984,15 @@ export default function Home() {
                   {/* Ligne 1 : Basses, Mids, Aigus — libellés en glow+blanc quand la box réglages est ouverte */}
                   <div className="grid grid-cols-3 gap-4 min-h-[3rem] items-end">
                     <div className="flex flex-col min-w-0">
-                      <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)] block mb-1.5 text-center text-xs uppercase tracking-wider">Basses</span>
+                      <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)] block mb-1.5 text-center text-xs uppercase tracking-wider">Basses</span>
                       <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_low ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full" options={TONE_OPTIONS} />
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)] block mb-1.5 text-center text-xs uppercase tracking-wider">Mids</span>
+                      <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)] block mb-1.5 text-center text-xs uppercase tracking-wider">Mids</span>
                       <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_mid ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full" options={TONE_OPTIONS} />
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)] block mb-1.5 text-center text-xs uppercase tracking-wider">Aigus</span>
+                      <span className="text-tagline text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)] block mb-1.5 text-center text-xs uppercase tracking-wider">Aigus</span>
                       <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_high ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full" options={TONE_OPTIONS} />
                     </div>
                   </div>
@@ -5001,21 +5001,21 @@ export default function Home() {
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
                         <input type="checkbox" checked={track.mixParams.noise_gate ?? true} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, noise_gate: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.noise_gate !== false ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>Noise gate</span>
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.noise_gate !== false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>Noise gate</span>
                       </label>
                       <CustomSelect value={Math.min(4, Math.max(1, track.mixParams.noise_gate_mode ?? 2))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, noise_gate_mode: Number(v) as 1 | 2 | 3 | 4 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }, { value: 4, label: "Extrême" }]} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
                         <input type="checkbox" checked={track.mixParams.reverb} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>Reverb</span>
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>Reverb</span>
                       </label>
                       <CustomSelect value={track.mixParams.reverb_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb_mode: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
                         <input type="checkbox" checked={track.mixParams.delay} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>Delay</span>
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>Delay</span>
                       </label>
                       <div className="grid grid-cols-2 gap-1">
                         <CustomSelect value={track.mixParams.delay_division} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay_division: v as "1/4" | "1/2" | "1/8" } })} className="w-full" options={[{ value: "1/4", label: "1/4" }, { value: "1/2", label: "1/2" }, { value: "1/8", label: "1/8" }]} />
@@ -5025,7 +5025,7 @@ export default function Home() {
                     <div className="flex flex-col min-w-0">
                       <label className="flex items-center justify-center gap-2 mb-1.5">
                         <input type="checkbox" checked={track.mixParams.deesser} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>De-esser</span>
+                        <span className={`text-tagline text-xs uppercase tracking-wider ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>De-esser</span>
                       </label>
                       <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                     </div>
@@ -5034,19 +5034,19 @@ export default function Home() {
                   <div className="grid grid-cols-4 gap-4 min-h-[3rem] items-end">
                     <label className="flex flex-col items-center justify-center gap-1.5 min-w-0">
                       <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>Doubler</span>
+                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>Doubler</span>
                     </label>
                     <label className="flex flex-col items-center justify-center gap-1.5 min-w-0">
                       <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>FX robot</span>
+                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>FX robot</span>
                     </label>
                     <label className="flex flex-col items-center justify-center gap-1.5 min-w-0">
                       <input type="checkbox" checked={track.mixParams.phone_fx} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, phone_fx: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>FX téléphone</span>
+                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>FX téléphone</span>
                     </label>
                     <label className="flex flex-col items-center justify-center gap-1.5 min-w-0">
                       <input type="checkbox" checked={track.mixParams.air} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, air: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5" />
-                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>Air</span>
+                      <span className={`text-tagline text-xs uppercase tracking-wider text-center ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>Air</span>
                     </label>
                   </div>
                 </div>
@@ -5056,40 +5056,40 @@ export default function Home() {
               {track.paramsOpen && isVocal(track.category) && (
                 <div className="mt-4 pt-4 border-t border-white/[0.06] lg:hidden flex flex-col gap-2">
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]">Basses</span>
+                        <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]">Basses</span>
                         <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_low ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_low: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={TONE_OPTIONS} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]">Mids</span>
+                        <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]">Mids</span>
                         <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_mid ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_mid: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={TONE_OPTIONS} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]">Aigus</span>
+                        <span className="text-tagline text-sm max-md:text-xs text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]">Aigus</span>
                         <CustomSelect value={Math.min(5, Math.max(1, track.mixParams.tone_high ?? 3))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, tone_high: Number(v) as 1 | 2 | 3 | 4 | 5 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={TONE_OPTIONS} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.noise_gate !== false ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>
+                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.noise_gate !== false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.noise_gate ?? true} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, noise_gate: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Noise gate
                         </label>
                         <CustomSelect value={Math.min(4, Math.max(1, track.mixParams.noise_gate_mode ?? 2))} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, noise_gate_mode: Number(v) as 1 | 2 | 3 | 4 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }, { value: 4, label: "Extrême" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>
+                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.deesser ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.deesser} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           De-esser
                         </label>
                         <CustomSelect value={track.mixParams.deesser_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, deesser_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>
+                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.reverb ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.reverb} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Reverb
                         </label>
                         <CustomSelect value={track.mixParams.reverb_mode} onChange={(v) => updateTrack(track.id, { mixParams: { ...track.mixParams, reverb_mode: Number(v) as 1 | 2 | 3 } })} className="w-full min-w-0 h-9 text-sm max-md:text-xs" options={[{ value: 1, label: "Léger" }, { value: 2, label: "Moyen" }, { value: 3, label: "Fort" }]} />
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2 items-center min-h-[2.25rem] min-w-0">
-                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>
+                        <label className={`flex items-center gap-1.5 text-tagline text-sm max-md:text-xs ${track.mixParams.delay ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.delay} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, delay: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Delay
                         </label>
@@ -5099,21 +5099,21 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between min-h-[2.25rem] px-0 text-tagline text-sm max-md:text-xs">
-                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>
+                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.phone_fx ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.phone_fx} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, phone_fx: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           FX téléphone
                         </label>
-                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>
+                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.robot ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.robot ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, robot: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           <span>FX robot</span>
                         </label>
                       </div>
                       <div className="flex items-center justify-between min-h-[2.25rem] px-0 text-tagline text-sm max-md:text-xs">
-                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>
+                        <label className={`flex items-center gap-1.5 shrink-0 ${track.mixParams.air ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.air} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, air: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           Air
                         </label>
-                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(105,163,255,0.8)]" : "text-slate-400"}`}>
+                        <label className={`flex items-center gap-1.5 shrink-0 w-[5.5rem] ${track.mixParams.doubler ?? false ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.8)]" : "text-slate-400"}`}>
                           <input type="checkbox" checked={track.mixParams.doubler ?? false} onChange={(e) => updateTrack(track.id, { mixParams: { ...track.mixParams, doubler: e.target.checked } })} className="checkbox-reglages rounded border border-white/10 bg-white/5 shrink-0" />
                           <span>Doubler</span>
                         </label>
@@ -5235,7 +5235,7 @@ export default function Home() {
                   <span
                     className={
                       masterPlaybackMode === "mix"
-                        ? "text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.5)]"
+                        ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
                         : "text-slate-400"
                     }
                   >
@@ -5246,7 +5246,7 @@ export default function Home() {
                     className={
                       masterPlaybackMode === "mix"
                         ? "text-slate-400"
-                        : "text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.5)]"
+                        : "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"
                     }
                   >
                     APRÈS
@@ -5364,11 +5364,11 @@ export default function Home() {
                   className={`mt-2 rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline disabled:cursor-not-allowed whitespace-nowrap ${
                     isDownloadingMaster
                       ? "border border-white/30 bg-slate-800 text-white"
-                      : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors disabled:opacity-50"
+                      : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors disabled:opacity-50"
                   }`}
                 >
                   {isDownloadingMaster ? (
-                    <span className="text-white drop-shadow-[0_0_8px_rgba(105,163,255,0.7)]">
+                    <span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]">
                       TÉLÉCHARGEMENT<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span>
                     </span>
                   ) : (
@@ -5379,7 +5379,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => { if (!user) { openAuthModal?.("login"); return; } }}
-                  className="mt-2 rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(105,163,255,0.8)] transition-colors whitespace-nowrap"
+                  className="mt-2 rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors whitespace-nowrap"
                 >
                   TÉLÉCHARGER LE MASTER
                 </button>
