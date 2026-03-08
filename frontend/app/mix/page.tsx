@@ -485,6 +485,8 @@ export default function Home() {
     nextFiles?: File[];
   } | null>(null);
   const [preparingTrack, setPreparingTrack] = useState<string | null>(null);
+  const [preuploadProgress, setPreuploadProgress] = useState(0);
+  const preuploadProgressMap = useRef<Map<File, number>>(new Map());
   const mixDropzoneInputRef = useRef<HTMLInputElement>(null);
   const [mixDropzoneDragging, setMixDropzoneDragging] = useState(false);
   const addTrackDropzoneInputRef = useRef<HTMLInputElement>(null);
@@ -631,6 +633,14 @@ export default function Home() {
     return apiConnReady.current;
   }, []);
 
+  const updateAggregateProgress = useCallback(() => {
+    const map = preuploadProgressMap.current;
+    if (map.size === 0) { setPreuploadProgress(0); return; }
+    let sum = 0;
+    map.forEach((v) => { sum += v; });
+    setPreuploadProgress(Math.round(sum / map.size));
+  }, []);
+
   const startPreupload = useCallback((file: File) => {
     if (preuploadByFileRef.current.has(file)) return;
     const entry: PreuploadEntry = {
@@ -643,23 +653,48 @@ export default function Home() {
         ensureApiConnection(),
       ]);
       console.log("[preupload-wav] file in memory + connection ready, sending raw", file.name, `${(buffer.byteLength / 1048576).toFixed(1)}MB`);
+      preuploadProgressMap.current.set(file, 0);
+      updateAggregateProgress();
       try {
         const url = `${API_BASE}/api/track/preupload-bin?filename=${encodeURIComponent(file.name)}`;
-        const res = await fetch(url, { method: "POST", body: buffer });
-        if (!res.ok) throw new Error(`status ${res.status}`);
-        const d = await res.json();
-        const pid = d?.preupload_id ?? null;
+        const pid = await new Promise<string | null>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", url);
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const pct = Math.round((e.loaded / e.total) * 100);
+              preuploadProgressMap.current.set(file, pct);
+              updateAggregateProgress();
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const d = JSON.parse(xhr.responseText);
+                resolve(d?.preupload_id ?? null);
+              } catch { resolve(null); }
+            } else {
+              reject(new Error(`status ${xhr.status}`));
+            }
+          };
+          xhr.onerror = () => reject(new Error("network error"));
+          xhr.send(buffer);
+        });
         entry.wavId = pid;
+        preuploadProgressMap.current.set(file, 100);
+        updateAggregateProgress();
         console.log("[preupload-wav] done, id=", pid);
         return pid;
       } catch (e) {
         console.warn("[preupload-wav] error", e);
+        preuploadProgressMap.current.delete(file);
+        updateAggregateProgress();
         return null;
       }
     })();
 
     preuploadByFileRef.current.set(file, entry);
-  }, [ensureApiConnection]);
+  }, [ensureApiConnection, updateAggregateProgress]);
   useEffect(() => {
     if (categoryModal?.file) startPreupload(categoryModal.file);
     if (categoryModal?.nextFiles) categoryModal.nextFiles.forEach((f) => startPreupload(f));
@@ -1685,6 +1720,7 @@ export default function Home() {
       .filter(Boolean);
     if (!cappedPromises.length) return;
     const label = cappedPromises.length > 1 ? "Préparation des pistes..." : "Préparation de la piste...";
+    setPreuploadProgress(0);
     setPreparingTrack(label);
     const minWait = new Promise((r) => setTimeout(r, 3000));
     const globalCap = new Promise((r) => setTimeout(r, 30000));
@@ -1692,6 +1728,8 @@ export default function Home() {
       Promise.all([...cappedPromises, minWait]),
       globalCap,
     ]);
+    preuploadProgressMap.current.clear();
+    setPreuploadProgress(0);
     setPreparingTrack(null);
   }, []);
 
@@ -3893,8 +3931,21 @@ export default function Home() {
           <div className={`fixed inset-0 flex items-center justify-center p-4 ${isFullscreen ? "z-[100020]" : "z-[110]"}`}>
             <div className="absolute inset-0 bg-brand-dark/80 backdrop-blur-sm" />
             <div className="relative flex flex-col items-center gap-4">
-              <div className="w-12 h-12 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-              <p className="text-white text-sm font-medium tracking-wide animate-pulse">{preparingTrack}</p>
+              <div className="relative w-16 h-16 flex items-center justify-center">
+                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3" />
+                  <circle cx="32" cy="32" r="28" fill="none" stroke="#91bbff" strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 28}`}
+                    strokeDashoffset={`${2 * Math.PI * 28 * (1 - preuploadProgress / 100)}`}
+                    style={{ transition: "stroke-dashoffset 0.3s ease" }}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold tabular-nums">
+                  {preuploadProgress}%
+                </span>
+              </div>
+              <p className="text-white text-sm font-medium tracking-wide">{preparingTrack}</p>
             </div>
           </div>,
           document.body
