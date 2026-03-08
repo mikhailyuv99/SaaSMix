@@ -921,20 +921,30 @@ input, textarea, select, button {
   text-transform: uppercase !important;
 }
 .hero-dropzone,
-.mix-dropzone,
-.glow-border {
+.mix-dropzone {
   position: relative;
   overflow: hidden;
 }
 .glow-border {
+  position: relative;
   border-color: transparent !important;
 }
 .hero-dropzone::before,
-.mix-dropzone::before,
-.glow-border::before {
+.mix-dropzone::before {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid rgba(145, 187, 255, 0.7);
+  box-shadow: 0 0 10px rgba(145, 187, 255, 0.3), inset 0 0 10px rgba(145, 187, 255, 0.08);
+  pointer-events: none;
+  z-index: 2;
+  animation: dropzone-glow 3s ease-in-out infinite;
+}
+.glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
   border-radius: inherit;
   border: 1.5px solid rgba(145, 187, 255, 0.7);
   box-shadow: 0 0 10px rgba(145, 187, 255, 0.3), inset 0 0 10px rgba(145, 187, 255, 0.08);
