@@ -289,10 +289,6 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   100% { background-position: 200% 0; }
 }
 
-@keyframes dropzone-glow {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 1; }
-}
 @keyframes shimmer-slide {
   0% { transform: translateX(-150%); }
   100% { transform: translateX(150%); }
@@ -927,30 +923,24 @@ input, textarea, select, button {
 }
 .glow-border {
   position: relative;
+}
+.hero-dropzone,
+.mix-dropzone,
+.glow-border {
   border-color: transparent !important;
+  outline: 1.5px solid transparent;
+  outline-offset: -1px;
+  animation: dropzone-glow-outline 3s ease-in-out infinite;
 }
-.hero-dropzone::before,
-.mix-dropzone::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1.5px solid rgba(145, 187, 255, 0.7);
-  box-shadow: 0 0 10px rgba(145, 187, 255, 0.3), inset 0 0 10px rgba(145, 187, 255, 0.08);
-  pointer-events: none;
-  z-index: 2;
-  animation: dropzone-glow 3s ease-in-out infinite;
-}
-.glow-border::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  border: 1.5px solid rgba(145, 187, 255, 0.7);
-  box-shadow: 0 0 10px rgba(145, 187, 255, 0.3), inset 0 0 10px rgba(145, 187, 255, 0.08);
-  pointer-events: none;
-  z-index: 2;
-  animation: dropzone-glow 3s ease-in-out infinite;
+@keyframes dropzone-glow-outline {
+  0%, 100% {
+    outline-color: transparent;
+    box-shadow: none;
+  }
+  50% {
+    outline-color: rgba(145, 187, 255, 0.7);
+    box-shadow: 0 0 10px rgba(145, 187, 255, 0.3);
+  }
 }
 .hero-dropzone::after {
   content: "";
