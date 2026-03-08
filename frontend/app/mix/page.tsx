@@ -3941,7 +3941,7 @@ export default function Home() {
                     style={{ transition: "stroke-dashoffset 0.3s ease" }}
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-white text-sm font-bold tabular-nums">
+                <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold tabular-nums leading-none pt-px">
                   {preuploadProgress}%
                 </span>
               </div>
