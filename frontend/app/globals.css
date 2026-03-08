@@ -926,6 +926,9 @@ input, textarea, select, button {
   position: relative;
   overflow: hidden;
 }
+.glow-border {
+  border-color: transparent !important;
+}
 .hero-dropzone::before,
 .mix-dropzone::before,
 .glow-border::before {
