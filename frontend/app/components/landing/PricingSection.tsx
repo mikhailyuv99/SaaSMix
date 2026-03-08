@@ -101,7 +101,7 @@ export function PricingSection() {
             const badgeLabel = plan.name === "Pro annuel" ? "−25%" : (plan.featured ? "Populaire" : null);
             const cardContent = (
               <>
-                <div className="flex items-center justify-between gap-1 min-h-[2rem] min-w-0 shrink-0 max-sm:min-h-[1.5rem]">
+                <div className="flex items-center justify-between gap-1 h-[2rem] min-w-0 shrink-0 max-sm:h-[1.5rem]">
                   <h3 className="font-heading text-xl font-semibold text-white max-lg:text-sm max-md:text-xs max-sm:text-[11px] truncate">{plan.name}</h3>
                   {badgeLabel && (
                     <span className="badge-shimmer-loop shrink-0 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-slate-400 max-lg:text-[9px] max-lg:px-1.5 max-md:text-[8px] max-md:px-1 max-sm:text-[8px] max-sm:px-1">
