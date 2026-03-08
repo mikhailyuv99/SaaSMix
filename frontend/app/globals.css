@@ -932,7 +932,6 @@ input, textarea, select, button {
 }
 .glow-border {
   position: relative;
-  overflow: visible !important;
 }
 .mix-card-glow {
   position: relative;
