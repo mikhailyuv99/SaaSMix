@@ -4351,7 +4351,7 @@ export default function Home() {
                 dragState?.trackId === track.id
                   ? "mix-card-dragging border-white/30 shadow-lg shadow-black/30 scale-[1.02] z-20"
                   : dragState && dragState.offset !== 0 && dragState.startIndex + dragState.offset === trackIndex
-                    ? "mix-card-drop-over border-white/25 shadow-[inset_0_0_0_2px_rgba(255,255,255,0.2),0_4px_20px_rgba(20,21,28,0.3)]"
+                    ? "mix-card-drop-over border-white/25 shadow-[inset_0_0_6px_1px_rgba(255,255,255,0.15),0_4px_20px_rgba(20,21,28,0.3)]"
                     : "border-white/10 hover:border-white/15"
               }`}
             >
