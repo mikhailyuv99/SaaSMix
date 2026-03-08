@@ -446,7 +446,10 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   }
   .glow-border,
   .hero-dropzone,
-  .mix-dropzone {
+  .mix-dropzone,
+  .observe-section .glow-border,
+  .observe-section .hero-dropzone,
+  .observe-section .mix-dropzone {
     animation: dropzone-glow-outline 3s ease-in-out infinite !important;
     opacity: 1 !important;
   }

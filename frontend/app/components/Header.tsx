@@ -157,7 +157,7 @@ export function Header() {
               aria-label="Accueil Siberia Mix"
               className="font-heading max-lg:hidden flex items-center shrink-0 transition-opacity hover:opacity-90"
             >
-              <img src="/logo-header.png" alt="Siberia Mix" className="h-10 sm:h-11 w-auto shrink-0" />
+              <img src="/logo-header.png" alt="Siberia Mix" className="h-9 sm:h-10 w-auto shrink-0" />
             </Link>
             <Link
               href="/"
@@ -165,7 +165,7 @@ export function Header() {
               aria-label="Accueil Siberia Mix"
               className="font-heading lg:hidden flex items-center shrink-0 transition-opacity hover:opacity-90"
             >
-              <img src="/logo-header.png" alt="Siberia Mix" className="h-9 sm:h-10 w-auto shrink-0" />
+              <img src="/logo-header.png" alt="Siberia Mix" className="h-8 sm:h-9 w-auto shrink-0" />
             </Link>
           </>
 
