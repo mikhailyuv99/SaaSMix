@@ -287,6 +287,10 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+
+@keyframes dropzone-glow {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 @keyframes shimmer-slide {
   0% { transform: translateX(-150%); }
@@ -564,6 +568,31 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   transform: translateY(-1px);
 }
 .btn-cta-secondary:hover::after {
+  opacity: 1;
+  animation: shimmer 1.2s ease-in-out;
+}
+
+.btn-cta-accent {
+  @apply relative overflow-hidden rounded-xl px-8 py-4 text-base font-medium transition-all duration-300;
+  background: #91bbff;
+  color: #0d1117;
+  border: 1px solid rgba(145, 187, 255, 0.6);
+}
+.btn-cta-accent:hover {
+  background: #a8caff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(145, 187, 255, 0.35), 0 0 0 1px rgba(145, 187, 255, 0.4);
+}
+.btn-cta-accent::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.btn-cta-accent:hover::after {
   opacity: 1;
   animation: shimmer 1.2s ease-in-out;
 }
@@ -874,6 +903,30 @@ input, textarea, select, button {
 .mix-dropzone {
   position: relative;
   overflow: hidden;
+}
+.hero-dropzone::before,
+.mix-dropzone::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(
+    135deg,
+    transparent 20%,
+    rgba(145, 187, 255, 0.45) 40%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(145, 187, 255, 0.45) 60%,
+    transparent 80%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+  animation: dropzone-glow 3s ease-in-out infinite;
 }
 .hero-dropzone::after {
   content: "";

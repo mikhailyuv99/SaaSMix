@@ -311,7 +311,7 @@ export function HowItWorks() {
           <div className="text-center -mt-2 relative z-10">
             <Link
               href="/mix"
-              className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs"
+              className="btn-cta-accent inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs"
               onClick={(e) => { e.preventDefault(); router.push("/mix"); }}
             >
               Essayer ces 4 étapes avec vos pistes

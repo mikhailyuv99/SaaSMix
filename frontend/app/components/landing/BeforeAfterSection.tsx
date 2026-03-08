@@ -341,7 +341,7 @@ export function BeforeAfterSection({
         <div className="w-full max-w-2xl mx-auto mt-5 text-center observe-stagger-4 max-lg:mt-4 max-md:mt-3 box-border">
           <Link
             href="/mix"
-            className="btn-cta-secondary inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs"
+            className="btn-cta-accent inline-flex w-full items-center justify-center rounded-xl px-6 py-3.5 text-sm font-medium sm:w-auto max-lg:py-3 max-md:text-xs"
             onClick={(e) => { e.preventDefault(); router.push("/mix"); }}
           >
             Mixer votre propre morceau
