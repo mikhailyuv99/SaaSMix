@@ -287,6 +287,7 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
 
 @keyframes dropzone-glow {
   0%, 100% { opacity: 0; }
