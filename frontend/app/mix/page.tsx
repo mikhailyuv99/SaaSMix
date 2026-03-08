@@ -4307,7 +4307,7 @@ export default function Home() {
                   className={`h-10 max-md:h-9 rounded-lg px-4 flex items-center justify-center text-center text-tagline text-xs max-md:text-[10px] disabled:cursor-not-allowed whitespace-nowrap min-w-[7.5rem] ${
                     isMastering
                       ? "border border-white/30 bg-[#14151c] text-white"
-                      : "border border-white/20 bg-white text-brand-dark hover:bg-white/90 disabled:opacity-50"
+                      : "border border-[rgba(145,187,255,0.6)] bg-[#91bbff] text-[#0d1117] hover:bg-[#a8caff] disabled:opacity-50"
                   }`}
                 >
                   {isMastering ? (
@@ -4690,7 +4690,7 @@ export default function Home() {
                         className={`w-full h-9 flex items-center justify-center rounded-lg border text-tagline disabled:cursor-not-allowed ${
                           track.isMixing
                             ? "border border-white/30 bg-[#14151c] text-white"
-                            : "border-white/20 bg-white text-brand-dark hover:bg-white/90 disabled:opacity-50"
+                            : "border-[rgba(145,187,255,0.6)] bg-[#91bbff] text-[#0d1117] hover:bg-[#a8caff] disabled:opacity-50"
                         }`}
                       >
                         {track.isMixing ? (
@@ -4908,7 +4908,7 @@ export default function Home() {
                           className={`py-2.5 rounded-lg border text-tagline text-sm max-md:text-xs ${
                             track.isMixing
                               ? "border border-white/30 bg-[#14151c] text-white"
-                              : "border-white/20 bg-white text-brand-dark hover:bg-white/90 disabled:opacity-50"
+                              : "border-[rgba(145,187,255,0.6)] bg-[#91bbff] text-[#0d1117] hover:bg-[#a8caff] disabled:opacity-50"
                           }`}
                         >
                           {track.isMixing ? (
