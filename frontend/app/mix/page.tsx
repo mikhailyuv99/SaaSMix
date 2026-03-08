@@ -4057,7 +4057,7 @@ export default function Home() {
         )}
 
         {tracks.length === 0 ? (
-        <div className="glow-border mix-card-glass mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 shadow-lg shadow-black/20 backdrop-blur-sm flex flex-col min-h-[calc(70vh-160px)] max-lg:min-h-[calc(65vh-160px)] max-md:min-h-[45vh]" aria-label="Pistes">
+        <div className="glow-border mix-card-glass mt-8 max-lg:mt-6 max-md:mt-4 rounded-2xl border border-white/10 shadow-lg shadow-black/20 backdrop-blur-sm overflow-hidden flex flex-col min-h-[calc(70vh-160px)] max-lg:min-h-[calc(65vh-160px)] max-md:min-h-[45vh]" aria-label="Pistes">
               <input
                 ref={mixDropzoneInputRef}
                 type="file"

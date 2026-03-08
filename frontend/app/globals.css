@@ -930,7 +930,6 @@ input, textarea, select, button {
 }
 .glow-border {
   position: relative;
-  overflow: visible !important;
 }
 .hero-dropzone,
 .glow-border {

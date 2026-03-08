@@ -88,7 +88,7 @@ export function PricingSection() {
           </div>
         </div>
 
-        <div className="w-full max-w-5xl mx-auto mt-5 box-border overflow-x-hidden">
+        <div className="w-full max-w-5xl mx-auto mt-5 box-border">
           <div className="mt-5 grid grid-cols-3 gap-6 sm:gap-6 max-lg:gap-3 max-md:mt-4 max-md:gap-2 max-sm:gap-1.5 items-stretch max-md:[grid-auto-rows:minmax(340px,1fr)] max-sm:[grid-auto-rows:minmax(340px,1fr)]">
           {(billingPeriod === "mensuel"
             ? plansMensuel.map((plan, i) => ({ plan, invisible: false, index: i }))
@@ -141,7 +141,7 @@ export function PricingSection() {
             return (
               <div
                 key={plan.name + (invisible ? "-ghost" : "")}
-                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-sm:p-1.5 min-w-0 overflow-hidden ${
+                className={`rounded-2xl border p-6 transition-all duration-300 sm:p-8 flex flex-col min-h-[380px] max-lg:min-h-[340px] max-lg:p-3 max-lg:rounded-xl max-md:p-2 max-sm:p-1.5 min-w-0 ${
                   invisible ? "invisible" : ""
                 } ${observeClass} ${
                   plan.featured
