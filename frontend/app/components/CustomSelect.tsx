@@ -143,7 +143,7 @@ export function CustomSelect({
 
   /* Dropdown : même style que modal Connexion (transparent noir, pas de bleu) */
   const dropdownClass =
-    "modal-panel-dark z-[9999] w-max max-w-[min(100vw,24rem)] rounded-xl border border-white/15 backdrop-blur-xl py-1.5 max-h-[min(20rem,70vh)] overflow-auto shadow-xl shadow-black/20 text-center";
+    "modal-panel-dark z-[9999] w-max max-w-[min(100vw,24rem)] rounded-xl border border-white/15 backdrop-blur-xl py-1.5 max-h-[min(20rem,70vh)] overflow-auto text-center";
 
   const dropdownContent = open && dropdownRect && typeof document !== "undefined" && (
     <ul
@@ -167,7 +167,7 @@ export function CustomSelect({
             aria-selected={opt.value === value}
             className={`cursor-pointer px-3 py-2 text-tagline text-slate-400 whitespace-nowrap transition-colors text-center ${
               isHighlighted
-                ? "text-white [text-shadow:0_0_12px_rgba(255,255,255,0.9)]"
+                ? "text-white"
                 : ""
             } hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.9)]`}
             onMouseEnter={() => setHighlightedIndex(i)}

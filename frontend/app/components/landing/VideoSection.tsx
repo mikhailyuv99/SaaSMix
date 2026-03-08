@@ -34,7 +34,7 @@ export function VideoSection() {
           </div>
 
           <div className="mt-5 observe-stagger-2 sm:mt-6 max-lg:mt-4">
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-xl shadow-black/30 aspect-video max-lg:rounded-xl">
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/40 aspect-video max-lg:rounded-xl">
               {YOUTUBE_VIDEO_ID ? (
                 <iframe
                   src={`https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?rel=0`}

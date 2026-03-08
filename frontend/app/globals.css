@@ -95,12 +95,11 @@ body[data-mix-fullscreen] footer {
 /* Force rgba background. On Safari, disable backdrop-filter (workaround for regression). */
 .mix-card-glass {
   background-color: rgba(180, 185, 195, 0.05) !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  transition: transform 0.2s ease !important;
 }
 .mix-card-glass:hover {
   background-color: rgba(180, 185, 195, 0.05) !important;
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22) !important;
 }
 .mix-card-glass.mix-card-dragging {
   background-color: rgba(180, 185, 195, 0.10) !important;
@@ -338,8 +337,8 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.03); }
-  50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.06); }
+  0%, 100% { opacity: 0.97; }
+  50% { opacity: 1; }
 }
 
 @keyframes hero-zoom-in-out {
@@ -489,10 +488,8 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   border-color: rgba(255, 255, 255, 0.8);
   background-color: rgba(255, 255, 255, 0.1) !important;
   color: #fff;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
 }
 .hiw-glow .hiw-glow-ring {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
 /* Premium landing cards */
@@ -505,7 +502,6 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 .landing-card:hover {
   border-color: var(--card-hover-border);
   transform: translateY(-2px);
-  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.4);
 }
 
 .gradient-text {
@@ -523,7 +519,6 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 .landing-text-shadow li,
 .landing-text-shadow a:not(.btn-cta-accent),
 .landing-text-shadow span {
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.4), 0 1px 6px rgba(0, 0, 0, 0.4);
 }
 .btn-cta-accent {
   text-shadow: none !important;
@@ -533,13 +528,11 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   background: transparent;
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
 }
 
 .btn-cta-primary:hover {
   background: rgba(255, 255, 255, 0.08);
   transform: translateY(-1px);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2), 0 0 4px 1px rgba(255, 255, 255, 0.15);
 }
 
 .btn-cta-primary::after {
@@ -791,11 +784,9 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   @keyframes glow-blink-slow {
     0%, 100% {
       color: rgb(180 185 195);
-      text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
     }
     50% {
       color: #fff;
-      text-shadow: 0 0 14px rgba(255, 255, 255, 0.85);
     }
   }
   .glow-blink-slow {
@@ -838,9 +829,9 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 }
 
 @keyframes track-moved-flash {
-  0%   { box-shadow: 0 0 8px 1px rgba(255, 255, 255, 0.4); }
-  70%  { box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.15); }
-  100% { box-shadow: none; }
+  0%   { opacity: 0.9; }
+  70%  { opacity: 0.95; }
+  100% { opacity: 1; }
 }
 .animate-track-moved {
   animation: track-moved-flash 0.4s ease-out forwards;

@@ -247,7 +247,7 @@ export function HowItWorks() {
               >
                 <div className={`relative z-10 flex-1 max-lg:w-full ${isLeft ? "pr-4 sm:pr-6 max-lg:pr-0" : "sm:pr-6 max-lg:pr-0"}`}>
                   {isLeft && (
-                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
+                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
                       <div className="flex items-start gap-4 max-md:gap-3">
                         <StepIcon icon={step.icon} />
                         <div className="min-w-0 flex-1">
@@ -271,7 +271,7 @@ export function HowItWorks() {
 
                 <div
                   ref={(el) => { circleRefs.current[i] = el; }}
-                  className="hiw-dim relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 font-heading text-sm font-bold shadow-lg transition-all duration-500 sm:h-12 sm:w-12 max-lg:self-center max-lg:order-first max-lg:-order-1"
+                  className="hiw-dim relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 font-heading text-sm font-bold transition-all duration-500 sm:h-12 sm:w-12 max-lg:self-center max-lg:order-first max-lg:-order-1"
                 >
                   <span className="hiw-glow-ring pointer-events-none absolute inset-0 rounded-full" />
                   <span className="relative z-[1]">{step.num}</span>
@@ -279,7 +279,7 @@ export function HowItWorks() {
 
                 <div className={`relative z-10 flex-1 max-lg:w-full ${!isLeft ? "pl-4 sm:pl-6 max-lg:pl-0" : "sm:pl-6 max-lg:pl-0"}`}>
                   {!isLeft && (
-                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-lg shadow-black/20 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
+                    <ObserveElement className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm sm:p-6 max-lg:p-4 max-md:p-3">
                       <div className="flex items-start gap-4 max-md:gap-3">
                         <StepIcon icon={step.icon} />
                         <div className="min-w-0 flex-1">

@@ -164,7 +164,7 @@ export function HeroSection() {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
-            className={`hero-dropzone font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-6 text-center shadow-xl shadow-black/20 transition-all duration-200 outline-none focus:outline-none focus-visible:outline-none sm:min-h-[240px] max-lg:min-h-[180px] max-lg:gap-2 max-lg:px-3 max-lg:py-5 max-md:min-h-[160px] max-md:py-4 max-md:bg-white/[0.02] max-md:hover:bg-white/[0.04] ${
+            className={`hero-dropzone font-sans uppercase flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-6 text-center transition-all duration-200 outline-none focus:outline-none focus-visible:outline-none sm:min-h-[240px] max-lg:min-h-[180px] max-lg:gap-2 max-lg:px-3 max-lg:py-5 max-md:min-h-[160px] max-md:py-4 max-md:bg-white/[0.02] max-md:hover:bg-white/[0.04] ${
               isDragging ? "border-white/25 bg-white/[0.08] max-md:bg-white/[0.05]" : "hover:border-white/15 hover:bg-white/[0.06]"
             }`}
           >

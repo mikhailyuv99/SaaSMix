@@ -66,7 +66,7 @@ export function PricingModal({
       <div className="backdrop-blur-layer" aria-hidden="true" />
       <div className="backdrop-tint-layer" aria-hidden="true" />
       <div
-        className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 w-full max-w-5xl max-h-[90vh] overflow-y-auto my-auto relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl"
+        className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto my-auto relative max-lg:max-w-[calc(100vw-1.5rem)] max-lg:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button

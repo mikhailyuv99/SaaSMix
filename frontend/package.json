@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@netlify/plugin-nextjs": "^4.2.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",

@@ -286,7 +286,7 @@ export function Header() {
           <div className="modal-backdrop-dark fixed inset-0 z-[200] flex items-center justify-center p-4 max-lg:p-3" aria-modal="true" role="dialog">
           <div className="backdrop-blur-layer" aria-hidden="true" />
           <div className="backdrop-tint-layer" aria-hidden="true" />
-          <div className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl shadow-xl shadow-black/20 p-6 w-full max-w-sm max-lg:p-4 max-lg:max-w-[calc(100vw-1.5rem)]">
+          <div className="modal-panel-dark font-sans rounded-2xl border border-white/15 backdrop-blur-xl p-6 w-full max-w-sm max-lg:p-4 max-lg:max-w-[calc(100vw-1.5rem)]">
             <p className="text-tagline text-slate-300 text-center text-sm mb-6">
               {isLeaveForDisconnect
                 ? "Vous avez des modifications non sauvegardées. Se déconnecter quand même ?"
