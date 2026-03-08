@@ -444,6 +444,12 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
     transition: none !important;
     animation: none !important;
   }
+  .glow-border,
+  .hero-dropzone,
+  .mix-dropzone {
+    animation: dropzone-glow-outline 3s ease-in-out infinite !important;
+    opacity: 1 !important;
+  }
 }
 
 /* Per-element AOS (e.g. timeline steps) */
