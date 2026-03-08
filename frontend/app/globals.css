@@ -446,8 +446,10 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
   }
   .glow-border,
   .hero-dropzone,
+  .mix-card-glow,
   .observe-section .glow-border,
-  .observe-section .hero-dropzone {
+  .observe-section .hero-dropzone,
+  .observe-section .mix-card-glow {
     animation: dropzone-glow-outline 3s ease-in-out infinite !important;
     opacity: 1 !important;
   }
@@ -930,12 +932,19 @@ input, textarea, select, button {
 }
 .glow-border {
   position: relative;
+  overflow: visible !important;
+}
+.mix-card-glow {
+  position: relative;
+  overflow: hidden;
+  border-color: transparent !important;
 }
 .hero-dropzone {
   border-color: transparent !important;
 }
 .hero-dropzone,
-.glow-border {
+.glow-border,
+.mix-card-glow {
   outline: 1.5px solid transparent;
   outline-offset: -1px;
   animation: dropzone-glow-outline 3s ease-in-out infinite;
