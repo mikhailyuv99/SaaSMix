@@ -799,7 +799,7 @@ html, body, html *, body * {
   font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 h1, h2, h3, h4, h5, h6, .font-heading,
-h1 *, h2 *, h3 *, h4 *, h5 *, h6 *, .font-heading * {
+h1 *, h2 *, h3 *, h4 *, h5 *, h6 * {
   font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Formulaires et boutons (n’héritent pas toujours) */
