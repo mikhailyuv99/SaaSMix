@@ -516,9 +516,12 @@ html.safari-ios-old .header-burger-overlay > *:not(.backdrop-blur-layer):not(.ba
 .landing-text-shadow h3,
 .landing-text-shadow p,
 .landing-text-shadow li,
-.landing-text-shadow a,
+.landing-text-shadow a:not(.btn-cta-accent),
 .landing-text-shadow span {
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.btn-cta-accent {
+  text-shadow: none !important;
 }
 .btn-cta-primary {
   @apply relative overflow-hidden rounded-xl px-8 py-4 text-base font-semibold transition-all duration-300;
@@ -863,9 +866,12 @@ input, textarea, select, button {
   font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Bouton Envoyer et texte des questions FAQ */
-.landing-card button,
+.landing-card button:not(.pricing-plan-btn),
 .landing-card .btn-cta-primary {
   font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif !important;
+}
+.pricing-plan-btn {
+  font-family: Questrial, ui-sans-serif, system-ui, sans-serif !important;
 }
 /* Champs contact (Votre nom, vous@exemple.com, Votre message...) */
 .contact-input,
@@ -926,13 +932,13 @@ input, textarea, select, button {
   inset: -1px;
   border-radius: inherit;
   padding: 2px;
-  background: linear-gradient(
-    135deg,
-    transparent 10%,
-    rgba(145, 187, 255, 0.8) 35%,
-    rgba(255, 255, 255, 0.9) 50%,
-    rgba(145, 187, 255, 0.8) 65%,
-    transparent 90%
+  background: conic-gradient(
+    from 0deg,
+    rgba(145, 187, 255, 0.7),
+    rgba(255, 255, 255, 0.85),
+    rgba(145, 187, 255, 0.7),
+    rgba(255, 255, 255, 0.85),
+    rgba(145, 187, 255, 0.7)
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
