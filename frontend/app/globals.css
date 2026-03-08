@@ -931,9 +931,11 @@ input, textarea, select, button {
 .glow-border {
   position: relative;
 }
+.hero-dropzone {
+  border-color: transparent !important;
+}
 .hero-dropzone,
 .glow-border {
-  border-color: transparent !important;
   outline: 1.5px solid transparent;
   outline-offset: -1px;
   animation: dropzone-glow-outline 3s ease-in-out infinite;
