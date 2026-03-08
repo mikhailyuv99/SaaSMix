@@ -52,7 +52,7 @@ export function PricingSection() {
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2 max-lg:text-2xl max-md:text-xl">
             Tarifs
           </h2>
-          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs">
+          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs font-sans">
             Choisissez la formule qui vous convient.
           </p>
         </div>
@@ -109,9 +109,9 @@ export function PricingSection() {
                     </span>
                   )}
                 </div>
-                <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px] max-sm:text-[10px] break-words">{plan.subtitle}</p>
+                <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px] max-sm:text-[10px] break-words font-sans">{plan.subtitle}</p>
                 <p className={`min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base max-sm:text-sm mt-4 shrink-0 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
-                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 min-h-0 min-w-0 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5 max-sm:text-[10px] max-sm:space-y-0.5 overflow-hidden">
+                <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 min-h-0 min-w-0 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5 max-sm:text-[10px] max-sm:space-y-0.5 overflow-hidden font-sans">
                   {plan.features.split("\n").map((line, j) => (
                     <li key={j} className="flex items-start gap-2.5 max-lg:gap-1.5 max-sm:gap-0.5 min-w-0 break-words">
                       <span className="mt-0.5 shrink-0 size-1.5 rounded-full bg-white/50 max-lg:size-1 max-sm:size-1" aria-hidden />

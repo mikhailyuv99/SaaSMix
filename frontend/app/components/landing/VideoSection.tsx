@@ -28,7 +28,7 @@ export function VideoSection() {
             <h2 className="mt-2 font-heading text-2xl font-bold text-white sm:text-3xl max-lg:text-xl max-md:text-lg">
               Comment utiliser l'outil
             </h2>
-            <p className="mt-2 text-slate-400 text-sm sm:text-base max-md:text-xs">
+            <p className="mt-2 text-slate-400 text-sm sm:text-base max-md:text-xs font-sans">
               Une vidéo pour tout comprendre en quelques minutes.
             </p>
           </div>
@@ -55,7 +55,7 @@ export function VideoSection() {
                       <path d="M8 5v14l11-7L8 5z" />
                     </svg>
                   </button>
-                  <p className="text-sm font-medium uppercase tracking-wide text-white/90">Tutoriel bientôt disponible</p>
+                  <p className="text-sm font-medium uppercase tracking-wide text-white/90 font-sans">Tutoriel bientôt disponible</p>
                 </div>
               )}
             </div>

@@ -242,7 +242,7 @@ function DemoCard({
       className={`landing-card group p-5 sm:p-6 flex flex-col min-w-0 max-lg:p-4 max-md:p-3 ${index === 0 ? "observe-stagger-1" : index === 1 ? "observe-stagger-2" : "observe-stagger-3"}`}
     >
       <p className="font-heading font-semibold text-white max-md:text-sm">{demo.title}</p>
-      <p className="mt-0.5 text-sm text-slate-400 max-md:text-xs">{demo.desc}</p>
+      <p className="mt-0.5 text-sm text-slate-400 max-md:text-xs font-sans">{demo.desc}</p>
 
       {/* Waveform (current mode) or loading spinner - prend toute la largeur dispo */}
       <div className="mt-4 w-full min-w-0 rounded-lg border border-white/[0.06] h-12 overflow-hidden relative">
@@ -329,7 +329,7 @@ export function BeforeAfterSection({
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2 max-lg:text-2xl max-md:text-xl">
             Écoutez le résultat
           </h2>
-          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs">
+          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs font-sans">
             Exemples mixés avec Siberia Mix.
           </p>
         </div>

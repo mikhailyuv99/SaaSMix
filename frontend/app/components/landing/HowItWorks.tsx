@@ -210,7 +210,7 @@ export function HowItWorks() {
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2 max-lg:text-2xl max-md:text-xl">
             Comment ça marche
           </h2>
-          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs">
+          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs font-sans">
             De la piste brute au morceau fini en quatre étapes — sans plugin, tout dans le navigateur.
           </p>
         </div>
@@ -255,14 +255,14 @@ export function HowItWorks() {
                           <button
                             type="button"
                             onClick={() => setExpanded(expanded === step.num ? null : step.num)}
-                            className="mt-2 flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+                            className="mt-2 flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors font-sans"
                           >
                             Lire la suite
                             <svg className={`h-4 w-4 transition-transform ${expanded === step.num ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                           </button>
-                          {expanded === step.num && <p className="mt-3 text-sm leading-relaxed text-slate-400">{step.desc}</p>}
+                          {expanded === step.num && <p className="mt-3 text-sm leading-relaxed text-slate-400 font-sans">{step.desc}</p>}
                         </div>
                       </div>
                     </ObserveElement>
@@ -287,14 +287,14 @@ export function HowItWorks() {
                           <button
                             type="button"
                             onClick={() => setExpanded(expanded === step.num ? null : step.num)}
-                            className="mt-2 flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors"
+                            className="mt-2 flex items-center gap-1 text-sm text-slate-400 hover:text-white transition-colors font-sans"
                           >
                             Lire la suite
                             <svg className={`h-4 w-4 transition-transform ${expanded === step.num ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                           </button>
-                          {expanded === step.num && <p className="mt-3 text-sm leading-relaxed text-slate-400">{step.desc}</p>}
+                          {expanded === step.num && <p className="mt-3 text-sm leading-relaxed text-slate-400 font-sans">{step.desc}</p>}
                         </div>
                       </div>
                     </ObserveElement>

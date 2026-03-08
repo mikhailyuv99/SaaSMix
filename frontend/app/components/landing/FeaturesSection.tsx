@@ -38,7 +38,7 @@ export function FeaturesSection() {
           <h2 className="mt-2 font-heading text-3xl font-bold text-white sm:text-4xl observe-stagger-2 max-lg:text-2xl max-md:text-xl">
             Ce que vous obtenez
           </h2>
-          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs">
+          <p className="mt-3 text-slate-400 observe-stagger-3 max-lg:text-sm max-md:text-xs font-sans">
             Un workflow simple pour des résultats pro.
           </p>
         </div>
@@ -55,7 +55,7 @@ export function FeaturesSection() {
                     <h3 className="font-heading font-semibold text-white text-[15px] sm:text-base tracking-tight max-md:text-sm">
                       {f.title}
                     </h3>
-                    <p className="mt-1.5 text-sm sm:text-[15px] leading-relaxed text-slate-400 max-md:text-xs">
+                    <p className="mt-1.5 text-sm sm:text-[15px] leading-relaxed text-slate-400 max-md:text-xs font-sans">
                       {f.desc}
                     </p>
                   </div>

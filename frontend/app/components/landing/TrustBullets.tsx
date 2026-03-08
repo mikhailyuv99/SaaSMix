@@ -34,7 +34,7 @@ export function TrustBullets() {
               </span>
               <div className="flex-1 min-w-0">
                 <p className="font-heading font-semibold text-white whitespace-nowrap max-lg:text-xs max-md:text-[10px]">{item.label}</p>
-                <p className="mt-0.5 text-sm text-slate-400 max-lg:text-[10px] max-md:text-[9px]">{item.desc}</p>
+                <p className="mt-0.5 text-sm text-slate-400 max-lg:text-[10px] max-md:text-[9px] font-sans">{item.desc}</p>
               </div>
             </div>
           ))}
