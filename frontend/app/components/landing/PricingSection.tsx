@@ -88,7 +88,7 @@ export function PricingSection() {
           </div>
         </div>
 
-        <div className="w-full max-w-5xl mx-auto mt-5 box-border overflow-x-hidden">
+        <div className="w-full max-w-5xl mx-auto mt-5 box-border overflow-x-hidden pb-1">
           <div className="mt-5 grid grid-cols-3 gap-6 sm:gap-6 max-lg:gap-3 max-md:mt-4 max-md:gap-2 max-sm:gap-1.5 items-stretch max-md:[grid-auto-rows:minmax(340px,1fr)] max-sm:[grid-auto-rows:minmax(340px,1fr)]">
           {(billingPeriod === "mensuel"
             ? plansMensuel.map((plan, i) => ({ plan, invisible: false, index: i }))
@@ -110,7 +110,7 @@ export function PricingSection() {
                   )}
                 </div>
                 <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px] max-sm:text-[10px] break-words font-sans">{plan.subtitle}</p>
-                <p className={`min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base max-sm:text-sm mt-4 shrink-0 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
+                <p className={`min-h-[2.5rem] flex items-center font-sans text-2xl font-bold text-white max-lg:text-lg max-md:text-base max-sm:text-sm mt-4 shrink-0 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
                 <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 min-h-0 min-w-0 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5 max-sm:text-[10px] max-sm:space-y-0.5 overflow-hidden font-sans">
                   {plan.features.split("\n").map((line, j) => (
                     <li key={j} className="flex items-start gap-2.5 max-lg:gap-1.5 max-sm:gap-0.5 min-w-0 break-words">
