@@ -4134,7 +4134,7 @@ export default function Home() {
           }`}
           style={isFullscreen ? { height: "100dvh", minHeight: "100vh" } : undefined}
         >
-        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 border-b border-white/10 max-xl:px-3 max-xl:py-2 max-xl:flex-col max-xl:items-stretch max-xl:gap-0 max-md:flex-col max-md:flex-wrap max-md:gap-3 ${isFullscreen ? "relative z-10" : ""}`} style={{ backgroundColor: "rgba(180,185,195,0.04)" }}>
+        <div className={`flex flex-wrap items-center gap-3 px-4 py-3 border-b border-white/10 rounded-2xl max-xl:px-3 max-xl:py-2 max-xl:flex-col max-xl:items-stretch max-xl:gap-0 max-md:flex-col max-md:flex-wrap max-md:gap-3 ${isFullscreen ? "relative z-10 rounded-none" : ""}`} style={{ backgroundColor: "rgba(180,185,195,0.04)" }}>
           {/* Row 1 (desktop xl: title+save left | tablet max-xl: title+save centered, fullscreen right | mobile: title centered + fullscreen right, save in row 2) */}
           <div className="flex items-center gap-2 shrink-0 w-[calc(20ch+0.5rem+2.25rem)] max-xl:w-full max-xl:flex max-xl:justify-center max-xl:items-center max-xl:gap-2 max-xl:py-2 max-xl:relative max-md:justify-center max-md:items-center max-md:w-full max-md:order-first max-md:min-w-0 max-md:relative max-md:max-w-none">
             {(() => {
