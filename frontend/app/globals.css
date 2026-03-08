@@ -939,7 +939,9 @@ input, textarea, select, button {
   overflow: hidden;
   border-color: transparent !important;
 }
-.hero-dropzone {
+.hero-dropzone,
+.glow-border,
+.mix-card-glow {
   border-color: transparent !important;
 }
 .hero-dropzone,
