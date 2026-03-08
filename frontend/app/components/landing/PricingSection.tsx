@@ -145,7 +145,7 @@ export function PricingSection() {
                   invisible ? "invisible" : ""
                 } ${observeClass} ${
                   plan.featured
-                    ? "border-white/15 bg-white/[0.04] hover:border-white/20"
+                    ? "glow-border border-white/15 bg-white/[0.04] hover:border-white/20"
                     : "landing-card border-white/10"
                 }`}
               >
