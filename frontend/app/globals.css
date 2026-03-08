@@ -932,6 +932,7 @@ input, textarea, select, button {
 }
 .glow-border {
   position: relative;
+  overflow: visible !important;
 }
 .hero-dropzone,
 .mix-dropzone,
@@ -944,11 +945,9 @@ input, textarea, select, button {
 @keyframes dropzone-glow-outline {
   0%, 100% {
     outline-color: transparent;
-    box-shadow: none;
   }
   50% {
     outline-color: rgba(145, 187, 255, 0.7);
-    box-shadow: 0 0 10px rgba(145, 187, 255, 0.3);
   }
 }
 .hero-dropzone::after {
