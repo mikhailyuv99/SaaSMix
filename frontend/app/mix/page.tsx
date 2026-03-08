@@ -5227,7 +5227,7 @@ export default function Home() {
             ref={masterResultSectionRef}
             className={
               isFullscreen
-                ? "fixed bottom-4 left-1/2 z-[10000] w-[min(42rem,calc(100vw-1.5rem))] -translate-x-1/2"
+                ? "max-lg:mt-6 max-lg:max-w-xl max-lg:mx-auto lg:fixed lg:bottom-4 lg:left-1/2 lg:z-[10000] lg:w-[min(42rem,calc(100vw-1.5rem))] lg:-translate-x-1/2"
                 : tracks.length === 0
                   ? "mt-8 max-lg:mt-6 max-md:mt-4 max-w-xl mx-auto"
                   : "mt-10 max-w-xl mx-auto"
