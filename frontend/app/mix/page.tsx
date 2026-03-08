@@ -5219,18 +5219,81 @@ export default function Home() {
         </section>
         )}
 
+        {isFullscreen && masterResult && (
+          <div className="mt-6 max-w-xl mx-auto px-4 pb-6" ref={isFullscreen ? masterResultSectionRef : undefined} aria-label="Résultat du master">
+            <div className="mix-card-glass relative rounded-2xl border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20 p-6 flex flex-col items-center text-center">
+              <button type="button" onClick={() => { stopMasterPlayback(); setMasterResult(null); }} className="absolute top-3 right-3 w-8 h-8 max-md:w-7 max-md:h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors" aria-label="Fermer">
+                <svg className="w-4 h-4 max-md:w-3.5 max-md:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+              <h2 className="text-tagline text-slate-400 mb-4">Résultat du master</h2>
+              <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
+                {!isMasterResultPlaying ? (
+                  <button type="button" onClick={() => { demoPlaybackRef.current = null; setActivePlayer("master"); startMasterPlayback(); }} disabled={!masterWaveforms} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed" aria-label={masterResumeFrom > 0 ? "Reprendre" : "Play"}>
+                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="-0.333 0 24 24" aria-hidden><path d="M8 5v14l11-7L8 5z"/></svg>
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => { demoPlaybackRef.current = null; setActivePlayer("master"); stopMasterPlayback(); }} className="w-12 h-12 max-md:w-11 max-md:h-11 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors shrink-0" aria-label="Pause">
+                    <svg className="w-5 h-5 max-md:w-4 max-md:h-4 shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  </button>
+                )}
+                <button type="button" onClick={toggleMasterPlaybackMode} className="h-9 flex items-center justify-center gap-1 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-tagline px-4">
+                  <span className={masterPlaybackMode === "mix" ? "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "text-slate-400"}>AVANT</span>
+                  <span className="text-slate-400">/</span>
+                  <span className={masterPlaybackMode === "mix" ? "text-slate-400" : "text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"}>APRÈS</span>
+                </button>
+              </div>
+              {masterWaveforms && (
+                <div className="w-full mb-4">
+                  <Waveform peaks={masterPlaybackMode === "mix" ? masterWaveforms.mix.peaks : masterWaveforms.master.peaks} duration={masterPlaybackMode === "mix" ? masterWaveforms.mix.duration : masterWaveforms.master.duration} currentTime={isMasterResultPlaying ? masterPlaybackCurrentTime : masterResumeFrom} onSeek={seekMaster} className="mt-1" />
+                </div>
+              )}
+              {user ? (
+                <button type="button" disabled={isDownloadingMaster} onClick={async () => {
+                  let u = billingUsageRef.current;
+                  const calcMasterRem = (d: typeof u) => { if (!d) return 999; return d.plan === "free" ? (d.master_tokens_purchased ?? 0) : (d.master_limit == null ? 999 : Math.max(0, (d.master_limit ?? 0) - (d.master_used ?? 0)) + (d.master_tokens_purchased ?? 0)); };
+                  if (calcMasterRem(u) < 1) { await refreshBillingUsage(); u = billingUsageRef.current; }
+                  if (u && calcMasterRem(u) < 1) { if (!isPro) { setAppModal({ type: "confirm_two", message: "Téléchargement du master coûte 1 token. Choisissez une formule ou achetez un token pour télécharger votre master.", primaryLabel: "Choisir un plan", secondaryLabel: "Acheter un token", onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); }, onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); } }); } else { setAppModal({ type: "alert", message: "Plus de tokens disponibles. Achetez des tokens pour télécharger le master.", onClose: () => { window.dispatchEvent(new Event("openTokensModal")); } }); } return; }
+                  setIsDownloadingMaster(true);
+                  const token = typeof window !== "undefined" ? localStorage.getItem("saas_mix_token") : null;
+                  const dlController = new AbortController(); downloadAbortRef.current = dlController;
+                  try {
+                    let cachedBlob = masterWavBlobRef.current.master;
+                    if (!cachedBlob && masterWavPromiseRef.current) { cachedBlob = await masterWavPromiseRef.current; }
+                    if (cachedBlob) {
+                      const consumeUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "consume_only=1";
+                      const consumeRes = await fetch(consumeUrl, { headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: dlController.signal });
+                      if (consumeRes.status === 401) { setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => { openAuthModal?.("login"); } }); return; }
+                      if (consumeRes.status === 402) { const errData = await consumeRes.json().catch(() => ({})); const errMsg = (errData.detail as string) || "Limite atteinte."; const isNoTokens = typeof errMsg === "string" && errMsg.includes("NO_TOKENS"); if (!isPro && isNoTokens) { setAppModal({ type: "confirm_two", message: "Téléchargement du master coûte 1 token.", primaryLabel: "Choisir un plan", secondaryLabel: "Acheter un token", onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); }, onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); } }); } else { setAppModal({ type: "alert", message: isNoTokens ? "Plus de tokens disponibles." : errMsg, onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } } }); } return; }
+                      const url = URL.createObjectURL(cachedBlob); const a = document.createElement("a"); a.href = url; a.download = "master.wav"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                    } else {
+                      const masterDownloadUrl = masterResult.masterUrl + (masterResult.masterUrl.includes("?") ? "&" : "?") + "download=1";
+                      const res = await fetch(masterDownloadUrl, { headers: token ? { Authorization: `Bearer ${token}` } : undefined, signal: dlController.signal });
+                      if (res.status === 401) { setAppModal({ type: "alert", message: "Session expirée. Reconnectez-vous.", onClose: () => { openAuthModal?.("login"); } }); return; }
+                      if (res.status === 402) { const errData = await res.json().catch(() => ({})); const errMsg = (errData.detail as string) || "Limite atteinte."; const isNoTokens = typeof errMsg === "string" && errMsg.includes("NO_TOKENS"); if (!isPro && isNoTokens) { setAppModal({ type: "confirm_two", message: "Téléchargement du master coûte 1 token.", primaryLabel: "Choisir un plan", secondaryLabel: "Acheter un token", onPrimary: () => { setAppModal(null); window.dispatchEvent(new CustomEvent("openPlanModal")); }, onSecondary: () => { setAppModal(null); window.dispatchEvent(new Event("openTokensModal")); } }); } else { setAppModal({ type: "alert", message: isNoTokens ? "Plus de tokens disponibles." : errMsg, onClose: () => { if (isNoTokens) window.dispatchEvent(new Event("openTokensModal")); else { setOpenManageWithChangePlanView(true); setManageSubscriptionModalOpen(true); } } }); } return; }
+                      if (!res.ok) throw new Error("Téléchargement master échoué");
+                      const blob = await res.blob(); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "master.wav"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+                    }
+                  } catch (e) { const isAbort = (e as { name?: string })?.name === "AbortError" || /aborted|signal is aborted/i.test(String(e instanceof Error ? e.message : (e && typeof e === "object" && "message" in e ? (e as { message: unknown }).message : e))); if (isAbort) return; console.error("[mix] master download failed", e); setAppModal({ type: "alert", message: "Le téléchargement a échoué. Vérifiez votre connexion et réessayez.", onClose: () => {} }); } finally { downloadAbortRef.current = null; setIsDownloadingMaster(false); }
+                }} className={`mt-2 rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline disabled:cursor-not-allowed whitespace-nowrap ${isDownloadingMaster ? "border border-white/30 bg-[#14151c] text-white" : "border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors disabled:opacity-50"}`}>
+                  {isDownloadingMaster ? (<span className="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]">TÉLÉCHARGEMENT<span className="inline-block animate-mix-dot [animation-delay:0ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:200ms]">.</span><span className="inline-block animate-mix-dot [animation-delay:400ms]">.</span></span>) : "TÉLÉCHARGER LE MASTER"}
+                </button>
+              ) : (
+                <button type="button" onClick={() => { if (!user) { openAuthModal?.("login"); return; } }} className="mt-2 rounded-lg px-4 py-2.5 flex items-center justify-center text-center text-tagline border border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_12px_rgba(255,255,255,0.8)] transition-colors whitespace-nowrap">TÉLÉCHARGER LE MASTER</button>
+              )}
+            </div>
+          </div>
+        )}
+
         </div>
         )}
 
-        {masterResult && (
+        {!isFullscreen && masterResult && (
           <section
             ref={masterResultSectionRef}
             className={
-              isFullscreen
-                ? "max-lg:mt-6 max-lg:max-w-xl max-lg:mx-auto lg:fixed lg:bottom-4 lg:left-1/2 lg:z-[10000] lg:w-[min(42rem,calc(100vw-1.5rem))] lg:-translate-x-1/2"
-                : tracks.length === 0
-                  ? "mt-8 max-lg:mt-6 max-md:mt-4 max-w-xl mx-auto"
-                  : "mt-10 max-w-xl mx-auto"
+              tracks.length === 0
+                ? "mt-8 max-lg:mt-6 max-md:mt-4 max-w-xl mx-auto"
+                : "mt-10 max-w-xl mx-auto"
             }
             aria-label="Résultat du master"
           >
