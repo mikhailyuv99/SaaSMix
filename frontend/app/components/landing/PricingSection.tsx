@@ -110,7 +110,7 @@ export function PricingSection() {
                   )}
                 </div>
                 <p className="mt-2 text-sm text-slate-400 max-lg:text-xs max-md:text-[10px] max-sm:text-[10px] break-words font-sans">{plan.subtitle}</p>
-                <p className={`min-h-[2.5rem] flex items-center font-sans text-2xl font-bold text-white max-lg:text-lg max-md:text-base max-sm:text-sm mt-4 shrink-0 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
+                <p className={`min-h-[2.5rem] flex items-center font-heading text-2xl font-bold text-white max-lg:text-lg max-md:text-base max-sm:text-sm mt-4 shrink-0 ${i === 0 || plan.name === "Pro annuel" ? "max-lg:mt-8" : ""}`}>{plan.price}</p>
                 <ul className="mt-3 space-y-2.5 text-sm text-slate-400 flex-1 min-h-0 min-w-0 max-lg:space-y-1 max-lg:text-xs max-md:text-[10px] max-md:space-y-0.5 max-sm:text-[10px] max-sm:space-y-0.5 overflow-hidden font-sans">
                   {plan.features.split("\n").map((line, j) => (
                     <li key={j} className="flex items-start gap-2.5 max-lg:gap-1.5 max-sm:gap-0.5 min-w-0 break-words">
@@ -145,7 +145,7 @@ export function PricingSection() {
                   invisible ? "invisible" : ""
                 } ${observeClass} ${
                   plan.featured
-                    ? "glow-border landing-card border-white/15 bg-white/[0.04] hover:border-white/20"
+                    ? "glow-border border-white/15 bg-white/[0.04] hover:border-white/20"
                     : "landing-card border-white/10"
                 }`}
               >
